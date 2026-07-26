@@ -1,0 +1,84 @@
+@use './abstract/variable' as var;
+
+@layer base {
+	* {
+		overscroll-behavior: none;
+	}
+
+	html {
+		cursor: default;
+
+		font-family: 'Helvetica Now Text', sans-serif;
+		font-size: 16px;
+		font-weight: var(--font-weight-md);
+		font-synthesis: none;
+		line-height: 1.5em;
+		color: var(--color-contrast);
+		letter-spacing: -0.01rem;
+
+		body {
+			overflow: hidden;
+			height: 100dvh;
+			background-color: var(--color-primary);
+
+			main {
+				ng-component {
+					> section {
+						padding: var(--spacing-4);
+					}
+				}
+			}
+		}
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-weight: var(--font-weight-xl);
+		line-height: 1.5em;
+		letter-spacing: 0.015em;
+	}
+
+	h1,
+	h2,
+	h3 {
+		font-family: 'Helvetica Now Display', sans-serif;
+	}
+
+	h1 {
+		font-size: var(--font-size-xxxl);
+	}
+
+	h2 {
+		font-size: var(--font-size-xxl);
+	}
+
+	h3 {
+		font-size: var(--font-size-xl);
+	}
+
+	h4 {
+		font-size: var(--font-size-lg);
+	}
+
+	h5 {
+		font-size: var(--font-size-md);
+	}
+
+	h6 {
+		font-size: var(--font-size-sm);
+	}
+
+	strong {
+		font-weight: var(--font-weight-lg);
+	}
+
+	#modal-outlet {
+		.modal > section {
+			padding-bottom: var(--safe-padding-bottom);
+		}
+	}
+}

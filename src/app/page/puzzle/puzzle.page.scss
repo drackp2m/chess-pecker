@@ -1,0 +1,147 @@
+@use '../../../scss/abstract/mixin' as mix;
+
+section {
+	height: 100%;
+
+	.title {
+		span {
+			text-decoration: underline;
+			text-decoration-thickness: 2px;
+		}
+	}
+}
+
+.headline {
+	font-size: var(--font-size-lg);
+	font-weight: var(--font-weight-lg);
+
+	&.failed {
+		color: rgb(196 48 38);
+	}
+
+	&.solved {
+		color: var(--color-accent);
+	}
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--spacing-6);
+	align-items: start;
+
+	@include mix.media($from: lg) {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+	}
+}
+
+app-chess-board {
+	max-width: 34rem;
+	margin: 0 auto;
+}
+
+.counter {
+	font-variant-numeric: tabular-nums;
+}
+
+.panel {
+	h5 {
+		font-size: var(--font-size-md);
+		font-weight: var(--font-weight-xl);
+	}
+}
+
+.meta,
+.progress {
+	font-size: var(--font-size-sm);
+}
+
+.themes {
+	list-style: none;
+}
+
+.theme {
+	padding: var(--spacing-1) var(--spacing-2);
+	border-radius: var(--border-radius-1);
+	font-size: var(--font-size-sm);
+	background-color: color-mix(in oklab, var(--color-contrast) 10%, transparent);
+}
+
+.source {
+	font-size: var(--font-size-sm);
+	text-decoration: underline;
+}
+
+.import {
+	padding: var(--spacing-3);
+	border-radius: var(--border-radius-2);
+	background-color: color-mix(in oklab, var(--color-contrast) 5%, transparent);
+
+	summary {
+		cursor: pointer;
+		font-weight: var(--font-weight-xl);
+	}
+}
+
+.import-body {
+	margin-top: var(--spacing-3);
+}
+
+.label {
+	font-size: var(--font-size-sm);
+}
+
+textarea {
+	resize: vertical;
+
+	width: 100%;
+	padding: var(--spacing-2);
+	border: 1px solid color-mix(in oklab, var(--color-contrast) 25%, transparent);
+	border-radius: var(--border-radius-1);
+
+	font-family: monospace;
+	font-size: var(--font-size-sm);
+	color: var(--color-contrast);
+
+	background-color: var(--color-primary);
+}
+
+// The native file input is replaced by its own label, styled like a button.
+.file-input {
+	position: absolute;
+
+	overflow: hidden;
+
+	width: 1px;
+	height: 1px;
+
+	clip-path: inset(50%);
+}
+
+.file-button {
+	cursor: pointer;
+
+	display: inline-flex;
+	align-items: center;
+
+	padding: var(--spacing-2) var(--spacing-4);
+	border-radius: var(--border-radius-1);
+
+	font-weight: var(--font-weight-lg);
+	color: var(--color-contrast);
+
+	background-color: var(--color-primary-mid);
+
+	&:hover {
+		background-color: var(--color-primary-mid-hover);
+	}
+}
+
+.error {
+	color: rgb(196 48 38);
+}
+
+.notice,
+.error {
+	font-size: var(--font-size-sm);
+}

@@ -1,0 +1,16 @@
+{
+	"hooks": {
+		"PostToolUse": [
+			{
+				"matcher": "Write|Edit",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "f=$(jq -r '.tool_input.file_path // empty'); [ -z \"$f\" ] && exit 0; rel=\"${f#$PWD/}\"; mkdir -p .claude; log=.claude/hook-errors.log; case \"$rel\" in *.ts|*.html) docker exec chesspecker-node eslint --fix \"$rel\" 2>>\"$log\"; docker exec chesspecker-node prettier --write \"$rel\" 2>>\"$log\" ;; *.scss|*.css) docker exec chesspecker-node stylelint --fix \"$rel\" 2>>\"$log\"; docker exec chesspecker-node prettier --write \"$rel\" 2>>\"$log\" ;; esac; true",
+						"statusMessage": "Formatting edited file..."
+					}
+				]
+			}
+		]
+	}
+}

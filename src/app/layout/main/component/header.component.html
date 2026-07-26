@@ -1,0 +1,13 @@
+<section
+	class="header force-light pb-2 px-4 surface-contrast color-primary flex-row align-center justify-between"
+>
+	<button appRouterLink="/" class="flex-row gap-2 align-center logo">
+		<img src="icon-solo-dark.svg" alt="App Logo" />
+		<h3>{{ title() }}</h3>
+	</button>
+
+	<div class="flex-row gap-2 align-center">
+		<button appThemed appRouterLink="/match" icon="dice"></button>
+		<button appThemed appRouterLink="/settings" icon="gear"></button>
+	</div>
+</section>

@@ -1,0 +1,25 @@
+services:
+  chesspecker-node:
+    container_name: chesspecker-node
+    hostname: chesspecker-node
+    working_dir: /usr/src/app
+    image: chesspecker-node:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: serve
+    ports:
+      - ${APP_PORT}:4200
+    volumes:
+      - .:/usr/src/app
+      - node_modules:/usr/src/app/node_modules
+    environment:
+      PATH: $PATH:/usr/src/app/node_modules/.bin
+      NG_HMR_TEMPLATES: 1
+      TZ: UTC
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  node_modules:

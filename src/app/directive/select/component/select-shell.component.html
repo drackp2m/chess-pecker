@@ -1,0 +1,78 @@
+<div
+	#wrapper
+	class="app-select"
+	[class.focused]="store.focused()"
+	[class.filled]="store.filled()"
+	[class.open]="store.isOpen()"
+	[class.position-top]="positionTop()"
+	[class.disabled]="store.disabled()"
+>
+	<!-- Same structure as the input directive builds: the real label wraps
+	the control (a combobox search input owning focus, keyboard and text
+	rendering) plus the hidden measure span, while the visible floating label
+	is the decorative sibling `.label` element. The projected native select
+	only carries the form value. -->
+	<label [attr.for]="searchInputId()">
+		<span #labelText class="label-measure" aria-hidden="true">{{ label() }}</span>
+		<input
+			#searchInput
+			class="search-input"
+			type="text"
+			role="combobox"
+			autocomplete="off"
+			[attr.aria-autocomplete]="store.searchable() ? 'list' : null"
+			[readOnly]="!store.searchable()"
+			[id]="searchInputId()"
+			[attr.aria-controls]="listboxId()"
+			[attr.aria-expanded]="store.isOpen()"
+			[attr.aria-label]="label()"
+			[placeholder]="placeholder()"
+			[value]="displayText()"
+			[disabled]="store.disabled()"
+			(focus)="onSearchFocus()"
+			(blur)="onSearchBlur()"
+			(input)="onSearchInput($event)"
+			(keydown)="onSearchKeydown($event)"
+		/>
+		<ng-content></ng-content>
+	</label>
+
+	<div class="border-container flex-row align-center" aria-hidden="true">
+		<app-svg icon="chevron-down" [size]="18" />
+	</div>
+
+	<p class="label" aria-hidden="true">{{ label() }}</p>
+
+	<div class="sr-status" aria-live="polite">{{ announcement() }}</div>
+
+	<div
+		class="app-select-options"
+		aria-hidden="true"
+		[id]="listboxId()"
+		[style.--max-visible-options]="maxVisibleOptions()"
+	>
+		<div #optionsScroller class="options-scroller">
+			@for (option of store.visibleOptions(); track option.value; let index = $index) {
+				<div
+					class="option"
+					tabindex="-1"
+					[class.disabled]="option.disabled"
+					[class.selected]="option.selected"
+					[class.highlighted]="option.highlighted"
+					(mousedown)="$event.preventDefault()"
+					(mousemove)="hoverOption(option, index)"
+					(click)="selectOption(option)"
+					(keydown.enter)="selectOption(option)"
+				>
+					@if (optionTemplate(); as template) {
+						<ng-container *ngTemplateOutlet="template; context: { $implicit: option }" />
+					} @else {
+						{{ option.label }}
+					}
+				</div>
+			} @empty {
+				<div class="no-matches">No matches found</div>
+			}
+		</div>
+	</div>
+</div>

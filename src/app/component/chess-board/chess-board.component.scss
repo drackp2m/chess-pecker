@@ -1,0 +1,190 @@
+:host {
+	// Board tones are mixed from the palette so the board follows the active theme
+	// instead of shipping its own hardcoded wood colours.
+	--square-light: color-mix(in oklab, var(--color-primary) 88%, var(--color-accent));
+	--square-dark: color-mix(in oklab, var(--color-accent) 58%, var(--color-contrast));
+	--square-selected: color-mix(in oklab, var(--color-accent) 70%, rgb(255 255 255));
+	--square-last-move: color-mix(in oklab, var(--color-accent) 35%, transparent);
+	--square-checked: rgb(214 64 52);
+	--square-mistake: rgb(196 48 38);
+
+	display: block;
+	width: 100%;
+}
+
+.board {
+	position: relative;
+
+	overflow: hidden;
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+
+	aspect-ratio: 1;
+	width: 100%;
+	border-radius: var(--border-radius-2);
+
+	box-shadow: 0 2px 12px rgb(0 0 0 / 25%);
+
+	&.waiting {
+		cursor: progress;
+	}
+}
+
+.square {
+	cursor: pointer;
+
+	position: relative;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	aspect-ratio: 1;
+
+	transition: background-color 120ms ease-in-out;
+
+	&.light {
+		background-color: var(--square-light);
+	}
+
+	&.dark {
+		background-color: var(--square-dark);
+	}
+
+	&:disabled {
+		cursor: default;
+	}
+
+	&.last-move::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-color: var(--square-last-move);
+	}
+
+	&.selected {
+		background-color: var(--square-selected);
+	}
+
+	&.checked {
+		background-color: var(--square-checked);
+	}
+
+	// A refuted attempt: louder than the last-move tint, and it outranks it.
+	&.mistake,
+	&.mistake.last-move {
+		background-color: var(--square-mistake);
+	}
+
+	&.mistake::after {
+		background-color: transparent;
+	}
+
+	// A dot marks a quiet destination, a ring marks a capture.
+	&.target::before {
+		content: '';
+
+		position: absolute;
+
+		width: 30%;
+		height: 30%;
+		border-radius: 50%;
+
+		background-color: rgb(0 0 0 / 30%);
+	}
+
+	&.target.capture::before {
+		width: 84%;
+		height: 84%;
+		border: 6px solid rgb(0 0 0 / 30%);
+		background-color: transparent;
+	}
+
+	&:focus-visible {
+		z-index: 1;
+		outline: 2px solid var(--color-contrast);
+		outline-offset: -2px;
+	}
+
+	app-chess-piece {
+		position: relative;
+		z-index: 1;
+	}
+}
+
+// Each coordinate is painted in the tone of the opposite square, so it always
+// contrasts with the one it sits on and the ranks and files alternate down the
+// edges. Driven by the square's own class, it stays right when the board flips.
+.square.light .coordinate {
+	color: var(--square-dark);
+}
+
+.square.dark .coordinate {
+	color: var(--square-light);
+}
+
+.coordinate {
+	position: absolute;
+	font-size: clamp(0.5rem, 1.4vw, 0.7rem);
+	font-weight: 700;
+	line-height: 1;
+
+	&.rank {
+		top: 3%;
+		left: 5%;
+	}
+
+	&.file {
+		right: 5%;
+		bottom: 3%;
+	}
+}
+
+.promotion {
+	position: absolute;
+	inset: 0;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-3);
+	align-items: center;
+	justify-content: center;
+
+	background-color: rgb(0 0 0 / 60%);
+}
+
+.promotion-title {
+	font-weight: 700;
+	color: rgb(255 255 255 / 90%);
+}
+
+.promotion-choices {
+	display: flex;
+	gap: var(--spacing-2);
+}
+
+.promotion-choice {
+	cursor: pointer;
+
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	aspect-ratio: 1;
+	width: clamp(2.5rem, 8vw, 4rem);
+	border-radius: var(--border-radius-2);
+
+	background-color: var(--square-light);
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--square-selected);
+	}
+}
+
+.promotion-cancel {
+	cursor: pointer;
+	font-size: 0.8rem;
+	color: rgb(255 255 255 / 80%);
+	text-decoration: underline;
+}

@@ -1,0 +1,54 @@
+#modal-outlet {
+	position: absolute;
+	z-index: 10;
+	top: 0;
+
+	width: 100%;
+	height: 100vh;
+
+	.overlay {
+		width: 100%;
+		height: 100%;
+
+		background-color: rgb(from var(--color-overlay) r g b / 0%);
+		backdrop-filter: blur(0) grayscale(0);
+
+		transition:
+			background-color var(--transition-duration) var(--transition-easing),
+			backdrop-filter var(--transition-duration) var(--transition-easing);
+	}
+
+	.wrapper {
+		position: relative;
+
+		.container {
+			position: absolute;
+			top: 0;
+
+			width: 100%;
+			border-radius: var(--spacing-6) var(--spacing-6) 0 0;
+
+			background-color: var(--color-primary);
+
+			transition: transform var(--transition-duration) var(--transition-easing);
+		}
+	}
+
+	// Fully closed: hide the (transparent) overlay so it stops catching pointer events.
+	&[data-state='closed'] {
+		visibility: hidden;
+	}
+
+	// Open: the only state that lifts the container and reveals the overlay; every
+	// other state rests at the base values above, so the transitions play both ways.
+	&[data-state='open'] {
+		.overlay {
+			background-color: rgb(from var(--color-overlay) r g b / var(--opacity-overlay));
+			backdrop-filter: blur(2px) grayscale(0.5);
+		}
+
+		.container {
+			transform: translateY(-100%);
+		}
+	}
+}

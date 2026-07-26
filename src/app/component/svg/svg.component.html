@@ -1,0 +1,7 @@
+<div
+	[attr.class]="class()"
+	[style.mask-image]="icon()"
+	[style.aspect-ratio]="aspectRatio()"
+	[style.width]="aspectRatioValue() >= 1 ? '100%' : 'auto'"
+	[style.height]="aspectRatioValue() <= 1 ? '100%' : 'auto'"
+></div>

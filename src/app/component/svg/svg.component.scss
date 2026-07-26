@@ -1,0 +1,16 @@
+:host {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	div {
+		background-color: currentcolor;
+		mask-repeat: no-repeat;
+		mask-position: center;
+		mask-size: contain;
+
+		&.flip {
+			transform: scaleX(-1);
+		}
+	}
+}

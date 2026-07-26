@@ -1,0 +1,23 @@
+<div id="modal-outlet" [attr.data-state]="outletState()">
+	<div class="overlay"></div>
+
+	<div class="wrapper">
+		@if ('closed' !== outletState()) {
+			<div class="container shadow-top-xl" (transitionend)="onTransitionEnd($event)">
+				<div class="header flex-row justify-between align-center p-4 pb-0">
+					<h4 class="color-contrast-mid">{{ title() }}</h4>
+
+					<button
+						appThemed
+						color="contrast-mid"
+						icon="xmark"
+						[iconSize]="22"
+						(click)="close()"
+					></button>
+				</div>
+
+				<ng-container #modalContent />
+			</div>
+		}
+	</div>
+</div>

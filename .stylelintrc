@@ -1,0 +1,27 @@
+{
+	"extends": ["stylelint-config-standard-scss", "stylelint-config-clean-order"],
+	"plugins": ["./tools/stylelint-plugins/angular/index.js"],
+	"defaultSeverity": "warning",
+	"rules": {
+		"color-hex-length": "short",
+		"color-named": "never",
+		"color-no-hex": true,
+		"at-rule-disallowed-list": [["import"], { "severity": "error" }],
+		"selector-pseudo-element-no-unknown": [
+			true,
+			{
+				"ignorePseudoElements": ["ng-deep"]
+			}
+		],
+		"angular-custom/ng-deep-requires-host": true,
+		"scss/dollar-variable-empty-line-before": null,
+		"at-rule-empty-line-before": [
+			"always",
+			{
+				"except": ["blockless-after-same-name-blockless", "first-nested"],
+				"ignore": ["after-comment"],
+				"ignoreAtRules": ["else", "use", "forward"]
+			}
+		]
+	}
+}

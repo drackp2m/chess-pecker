@@ -1,0 +1,17 @@
+@layer base {
+	:root {
+		--color-slower: rgb(255 220 220);
+		--color-faster: rgb(220 255 220);
+		--color-overlay: rgb(0 0 0);
+		--color-shadow: rgb(0 0 0 / 35%);
+		--opacity-overlay: 30%;
+	}
+
+	[data-theme='dark'] {
+		--color-slower: rgb(60 25 25);
+		--color-faster: rgb(25 50 25);
+		--color-overlay: rgb(255 255 255);
+		--color-shadow: rgb(255 255 255 / 15%);
+		--opacity-overlay: 10%;
+	}
+}

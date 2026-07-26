@@ -1,0 +1,5 @@
+IDBP
+ngrx
+projectable
+sonarjs
+titlecase

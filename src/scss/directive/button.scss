@@ -1,0 +1,41 @@
+@layer component {
+	.app-button {
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+
+		padding: var(--spacing-2) var(--spacing-3);
+		border-radius: var(--border-radius-2);
+
+		&.icon {
+			padding: var(--spacing-1);
+			color: var(--foreground);
+		}
+
+		// &[class='surface-contrast'] {
+		// 	color: var(--color-contrast-mid) !important;
+		// }
+	}
+
+	button {
+		&:disabled {
+			opacity: 0.5;
+		}
+	}
+}
+
+@layer utility {
+	.app-button:not(:disabled, .icon) {
+		&:hover,
+		&:focus {
+			background-color: var(--surface-hover);
+		}
+	}
+
+	.app-button.icon:not(:disabled) {
+		&:hover,
+		&:focus {
+			color: var(--foreground-hover);
+		}
+	}
+}

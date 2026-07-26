@@ -1,0 +1,12 @@
+# Add files here to ignore them from prettier formatting
+/.angular
+/.devcontainer
+/.docker
+/.github/release-notes
+/.husky
+/.pnpm-store
+/.vscode
+/dist
+/node_modules
+/coverage
+Dockerfile

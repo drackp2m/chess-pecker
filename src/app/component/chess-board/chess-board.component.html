@@ -1,0 +1,54 @@
+<div class="board" [class.waiting]="store.isBusy()">
+	@for (square of squares(); track square.square) {
+		<button
+			type="button"
+			class="square"
+			[class.light]="square.isLight"
+			[class.dark]="!square.isLight"
+			[class.selected]="square.isSelected"
+			[class.target]="square.isTarget"
+			[class.capture]="square.isCapture"
+			[class.last-move]="square.isLastMove"
+			[class.checked]="square.isChecked"
+			[class.mistake]="square.isMistake"
+			[attr.aria-label]="label(square)"
+			[disabled]="store.isLocked()"
+			(click)="select(square)"
+		>
+			@if (square.piece; as piece) {
+				<app-chess-piece [type]="piece.type" [color]="piece.color" />
+			}
+
+			@if (square.rankLabel; as rank) {
+				<span class="coordinate rank" aria-hidden="true">{{ rank }}</span>
+			}
+
+			@if (square.fileLabel; as file) {
+				<span class="coordinate file" aria-hidden="true">{{ file }}</span>
+			}
+		</button>
+	}
+
+	@if (store.pendingPromotion(); as promotion) {
+		<div class="promotion" role="dialog" aria-label="Choose a promotion piece">
+			<p class="promotion-title">Promote to</p>
+
+			<div class="promotion-choices">
+				@for (piece of promotionPieces; track piece) {
+					<button
+						type="button"
+						class="promotion-choice"
+						[attr.aria-label]="'Promote to ' + piece"
+						(click)="promote(piece)"
+					>
+						<app-chess-piece [type]="piece" [color]="promotionColor()" />
+					</button>
+				}
+			</div>
+
+			<button type="button" class="promotion-cancel" (click)="store.cancelPromotion()">
+				Cancel
+			</button>
+		</div>
+	}
+</div>

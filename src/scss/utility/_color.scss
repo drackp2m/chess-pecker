@@ -1,0 +1,34 @@
+@use 'sass:map';
+
+@use '../abstract/mixin' as mix;
+@use '../abstract/variable' as var;
+
+$rules: ();
+
+@each $suffix in ('', '-light', '-dark') {
+	@each $name in map.keys(var.$color) {
+		$rules: map.set(
+			$rules,
+			'color-#{$name}#{$suffix}',
+			(
+				'--foreground': var(--color-#{$name}#{$suffix}),
+				'--foreground-hover': var(--color-#{$name}#{$suffix}-hover),
+				color: var(--foreground),
+			)
+		);
+
+		$rules: map.set(
+			$rules,
+			'surface-#{$name}#{$suffix}',
+			(
+				'--surface': var(--color-#{$name}#{$suffix}),
+				'--surface-hover': var(--color-#{$name}#{$suffix}-hover),
+				background-color: var(--surface),
+			)
+		);
+	}
+}
+
+@layer utility {
+	@include mix.generate-responsive($rules);
+}

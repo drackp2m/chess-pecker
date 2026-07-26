@@ -1,0 +1,128 @@
+#notification-outlet {
+	pointer-events: none;
+
+	position: fixed;
+	z-index: 20;
+	right: 0;
+	bottom: var(--safe-offset-bottom);
+	left: 0;
+
+	padding: 0 var(--spacing-2);
+
+	.wrapper {
+		display: grid;
+		grid-template-rows: 1fr;
+		animation: notification-open var(--transition-duration) var(--transition-easing);
+
+		&[data-state='leaving'] {
+			animation-name: notification-close;
+			animation-fill-mode: forwards;
+
+			.notification {
+				animation-name: notification-leave;
+				animation-fill-mode: forwards;
+			}
+		}
+	}
+
+	.slot {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
+
+	.notification {
+		--countdown-play-state: running;
+
+		pointer-events: auto;
+		margin-top: var(--spacing-2);
+		animation: notification-enter var(--transition-duration) var(--transition-easing);
+
+		&:active,
+		&.paused {
+			--countdown-play-state: paused;
+		}
+
+		@media (hover: hover) {
+			&:hover {
+				--countdown-play-state: paused;
+			}
+		}
+	}
+
+	.countdown {
+		position: relative;
+
+		svg {
+			pointer-events: none;
+
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%) rotate(-90deg);
+
+			width: 30px;
+			height: 30px;
+
+			circle {
+				fill: none;
+				stroke: var(--color-primary);
+				stroke-dasharray: 100;
+				stroke-width: 2;
+
+				animation: notification-countdown linear forwards;
+				animation-play-state: var(--countdown-play-state, running);
+			}
+		}
+	}
+}
+
+@keyframes notification-open {
+	from {
+		grid-template-rows: 0fr;
+	}
+
+	to {
+		grid-template-rows: 1fr;
+	}
+}
+
+@keyframes notification-close {
+	from {
+		grid-template-rows: 1fr;
+	}
+
+	to {
+		grid-template-rows: 0fr;
+	}
+}
+
+@keyframes notification-enter {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes notification-leave {
+	from {
+		opacity: 1;
+	}
+
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes notification-countdown {
+	from {
+		stroke-dashoffset: 0;
+	}
+
+	to {
+		stroke-dashoffset: 100;
+	}
+}

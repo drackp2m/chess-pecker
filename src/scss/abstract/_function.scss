@@ -1,0 +1,74 @@
+@use 'sass:map';
+@use 'sass:list';
+
+@function utility-rules($items, $class-prefix, $properties, $variable-prefix, $suffix: '') {
+	$rules: ();
+
+	@each $name in map.keys($items) {
+		$declarations: ();
+
+		@each $property in $properties {
+			$declarations: map.set($declarations, $property, var(#{$variable-prefix}-#{$name}#{$suffix}));
+		}
+
+		$rules: map.set($rules, #{$class-prefix}-#{$name}#{$suffix}, $declarations);
+	}
+
+	@return $rules;
+}
+
+@function generate-shadow-value(
+	$shadow-separation-map,
+	$shadow-direction-map,
+	$size-key,
+	$size-value,
+	$direction: null
+) {
+	$blur: list.nth($size-value, 1);
+	$spread: list.nth($size-value, 2);
+	$color: list.nth($size-value, 3);
+
+	@if not $direction {
+		@return 0 0 $blur $spread $color;
+	}
+
+	$separation: map.get($shadow-separation-map, $size-key);
+	$direction-values: map.get($shadow-direction-map, $direction);
+	$x-multiplier: list.nth($direction-values, 1);
+	$y-multiplier: list.nth($direction-values, 2);
+
+	$x-offset: $separation * $x-multiplier;
+	$y-offset: $separation * $y-multiplier;
+
+	@return $x-offset $y-offset $blur $spread $color;
+}
+
+@function generate-shadow-map($shadow-size-map, $shadow-separation-map, $shadow-direction-map) {
+	$result: (
+		'none': none,
+	);
+
+	@each $size-key, $size-value in $shadow-size-map {
+		$result: map.set(
+			$result,
+			$size-key,
+			generate-shadow-value($shadow-separation-map, $shadow-direction-map, $size-key, $size-value)
+		);
+
+		@each $direction-key, $direction-value in $shadow-direction-map {
+			$result: map.set(
+				$result,
+				'#{$direction-key}-#{$size-key}',
+				generate-shadow-value(
+					$shadow-separation-map,
+					$shadow-direction-map,
+					$size-key,
+					$size-value,
+					$direction-key
+				)
+			);
+		}
+	}
+
+	@return $result;
+}

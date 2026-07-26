@@ -1,0 +1,17 @@
+@let model = viewModel();
+
+<div
+	class="app-{{ model.type }}"
+	[class.bare]="model.bare"
+	[class.selected]="model.selected"
+	[class.focused]="model.focused"
+>
+	<label [attr.for]="model.inputId">
+		<ng-content></ng-content>
+		@if (model.labelTemplate; as labelTemplate) {
+			<ng-container *ngTemplateOutlet="labelTemplate" />
+		} @else {
+			<span class="label">{{ model.labelText }}</span>
+		}
+	</label>
+</div>

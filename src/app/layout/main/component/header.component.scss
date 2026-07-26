@@ -1,0 +1,19 @@
+.header {
+	padding-top: var(--safe-padding-top);
+	border-bottom: solid 1.5px var(--color-primary);
+
+	.logo {
+		height: 24px;
+		color: var(--color-primary);
+	}
+
+	[appRouterLink]:not(.logo) {
+		--foreground: var(--color-primary-mid);
+		--foreground-hover: var(--color-primary-mid-hover);
+
+		&.active {
+			--foreground: var(--color-primary);
+			--foreground-hover: var(--color-primary-hover);
+		}
+	}
+}

@@ -1,0 +1,9 @@
+@use '../abstract/function' as func;
+@use '../abstract/mixin' as mix;
+@use '../abstract/variable' as var;
+
+@layer utility {
+	@include mix.generate-responsive(
+		func.utility-rules(var.$shadow, 'shadow', box-shadow, '--shadow')
+	);
+}

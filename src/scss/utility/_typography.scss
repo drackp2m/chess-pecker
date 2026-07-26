@@ -1,0 +1,36 @@
+@use '../abstract/function' as func;
+@use '../abstract/mixin' as mix;
+@use '../abstract/variable' as var;
+
+$text-align: (
+	text-left: (
+		text-align: left,
+	),
+	text-center: (
+		text-align: center,
+	),
+	text-right: (
+		text-align: right,
+	),
+	text-justify: (
+		text-align: justify,
+	),
+);
+
+@layer utility {
+	@include mix.generate-responsive($text-align);
+	@include mix.generate-responsive(
+		func.utility-rules(var.$font-size, 'fs', font-size, '--font-size')
+	);
+	@include mix.generate-responsive(
+		func.utility-rules(var.$font-weight, 'fw', font-weight, '--font-weight')
+	);
+
+	.mono {
+		font-family: 'Fira Code', monospace;
+	}
+
+	.nowrap {
+		text-wrap: nowrap;
+	}
+}

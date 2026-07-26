@@ -1,0 +1,39 @@
+:host {
+	overflow-y: auto;
+	display: block;
+	max-height: 16rem;
+}
+
+.empty {
+	font-size: var(--font-size-sm);
+}
+
+.turns {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-1);
+}
+
+.turn {
+	display: grid;
+	grid-template-columns: 2.5rem 1fr 1fr;
+	gap: var(--spacing-2);
+	align-items: baseline;
+
+	padding: var(--spacing-1) var(--spacing-2);
+	border-radius: var(--border-radius-1);
+
+	font-variant-numeric: tabular-nums;
+
+	&:nth-child(odd) {
+		background-color: color-mix(in oklab, var(--color-contrast) 6%, transparent);
+	}
+}
+
+.number {
+	font-size: var(--font-size-sm);
+}
+
+.move {
+	font-weight: var(--font-weight-lg);
+}

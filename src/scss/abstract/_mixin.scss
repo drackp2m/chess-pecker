@@ -1,0 +1,116 @@
+@use 'sass:map';
+
+@use 'variable' as var;
+
+$responsive-variant: (
+	sm: (
+		from: sm,
+	),
+	md: (
+		from: md,
+	),
+	lg: (
+		from: lg,
+	),
+	(xl, xl-o): (
+			from: xl,
+		),
+	xs-o: (
+		until: sm,
+	),
+	sm-o: (
+		from: sm,
+		until: md,
+	),
+	md-o: (
+		from: md,
+		until: lg,
+	),
+	lg-o: (
+		from: lg,
+		until: xl,
+	),
+);
+
+$except-variant: (
+	xs-e: map.get($responsive-variant, sm),
+	sm-e: (
+		until: sm,
+		or-from: md,
+	),
+	md-e: (
+		until: md,
+		or-from: lg,
+	),
+	lg-e: (
+		until: lg,
+		or-from: xl,
+	),
+	xl-e: (
+		until: xl,
+	),
+);
+
+@mixin media($from: null, $until: null, $or-from: null) {
+	$from-width: map.get(var.$breakpoint, $from);
+	$until-width: map.get(var.$breakpoint, $until);
+	$or-from-width: map.get(var.$breakpoint, $or-from);
+
+	@if $until-width and $or-from-width {
+		@media screen and ($until-width > width), screen and ($or-from-width <= width) {
+			@content;
+		}
+	} @else if $from-width and $until-width {
+		@media screen and ($from-width <= width) and ($until-width > width) {
+			@content;
+		}
+	} @else if $from-width {
+		@media screen and ($from-width <= width) {
+			@content;
+		}
+	} @else {
+		@media screen and ($until-width > width) {
+			@content;
+		}
+	}
+}
+
+@mixin generate-responsive($rules) {
+	@each $rule, $properties in $rules {
+		@include generate-class-rule($rule, $properties);
+	}
+
+	@include generate-variants($rules, $responsive-variant);
+}
+
+@mixin generate-except-responsive($rules) {
+	@include generate-variants($rules, $except-variant);
+}
+
+@mixin generate-variants($rules, $variants) {
+	@each $variant-names, $range in $variants {
+		@include media(map.get($range, from), map.get($range, until), map.get($range, or-from)) {
+			@each $variant in $variant-names {
+				@each $rule, $properties in $rules {
+					@include generate-media-class-rule($variant, $rule, $properties);
+				}
+			}
+		}
+	}
+}
+
+@mixin generate-media-class-rule($media-size, $class-name, $properties) {
+	.#{$media-size}\:#{$class-name} {
+		@each $property, $value in $properties {
+			#{$property}: $value;
+		}
+	}
+}
+
+@mixin generate-class-rule($class-name, $properties) {
+	.#{$class-name} {
+		@each $property, $value in $properties {
+			#{$property}: $value;
+		}
+	}
+}

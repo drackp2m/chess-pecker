@@ -1,0 +1,4 @@
+pnpm run pnpm:match
+pnpm exec lint-staged
+pnpm typecheck
+pnpm test --watch=false

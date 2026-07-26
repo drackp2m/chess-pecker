@@ -1,0 +1,49 @@
+<div id="notification-outlet" class="flex-col">
+	@for (notification of notifications(); track notification.uuid) {
+		<div
+			class="wrapper"
+			[attr.data-state]="notification.leaving ? 'leaving' : 'open'"
+			[style.z-index]="$index + 1"
+			(animationend)="onWrapperAnimationEnd(notification, $event)"
+		>
+			<div class="slot">
+				<div
+					class="notification flex-row align-center gap-4 p-4 br-2 surface-contrast shadow-md"
+					[class.paused]="isPaused(notification)"
+					(pointerdown)="onNotificationPointerDown(notification, $event)"
+				>
+					<p class="flex-grow fs-sm color-primary">{{ notification.message }}</p>
+
+					@if (notification.action; as action) {
+						<button appThemed color="accent" (click)="runAction(notification)">
+							{{ action.label }}
+						</button>
+					}
+
+					<div class="countdown">
+						@if (null !== notification.duration) {
+							<svg viewBox="0 0 32 32">
+								<circle
+									cx="16"
+									cy="16"
+									r="15"
+									pathLength="100"
+									[style.animation-duration.ms]="notification.duration"
+									(animationend)="onCountdownEnd(notification)"
+								/>
+							</svg>
+						}
+
+						<button
+							appThemed
+							class="color-primary"
+							icon="xmark"
+							[iconSize]="18"
+							(click)="dismiss(notification)"
+						></button>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+</div>

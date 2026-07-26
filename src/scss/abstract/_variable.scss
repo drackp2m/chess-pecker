@@ -1,0 +1,157 @@
+@use 'sass:map';
+@use './function' as func;
+
+$base-spacing: 0.25rem !default;
+
+$transition: (
+	duration: 400ms,
+	easing: cubic-bezier(0.4, 0, 0.2, 1),
+) !default;
+
+$breakpoint: (
+	sm: 480px,
+	md: 768px,
+	lg: 1024px,
+	xl: 1280px,
+) !default;
+
+$font-size: (
+	sm: 0.8rem,
+	md: 1rem,
+	lg: 1.25rem,
+	xl: 1.5rem,
+	xxl: 2rem,
+	xxxl: 2.75rem,
+) !default;
+
+$font-weight: (
+	xxs: 100,
+	xs: 200,
+	sm: 300,
+	md: 400,
+	lg: 500,
+	xl: 700,
+	xxl: 800,
+) !default;
+
+$font-oblique: (
+	none: 0,
+	sm: 5,
+	md: 10,
+	lg: 15,
+) !default;
+
+$font-monospace: (
+	none: 0,
+	sm: 0.2,
+	md: 0.4,
+	lg: 0.6,
+	xl: 0.8,
+	xxl: 1,
+) !default;
+
+$font-casual: (
+	none: 0,
+	sm: 0.2,
+	md: 0.4,
+	lg: 0.6,
+	xl: 0.8,
+	xxl: 1,
+) !default;
+
+$color: (
+	primary: rgb(255 251 240),
+	primary-mid: rgb(204 197 185),
+	contrast: rgb(37 36 34),
+	contrast-mid: rgb(85 81 76),
+	accent: rgb(235 94 40),
+) !default;
+
+$dark-color: (
+	primary: rgb(37 36 34),
+	primary-mid: rgb(64 61 57),
+	contrast: rgb(255 252 242),
+	contrast-mid: rgb(204 197 185),
+	accent: rgb(235 94 40),
+) !default;
+
+$color-hover: (
+	primary: color-mix(in oklab, #{map.get($color, primary)} 96%, rgb(0 0 0)),
+	primary-mid: color-mix(in oklab, #{map.get($color, primary-mid)} 90%, rgb(255 255 255)),
+	contrast: color-mix(in oklab, #{map.get($color, contrast)} 95%, rgb(255 255 255)),
+	contrast-mid: color-mix(in oklab, #{map.get($color, contrast-mid)} 95%, rgb(0 0 0)),
+	accent: color-mix(in oklab, #{map.get($color, accent)} 96%, rgb(0 0 0)),
+) !default;
+
+$dark-color-hover: (
+	primary: color-mix(in oklab, #{map.get($dark-color, primary)} 98%, rgb(255 255 255)),
+	primary-mid: color-mix(in oklab, #{map.get($dark-color, primary-mid)} 98%, rgb(255 255 255)),
+	contrast: color-mix(in oklab, #{map.get($dark-color, contrast)} 95%, rgb(0 0 0)),
+	contrast-mid: color-mix(in oklab, #{map.get($dark-color, contrast-mid)} 80%, rgb(255 255 255)),
+	accent: color-mix(in oklab, #{map.get($dark-color, accent)} 94%, rgb(255 255 255)),
+) !default;
+
+$spacing: (
+	1: $base-spacing * 1,
+	2: $base-spacing * 2,
+	3: $base-spacing * 3,
+	4: $base-spacing * 4,
+	6: $base-spacing * 6,
+	8: $base-spacing * 8,
+	10: $base-spacing * 10,
+	12: $base-spacing * 12,
+	16: $base-spacing * 16,
+	20: $base-spacing * 20,
+	24: $base-spacing * 24,
+	32: $base-spacing * 32,
+	40: $base-spacing * 40,
+	48: $base-spacing * 48,
+	56: $base-spacing * 56,
+	64: $base-spacing * 64,
+	0: 0,
+) !default;
+
+$borders-radius: (
+	1: $base-spacing * 1,
+	2: $base-spacing * 2,
+	3: $base-spacing * 3,
+	4: $base-spacing * 4,
+	0: 0,
+) !default;
+
+$shadow-size: (
+	sm: 8px 2px rgb(0 0 0 / 30%),
+	md: 12px 1px rgb(0 0 0 / 35%),
+	lg: 16px -1px rgb(0 0 0 / 40%),
+	xl: 20px -3px rgb(0 0 0 / 45%),
+	xxl: 24px -4px rgb(0 0 0 / 50%),
+) !default;
+
+$shadow-separation: (
+	sm: 2px,
+	md: 3px,
+	lg: 4px,
+	xl: 5px,
+	xxl: 6px,
+) !default;
+
+$shadow-direction: (
+	top: (
+		0,
+		-1,
+	),
+	right: (
+		1,
+		0,
+	),
+	bottom: (
+		0,
+		1,
+	),
+	left: (
+		-1,
+		0,
+	),
+) !default;
+
+$shadow: func.generate-shadow-map($shadow-size, $shadow-separation, $shadow-direction) !default;

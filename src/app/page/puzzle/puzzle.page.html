@@ -1,0 +1,153 @@
+<section class="flex-col gap-4">
+	<header class="flex-col gap-1">
+		<h4 class="title color-contrast-mid">Solving <span class="color-contrast">exercises</span></h4>
+
+		<p
+			class="headline"
+			[class.failed]="'failed' === store.outcome()"
+			[class.solved]="'solved' === store.outcome()"
+		>
+			{{ headline() }}
+		</p>
+	</header>
+
+	@if (store.puzzle(); as puzzle) {
+		<div class="layout">
+			<div class="flex-col gap-3">
+				<app-chess-board />
+
+				<div class="controls flex-row gap-2 justify-center">
+					<button
+						appThemed
+						icon="backward-fast"
+						aria-label="Restart exercise"
+						[disabled]="0 === store.cursor() && !store.canStepBackward()"
+						(click)="store.restart()"
+					></button>
+
+					<button
+						appThemed
+						icon="backward-step"
+						aria-label="Step back one move"
+						[disabled]="!store.canStepBackward()"
+						(click)="store.stepBackward()"
+					></button>
+
+					<button
+						appThemed
+						icon="forward-step"
+						aria-label="Step forward one move"
+						[disabled]="!store.canStepForward()"
+						(click)="store.stepForward()"
+					></button>
+
+					<button
+						appThemed
+						icon="rotate"
+						aria-label="Flip board"
+						(click)="store.flipBoard()"
+					></button>
+				</div>
+
+				<div class="navigation flex-row gap-2 align-center justify-between">
+					<button
+						appThemed
+						[disabled]="!store.library.hasPrevious()"
+						(click)="store.previousPuzzle()"
+					>
+						Previous
+					</button>
+
+					<span class="counter color-contrast-mid">{{ counter() }}</span>
+
+					<button appThemed [disabled]="!store.library.hasNext()" (click)="store.nextPuzzle()">
+						Next
+					</button>
+				</div>
+			</div>
+
+			<aside class="panel flex-col gap-4">
+				<div class="flex-col gap-2">
+					<h5>Exercise {{ puzzle.id }}</h5>
+
+					<p class="meta color-contrast-mid">
+						Rating {{ puzzle.rating }} · {{ puzzle.nbPlays }} plays · playing
+						{{ store.playerColor() }}
+					</p>
+
+					<p class="progress">
+						Found {{ store.progress().solvedMoves }} of {{ store.progress().totalMoves }} moves
+					</p>
+
+					@if (0 < puzzle.themes.length) {
+						<ul class="themes flex-row flex-wrap gap-1">
+							@for (theme of puzzle.themes; track theme) {
+								<li class="theme">{{ theme }}</li>
+							}
+						</ul>
+					}
+
+					@if ('' !== puzzle.gameUrl) {
+						<a class="source" [href]="puzzle.gameUrl" target="_blank" rel="noopener noreferrer">
+							Open the original game
+						</a>
+					}
+				</div>
+
+				<div class="flex-col gap-2">
+					<h5>Line</h5>
+
+					<app-move-history />
+				</div>
+			</aside>
+		</div>
+	}
+
+	<details class="import" [open]="0 === store.library.puzzles().length">
+		<summary>Load exercises</summary>
+
+		<div class="flex-col gap-2 import-body">
+			<label class="label" for="puzzle-csv">Paste CSV rows</label>
+
+			<textarea
+				id="puzzle-csv"
+				rows="4"
+				spellcheck="false"
+				placeholder="PuzzleId,FEN,Moves,Rating,…"
+				[value]="csvDraft()"
+				(input)="updateDraft($event)"
+			></textarea>
+
+			<div class="flex-row flex-wrap gap-2">
+				<button
+					appThemed
+					color="accent"
+					[disabled]="'' === csvDraft().trim()"
+					(click)="loadDraft()"
+				>
+					Load CSV
+				</button>
+
+				<button appThemed (click)="loadSample()">Use sample row</button>
+
+				<label class="file-button" for="puzzle-file">Choose a .csv file</label>
+
+				<input
+					id="puzzle-file"
+					type="file"
+					accept=".csv,text/csv"
+					class="file-input"
+					(change)="loadFile($event)"
+				/>
+			</div>
+
+			@if (store.library.importError(); as error) {
+				<p class="error" role="alert">{{ error }}</p>
+			}
+
+			@if (store.library.importNotice(); as notice) {
+				<p class="notice">{{ notice }}</p>
+			}
+		</div>
+	</details>
+</section>

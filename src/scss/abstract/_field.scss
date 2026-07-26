@@ -1,0 +1,163 @@
+$horizontal-padding: var(--spacing-3);
+$vertical-padding: var(--spacing-2);
+$border-width: 1.5px;
+$border-radius: var(--border-radius-3);
+$transition-duration: 0.25s;
+$clip-gap: 3px;
+
+@mixin shell($control, $slider: $control) {
+	$glow: var(--glow-size);
+	$glow-neg: calc(-1 * var(--glow-size));
+
+	--glow-size: 6px;
+	--notch-start: calc(#{$horizontal-padding} - #{$clip-gap});
+	--notch-end: min(
+		calc(#{$horizontal-padding} + var(--label-width) + #{$clip-gap}),
+		calc(100% - #{$horizontal-padding})
+	);
+	--notch-mid: calc((var(--notch-start) + var(--notch-end)) / 2);
+
+	position: relative;
+	border-radius: $border-radius;
+
+	#{$control},
+	.label {
+		padding: $vertical-padding $horizontal-padding;
+	}
+
+	.border-container {
+		padding: calc($vertical-padding - $border-width) calc($horizontal-padding - $border-width);
+	}
+
+	#{$control} {
+		position: relative;
+		width: 100%;
+	}
+
+	#{$slider} {
+		transform: translateY(calc(var(--input-height) / 2));
+		transition: transform $transition-duration ease-in-out;
+	}
+
+	#{$control}::placeholder {
+		color: transparent;
+		transition: color $transition-duration ease-in-out;
+	}
+
+	> label {
+		overflow: hidden;
+		display: block;
+		border-radius: $border-radius;
+		clip-path: inset(0 round $border-radius);
+	}
+
+	.label-measure {
+		position: absolute;
+		top: 0;
+		left: 0;
+
+		font-size: var(--font-size-sm);
+		white-space: nowrap;
+
+		visibility: hidden;
+	}
+
+	.border-container,
+	.label {
+		position: absolute;
+		inset: 0;
+	}
+
+	.label {
+		pointer-events: none;
+
+		overflow: hidden;
+
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		transition:
+			transform $transition-duration ease-in-out,
+			font-size $transition-duration ease-in-out;
+	}
+
+	.border-container {
+		pointer-events: none;
+
+		overflow: hidden;
+		display: flex;
+		align-items: center;
+
+		border: solid $border-width var(--color-contrast-mid);
+		border-radius: $border-radius;
+
+		clip-path: polygon(
+			$glow-neg $glow-neg,
+			var(--notch-mid) $glow-neg,
+			var(--notch-mid) $glow,
+			var(--notch-mid) $glow,
+			var(--notch-mid) $glow-neg,
+			calc(100% + $glow) $glow-neg,
+			calc(100% + $glow) calc(100% + $glow),
+			$glow-neg calc(100% + $glow)
+		);
+
+		transition:
+			border-color $transition-duration ease-in-out,
+			clip-path $transition-duration ease-in-out,
+			box-shadow $transition-duration ease-in-out;
+	}
+
+	&.focused,
+	&.filled {
+		#{$slider} {
+			transform: translateY(0);
+		}
+
+		.border-container {
+			clip-path: polygon(
+				$glow-neg $glow-neg,
+				var(--notch-start) $glow-neg,
+				var(--notch-start) $glow,
+				var(--notch-end) $glow,
+				var(--notch-end) $glow-neg,
+				calc(100% + $glow) $glow-neg,
+				calc(100% + $glow) calc(100% + $glow),
+				$glow-neg calc(100% + $glow)
+			);
+		}
+
+		.label {
+			transform: translateY(calc(-1 * var(--input-height) / 2 + 1px));
+			font-size: var(--font-size-sm);
+		}
+	}
+
+	&.focused {
+		#{$control}::placeholder {
+			color: var(--color-contrast-mid);
+		}
+	}
+
+	&:hover,
+	&.focused {
+		$shadow: 0 0 var(--glow-size)
+			color-mix(
+				in oklab,
+				color-mix(in oklab, var(--color-accent) 30%, transparent) 80%,
+				rgb(255 210 75)
+			);
+
+		.border-container {
+			border-color: var(--color-accent);
+			box-shadow:
+				$shadow,
+				inset $shadow;
+		}
+	}
+
+	&.disabled {
+		pointer-events: none;
+		opacity: 0.5;
+	}
+}

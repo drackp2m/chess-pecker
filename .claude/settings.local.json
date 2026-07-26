@@ -1,0 +1,13 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(bash -c ' *)",
+			"Bash(echo \"EXIT:$?\")",
+			"Read(//Users/drackp2m/**)",
+			"Read(//Users/drackp2m/.local/bin/**)",
+			"Bash(docker exec chesspecker-node *)",
+			"Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.json)",
+			"Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.app.json)"
+		]
+	}
+}

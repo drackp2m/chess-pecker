@@ -1,0 +1,12 @@
+@use '../abstract/mixin' as mix;
+
+$rules: (
+	hide: (
+		display: none,
+	),
+);
+
+@layer utility {
+	@include mix.generate-responsive($rules);
+	@include mix.generate-except-responsive($rules);
+}

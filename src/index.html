@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Chess Pecker</title>
+		<link rel="manifest" href="manifest.webmanifest" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+		/>
+		<!--
+			FixMe => icon cleanup — each platform only uses a small subset, and several
+			assets are shipped/precached but never referenced. Pending changes:
+
+			iOS:
+			- apple-touch-icon below should point to icon-dark-180.png (180x180 is the
+			  standard size; icon-dark-1024.png is oversized and heavier). SVG/maskable
+			  are ignored by iOS, so this single PNG is all it uses.
+
+			favicon:
+			- favicon.svg weighs ~1.1MB and is in the service-worker prefetch group, so
+			  every user downloads it on first load. Drop the SVG link (favicon.ico is
+			  enough) or replace it with a tiny optimized SVG, and remove it from the
+			  prefetch group in ngsw-config.json.
+
+			Android/Chrome (manifest icons):
+			- Add the canonical 192x192 PNG (currently missing) — Chrome expects 192 + 512.
+			- Provide a dedicated maskable 512 PNG with ~20% safe padding; reusing the
+			  non-padded icon means the logo gets cropped on adaptive-icon devices.
+			- Drop the 1024 entries (no platform uses them for the install icon).
+			- Icons don't theme-switch on the home screen, so keep only the dark set.
+
+			Cleanup:
+			- Delete unreferenced files: icon.svg, icon-180.png, icon-512.png,
+			  icon-1024.png, icon-dark-180.png (only if not reused for apple-touch),
+			  icon-solo.svg. The /icon-*.{png,svg} glob in ngsw-config.json prefetches
+			  all of them today; narrow it after cleanup.
+		-->
+		<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+		<link rel="icon" type="image/x-icon" href="favicon.ico" />
+		<link rel="apple-touch-icon" sizes="1024x1024" href="icon-dark-1024.png" />
+		<meta name="apple-mobile-web-app-title" content="Chess Pecker" />
+		<meta name="application-name" content="Chess Pecker" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="theme-color" content="#252422" />
+	</head>
+	<body>
+		<app-root></app-root>
+	</body>
+</html>

@@ -1,0 +1,77 @@
+@use '../abstract/field';
+
+@layer component {
+	.app-input {
+		@include field.shell(input);
+	}
+
+	.app-radio {
+		label {
+			input {
+				border-radius: 50%;
+			}
+		}
+	}
+
+	.app-checkbox {
+		label {
+			input {
+				border-radius: var(--border-radius-1);
+			}
+		}
+	}
+
+	.app-radio,
+	.app-checkbox {
+		label {
+			display: flex;
+			flex-direction: row;
+			gap: var(--spacing-2);
+			align-items: center;
+
+			input {
+				aspect-ratio: 1;
+				width: 16px;
+				border: solid 1.5px;
+				border-color: var(--color-contrast-mid);
+
+				&:checked {
+					border-color: var(--color-contrast);
+					background-color: var(--color-contrast-mid);
+				}
+
+				&:hover {
+					border-color: var(--color-accent);
+				}
+			}
+		}
+
+		&.focused {
+			label {
+				input {
+					border-color: var(--color-accent);
+				}
+			}
+		}
+
+		&.bare {
+			label {
+				input {
+					position: absolute;
+
+					overflow: hidden;
+
+					width: 1px;
+					height: 1px;
+					margin: -1px;
+					padding: 0;
+					border: 0;
+
+					white-space: nowrap;
+
+					clip-path: inset(50%);
+				}
+			}
+		}
+	}
+}
