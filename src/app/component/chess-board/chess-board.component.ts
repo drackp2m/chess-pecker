@@ -74,7 +74,7 @@ export class ChessBoardComponent {
 		);
 	});
 
-	readonly promotionColor = computed(() => this.store.playerColor());
+	readonly promotionColor = computed(() => this.store.position().turn);
 
 	private readonly board = viewChild.required<ElementRef<HTMLElement>>('board');
 

@@ -102,7 +102,7 @@ describe('PuzzleStore', () => {
 		expect(store.progress().solvedMoves).toBe(3);
 	});
 
-	it('marks a wrong move as a mistake without adding it to the line', () => {
+	it('keeps a wrong move on the board and marks it', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		store.selectSquare('b2');
@@ -110,9 +110,68 @@ describe('PuzzleStore', () => {
 
 		expect(store.outcome()).toBe('failed');
 		expect(store.mistake()?.to).toBe('c2');
-		expect(store.history()).toHaveLength(1);
-		expect(store.cursor()).toBe(1);
-		expect(store.isLocked()).toBe(true);
+		expect(store.history()).toHaveLength(2);
+		expect(store.cursor()).toBe(2);
+		expect(store.isFreePlay()).toBe(true);
+		expect(store.progress().solvedMoves).toBe(0);
+	});
+
+	it('lets both sides be played by hand once the script is broken', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+
+		// The board is now the opponent's to move, and it is the player who moves it.
+		expect(store.isLocked()).toBe(false);
+		expect(store.isPlayerTurn()).toBe(false);
+		expect(store.position().turn).toBe('white');
+
+		store.selectSquare('a2');
+		store.selectSquare('a3');
+
+		expect(store.history()).toHaveLength(3);
+		expect(store.history().at(-1)?.isOpponent).toBe(true);
+		expect(store.position().turn).toBe('black');
+		expect(store.outcome()).toBe('failed');
+
+		// Illegal moves are still refused: the rook on c2 cannot jump to c8 through c6.
+		store.selectSquare('c2');
+		store.selectSquare('c8');
+
+		expect(store.history()).toHaveLength(3);
+	});
+
+	it('returns to solving once the cursor is rewound onto the script', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+		store.selectSquare('a2');
+		store.selectSquare('a3');
+
+		expect(store.cursor()).toBe(3);
+
+		store.stepBackward();
+
+		// Still past the deviation, so the board stays free.
+		expect(store.outcome()).toBe('failed');
+		expect(store.isFreePlay()).toBe(true);
+
+		store.stepBackward();
+
+		expect(store.outcome()).toBe('solving');
+		expect(store.isFreePlay()).toBe(false);
+		expect(store.isPlayerTurn()).toBe(true);
+		expect(store.mistake()).toBeUndefined();
+
+		// Playing the solution from there drops the whole free-play branch.
+		store.selectSquare('b2');
+		store.selectSquare('b1');
+
+		expect(store.line()).toHaveLength(2);
+		expect(store.history()[1]?.san).toBe('Rb1+');
+		expect(store.outcome()).toBe('replying');
 	});
 
 	it('takes the mistake back on step-back and lets you retry', () => {

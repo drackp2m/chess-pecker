@@ -7,13 +7,7 @@ import {
 	PromotionPieceType,
 	Square,
 } from '@app/definition/chess.type';
-import {
-	Puzzle,
-	PuzzleAttempt,
-	PuzzleMove,
-	PuzzleOutcome,
-	PuzzleProgress,
-} from '@app/definition/puzzle.type';
+import { Puzzle, PuzzleMove, PuzzleOutcome, PuzzleProgress } from '@app/definition/puzzle.type';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
@@ -22,11 +16,13 @@ import { ChessNotation } from '@app/util/chess/chess-notation';
 export interface PuzzleStoreProps {
 	/** `positions[k]` is the position after `k` moves of the line; `[0]` is the FEN. */
 	positions: ChessPosition[];
-	/** Correct moves only. A refuted attempt never enters the line. */
+	/**
+	 * Every move played, right or wrong. A move that leaves the script is kept, so
+	 * the board can be played on freely from there until it is rewound.
+	 */
 	line: PuzzleMove[];
 	/** Which position is on screen: `0` … `line.length`. */
 	cursor: number;
-	attempt: PuzzleAttempt | undefined;
 	/** The opponent's scripted move, lit up before it is replayed. */
 	announced: ChessMove | undefined;
 	/** What the board last did, for the animation policy to judge. */
@@ -47,7 +43,6 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		positions: [ChessFen.initial()],
 		line: [],
 		cursor: 0,
-		attempt: undefined,
 		announced: undefined,
 		transition: undefined,
 		playerColor: 'white',
@@ -71,7 +66,6 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		positions: [position],
 		line: [],
 		cursor: 0,
-		attempt: undefined,
 		announced: undefined,
 		transition: undefined,
 		playerColor,
@@ -140,20 +134,23 @@ export function commitPatch(
 ): Partial<PuzzleStoreProps> {
 	return {
 		...extendLine(state, toRecord(position, move, isOpponent), ChessBoard.apply(position, move)),
-		attempt: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
 	};
 }
 
-/** Player moves found so far; the opponent's plies occupy the even indexes. */
+/**
+ * Player moves found so far; the opponent's plies occupy the even indexes. Free-play
+ * moves are not progress, so the count stops at the deviation.
+ */
 export function describeProgress(
 	cursor: number,
 	puzzle: Puzzle | undefined,
 	playerColor: PieceColor,
+	deviation: number | undefined,
 ): PuzzleProgress {
 	return {
-		solvedMoves: Math.floor(cursor / 2),
+		solvedMoves: Math.floor(Math.min(cursor, deviation ?? cursor) / 2),
 		totalMoves: Math.floor((puzzle?.moves.length ?? 0) / 2),
 		playerColor,
 	};
@@ -173,22 +170,56 @@ export function findPromotion(
 	);
 }
 
-/** Which square the click selects, or `undefined` to clear the selection. */
+/**
+ * Which square the click selects, or `undefined` to clear the selection. The side
+ * to move owns the selection, which off the script is whichever side that is.
+ */
 export function nextSelection(
 	position: ChessPosition,
 	square: Square,
 	selected: Square | undefined,
-	playerColor: PieceColor,
 ): Square | undefined {
-	const isOwnPiece = ChessBoard.pieceAt(position, square)?.color === playerColor;
+	const isOwnPiece = ChessBoard.pieceAt(position, square)?.color === position.turn;
 
 	return isOwnPiece && square !== selected ? square : undefined;
 }
 
-/** Records a refuted attempt so the board can show it in red before it is taken back. */
-export function buildAttempt(position: ChessPosition, move: ChessMove): PuzzleAttempt {
-	return {
-		move: toRecord(position, move, false),
-		position: ChessBoard.apply(position, move),
-	};
+/**
+ * The ply at which the line stopped following the script, or `undefined` while it
+ * still does. Everything past it is free play, so rewinding the cursor back to it
+ * puts the exercise on the rails again without anything having to be undone.
+ */
+export function findDeviation(state: LineState, puzzle: Puzzle | undefined): number | undefined {
+	if (undefined === puzzle) {
+		return undefined;
+	}
+
+	for (let ply = 0; ply < state.line.length; ply += 1) {
+		const position = state.positions[ply];
+		const move = state.line[ply];
+
+		if (
+			undefined === position ||
+			undefined === move ||
+			!isSolution(position, move, puzzle.moves[ply])
+		) {
+			return ply;
+		}
+	}
+
+	return undefined;
+}
+
+/** Whether the cursor sits past the deviation, where the script no longer applies. */
+export function isPastDeviation(deviation: number | undefined, cursor: number): boolean {
+	return undefined !== deviation && deviation < cursor;
+}
+
+/** The move that broke the script, while it is still the last one on the board. */
+export function mistakeAt(
+	line: readonly PuzzleMove[],
+	cursor: number,
+	deviation: number | undefined,
+): PuzzleMove | undefined {
+	return undefined !== deviation && cursor === deviation + 1 ? line[deviation] : undefined;
 }

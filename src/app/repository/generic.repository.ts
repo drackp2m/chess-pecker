@@ -18,7 +18,7 @@ interface RepositoryTransactionOptions {
 }
 
 export class GenericRepository<T extends DBSchema> {
-	private dbName = 'RoundTimer';
+	private dbName = 'chess-pecker';
 	private dbPromise = this.getDbPromise();
 	private transaction: IDBPTransaction<T, StoreNames<T>[], 'readwrite' | 'readonly'> | null = null;
 

@@ -4,11 +4,10 @@ import { patchState, signalStore, withState } from '@ngrx/signals';
 import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
-import { Puzzle } from '@app/definition/puzzle.type';
+import { Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle-computed';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import {
-	buildAttempt,
 	buildPuzzleState,
 	commitPatch,
 	findPromotion,
@@ -81,48 +80,38 @@ export class PuzzleStore
 		this.open();
 	}
 
-	/** Takes back a refuted attempt, or rewinds one ply of the solved line. */
+	/**
+	 * Rewinds one ply. Stepping back over the move that broke the script puts the
+	 * exercise back on the rails, so a wrong move can always be retried.
+	 */
 	stepBackward(): void {
-		const attempt = this.attempt();
-
-		if (undefined !== attempt) {
-			patchState(this, {
-				attempt: undefined,
-				selected: undefined,
-				transition: nextTransition(this.transition(), attempt.move, 'backward'),
-				outcome: 'solving',
-			});
-
-			return;
-		}
-
 		const undone = this.line()[this.cursor() - 1];
+		const cursor = Math.max(0, this.cursor() - 1);
 
 		patchState(this, {
-			cursor: Math.max(0, this.cursor() - 1),
+			cursor,
 			selected: undefined,
+			outcome: this.outcomeAt(cursor),
 			transition:
 				undefined === undone ? undefined : nextTransition(this.transition(), undone, 'backward'),
 		});
 	}
 
 	stepForward(): void {
-		if (undefined !== this.attempt()) {
-			return;
-		}
-
 		const replayed = this.line()[this.cursor()];
+		const cursor = Math.min(this.line().length, this.cursor() + 1);
 
 		patchState(this, {
-			cursor: Math.min(this.line().length, this.cursor() + 1),
+			cursor,
 			selected: undefined,
+			outcome: this.outcomeAt(cursor),
 			transition:
 				undefined === replayed ? undefined : nextTransition(this.transition(), replayed, 'forward'),
 		});
 	}
 
 	selectSquare(square: Square): void {
-		if (!this.isPlayerTurn() || undefined !== this.pendingPromotion()) {
+		if (!this.canPlay() || undefined !== this.pendingPromotion()) {
 			return;
 		}
 
@@ -140,7 +129,7 @@ export class PuzzleStore
 		}
 
 		patchState(this, {
-			selected: nextSelection(this.position(), square, this.selected(), this.playerColor()),
+			selected: nextSelection(this.position(), square, this.selected()),
 		});
 	}
 
@@ -183,18 +172,19 @@ export class PuzzleStore
 		this.scheduleScriptedMove();
 	}
 
-	/** Grades the player's move, then lets the opponent answer if it was right. */
+	/**
+	 * Grades the player's move, then lets the opponent answer if it was right. A move
+	 * that leaves the script is kept anyway: from there the board is played freely,
+	 * both sides by hand, until the cursor is rewound back onto the solution.
+	 */
 	private attemptMove(move: ChessMove): void {
 		const position = this.position();
 		const puzzle = this.puzzle();
 		const expected = puzzle?.moves[this.cursor()];
 
-		if (!isSolution(position, move, expected)) {
-			patchState(this, {
-				attempt: buildAttempt(position, move),
-				selected: undefined,
-				outcome: 'failed',
-			});
+		if (this.isFreePlay() || !isSolution(position, move, expected)) {
+			this.commit(move, position.turn !== this.playerColor());
+			patchState(this, { outcome: 'failed' });
 
 			return;
 		}
@@ -208,6 +198,24 @@ export class PuzzleStore
 		if (!isComplete) {
 			this.scheduleScriptedMove();
 		}
+	}
+
+	/** Where the exercise stands with the cursor at `cursor`. */
+	private outcomeAt(cursor: number): PuzzleOutcome {
+		const puzzle = this.puzzle();
+
+		// A replay in flight owns the outcome until it lands.
+		if (undefined === puzzle || this.isReplaying()) {
+			return this.outcome();
+		}
+
+		const deviation = this.deviation();
+
+		if (undefined !== deviation && deviation < cursor) {
+			return 'failed';
+		}
+
+		return cursor >= puzzle.moves.length ? 'solved' : 'solving';
 	}
 
 	private commit(move: ChessMove, isOpponent: boolean): void {
