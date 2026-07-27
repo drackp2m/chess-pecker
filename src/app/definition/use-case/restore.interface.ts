@@ -7,6 +7,12 @@ export interface RestoreCounters {
 	skipped: number;
 }
 
+// ToDo => `players`, `games`, `matches`, `matchPlayers` and `matchEvents` are the
+// previous project's entities: this whole file (and `backup-file.interface.ts`) is
+// dead, and `use-case/` is an empty folder. Worth noticing that the conflict model
+// here — business key, existing vs incoming, per-record user choice — is very close
+// to what syncing attempts against a backend will need, so it is the one leftover to
+// re-read before designing that rather than to delete outright.
 export interface RestoreSummary {
 	players: RestoreCounters;
 	games: RestoreCounters;

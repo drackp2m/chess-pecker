@@ -57,6 +57,18 @@ export abstract class PuzzleCsv {
 	 * Splits RFC 4180 text: quoted fields may hold commas, newlines and `""`.
 	 * Line endings are normalised up front so the scanner only ever sees `\n`.
 	 */
+	// ToDo => this is the scalability ceiling for the Woodpecker feature. Everything
+	// is synchronous and fully materialised: the whole file is read into a string,
+	// copied again by `replace`, accumulated character-by-character into `field`, and
+	// every row of every column is kept as `string[][]` before a single puzzle is
+	// built. The published Lichess database is ~5M rows / ~1GB — that freezes the tab
+	// long before it runs out of memory, and `PuzzlePage.loadFile` reads it with
+	// `file.text()`, which needs the entire file resident first.
+	//
+	// A Woodpecker set is only a few hundred exercises, so the fix is not a faster
+	// parser but a narrower one: stream the file (`file.stream()`), parse in a worker
+	// so the UI keeps painting, and stop at the number of rows the set actually needs
+	// — with filtering by rating/theme applied during the scan rather than after it.
 	private static toRows(text: string): string[][] {
 		const source = text.replace(/\r\n?/g, '\n');
 		const rows: string[][] = [];

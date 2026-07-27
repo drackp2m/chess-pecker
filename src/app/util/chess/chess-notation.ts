@@ -19,6 +19,12 @@ const LONG_PATTERN = /^([a-h][1-8])([a-h][1-8])([qrbn])?$/;
  */
 export abstract class ChessNotation {
 	/** Full SAN for a move about to be played from `position`, suffix included. */
+	// ToDo => one `describe` runs the move generator three times: `disambiguate`
+	// generates from `position`, then `suffix` generates from the resulting position
+	// and, when it is check, again to tell `+` from `#`. Every generated move is
+	// legality-checked by applying it to a copied 64-slot board, so this is the
+	// hottest path in the app and it is called once per committed move. Threading a
+	// precomputed `legalMoves` through the private helpers removes two of the three.
 	static describe(position: ChessPosition, move: ChessMove): string {
 		return this.describeBody(position, move) + this.suffix(position, move);
 	}

@@ -46,6 +46,10 @@ export abstract class ChessBoard {
 	}
 
 	/** King versus king (plus at most one minor piece) can never be mated. */
+	// ToDo => misses king+bishop vs king+bishop on same-coloured squares, the one
+	// four-piece case that is also dead. Only affects the free-play match, and the
+	// match has no threefold-repetition check either — `positionHistory` already holds
+	// what that would need.
 	static hasInsufficientMaterial(position: ChessPosition): boolean {
 		const pieces = position.board.filter((piece): piece is Piece => undefined !== piece);
 

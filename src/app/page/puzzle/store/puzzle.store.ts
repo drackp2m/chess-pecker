@@ -19,6 +19,18 @@ import {
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
+// ToDo => Woodpecker needs a clock, and nothing here measures time. The method is
+// scored on how long a cycle takes, so a session needs: when the exercise became
+// solvable (`outcome` reaching `'solving'`), when it was solved, how long the tab was
+// hidden in between (`visibilitychange`, otherwise a backgrounded tab inflates every
+// time), and whether the first attempt was correct — `deviation` already knows, but
+// it is discarded the moment the cursor is rewound. Capture it in the state built by
+// `buildPuzzleState`, keep it out of the animation timers, and hand it to a
+// use-case that writes an attempt row.
+//
+// ToDo => an attempt is also lost on navigation: the store is provided by
+// `PuzzlePage`, so leaving the page destroys the session with no flush.
+
 /** Pause before the opponent's piece lights up. */
 const REPLAY_DELAY = 300;
 /** How long it stays lit before it slides to its destination. */
@@ -85,6 +97,12 @@ export class PuzzleStore
 	 * Rewinds one ply. Stepping back over the move that broke the script puts the
 	 * exercise back on the rails, so a wrong move can always be retried.
 	 */
+	// FixMe => neither stepper cancels a scripted reply already in flight, and the
+	// template does not disable them while `isReplaying()`. Play the right move, then
+	// step back inside the 750ms window: `replayAnnounced` still fires and commits the
+	// opponent's move through `commitPatch`, which truncates the line at the rewound
+	// cursor. The result is a line that never happened and an outcome that no longer
+	// matches it. Either cancel `this.scheduled` here or gate the buttons on `isBusy`.
 	stepBackward(): void {
 		const undone = this.line()[this.cursor() - 1];
 		const cursor = Math.max(0, this.cursor() - 1);

@@ -60,6 +60,11 @@ export class BoardPreferenceService {
 	}
 
 	/** Updates the stored row for a setting, creating it the first time. */
+	// FixMe => `stored.with()` throws once the entity has been through `updateEntity`
+	// (see the FixMe in `SettingStore`): first change adds the row, second updates the
+	// instance kept by `addEntity`, third one finds a plain object and blows up with
+	// "stored.with is not a function". Unlike `ThemeService` there is no try/catch
+	// here, so changing the move animation three times in one session is a live crash.
 	private store<K extends SettingTypeKey>(type: K, payload: SettingPayload[K]): void {
 		const stored = this.settingStore.settingEntities().find((setting) => type === setting.type);
 

@@ -68,6 +68,16 @@ export class GenericRepository<T extends DBSchema> {
 	}
 
 	// FixMe => transactions will be committes without calling this method
+	//
+	// The cause is IndexedDB's own rule, not a bug in the bookkeeping: a transaction
+	// auto-commits as soon as its microtask queue drains, so one held across an
+	// `await` that is not itself an IDB request is already closed by the time the next
+	// call reaches it — hence `TransactionInactiveError` rather than a clean commit.
+	// `beginTransaction`/`commitTransaction` cannot be made to work as written.
+	// The shape that does: `withTransaction(stores, mode, (tx) => …)` doing all its
+	// work inside one callback, with no public begin/commit at all. `batchInsert` is
+	// then a single `Promise.all` of `tx.objectStore(...).put(...)`, which is also
+	// what makes importing thousands of puzzle rows fast instead of one tx per row.
 	async commitTransaction(): Promise<void> {
 		if (null !== this.transaction) {
 			const tx = this.transaction;
@@ -126,6 +136,13 @@ export class GenericRepository<T extends DBSchema> {
 	}
 
 	// ToDo => try transform plain data to model
+	//
+	// Worth doing here rather than per-repository: `SettingRepository` only overrides
+	// `findAll`, so `find`, `findByIndex` and `findAllByIndex` hand back the raw
+	// structured-clone output typed as `Setting` — plain objects with no `.with()`.
+	// Nothing reads settings through those three today, so the lie is invisible; it
+	// stops being invisible the moment puzzles and attempts are read by index.
+	// A `hydrate` hook on the class (identity by default) would cover every read path.
 	async find<K extends StoreNames<T>>(
 		storeName: K,
 		key: StoreKey<T, K>,
@@ -161,6 +178,10 @@ export class GenericRepository<T extends DBSchema> {
 		});
 	}
 
+	// FixMe => the key parameter is typed `StoreValue` (the whole record) where it
+	// should be `StoreKey`. `IDBObjectStore.delete` takes a key, so passing the record
+	// the type asks for deletes nothing, and passing the key that actually works is a
+	// type error. Nothing calls it yet, which is the only reason it has not bitten.
 	async delete<K extends StoreNames<T>>(storeName: K, key: StoreValue<T, K>): Promise<void> {
 		await this.withTransaction([storeName], 'readwrite', async (tx) => {
 			await tx.objectStore(storeName).delete(key);
@@ -173,6 +194,12 @@ export class GenericRepository<T extends DBSchema> {
 		});
 	}
 
+	// FixMe => the ambient transaction is reused without checking that it covers
+	// `storeNames`, and the cast launders a `readonly` request into whatever mode the
+	// open transaction has. With a single store the mismatch cannot happen; with
+	// puzzle/attempt stores added, a read against store B while a transaction on store
+	// A is open throws `NotFoundError` from inside an unrelated call. Reuse should be
+	// conditional on the open transaction actually containing every requested store.
 	private async withTransaction<R, M extends 'readonly' | 'readwrite'>(
 		storeNames: StoreNames<T>[],
 		mode: M,
@@ -189,6 +216,17 @@ export class GenericRepository<T extends DBSchema> {
 		return result;
 	}
 
+	// FixMe => no failure path and no multi-tab handling. `openDB` rejects on a denied
+	// quota or a corrupt database and the rejection propagates to every caller as an
+	// unhandled one, with no user-visible error. It also needs the three handlers idb
+	// offers, which matter as soon as there is a second store to migrate: `blocked`
+	// (another tab holds the old version — tell the user to close it), `blocking`
+	// (this tab is holding a newer version back — close the connection), and
+	// `terminated` (the browser dropped the connection; reopen it).
+	//
+	// ToDo => the promise is created at field initialisation, so constructing the
+	// repository opens the database. Making it lazy keeps a page that never touches
+	// storage from paying for it.
 	private getDbPromise(): Promise<IDBPDatabase<T>> {
 		return openDB<T>(this.dbName, Repository.getLatestVersion(), {
 			upgrade: (db, oldVersion, newVersion, transaction) => {
@@ -220,6 +258,8 @@ export class GenericRepository<T extends DBSchema> {
 		]);
 	}
 
+	// ToDo => these three `console.log`s run in production on every write. Route them
+	// through `Debug.log` (already gated on the `APP_DEBUG` build constant) or drop them.
 	private setupTransactionListeners(): void {
 		if (null === this.transaction) {
 			return;

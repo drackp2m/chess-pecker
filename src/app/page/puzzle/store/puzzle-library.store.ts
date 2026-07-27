@@ -25,6 +25,15 @@ function buildLibraryState(): PuzzleLibraryProps {
  * session so the origin of the rows — a pasted CSV today, a database table later —
  * stays a concern of its own.
  */
+// ToDo => the split is the right seam, but the set only lives in memory and is
+// provided by `PuzzlePage`, so a reload or a navigation loses the whole import.
+// Woodpecker works on a *named, fixed* set replayed over several cycles, which needs
+// at least: a persisted `puzzleSet` (name, created date, ordered puzzle ids), the
+// `puzzle` rows themselves, and a `cycle` (which pass over the set, its order — the
+// method usually reshuffles per cycle — and where the user stopped). `index` alone
+// cannot express "puzzle 40 of cycle 3, 12 still unsolved this pass".
+//
+// ToDo => `setPuzzles` leaves `importError` set from an earlier failed import.
 @Injectable()
 export class PuzzleLibraryStore extends signalStore(
 	{ protectedState: false },

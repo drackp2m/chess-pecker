@@ -25,6 +25,13 @@ export function withPuzzleComputed() {
 
 			const position = computed(() => store.positions()[store.cursor()] ?? ChessFen.initial());
 
+			// ToDo => `findDeviation` rescans the whole line on every cursor change, and
+			// each ply costs an `isSolution` — a full `legalMoves` to parse the scripted
+			// move, plus a second one via `status()` whenever the first check fails. It
+			// also depends on `cursor`, which it never reads, so stepping through a line
+			// re-derives a value that cannot have changed. Dropping `cursor` from the
+			// input (it belongs to `isPastDeviation`, which already takes it separately)
+			// makes this recompute only when a move is actually played.
 			const deviation = computed(() =>
 				findDeviation(
 					{ positions: store.positions(), line: store.line(), cursor: store.cursor() },
@@ -51,6 +58,12 @@ export function withPuzzleComputed() {
 
 				legalMoves: computed(() => ChessMoveGenerator.legalMoves(position())),
 
+				// ToDo => generates the moves a second time instead of reusing the
+				// `legalMoves` computed declared just above, so every click re-runs the
+				// generator for a list that is already memoised. `MatchStore` gets this
+				// right (`this.legalMoves().filter(...)`); the only reason it cannot be
+				// written the same way here is that `legalMoves` is being defined in the
+				// same object literal — hoisting it next to `position` fixes both.
 				movesFromSelection: computed(() => {
 					const selected = store.selected();
 

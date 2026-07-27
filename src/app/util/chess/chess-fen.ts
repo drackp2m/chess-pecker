@@ -54,6 +54,21 @@ export abstract class ChessFen {
 	 * Sanity check for a user supplied position: both kings must be present, and the
 	 * side that just moved may not be left in check — that position is unreachable.
 	 */
+	// FixMe => this is the only gate a pasted CSV passes through, and it is thinner
+	// than it looks. It does not check that the placement describes exactly 64 squares
+	// (`parsePlacement` silently drops the overflow and leaves the shortfall empty, so
+	// `8/8/8/8/KQkq` validates), nor that the en-passant field is a real square. That
+	// second one is not cosmetic: `parse` casts it with `enPassant as Square`, and
+	// `ChessSquare.toIndex` computes `RANKS.indexOf(...) * 8 + FILES.indexOf(...)`
+	// without guarding the `-1`s — so `"z3"` resolves to index 39, a legitimate square
+	// (`h4`), and the move generator will happily offer a phantom en-passant capture
+	// there. Rejecting a malformed square in `parse`, or having `toIndex` refuse an
+	// off-board square, closes it.
+	//
+	// ToDo => `halfmoveClock: Number(halfmove ?? '0')` is `NaN` for a non-numeric
+	// field, and nothing here rejects it. It then leaks into `status()` (`100 <= NaN`
+	// is false, so the fifty-move draw never fires) and into `serialize`, which writes
+	// the string "NaN" back out.
 	static isValid(fen: string): boolean {
 		try {
 			const position = this.parse(fen);

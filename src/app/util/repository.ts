@@ -5,8 +5,17 @@ import { Migration } from '@app/repository/definition/migration.interface';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 
 export abstract class Repository {
+	// ToDo => `removeDeprecatedDatabase` is never called from anywhere, so this list
+	// could not take effect even if it had entries. Either wire it into the app
+	// initializer or drop both.
 	private static readonly deprecatedDatabaseNames: string[] = [];
 
+	// ToDo => migrations are declarative and versioned, which is the right shape for
+	// what comes next — but `apply` is typed as returning `void` and receives the
+	// versionchange transaction, so a migration that has to *move data* (backfilling
+	// attempt rows, re-keying settings by `type`) has nowhere to await its cursor
+	// walk. Allowing `apply` to return a promise before the second migration is
+	// written is much cheaper than changing it afterwards.
 	private static migrations: Migration<AppSchema>[] = [createSettingStoreMigration];
 
 	static getLatestVersion(): number {

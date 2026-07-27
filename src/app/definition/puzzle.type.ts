@@ -22,6 +22,12 @@ export interface Puzzle {
 	readonly selectedFor: string;
 }
 
+// ToDo => this outcome is a *view* state, not a result. `failed` is reversible by
+// rewinding the cursor, and once the line is back on the script the exercise reads
+// `solved` with nothing left to say that the first attempt was wrong. Woodpecker
+// grades on exactly that — first-try correct, and how long it took — so the result of
+// an attempt has to be recorded separately from what the board is currently showing,
+// and settled at the moment the first player move is committed rather than at the end.
 export type PuzzleOutcome =
 	/** No exercise loaded. */
 	| 'idle'

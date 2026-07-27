@@ -66,8 +66,12 @@ export class ThemeService implements OnDestroy {
 					this.settingStore.add(new Setting({ type: 'THEME', payload: theme }));
 				}
 			} catch {
-				// FixMe => Why need this for prevent Uncaught (in promise) TypeError:
-				// this.settingStore.settingEntities().find(...).with is not a function
+				// FixMe => root cause found: `@ngrx/signals/entities` `updateEntity` rebuilds
+				// the entity as `{ ...entity, ...changes }`, a plain object literal, so the
+				// `Setting` prototype is dropped the first time `SettingStore.update()` runs.
+				// From then on `settingEntities()` is typed `Setting[]` but holds plain data
+				// and `.with()` is gone — hence this catch. Fix it at the source (see the
+				// FixMe in `SettingStore`), then delete this try/catch.
 			}
 		}
 	}

@@ -75,6 +75,10 @@ export class PuzzlePage {
 		this.csvDraft.set((event.target as HTMLTextAreaElement).value);
 	}
 
+	// FixMe => `file.text()` rejects on an unreadable file (removed from disk, denied
+	// permission) and the template calls this straight from `(change)`, so the
+	// rejection is unhandled: no error shown, and `input.value` is never cleared, so
+	// picking the same file again fires no event and the picker looks dead.
 	async loadFile(event: Event): Promise<void> {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];

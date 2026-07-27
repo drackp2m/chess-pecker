@@ -1,5 +1,10 @@
 import { Generate } from '@app/util/generate';
 
+// ToDo => board-game names carried over from the previous project; nothing imports
+// this. Same for `util/enum.ts` (and `util/text.ts`, which only `enum.ts` uses),
+// `util/json-file.ts`, `util/backup-serializer.ts`, `util/debug.ts` and
+// `definition/use-case/*`. Deleting them is the cheapest way to stop `git grep` from
+// suggesting a backup/restore feature that does not exist.
 export abstract class Game {
 	private static readonly games = [
 		'Carcassonne',
