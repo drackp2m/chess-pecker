@@ -10,6 +10,7 @@ import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store'
 import {
 	buildPuzzleState,
 	commitPatch,
+	describeOutcome,
 	findPromotion,
 	isSolution,
 	nextSelection,
@@ -191,7 +192,7 @@ export class PuzzleStore
 
 		this.commit(move, false);
 
-		const isComplete = this.cursor() >= (puzzle?.moves.length ?? 0);
+		const isComplete = 'solved' === this.outcomeAt(this.cursor());
 
 		patchState(this, { outcome: isComplete ? 'solved' : 'replying' });
 
@@ -200,22 +201,13 @@ export class PuzzleStore
 		}
 	}
 
-	/** Where the exercise stands with the cursor at `cursor`. */
 	private outcomeAt(cursor: number): PuzzleOutcome {
 		const puzzle = this.puzzle();
 
 		// A replay in flight owns the outcome until it lands.
-		if (undefined === puzzle || this.isReplaying()) {
-			return this.outcome();
-		}
-
-		const deviation = this.deviation();
-
-		if (undefined !== deviation && deviation < cursor) {
-			return 'failed';
-		}
-
-		return cursor >= puzzle.moves.length ? 'solved' : 'solving';
+		return undefined === puzzle || this.isReplaying()
+			? this.outcome()
+			: describeOutcome(this.positions(), puzzle, this.deviation(), cursor);
 	}
 
 	private commit(move: ChessMove, isOpponent: boolean): void {
@@ -259,8 +251,7 @@ export class PuzzleStore
 
 		// Real Lichess lines end on a player move, but a set that ends on the
 		// opponent's would otherwise leave the exercise waiting forever.
-		const isComplete = this.cursor() >= (this.puzzle()?.moves.length ?? 0);
-
-		patchState(this, { isReplaying: false, outcome: isComplete ? 'solved' : 'solving' });
+		patchState(this, { isReplaying: false });
+		patchState(this, { outcome: this.outcomeAt(this.cursor()) });
 	}
 }

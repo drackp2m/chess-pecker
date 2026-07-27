@@ -9,6 +9,9 @@ const MATE_IN_3 =
 	'JOGv3,5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27,f1f8 b2b1 b3d1 b1d1 f8f1 d1f1,536,100,2178,backRankMate endgame long mate mateIn3,https://lichess.org/fFWULcre#53,500-599';
 const SHORT =
 	'ABC12,4k3/8/8/8/8/8/R7/4K2R w - - 0 1,h1h5 e8d8 a2a8,900,90,10,mate mateIn1,https://example.org,900-999';
+/** The script walks to mate with Qg4 first, but Qg7 mates straight away. */
+const ALT_MATE =
+	'ALT99,7k/p7/7K/8/8/8/8/R5Q1 b - - 0 1,a7a6 g1g4 a6a5 g4g7,700,80,50,mate mateIn2,https://example.org,700-799';
 
 /** Long enough for both beats of the replay: the piece lights up, then it moves. */
 const REPLAY_TOTAL = 1500;
@@ -100,6 +103,27 @@ describe('PuzzleStore', () => {
 		expect(store.outcome()).toBe('solved');
 		expect(store.history().at(-1)?.san).toBe('Rxf1#');
 		expect(store.progress().solvedMoves).toBe(3);
+	});
+
+	it('ends the exercise on any mate, not only the scripted one', () => {
+		const store = createStore(`${HEADER}\n${ALT_MATE}`);
+
+		expect(store.playerColor()).toBe('white');
+		expect(store.history()[0]?.san).toBe('a6');
+
+		// Qg4 is what the script asks for; Qg7 mates two plies early.
+		store.selectSquare('g1');
+		store.selectSquare('g7');
+
+		expect(store.history().at(-1)?.san).toBe('Qg7#');
+		expect(store.outcome()).toBe('solved');
+		expect(store.isLocked()).toBe(true);
+
+		// And no scripted reply is attempted from a position where it is illegal.
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.history()).toHaveLength(2);
+		expect(store.outcome()).toBe('solved');
 	});
 
 	it('keeps a wrong move on the board and marks it', () => {

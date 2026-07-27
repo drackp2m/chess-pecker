@@ -215,6 +215,27 @@ export function isPastDeviation(deviation: number | undefined, cursor: number): 
 	return undefined !== deviation && deviation < cursor;
 }
 
+/**
+ * Where the exercise stands with the cursor at `cursor`. A mate ends it wherever it
+ * lands: any mate solves a mating puzzle, so the scripted continuation may be cut
+ * short — and replaying it from a finished position would be illegal anyway.
+ */
+export function describeOutcome(
+	positions: readonly ChessPosition[],
+	puzzle: Puzzle,
+	deviation: number | undefined,
+	cursor: number,
+): PuzzleOutcome {
+	if (isPastDeviation(deviation, cursor)) {
+		return 'failed';
+	}
+
+	const position = positions[cursor];
+	const isMate = undefined !== position && 'checkmate' === ChessMoveGenerator.status(position);
+
+	return cursor >= puzzle.moves.length || isMate ? 'solved' : 'solving';
+}
+
 /** The move that broke the script, while it is still the last one on the board. */
 export function mistakeAt(
 	line: readonly PuzzleMove[],
