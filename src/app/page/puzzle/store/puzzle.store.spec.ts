@@ -9,6 +9,9 @@ const MATE_IN_3 =
 	'JOGv3,5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27,f1f8 b2b1 b3d1 b1d1 f8f1 d1f1,536,100,2178,backRankMate endgame long mate mateIn3,https://lichess.org/fFWULcre#53,500-599';
 const SHORT =
 	'ABC12,4k3/8/8/8/8/8/R7/4K2R w - - 0 1,h1h5 e8d8 a2a8,900,90,10,mate mateIn1,https://example.org,900-999';
+/** The script walks to mate with Qg4 first, but Qg7 mates straight away. */
+const ALT_MATE =
+	'ALT99,7k/p7/7K/8/8/8/8/R5Q1 b - - 0 1,a7a6 g1g4 a6a5 g4g7,700,80,50,mate mateIn2,https://example.org,700-799';
 
 /** Long enough for both beats of the replay: the piece lights up, then it moves. */
 const REPLAY_TOTAL = 1500;
@@ -102,7 +105,28 @@ describe('PuzzleStore', () => {
 		expect(store.progress().solvedMoves).toBe(3);
 	});
 
-	it('marks a wrong move as a mistake without adding it to the line', () => {
+	it('ends the exercise on any mate, not only the scripted one', () => {
+		const store = createStore(`${HEADER}\n${ALT_MATE}`);
+
+		expect(store.playerColor()).toBe('white');
+		expect(store.history()[0]?.san).toBe('a6');
+
+		// Qg4 is what the script asks for; Qg7 mates two plies early.
+		store.selectSquare('g1');
+		store.selectSquare('g7');
+
+		expect(store.history().at(-1)?.san).toBe('Qg7#');
+		expect(store.outcome()).toBe('solved');
+		expect(store.isLocked()).toBe(true);
+
+		// And no scripted reply is attempted from a position where it is illegal.
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.history()).toHaveLength(2);
+		expect(store.outcome()).toBe('solved');
+	});
+
+	it('keeps a wrong move on the board and marks it', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		store.selectSquare('b2');
@@ -110,9 +134,68 @@ describe('PuzzleStore', () => {
 
 		expect(store.outcome()).toBe('failed');
 		expect(store.mistake()?.to).toBe('c2');
-		expect(store.history()).toHaveLength(1);
-		expect(store.cursor()).toBe(1);
-		expect(store.isLocked()).toBe(true);
+		expect(store.history()).toHaveLength(2);
+		expect(store.cursor()).toBe(2);
+		expect(store.isFreePlay()).toBe(true);
+		expect(store.progress().solvedMoves).toBe(0);
+	});
+
+	it('lets both sides be played by hand once the script is broken', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+
+		// The board is now the opponent's to move, and it is the player who moves it.
+		expect(store.isLocked()).toBe(false);
+		expect(store.isPlayerTurn()).toBe(false);
+		expect(store.position().turn).toBe('white');
+
+		store.selectSquare('a2');
+		store.selectSquare('a3');
+
+		expect(store.history()).toHaveLength(3);
+		expect(store.history().at(-1)?.isOpponent).toBe(true);
+		expect(store.position().turn).toBe('black');
+		expect(store.outcome()).toBe('failed');
+
+		// Illegal moves are still refused: the rook on c2 cannot jump to c8 through c6.
+		store.selectSquare('c2');
+		store.selectSquare('c8');
+
+		expect(store.history()).toHaveLength(3);
+	});
+
+	it('returns to solving once the cursor is rewound onto the script', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+		store.selectSquare('a2');
+		store.selectSquare('a3');
+
+		expect(store.cursor()).toBe(3);
+
+		store.stepBackward();
+
+		// Still past the deviation, so the board stays free.
+		expect(store.outcome()).toBe('failed');
+		expect(store.isFreePlay()).toBe(true);
+
+		store.stepBackward();
+
+		expect(store.outcome()).toBe('solving');
+		expect(store.isFreePlay()).toBe(false);
+		expect(store.isPlayerTurn()).toBe(true);
+		expect(store.mistake()).toBeUndefined();
+
+		// Playing the solution from there drops the whole free-play branch.
+		store.selectSquare('b2');
+		store.selectSquare('b1');
+
+		expect(store.line()).toHaveLength(2);
+		expect(store.history()[1]?.san).toBe('Rb1+');
+		expect(store.outcome()).toBe('replying');
 	});
 
 	it('takes the mistake back on step-back and lets you retry', () => {

@@ -80,4 +80,13 @@
 			--color-#{$name}-hover: #{map.get(var.$dark-color-hover, $name)} !important;
 		}
 	}
+
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme]) {
+			@each $name, $value in var.$dark-color {
+				--color-#{$name}: #{$value};
+				--color-#{$name}-hover: #{map.get(var.$dark-color-hover, $name)};
+			}
+		}
+	}
 }

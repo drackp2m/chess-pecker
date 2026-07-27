@@ -35,7 +35,7 @@ export class PuzzlePage {
 			case 'replying':
 				return 'Opponent is moving…';
 			case 'failed':
-				return 'Not the move — step back and try again';
+				return 'Not the move — play it out, or step back to try again';
 			case 'solved':
 				return 'Solved';
 			case 'solving':

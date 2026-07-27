@@ -14,4 +14,14 @@
 		--color-shadow: rgb(255 255 255 / 15%);
 		--opacity-overlay: 10%;
 	}
+
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme]) {
+			--color-slower: rgb(60 25 25);
+			--color-faster: rgb(25 50 25);
+			--color-overlay: rgb(255 255 255);
+			--color-shadow: rgb(255 255 255 / 15%);
+			--opacity-overlay: 10%;
+		}
+	}
 }

@@ -1,4 +1,4 @@
-import { ChessMoveRecord, ChessPosition, PieceColor } from '@app/definition/chess.type';
+import { ChessMoveRecord, PieceColor } from '@app/definition/chess.type';
 
 /**
  * One exercise in the Lichess puzzle-database shape.
@@ -31,7 +31,10 @@ export type PuzzleOutcome =
 	| 'solving'
 	/** The opponent's scripted reply is being played. */
 	| 'replying'
-	/** The last attempt was refuted and is shown in red. */
+	/**
+	 * A move left the script. It stays on the board and play continues freely from
+	 * there, both sides by hand, until the cursor is rewound back onto the solution.
+	 */
 	| 'failed'
 	/** The whole line was found. */
 	| 'solved';
@@ -39,11 +42,6 @@ export type PuzzleOutcome =
 /** A move played during a session, plus where it came from. */
 export interface PuzzleMove extends ChessMoveRecord {
 	readonly isOpponent: boolean;
-}
-
-export interface PuzzleAttempt {
-	readonly move: ChessMoveRecord;
-	readonly position: ChessPosition;
 }
 
 export interface PuzzleParseResult {

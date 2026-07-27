@@ -77,6 +77,12 @@ export class SettingPage {
 
 	private syncAppearance(): void {
 		effect(() => {
+			this.form.controls.appearance.setValue(this.themeService.selectedTheme(), {
+				emitEvent: false,
+			});
+		});
+
+		effect(() => {
 			const newTheme = this.appearanceChange();
 
 			if (this.firstChangeIgnored) {
