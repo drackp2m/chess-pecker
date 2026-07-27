@@ -10,7 +10,6 @@ import {
 } from '@app/component/chess-board/board-geometry';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { shouldAnimate } from '@app/definition/board-animation.type';
-import { MOVE_INPUT_METHODS } from '@app/definition/board-input.type';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { FILES, PROMOTION_PIECES, RANKS, SQUARE_COUNT } from '@app/definition/chess.constant';
 import { Piece, PromotionPieceType, Square } from '@app/definition/chess.type';
@@ -50,13 +49,17 @@ interface DragGhost {
 export class ChessBoardComponent {
 	readonly store = inject(BOARD_PRESENTER);
 
+	private readonly preference = inject(BoardPreferenceService);
+
 	readonly promotionChoices = buildPromotionChoices(PROMOTION_PIECES);
 
 	/** Chosen in the settings; decides which transitions get a sliding animation. */
-	readonly animation = inject(BoardPreferenceService).moveAnimation;
+	readonly animation = this.preference.moveAnimation;
 
-	readonly isClickEnabled = inject(MOVE_INPUT_METHODS).includes('click');
-	readonly isDragEnabled = inject(MOVE_INPUT_METHODS).includes('drag');
+	// Read as signals, so changing the preference takes effect on a board already
+	// on screen rather than only on the next one.
+	readonly isClickEnabled = computed(() => this.preference.moveInputMethods().includes('click'));
+	readonly isDragEnabled = computed(() => this.preference.moveInputMethods().includes('drag'));
 
 	/** Square the pointer picked up, once the press has grown into a real drag. */
 	readonly draggingFrom = signal<Square | undefined>(undefined);
@@ -85,7 +88,7 @@ export class ChessBoardComponent {
 	 * captured pointer delivers its `click` to the board rather than to the square.
 	 */
 	activate(square: BoardSquare, event: MouseEvent): void {
-		if (0 === event.detail && this.isClickEnabled) {
+		if (0 === event.detail && this.isClickEnabled()) {
 			this.store.selectSquare(square.square);
 		}
 	}
@@ -98,7 +101,7 @@ export class ChessBoardComponent {
 		this.hasDragged = false;
 		this.pressedFrom = square.square;
 		this.pressedAt = { x: event.clientX, y: event.clientY };
-		this.canDrag = this.isDragEnabled && undefined !== square.piece;
+		this.canDrag = this.isDragEnabled() && undefined !== square.piece;
 
 		if (this.canDrag) {
 			this.capturePointer(event.pointerId);
@@ -147,7 +150,7 @@ export class ChessBoardComponent {
 				this.store.orientation(),
 			),
 			wasDrag,
-			isClickEnabled: this.isClickEnabled,
+			isClickEnabled: this.isClickEnabled(),
 		});
 
 		if (undefined !== target) {

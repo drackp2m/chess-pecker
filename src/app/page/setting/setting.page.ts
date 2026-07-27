@@ -8,6 +8,7 @@ import {
 	MOVE_ANIMATION_LABEL,
 	MoveAnimation,
 } from '@app/definition/board-animation.type';
+import { MOVE_INPUT_LABEL, buildMoveInputMethods } from '@app/definition/board-input.type';
 import { Theme } from '@app/definition/service/theme.type';
 import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
 import { version } from '@app/package';
@@ -25,6 +26,7 @@ export class SettingPage {
 
 	readonly moveAnimations = MOVE_ANIMATIONS;
 	readonly animationLabel = MOVE_ANIMATION_LABEL;
+	readonly inputLabel = MOVE_INPUT_LABEL;
 
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
@@ -32,6 +34,7 @@ export class SettingPage {
 
 	private firstChangeIgnored = false;
 	private firstAnimationChangeIgnored = false;
+	private firstInputChangeIgnored = false;
 
 	readonly form = new FormGroup({
 		appearance: new FormControl<Theme | 'system'>(this.themeService.selectedTheme(), {
@@ -42,6 +45,8 @@ export class SettingPage {
 			nonNullable: true,
 			validators: [Validators.required],
 		}),
+		clickToMove: new FormControl<boolean>(this.isMethodEnabled('click'), { nonNullable: true }),
+		dragToMove: new FormControl<boolean>(this.isMethodEnabled('drag'), { nonNullable: true }),
 	});
 
 	private readonly appearanceChange: Signal<Theme | 'system'> = toSignal(
@@ -54,7 +59,23 @@ export class SettingPage {
 		{ initialValue: this.boardPreference.moveAnimation() },
 	);
 
+	private readonly clickToMoveChange: Signal<boolean> = toSignal(
+		this.form.controls.clickToMove.valueChanges,
+		{ initialValue: this.isMethodEnabled('click') },
+	);
+
+	private readonly dragToMoveChange: Signal<boolean> = toSignal(
+		this.form.controls.dragToMove.valueChanges,
+		{ initialValue: this.isMethodEnabled('drag') },
+	);
+
 	constructor() {
+		this.syncAppearance();
+		this.syncMoveAnimation();
+		this.syncMoveInput();
+	}
+
+	private syncAppearance(): void {
 		effect(() => {
 			const newTheme = this.appearanceChange();
 
@@ -64,7 +85,9 @@ export class SettingPage {
 				this.firstChangeIgnored = true;
 			}
 		});
+	}
 
+	private syncMoveAnimation(): void {
 		// The stored preference arrives after the form is built, so mirror it back in.
 		effect(() => {
 			this.form.controls.moveAnimation.setValue(this.boardPreference.moveAnimation(), {
@@ -81,5 +104,30 @@ export class SettingPage {
 				this.firstAnimationChangeIgnored = true;
 			}
 		});
+	}
+
+	private syncMoveInput(): void {
+		// Mirrors both the stored value and the correction made when a selection
+		// would otherwise leave the board with no way to move a piece.
+		effect(() => {
+			this.form.controls.clickToMove.setValue(this.isMethodEnabled('click'), {
+				emitEvent: false,
+			});
+			this.form.controls.dragToMove.setValue(this.isMethodEnabled('drag'), { emitEvent: false });
+		});
+
+		effect(() => {
+			const methods = buildMoveInputMethods(this.clickToMoveChange(), this.dragToMoveChange());
+
+			if (this.firstInputChangeIgnored) {
+				this.boardPreference.updateMoveInputMethods(methods);
+			} else {
+				this.firstInputChangeIgnored = true;
+			}
+		});
+	}
+
+	private isMethodEnabled(method: 'click' | 'drag'): boolean {
+		return this.boardPreference.moveInputMethods().includes(method);
 	}
 }

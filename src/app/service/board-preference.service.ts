@@ -5,6 +5,13 @@ import {
 	MOVE_ANIMATIONS,
 	MoveAnimation,
 } from '@app/definition/board-animation.type';
+import {
+	MOVE_INPUT_METHODS,
+	MoveInputMethod,
+	normalizeMoveInputMethods,
+} from '@app/definition/board-input.type';
+import { SettingTypeKey } from '@app/definition/model/setting/setting-type.enum';
+import { SettingPayload } from '@app/definition/model/setting/setting-type.type';
 import { Setting } from '@app/model/setting.model';
 import { SettingStore } from '@app/store/setting.store';
 
@@ -18,10 +25,13 @@ import { SettingStore } from '@app/store/setting.store';
 })
 export class BoardPreferenceService {
 	private readonly settingStore = inject(SettingStore);
+	private readonly defaultInputMethods = inject(MOVE_INPUT_METHODS);
 
 	private readonly animation = signal<MoveAnimation>(DEFAULT_MOVE_ANIMATION);
+	private readonly inputMethods = signal<readonly MoveInputMethod[]>(this.defaultInputMethods);
 
 	readonly moveAnimation = this.animation.asReadonly();
+	readonly moveInputMethods = this.inputMethods.asReadonly();
 
 	constructor() {
 		const waitForSetting = effect(() => {
@@ -31,32 +41,51 @@ export class BoardPreferenceService {
 				return;
 			}
 
-			this.animation.set(this.readStored(settings));
+			this.animation.set(this.readAnimation(settings));
+			this.inputMethods.set(this.readInputMethods(settings));
 			waitForSetting.destroy();
 		});
 	}
 
 	updateMoveAnimation(animation: MoveAnimation): void {
 		this.animation.set(animation);
+		this.store('MOVE_ANIMATION', animation);
+	}
 
-		const stored = this.settingStore
-			.settingEntities()
-			.find((setting) => 'MOVE_ANIMATION' === setting.type);
+	updateMoveInputMethods(methods: readonly MoveInputMethod[]): void {
+		const normalized = normalizeMoveInputMethods(methods);
+
+		this.inputMethods.set(normalized);
+		this.store('MOVE_INPUT', normalized);
+	}
+
+	/** Updates the stored row for a setting, creating it the first time. */
+	private store<K extends SettingTypeKey>(type: K, payload: SettingPayload[K]): void {
+		const stored = this.settingStore.settingEntities().find((setting) => type === setting.type);
 
 		if (undefined === stored) {
-			this.settingStore.add(new Setting({ type: 'MOVE_ANIMATION', payload: animation }));
+			this.settingStore.add(new Setting({ type, payload }));
 
 			return;
 		}
 
-		this.settingStore.update(stored.with({ payload: animation }));
+		this.settingStore.update(stored.with({ payload }));
 	}
 
-	private readStored(settings: readonly Setting[]): MoveAnimation {
+	private readAnimation(settings: readonly Setting[]): MoveAnimation {
 		const stored = settings.find((setting) => 'MOVE_ANIMATION' === setting.type)?.payload;
 
 		return MOVE_ANIMATIONS.includes(stored as MoveAnimation)
 			? (stored as MoveAnimation)
 			: DEFAULT_MOVE_ANIMATION;
+	}
+
+	private readInputMethods(settings: readonly Setting[]): readonly MoveInputMethod[] {
+		const stored = settings.find((setting) => 'MOVE_INPUT' === setting.type);
+
+		// Nothing stored yet means the default set, not the empty fallback.
+		return undefined === stored
+			? this.defaultInputMethods
+			: normalizeMoveInputMethods(stored.payload);
 	}
 }

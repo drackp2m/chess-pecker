@@ -27,5 +27,19 @@
 		</form>
 	</div>
 
+	<div class="flex-col gap-2">
+		<h4>Move input</h4>
+
+		<p class="hint color-contrast-mid">
+			How you enter a move. Turning both off keeps clicking, so the board stays playable.
+		</p>
+
+		<form [formGroup]="form" class="flex-col gap-1">
+			<input appThemed type="checkbox" [label]="inputLabel.click" formControlName="clickToMove" />
+
+			<input appThemed type="checkbox" [label]="inputLabel.drag" formControlName="dragToMove" />
+		</form>
+	</div>
+
 	<p class="flex-row flex-grow justify-center align-end mono fs-sm">version {{ VERSION }}</p>
 </section>
