@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MatchStore } from '@app/page/match/store/match.store';
 
-const OPPONENT_DELAY = 500;
+/** Long enough for both beats: the machine thinks, lights its piece up, then moves. */
+const OPPONENT_DELAY = 1500;
 
 function createStore(): MatchStore {
 	TestBed.configureTestingModule({ providers: [MatchStore] });
@@ -50,6 +51,28 @@ describe('MatchStore', () => {
 		expect(store.isPlayerTurn()).toBe(true);
 	});
 
+	it('lights the machine piece up before it actually moves', () => {
+		const store = createStore();
+
+		store.playNotation('e4');
+		vi.advanceTimersByTime(400);
+
+		// First beat: a move is announced but the board has not changed.
+		const announced = store.announcedMove();
+
+		expect(announced).toBeDefined();
+		expect(announced?.color).toBe('black');
+		expect(store.history()).toHaveLength(1);
+
+		vi.advanceTimersByTime(OPPONENT_DELAY);
+
+		// Second beat: the highlight clears and that same move is on the board.
+		expect(store.announcedMove()).toBeUndefined();
+		expect(store.history()).toHaveLength(2);
+		expect(store.history()[1]?.from).toBe(announced?.from);
+		expect(store.history()[1]?.to).toBe(announced?.to);
+	});
+
 	it('lets the machine open the game when the player takes black', () => {
 		const store = createStore();
 
@@ -64,6 +87,20 @@ describe('MatchStore', () => {
 		expect(store.history()).toHaveLength(1);
 		expect(store.history()[0]?.color).toBe('white');
 		expect(store.isPlayerTurn()).toBe(true);
+	});
+
+	it('reports a played move as a transition, and none after an undo', () => {
+		const store = createStore();
+
+		store.playNotation('e4');
+
+		expect(store.transition()).toMatchObject({ from: 'e2', to: 'e4', kind: 'played' });
+
+		vi.advanceTimersByTime(OPPONENT_DELAY);
+		store.undoLastMove();
+
+		// Undo rewinds two plies at once, so there is no single slide to show.
+		expect(store.transition()).toBeUndefined();
 	});
 
 	it('rejects notation that is not legal and reports it', () => {

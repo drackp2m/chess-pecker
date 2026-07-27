@@ -1,3 +1,4 @@
+import { BoardTransition } from '@app/definition/board-animation.type';
 import { PendingPromotion } from '@app/definition/board-presenter.interface';
 import {
 	ChessMove,
@@ -26,6 +27,10 @@ export interface PuzzleStoreProps {
 	/** Which position is on screen: `0` … `line.length`. */
 	cursor: number;
 	attempt: PuzzleAttempt | undefined;
+	/** The opponent's scripted move, lit up before it is replayed. */
+	announced: ChessMove | undefined;
+	/** What the board last did, for the animation policy to judge. */
+	transition: BoardTransition | undefined;
 	playerColor: PieceColor;
 	orientation: PieceColor;
 	selected: Square | undefined;
@@ -43,6 +48,8 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		line: [],
 		cursor: 0,
 		attempt: undefined,
+		announced: undefined,
+		transition: undefined,
 		playerColor: 'white',
 		orientation: 'white',
 		selected: undefined,
@@ -65,6 +72,8 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		line: [],
 		cursor: 0,
 		attempt: undefined,
+		announced: undefined,
+		transition: undefined,
 		playerColor,
 		orientation: playerColor,
 		selected: undefined,

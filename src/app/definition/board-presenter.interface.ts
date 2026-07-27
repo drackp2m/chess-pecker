@@ -1,5 +1,6 @@
 import { InjectionToken, Signal } from '@angular/core';
 
+import { BoardTransition } from '@app/definition/board-animation.type';
 import {
 	ChessMove,
 	ChessMoveRecord,
@@ -29,6 +30,16 @@ export interface BoardPresenter {
 	readonly lastMove: Signal<ChessMove | undefined>;
 	/** A refuted move, highlighted in red until it is taken back. */
 	readonly mistake: Signal<ChessMove | undefined>;
+	/**
+	 * A move that is about to be played for you. The board lights up its origin
+	 * first, so the piece that is going to move can be seen before it does.
+	 */
+	readonly announcedMove: Signal<ChessMove | undefined>;
+	/**
+	 * What the board just did and why. The animation policy decides whether it is
+	 * worth a slide, so the stores stay out of that question entirely.
+	 */
+	readonly transition: Signal<BoardTransition | undefined>;
 	readonly checkedSquare: Signal<Square | undefined>;
 	readonly pendingPromotion: Signal<PendingPromotion | undefined>;
 	/** Something is being played for you; the board shows a waiting cursor. */

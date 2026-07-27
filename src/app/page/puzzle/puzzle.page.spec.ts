@@ -3,11 +3,21 @@ import { ActivatedRoute } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PuzzlePage } from '@app/page/puzzle/puzzle.page';
+import { SettingRepository } from '@app/repository/setting.repository';
+
+/** The board reads stored preferences; nothing here depends on what they hold. */
+const settingRepository = {
+	findAll: () => Promise.resolve([]),
+	insert: (_store: string, item: unknown) => Promise.resolve(item),
+};
 
 function createPage(data: Record<string, unknown>): PuzzlePage {
 	TestBed.configureTestingModule({
 		imports: [PuzzlePage],
-		providers: [{ provide: ActivatedRoute, useValue: { snapshot: { data } } }],
+		providers: [
+			{ provide: ActivatedRoute, useValue: { snapshot: { data } } },
+			{ provide: SettingRepository, useValue: settingRepository },
+		],
 	});
 
 	return TestBed.createComponent(PuzzlePage).componentInstance;
@@ -33,7 +43,7 @@ describe('PuzzlePage', () => {
 	it('opens the bundled example ready to play on the sample route', () => {
 		const page = createPage({ sample: true });
 
-		vi.advanceTimersByTime(500);
+		vi.advanceTimersByTime(1500);
 
 		expect(page.store.library.puzzles()).toHaveLength(1);
 		expect(page.store.puzzle()?.id).toBe('JOGv3');

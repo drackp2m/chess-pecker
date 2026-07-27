@@ -55,6 +55,8 @@ export function withPuzzleComputed() {
 
 				mistake: computed<ChessMove | undefined>(() => store.attempt()?.move),
 
+				announcedMove: computed(() => store.announced()),
+
 				checkedSquare: computed<Square | undefined>(() =>
 					ChessMoveGenerator.checkedSquare(position()),
 				),

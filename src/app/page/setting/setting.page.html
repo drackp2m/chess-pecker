@@ -9,5 +9,23 @@
 		</form>
 	</div>
 
+	<div class="flex-col gap-2">
+		<h4>Move animation</h4>
+
+		<p class="hint color-contrast-mid">How much of the board's movement slides into place.</p>
+
+		<form [formGroup]="form" class="flex-col gap-1">
+			@for (animation of moveAnimations; track animation) {
+				<input
+					appThemed
+					type="radio"
+					[label]="animationLabel[animation]"
+					[value]="animation"
+					formControlName="moveAnimation"
+				/>
+			}
+		</form>
+	</div>
+
 	<p class="flex-row flex-grow justify-center align-end mono fs-sm">version {{ VERSION }}</p>
 </section>

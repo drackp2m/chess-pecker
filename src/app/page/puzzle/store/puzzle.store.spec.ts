@@ -10,13 +10,16 @@ const MATE_IN_3 =
 const SHORT =
 	'ABC12,4k3/8/8/8/8/8/R7/4K2R w - - 0 1,h1h5 e8d8 a2a8,900,90,10,mate mateIn1,https://example.org,900-999';
 
+/** Long enough for both beats of the replay: the piece lights up, then it moves. */
+const REPLAY_TOTAL = 1500;
+
 function createStore(csv: string): PuzzleStore {
 	TestBed.configureTestingModule({ providers: [PuzzleLibraryStore, PuzzleStore] });
 
 	const store = TestBed.inject(PuzzleStore);
 
 	store.loadCsv(csv);
-	vi.advanceTimersByTime(500);
+	vi.advanceTimersByTime(REPLAY_TOTAL);
 
 	return store;
 }
@@ -43,6 +46,28 @@ describe('PuzzleStore', () => {
 		expect(store.isPlayerTurn()).toBe(true);
 	});
 
+	it('lights the opponent piece up before it actually moves', () => {
+		TestBed.configureTestingModule({ providers: [PuzzleLibraryStore, PuzzleStore] });
+
+		const store = TestBed.inject(PuzzleStore);
+
+		store.loadCsv(`${HEADER}\n${MATE_IN_3}`);
+		vi.advanceTimersByTime(350);
+
+		// First beat: the rook on f1 is announced but has not left its square.
+		expect(store.announcedMove()?.from).toBe('f1');
+		expect(store.announcedMove()?.to).toBe('f8');
+		expect(store.history()).toHaveLength(0);
+		expect(store.isBusy()).toBe(true);
+
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		// Second beat: the highlight clears and the move lands.
+		expect(store.announcedMove()).toBeUndefined();
+		expect(store.history()[0]?.san).toBe('Rxf8');
+		expect(store.isBusy()).toBe(false);
+	});
+
 	it('accepts the scripted solution and replies for the opponent', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
@@ -52,7 +77,7 @@ describe('PuzzleStore', () => {
 		expect(store.history()[1]?.san).toBe('Rb1+');
 		expect(store.outcome()).toBe('replying');
 
-		vi.advanceTimersByTime(500);
+		vi.advanceTimersByTime(REPLAY_TOTAL);
 
 		expect(store.history()[2]?.san).toBe('Bd1');
 		expect(store.outcome()).toBe('solving');
@@ -69,7 +94,7 @@ describe('PuzzleStore', () => {
 		] as const) {
 			store.selectSquare(from);
 			store.selectSquare(to);
-			vi.advanceTimersByTime(500);
+			vi.advanceTimersByTime(REPLAY_TOTAL);
 		}
 
 		expect(store.outcome()).toBe('solved');
@@ -111,12 +136,38 @@ describe('PuzzleStore', () => {
 		expect(store.history()[1]?.san).toBe('Rb1+');
 	});
 
+	it('reports each kind of transition so the policy can judge it', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.selectSquare('b2');
+		store.selectSquare('b1');
+
+		// Playing a move.
+		expect(store.transition()).toMatchObject({ from: 'b2', to: 'b1', kind: 'played' });
+
+		const tick = store.transition()?.tick ?? 0;
+
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.transition()).toMatchObject({ to: 'd1', kind: 'played' });
+		expect(store.transition()?.tick).toBeGreaterThan(tick);
+
+		store.stepBackward();
+
+		// Taking a move back travels the other way, so the squares are reversed.
+		expect(store.transition()).toMatchObject({ from: 'd1', to: 'b3', kind: 'backward' });
+
+		store.stepForward();
+
+		expect(store.transition()).toMatchObject({ from: 'b3', to: 'd1', kind: 'forward' });
+	});
+
 	it('steps backward and forward through the played line', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		store.selectSquare('b2');
 		store.selectSquare('b1');
-		vi.advanceTimersByTime(500);
+		vi.advanceTimersByTime(REPLAY_TOTAL);
 
 		expect(store.cursor()).toBe(3);
 
@@ -144,22 +195,22 @@ describe('PuzzleStore', () => {
 		expect(store.library.hasNext()).toBe(true);
 
 		store.nextPuzzle();
-		vi.advanceTimersByTime(500);
+		vi.advanceTimersByTime(REPLAY_TOTAL);
 
 		expect(store.puzzle()?.id).toBe('ABC12');
 		expect(store.library.hasNext()).toBe(false);
 
 		store.previousPuzzle();
-		vi.advanceTimersByTime(500);
+		vi.advanceTimersByTime(REPLAY_TOTAL);
 
 		expect(store.puzzle()?.id).toBe('JOGv3');
 		expect(store.cursor()).toBe(1);
 
 		store.selectSquare('b2');
 		store.selectSquare('b1');
-		vi.advanceTimersByTime(500);
+		vi.advanceTimersByTime(REPLAY_TOTAL);
 		store.restart();
-		vi.advanceTimersByTime(500);
+		vi.advanceTimersByTime(REPLAY_TOTAL);
 
 		expect(store.cursor()).toBe(1);
 		expect(store.line()).toHaveLength(1);

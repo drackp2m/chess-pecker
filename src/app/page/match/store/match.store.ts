@@ -1,6 +1,7 @@
 import { DestroyRef, Injectable, computed, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
+import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { PIECE_LETTER } from '@app/definition/chess.constant';
 import {
@@ -17,8 +18,12 @@ import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessNotation } from '@app/util/chess/chess-notation';
+import { ScheduledAction } from '@app/util/scheduled-action';
 
-const OPPONENT_DELAY = 450;
+/** Time the machine appears to think before it reveals its move. */
+const THINK_DELAY = 350;
+/** How long the chosen piece stays lit before it slides to its destination. */
+const ANNOUNCE_DELAY = 450;
 
 @Injectable()
 export class MatchStore
@@ -27,7 +32,7 @@ export class MatchStore
 {
 	private readonly opponent = inject(ChessOpponentService);
 
-	private timeoutId: ReturnType<typeof setTimeout> | undefined;
+	private readonly scheduled = new ScheduledAction();
 
 	readonly legalMoves = computed(() => ChessMoveGenerator.legalMoves(this.position()));
 
@@ -52,6 +57,7 @@ export class MatchStore
 	// BoardPresenter contract. Free play has no refuted move to show, and the board
 	// only waits while the machine thinks.
 	readonly mistake = computed<ChessMove | undefined>(() => undefined);
+	readonly announcedMove = computed(() => this.announced());
 	readonly isBusy = this.isOpponentThinking;
 	readonly isLocked = this.isFinished;
 
@@ -59,14 +65,14 @@ export class MatchStore
 		super();
 
 		inject(DestroyRef).onDestroy(() => {
-			this.clearScheduledMove();
+			this.scheduled.cancel();
 		});
 
 		this.scheduleOpponentMove();
 	}
 
 	startMatch(playerColor: PieceColor): void {
-		this.clearScheduledMove();
+		this.scheduled.cancel();
 		patchState(this, buildInitialState(playerColor));
 		this.scheduleOpponentMove();
 	}
@@ -81,7 +87,7 @@ export class MatchStore
 
 		const position = ChessFen.parse(fen);
 
-		this.clearScheduledMove();
+		this.scheduled.cancel();
 		patchState(this, {
 			...buildInitialState(position.turn),
 			position,
@@ -147,7 +153,7 @@ export class MatchStore
 
 	/** Steps back to the player's previous turn, undoing the machine's reply too. */
 	undoLastMove(): void {
-		this.clearScheduledMove();
+		this.scheduled.cancel();
 
 		const rewound = rewindToPlayerTurn(
 			{
@@ -163,6 +169,8 @@ export class MatchStore
 			selected: undefined,
 			pendingPromotion: undefined,
 			isOpponentThinking: false,
+			announced: undefined,
+			transition: undefined,
 			status: ChessMoveGenerator.status(rewound.position),
 			notationError: undefined,
 		});
@@ -212,6 +220,7 @@ export class MatchStore
 			selected: undefined,
 			pendingPromotion: undefined,
 			notationError: undefined,
+			transition: nextTransition(this.transition(), move, 'played'),
 		});
 
 		this.scheduleOpponentMove();
@@ -219,29 +228,38 @@ export class MatchStore
 
 	/** Hands the turn to the machine, which answers in notation after a short pause. */
 	private scheduleOpponentMove(): void {
-		this.clearScheduledMove();
+		this.scheduled.cancel();
 
 		if ('playing' !== this.status() || this.position().turn === this.playerColor()) {
 			return;
 		}
 
 		patchState(this, { isOpponentThinking: true });
-
-		this.timeoutId = setTimeout(() => {
-			const notation = this.opponent.chooseNotation(this.position());
-
-			patchState(this, { isOpponentThinking: false });
-
-			if (undefined !== notation) {
-				this.playNotation(notation);
-			}
-		}, OPPONENT_DELAY);
+		this.scheduled.run(() => {
+			this.announceOpponentMove();
+		}, THINK_DELAY);
 	}
 
-	private clearScheduledMove(): void {
-		if (undefined !== this.timeoutId) {
-			clearTimeout(this.timeoutId);
-			this.timeoutId = undefined;
+	/**
+	 * Reveals the machine's choice in two beats: the piece lights up on its own
+	 * square, and only then does the move actually get played.
+	 */
+	private announceOpponentMove(): void {
+		const position = this.position();
+		const notation = this.opponent.chooseNotation(position);
+
+		patchState(this, {
+			isOpponentThinking: false,
+			announced: undefined === notation ? undefined : ChessNotation.parse(position, notation),
+		});
+
+		if (undefined === notation) {
+			return;
 		}
+
+		this.scheduled.run(() => {
+			patchState(this, { announced: undefined });
+			this.playNotation(notation);
+		}, ANNOUNCE_DELAY);
 	}
 }

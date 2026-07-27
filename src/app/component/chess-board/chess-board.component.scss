@@ -6,7 +6,8 @@
 	--square-selected: color-mix(in oklab, var(--color-accent) 70%, rgb(255 255 255));
 	--square-last-move: color-mix(in oklab, var(--color-accent) 35%, transparent);
 	--square-checked: rgb(214 64 52);
-	--square-mistake: rgb(196 48 38);
+	--square-mistake: rgb(196 48 38 / 45%);
+	--square-announced: color-mix(in oklab, var(--color-accent) 85%, rgb(255 255 255));
 
 	display: block;
 	width: 100%;
@@ -28,9 +29,16 @@
 	&.waiting {
 		cursor: progress;
 	}
+
+	// The ghost must not steal the pointer, or the drop lands on itself.
+	&.dragging .square {
+		cursor: grabbing;
+	}
 }
 
 .square {
+	// Dragging a piece must not scroll the page under it.
+	touch-action: none;
 	cursor: pointer;
 
 	position: relative;
@@ -51,11 +59,19 @@
 		background-color: var(--square-dark);
 	}
 
-	&:disabled {
+	&[aria-disabled='true'] {
 		cursor: default;
 	}
 
-	&.last-move::after {
+	// Picked up: the piece rides with the pointer, so its home square shows empty.
+	&.lifted app-chess-piece {
+		opacity: 0.25;
+	}
+
+	// The last move and a refuted attempt are both a translucent wash over the
+	// square, so the piece underneath stays readable. Same treatment, different tint.
+	&.last-move::after,
+	&.mistake::after {
 		content: '';
 		position: absolute;
 		inset: 0;
@@ -70,14 +86,17 @@
 		background-color: var(--square-checked);
 	}
 
-	// A refuted attempt: louder than the last-move tint, and it outranks it.
-	&.mistake,
-	&.mistake.last-move {
-		background-color: var(--square-mistake);
+	// The piece the opponent is about to move, pulsing on its own square before it
+	// travels, so the move can be followed instead of just appearing.
+	&.announced {
+		background-color: var(--square-announced);
+		animation: announce 600ms ease-in-out infinite alternate;
 	}
 
+	// Declared after the shared rule above so a refuted move outranks the last-move
+	// tint on the very squares it also occupies.
 	&.mistake::after {
-		background-color: transparent;
+		background-color: var(--square-mistake);
 	}
 
 	// A dot marks a quiet destination, a ring marks a capture.
@@ -115,11 +134,11 @@
 // Each coordinate is painted in the tone of the opposite square, so it always
 // contrasts with the one it sits on and the ranks and files alternate down the
 // edges. Driven by the square's own class, it stays right when the board flips.
-.square.light .coordinate {
+.light .coordinate {
 	color: var(--square-dark);
 }
 
-.square.dark .coordinate {
+.dark .coordinate {
 	color: var(--square-light);
 }
 
@@ -140,8 +159,13 @@
 	}
 }
 
+.promotion-square .coordinate {
+	font-size: clamp(0.55rem, 1.6vw, 0.8rem);
+}
+
 .promotion {
 	position: absolute;
+	z-index: 3;
 	inset: 0;
 
 	display: flex;
@@ -158,23 +182,38 @@
 	color: rgb(255 255 255 / 90%);
 }
 
-.promotion-choices {
-	display: flex;
-	gap: var(--spacing-2);
+// The four candidates laid out as the a1-b2 corner of a board, so the picker looks
+// like part of the game rather than a row of buttons.
+.promotion-board {
+	overflow: hidden;
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+
+	aspect-ratio: 1;
+	width: min(46%, 12rem);
+	border-radius: var(--border-radius-2);
+
+	box-shadow: 0 2px 12px rgb(0 0 0 / 45%);
 }
 
-.promotion-choice {
+.promotion-square {
 	cursor: pointer;
+
+	position: relative;
 
 	display: flex;
 	align-items: center;
 	justify-content: center;
 
 	aspect-ratio: 1;
-	width: clamp(2.5rem, 8vw, 4rem);
-	border-radius: var(--border-radius-2);
 
-	background-color: var(--square-light);
+	&.light {
+		background-color: var(--square-light);
+	}
+
+	&.dark {
+		background-color: var(--square-dark);
+	}
 
 	&:hover,
 	&:focus-visible {
@@ -187,4 +226,27 @@
 	font-size: 0.8rem;
 	color: rgb(255 255 255 / 80%);
 	text-decoration: underline;
+}
+
+@keyframes announce {
+	from {
+		box-shadow: inset 0 0 0 2px rgb(255 255 255 / 30%);
+	}
+
+	to {
+		box-shadow: inset 0 0 0 5px rgb(255 255 255 / 85%);
+	}
+}
+
+// Follows the pointer while a piece is being dragged.
+.ghost {
+	pointer-events: none;
+	position: fixed;
+	z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.square.announced {
+		animation: none;
+	}
 }

@@ -1,6 +1,7 @@
 import { DestroyRef, Injectable, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
+import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
@@ -18,7 +19,10 @@ import {
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
-const SCRIPTED_DELAY = 400;
+/** Pause before the opponent's piece lights up. */
+const REPLAY_DELAY = 300;
+/** How long it stays lit before it slides to its destination. */
+const ANNOUNCE_DELAY = 450;
 
 @Injectable()
 export class PuzzleStore
@@ -79,13 +83,27 @@ export class PuzzleStore
 
 	/** Takes back a refuted attempt, or rewinds one ply of the solved line. */
 	stepBackward(): void {
-		if (undefined !== this.attempt()) {
-			patchState(this, { attempt: undefined, selected: undefined, outcome: 'solving' });
+		const attempt = this.attempt();
+
+		if (undefined !== attempt) {
+			patchState(this, {
+				attempt: undefined,
+				selected: undefined,
+				transition: nextTransition(this.transition(), attempt.move, 'backward'),
+				outcome: 'solving',
+			});
 
 			return;
 		}
 
-		patchState(this, { cursor: Math.max(0, this.cursor() - 1), selected: undefined });
+		const undone = this.line()[this.cursor() - 1];
+
+		patchState(this, {
+			cursor: Math.max(0, this.cursor() - 1),
+			selected: undefined,
+			transition:
+				undefined === undone ? undefined : nextTransition(this.transition(), undone, 'backward'),
+		});
 	}
 
 	stepForward(): void {
@@ -93,9 +111,13 @@ export class PuzzleStore
 			return;
 		}
 
+		const replayed = this.line()[this.cursor()];
+
 		patchState(this, {
 			cursor: Math.min(this.line().length, this.cursor() + 1),
 			selected: undefined,
+			transition:
+				undefined === replayed ? undefined : nextTransition(this.transition(), replayed, 'forward'),
 		});
 	}
 
@@ -189,18 +211,21 @@ export class PuzzleStore
 	}
 
 	private commit(move: ChessMove, isOpponent: boolean): void {
-		patchState(
-			this,
-			commitPatch(
+		patchState(this, {
+			...commitPatch(
 				{ positions: this.positions(), line: this.line(), cursor: this.cursor() },
 				this.position(),
 				move,
 				isOpponent,
 			),
-		);
+			transition: nextTransition(this.transition(), move, 'played'),
+		});
 	}
 
-	/** Replays the opponent's scripted ply after a short pause. */
+	/**
+	 * Replays the opponent's scripted ply in two beats: the piece lights up on its
+	 * own square first, so it can be seen before it slides across the board.
+	 */
 	private scheduleScriptedMove(): void {
 		this.scheduled.cancel();
 		patchState(this, { isReplaying: true });
@@ -210,15 +235,24 @@ export class PuzzleStore
 			const move =
 				undefined === expected ? undefined : ChessNotation.parse(this.position(), expected);
 
-			if (undefined !== move) {
-				this.commit(move, true);
-			}
+			patchState(this, { announced: move });
+			this.scheduled.run(() => {
+				this.replayAnnounced(move);
+			}, ANNOUNCE_DELAY);
+		}, REPLAY_DELAY);
+	}
 
-			// Real Lichess lines end on a player move, but a set that ends on the
-			// opponent's would otherwise leave the exercise waiting forever.
-			const isComplete = this.cursor() >= (this.puzzle()?.moves.length ?? 0);
+	private replayAnnounced(move: ChessMove | undefined): void {
+		patchState(this, { announced: undefined });
 
-			patchState(this, { isReplaying: false, outcome: isComplete ? 'solved' : 'solving' });
-		}, SCRIPTED_DELAY);
+		if (undefined !== move) {
+			this.commit(move, true);
+		}
+
+		// Real Lichess lines end on a player move, but a set that ends on the
+		// opponent's would otherwise leave the exercise waiting forever.
+		const isComplete = this.cursor() >= (this.puzzle()?.moves.length ?? 0);
+
+		patchState(this, { isReplaying: false, outcome: isComplete ? 'solved' : 'solving' });
 	}
 }

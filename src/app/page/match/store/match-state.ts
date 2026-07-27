@@ -1,4 +1,6 @@
+import { BoardTransition } from '@app/definition/board-animation.type';
 import {
+	ChessMove,
 	ChessMoveRecord,
 	ChessPosition,
 	MatchStatus,
@@ -21,6 +23,10 @@ export interface MatchStoreProps {
 	orientation: PieceColor;
 	selected: Square | undefined;
 	pendingPromotion: PendingPromotion | undefined;
+	/** The machine's next move, lit up on the board before it is played. */
+	announced: ChessMove | undefined;
+	/** What the board last did, for the animation policy to judge. */
+	transition: BoardTransition | undefined;
 	status: MatchStatus;
 	isOpponentThinking: boolean;
 	notationError: string | undefined;
@@ -41,6 +47,8 @@ export function buildInitialState(playerColor: PieceColor = 'white'): MatchStore
 		orientation: playerColor,
 		selected: undefined,
 		pendingPromotion: undefined,
+		announced: undefined,
+		transition: undefined,
 		status: 'playing',
 		isOpponentThinking: false,
 		notationError: undefined,
