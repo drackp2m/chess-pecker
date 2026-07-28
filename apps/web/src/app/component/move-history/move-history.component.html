@@ -1,12 +1,12 @@
 @if (0 === turns().length) {
-	<p class="empty color-contrast-mid">No moves yet.</p>
+	<p class="fs-sm color-contrast-mid">No moves yet.</p>
 } @else {
-	<ol class="turns">
+	<ol class="flex-col gap-1">
 		@for (turn of turns(); track turn.number) {
-			<li class="turn">
-				<span class="number color-contrast-mid">{{ turn.number }}.</span>
-				<span class="move">{{ turn.white ?? '…' }}</span>
-				<span class="move">{{ turn.black ?? '' }}</span>
+			<li class="turn gap-2 align-base py-1 px-2 br-1">
+				<span class="fs-sm color-contrast-mid">{{ turn.number }}.</span>
+				<span class="fw-lg">{{ turn.white ?? '…' }}</span>
+				<span class="fw-lg">{{ turn.black ?? '' }}</span>
 			</li>
 		}
 	</ol>

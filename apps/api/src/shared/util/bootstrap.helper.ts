@@ -25,7 +25,7 @@ export class BootstrapHelper {
 	static readonly nestApplicationOptions = (appConfig: ApiConfig): NestApplicationOptions => {
 		const nestApplicationOptions: NestApplicationOptions = {};
 
-		if ('production' !== appConfig.environment) {
+		if ('production' !== appConfig.environment && 'https' === appConfig.protocol) {
 			nestApplicationOptions.httpsOptions = {
 				key: readFileSync('../../.cert/key.pem'),
 				cert: readFileSync('../../.cert/cert.pem'),

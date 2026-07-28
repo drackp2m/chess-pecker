@@ -7,8 +7,6 @@
 	bottom: var(--safe-offset-bottom);
 	left: 0;
 
-	padding: 0 var(--spacing-2);
-
 	.wrapper {
 		display: grid;
 		grid-template-rows: 1fr;
@@ -26,8 +24,6 @@
 	}
 
 	.slot {
-		display: flex;
-		flex-direction: column;
 		min-height: 0;
 	}
 
@@ -35,7 +31,6 @@
 		--countdown-play-state: running;
 
 		pointer-events: auto;
-		margin-top: var(--spacing-2);
 		animation: notification-enter var(--transition-duration) var(--transition-easing);
 
 		&:active,

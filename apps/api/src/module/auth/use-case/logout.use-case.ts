@@ -24,13 +24,14 @@ export class LogoutUseCase {
 
 		if (undefined !== enumKey) {
 			const path = JwtEndpoints[enumKey];
+			const cookieDomain = this.configService.api.cookieDomain;
 
 			this.request.res?.clearCookie(tokenType, {
 				signed: true,
 				secure: true,
 				httpOnly: true,
 				sameSite: 'none',
-				domain: this.configService.api.cookieDomain,
+				...('' === cookieDomain ? {} : { domain: cookieDomain }),
 				path,
 			});
 		}

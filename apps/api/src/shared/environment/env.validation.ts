@@ -86,7 +86,6 @@ class EnvironmentVariables {
 	API_COOKIE_SECRET!: string;
 
 	@IsString()
-	@IsNotEmpty()
 	API_COOKIE_DOMAIN!: string;
 
 	@IsString()

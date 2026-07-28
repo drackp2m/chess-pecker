@@ -1,4 +1,4 @@
-<div id="notification-outlet" class="flex-col">
+<div id="notification-outlet" class="flex-col px-2">
 	@for (notification of notifications(); track notification.uuid) {
 		<div
 			class="wrapper"
@@ -6,9 +6,9 @@
 			[style.z-index]="$index + 1"
 			(animationend)="onWrapperAnimationEnd(notification, $event)"
 		>
-			<div class="slot">
+			<div class="slot flex-col">
 				<div
-					class="notification flex-row align-center gap-4 p-4 br-2 surface-contrast shadow-md"
+					class="notification flex-row align-center gap-4 mt-2 p-4 br-2 surface-contrast shadow-md"
 					[class.paused]="isPaused(notification)"
 					(pointerdown)="onNotificationPointerDown(notification, $event)"
 				>

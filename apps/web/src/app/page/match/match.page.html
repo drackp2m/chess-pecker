@@ -2,11 +2,11 @@
 	<header class="flex-col gap-1">
 		<h4 class="title color-contrast-mid">Playing <span class="color-contrast">match</span></h4>
 
-		<p class="headline" [class.check]="isCheck()">
+		<p class="headline flex-row gap-2 align-center fs-lg fw-lg" [class.check]="isCheck()">
 			{{ headline() }}
 
 			@if (isCheck() && !store.isFinished()) {
-				<span class="badge">Check</span>
+				<span class="badge py-1 px-2 br-1 fs-sm fw-xl">Check</span>
 			}
 		</p>
 	</header>
@@ -36,7 +36,7 @@
 					</button>
 				</div>
 
-				<p class="hint color-contrast-mid">Choosing a side starts a new match.</p>
+				<p class="fs-sm color-contrast-mid">Choosing a side starts a new match.</p>
 			</div>
 
 			<div class="flex-col gap-2">
@@ -71,7 +71,7 @@
 					Load position
 				</button>
 
-				<p class="fen color-contrast-mid">{{ store.fen() }}</p>
+				<p class="fen mono fs-sm color-contrast-mid">{{ store.fen() }}</p>
 			</div>
 
 			<div class="flex-col gap-2">
@@ -83,10 +83,10 @@
 	</div>
 
 	@if (store.notationError(); as error) {
-		<p class="error" role="alert">
+		<p class="error flex-row gap-3 align-center py-2 px-3 br-1" role="alert">
 			{{ error }}
 
-			<button type="button" class="dismiss" (click)="store.dismissError()">Dismiss</button>
+			<button type="button" class="dismiss fs-sm" (click)="store.dismissError()">Dismiss</button>
 		</p>
 	}
 </section>

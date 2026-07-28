@@ -25,12 +25,14 @@ export class SetJwtTokenUseCase {
 					? this.configService.jwt.accessTokenExpiresIn
 					: this.configService.jwt.refreshTokenExpiresIn;
 
+			const cookieDomain = this.configService.api.cookieDomain;
+
 			this.request.res?.cookie(tokenType, tokenValue, {
 				signed: true,
 				secure: true,
 				httpOnly: true,
 				sameSite: 'none',
-				domain: this.configService.api.cookieDomain,
+				...('' === cookieDomain ? {} : { domain: cookieDomain }),
 				path,
 				// `maxAge` from config is a human string like "1d"; `ms()` turns it into milliseconds.
 				maxAge: ms(maxAge),

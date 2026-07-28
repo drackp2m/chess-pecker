@@ -216,6 +216,18 @@ export default typescriptEslint.config(
 		extends: [transformEslintConfigs(angularEslint.configs.tsRecommended)],
 		processor: angularEslint.processInlineTemplates,
 		rules: {
+			// Angular fails a request with `HttpErrorResponse`, which implements `Error`
+			// without extending it. Both rules would otherwise reject the one error type
+			// this app actually handles, in the code under test and in the stubs alike.
+			'@typescript-eslint/only-throw-error': [
+				'warn',
+				{ allow: [{ from: 'package', name: 'HttpErrorResponse', package: '@angular/common' }] },
+			],
+			'@typescript-eslint/prefer-promise-reject-errors': [
+				'warn',
+				{ allow: [{ from: 'package', name: 'HttpErrorResponse', package: '@angular/common' }] },
+			],
+
 			'@angular-eslint/directive-selector': [
 				'warn',
 				{ type: 'attribute', prefix: 'app', style: 'camelCase' },
@@ -251,7 +263,7 @@ export default typescriptEslint.config(
 			},
 		},
 		rules: {
-			// TODO: remove this whole `rules` block once the API is fully integrated.
+			// ToDo => remove this whole `rules` block once the API is fully integrated.
 			// Five packages it imports are not installed (@nestjs/graphql, graphql,
 			// graphql-subscriptions, graphql-ws, @playsetonline/api-definitions) and ten
 			// relative imports point at files that were left behind in the project it
@@ -265,6 +277,15 @@ export default typescriptEslint.config(
 			'@typescript-eslint/no-unsafe-call': 'off',
 			'@typescript-eslint/no-unsafe-member-access': 'off',
 			'@typescript-eslint/no-unsafe-return': 'off',
+		},
+	},
+
+	// ── Migrations (apps/api) ──────────────────────────────────────────────────
+	{
+		name: 'Migrations',
+		files: ['apps/api/migrations/**/*.ts'],
+		rules: {
+			'@typescript-eslint/require-await': 'off',
 		},
 	},
 
@@ -322,7 +343,7 @@ export default typescriptEslint.config(
 	{
 		name: 'Complexity',
 		files: ['**/*.ts', '**/*.mts', '**/*.js', '**/*.mjs'],
-		ignores: ['**/*.spec.ts', '**/*.spec.js', '.angular/**'],
+		ignores: ['**/*.spec.ts', '**/*.spec.js', '**/.angular/**'],
 		rules: {
 			'max-lines': ['warn', { max: 250, skipComments: true }],
 			'max-lines-per-function': ['warn', { max: 75, skipComments: true, IIFEs: true }],

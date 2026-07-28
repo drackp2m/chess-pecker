@@ -1,0 +1,42 @@
+<section class="flex-col gap-4">
+	<header class="flex-col gap-1">
+		<h4>Log in</h4>
+
+		<p class="fs-sm color-contrast-mid">
+			The session is opened against the Chess Pecker API and kept in a cookie, so it survives a
+			reload.
+		</p>
+	</header>
+
+	<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
+		<input
+			appThemed
+			type="text"
+			label="Username"
+			autocomplete="username"
+			formControlName="username"
+		/>
+
+		<input
+			appThemed
+			type="password"
+			label="Password"
+			autocomplete="current-password"
+			formControlName="password"
+		/>
+
+		@if (error(); as message) {
+			<p class="error fs-sm" role="alert">{{ message }}</p>
+		}
+
+		<button appThemed type="submit" color="accent" [disabled]="isSubmitting()">
+			{{ isSubmitting() ? 'Logging in…' : 'Log in' }}
+		</button>
+	</form>
+
+	<div class="flex-row flex-wrap gap-2 align-center">
+		<p class="fs-sm color-contrast-mid">No account yet?</p>
+
+		<button appThemed appRouterLink="/register">Create one</button>
+	</div>
+</section>

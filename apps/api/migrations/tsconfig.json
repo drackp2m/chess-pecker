@@ -1,0 +1,15 @@
+/* MikroORM writes its migrations next to `src`, not inside it, so the app
+   tsconfig (rootDir `src`, so `nest build` emits a flat `dist`) cannot include
+   them and the type-aware ESLint pass had no project for these files. This
+   config covers only this folder: same compiler settings, no emit — the CLI runs
+   the migrations through ts-node. */
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {
+		"rootDir": ".",
+		"noEmit": true,
+		"incremental": false,
+		"types": ["node"]
+	},
+	"include": ["./**/*.ts"]
+}

@@ -1,6 +1,6 @@
 <div
 	#board
-	class="board"
+	class="board br-2"
 	[class.waiting]="store.isBusy()"
 	[class.locked]="store.isLocked()"
 	[class.dragging]="undefined !== draggingFrom()"
@@ -11,7 +11,7 @@
 	@for (square of squares(); track square.square) {
 		<button
 			type="button"
-			class="square"
+			class="square flex-row align-center justify-center"
 			[class.light]="square.isLight"
 			[class.dark]="!square.isLight"
 			[class.selected]="square.isSelected"
@@ -32,11 +32,11 @@
 			}
 
 			@if (square.rankLabel; as rank) {
-				<span class="coordinate rank" aria-hidden="true">{{ rank }}</span>
+				<span class="coordinate rank fw-xl" aria-hidden="true">{{ rank }}</span>
 			}
 
 			@if (square.fileLabel; as file) {
-				<span class="coordinate file" aria-hidden="true">{{ file }}</span>
+				<span class="coordinate file fw-xl" aria-hidden="true">{{ file }}</span>
 			}
 		</button>
 	}
@@ -54,14 +54,18 @@
 	}
 
 	@if (store.pendingPromotion(); as promotion) {
-		<div class="promotion" role="dialog" aria-label="Choose a promotion piece">
-			<p class="promotion-title">Promote to</p>
+		<div
+			class="promotion flex-col gap-3 align-center justify-center"
+			role="dialog"
+			aria-label="Choose a promotion piece"
+		>
+			<p class="promotion-title fw-xl">Promote to</p>
 
-			<div class="promotion-board">
+			<div class="promotion-board br-2">
 				@for (choice of promotionChoices; track choice.piece) {
 					<button
 						type="button"
-						class="promotion-square"
+						class="promotion-square flex-row align-center justify-center"
 						[class.light]="choice.isLight"
 						[class.dark]="!choice.isLight"
 						[attr.aria-label]="'Promote to ' + choice.piece"
@@ -70,17 +74,17 @@
 						<app-chess-piece [type]="choice.piece" [color]="promotionColor()" />
 
 						@if (choice.rankLabel; as rank) {
-							<span class="coordinate rank" aria-hidden="true">{{ rank }}</span>
+							<span class="coordinate rank fw-xl" aria-hidden="true">{{ rank }}</span>
 						}
 
 						@if (choice.fileLabel; as file) {
-							<span class="coordinate file" aria-hidden="true">{{ file }}</span>
+							<span class="coordinate file fw-xl" aria-hidden="true">{{ file }}</span>
 						}
 					</button>
 				}
 			</div>
 
-			<button type="button" class="promotion-cancel" (click)="store.cancelPromotion()">
+			<button type="button" class="promotion-cancel fs-sm" (click)="store.cancelPromotion()">
 				Cancel
 			</button>
 		</div>

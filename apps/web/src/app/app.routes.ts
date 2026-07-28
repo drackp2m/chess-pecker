@@ -23,6 +23,14 @@ export const APP_ROUTES: Routes = [
 				path: 'settings',
 				loadChildren: () => import('./page/setting/setting.routes'),
 			},
+			{
+				path: 'login',
+				loadChildren: () => import('./page/auth/login.routes'),
+			},
+			{
+				path: 'register',
+				loadChildren: () => import('./page/auth/register.routes'),
+			},
 		],
 	},
 ];

@@ -11,6 +11,7 @@ async function bootstrap(): Promise<void> {
 	const apiConfig = loadApiConfig();
 
 	const allowedDomains = apiConfig.corsAllowedDomains;
+	const allowAnyOrigin = 'production' !== apiConfig.environment;
 
 	const app = await NestFactory.create(
 		AppModule,
@@ -28,7 +29,7 @@ async function bootstrap(): Promise<void> {
 			origin: string | undefined,
 			callback: (error: Error | null, allowed: boolean) => void,
 		) => {
-			if (origin === undefined || allowedDomains.includes(origin)) {
+			if (origin === undefined || allowAnyOrigin || allowedDomains.includes(origin)) {
 				callback(null, true);
 			} else {
 				Logger.warn(`Origin ${origin} not allowed by CORS policy`);

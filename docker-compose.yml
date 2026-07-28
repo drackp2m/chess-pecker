@@ -39,21 +39,12 @@ services:
       - ${API_DEBUG_PORT}:9229
     volumes:
       - .:/usr/src/app
-      # One volume per workspace package: pnpm gives each its own node_modules,
-      # and the bind mount above would otherwise hide the ones baked in the image.
       - node_modules:/usr/src/app/node_modules
       - web_node_modules:/usr/src/app/apps/web/node_modules
       - api_node_modules:/usr/src/app/apps/api/node_modules
     environment:
-      # Relative to the MikroORM CLI's cwd, which `pnpm --filter @chesspecker/api`
-      # puts at apps/api — the same place mikro-orm.config.ts resolves its entity
-      # and migration globs from. Running the CLI by hand from the repo root finds
-      # nothing; always go through the package scripts.
       MIKRO_ORM_CLI_CONFIG: src/shared/module/config/mikro-orm.config.ts
-      MIKRO_ORM_CLI_TS_CONFIG_PATH: tsconfig.json
-      MIKRO_ORM_CLI_ALWAYS_ALLOW_TS: 1
-      MIKRO_ORM_CLI_USE_TS_NODE: 1
-      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      NODE_EXTRA_CA_CERTS: /usr/src/app/.cert/rootCA.pem
       PATH: $PATH:/usr/src/app/node_modules/.bin
       NG_HMR_TEMPLATES: 1
       TZ: UTC

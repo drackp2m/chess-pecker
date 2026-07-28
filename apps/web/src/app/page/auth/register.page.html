@@ -1,0 +1,52 @@
+<section class="flex-col gap-4">
+	<header class="flex-col gap-1">
+		<h4>Create an account</h4>
+
+		<p class="fs-sm color-contrast-mid">
+			A username and a password are enough. The email is optional and only used to get the account
+			back if you lose the password.
+		</p>
+	</header>
+
+	<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
+		<input
+			appThemed
+			type="text"
+			label="Username"
+			autocomplete="username"
+			formControlName="username"
+		/>
+
+		<input
+			appThemed
+			type="email"
+			label="Email (optional)"
+			autocomplete="email"
+			formControlName="email"
+		/>
+
+		<input
+			appThemed
+			type="password"
+			label="Password"
+			autocomplete="new-password"
+			formControlName="password"
+		/>
+
+		<p class="fs-sm color-contrast-mid">At least {{ minPasswordLength }} characters.</p>
+
+		@if (error(); as message) {
+			<p class="error fs-sm" role="alert">{{ message }}</p>
+		}
+
+		<button appThemed type="submit" color="accent" [disabled]="isSubmitting()">
+			{{ isSubmitting() ? 'Creating the account…' : 'Create account' }}
+		</button>
+	</form>
+
+	<div class="flex-row flex-wrap gap-2 align-center">
+		<p class="fs-sm color-contrast-mid">Already registered?</p>
+
+		<button appThemed appRouterLink="/login">Log in</button>
+	</div>
+</section>

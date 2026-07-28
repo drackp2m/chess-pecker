@@ -6,7 +6,7 @@
 	"scripts": {
 		"ng": "ng",
 		"start": "ng serve",
-		"start:safari": "sh ../../tools/scripts/start-safari.sh",
+		"start:safari": "sh ../../tools/scripts/start-safari.sh --source 4200 -- ng serve --host 0.0.0.0 --port 4201 --ssl=false",
 		"preview:pwa": "sh ../../tools/scripts/preview-pwa.sh",
 		"build": "ng build",
 		"test": "ng test",

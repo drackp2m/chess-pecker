@@ -1,3 +1,9 @@
-section > img {
-	aspect-ratio: 4 / 3;
+.method {
+	li {
+		text-indent: calc(var(--spacing-3) * -1);
+
+		&::before {
+			content: '· ';
+		}
+	}
 }

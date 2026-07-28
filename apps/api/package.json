@@ -12,6 +12,7 @@
 		"build": "nest build",
 		"start": "nest start",
 		"start:dev": "nest start --watch",
+		"start:safari": "sh ../../tools/scripts/start-safari.sh --source 3000 --env API_PROTOCOL=http --env API_PORT=3001 -- nest start --watch",
 		"start:debug": "nest start --debug --watch",
 		"start:prod": "node dist/main",
 		"test": "jest",

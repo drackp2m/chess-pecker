@@ -11,26 +11,9 @@ section {
 	}
 }
 
-.headline {
-	display: flex;
-	gap: var(--spacing-2);
-	align-items: center;
-
-	font-size: var(--font-size-lg);
-	font-weight: var(--font-weight-lg);
-
-	&.check .badge {
-		display: inline-block;
-
-		padding: var(--spacing-1) var(--spacing-2);
-		border-radius: var(--border-radius-1);
-
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-xl);
-		color: rgb(255 255 255);
-
-		background-color: rgb(214 64 52);
-	}
+.headline.check .badge {
+	color: rgb(255 255 255);
+	background-color: rgb(214 64 52);
 }
 
 // One column on phones, board beside its panel once there is room for both.
@@ -50,36 +33,15 @@ app-chess-board {
 	margin: 0 auto;
 }
 
-.panel {
-	h5 {
-		font-size: var(--font-size-md);
-		font-weight: var(--font-weight-xl);
-	}
-}
-
-.hint {
-	font-size: var(--font-size-sm);
-}
-
 .fen {
-	font-family: monospace;
-	font-size: var(--font-size-sm);
 	overflow-wrap: anywhere;
 }
 
 .error {
-	display: flex;
-	gap: var(--spacing-3);
-	align-items: center;
-
-	padding: var(--spacing-2) var(--spacing-3);
-	border-radius: var(--border-radius-1);
-
 	background-color: color-mix(in oklab, rgb(214 64 52) 18%, transparent);
 
 	.dismiss {
 		cursor: pointer;
-		font-size: var(--font-size-sm);
 		text-decoration: underline;
 	}
 }

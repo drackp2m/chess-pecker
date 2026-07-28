@@ -4,3 +4,5 @@
  * else (production, `testing`). Undefined in tooling that skips `define`.
  */
 declare const APP_DEBUG: boolean;
+
+declare const API_URL: string;

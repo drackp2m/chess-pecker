@@ -1,76 +1,89 @@
 <!--
-	ToDo => still the component scratchpad it started as. Below "Practice" it is
-	lorem ipsum, dead buttons wired to nothing ("Insert Game and Players", "Erase all
-	Indexed Data Base data", "Show test notification") and three `picsum.photos`
-	images — remote URLs the service worker does not precache, so the dashboard shows
-	broken images offline in what is otherwise an installable PWA.
-
 	ToDo => this is where the Woodpecker numbers belong: current set and cycle, time
 	for the last cycle against the ones before it, worst-performing exercises, and
-	later the friends' comparison. Worth keeping the widget shells as a sketch of that
-	and dropping the rest.
+	later the friends' comparison. Nothing of that is stored yet, so the section is
+	not sketched here either.
 -->
-<section class="flex-col gap-4">
-	<h4>Practice</h4>
+<section class="flex-col gap-6">
+	<div class="flex-col gap-2">
+		<h4>Practice</h4>
 
-	<button appThemed color="accent" appRouterLink="/puzzles/sample">Try the sample exercise</button>
+		<div class="flex-col gap-2">
+			<button appThemed color="accent" appRouterLink="/puzzles/sample">
+				Try the sample exercise
+			</button>
 
-	<button appThemed color="primary-mid" appRouterLink="/puzzles">Load your own exercises</button>
+			<button appThemed color="primary-mid" appRouterLink="/puzzles">
+				Load your own exercises
+			</button>
 
-	<button appThemed appRouterLink="/match">New match against the machine</button>
+			<button appThemed appRouterLink="/match">New match against the machine</button>
+		</div>
+	</div>
 
-	<h4>Previous statistics</h4>
+	<div class="flex-col gap-2">
+		<h4>The Woodpecker Method</h4>
 
-	<button appThemed color="primary-mid">Insert Game and Players</button>
+		<p class="fs-sm color-contrast-mid">
+			Tactics are trained by repetition, not by volume: you solve the same set of exercises over and
+			over until the patterns come back on sight.
+		</p>
 
-	<button appThemed>Erase all Indexed Data Base data</button>
+		<ul class="method flex-col gap-1 fs-sm">
+			<li class="pl-3">
+				Build one set around your level and solve it from the easiest exercise to the hardest.
+			</li>
 
-	<p>
-		Lorem ipsum dolor sit amet consectetur adipisicing elit. Esse error consequuntur distinctio
-		earum modi voluptas, tenetur, magnam quos suscipit nulla libero nobis perspiciatis magni dolorem
-		est dicta a nam dignissimos.
-	</p>
+			<li class="pl-3">
+				Go through the whole set at least four times, with no long breaks between passes.
+			</li>
 
-	<img src="https://picsum.photos/800/600.webp?random=1" alt="photo" />
+			<li class="pl-3">
+				Each pass gets less time than the one before — about half by the second, a third by the
+				third, and as fast as you can hold your accuracy after that.
+			</li>
 
-	<p>
-		Lorem ipsum dolor sit amet consectetur adipisicing elit. Expedita reiciendis ex, ad magnam quis
-		necessitatibus voluptate quaerat recusandae molestias doloremque corporis commodi molestiae
-		impedit. Quis sapiente maiores perferendis in autem?
-	</p>
+			<li class="pl-3">
+				A missed exercise is marked and left behind: you see the solution, but there is no retry.
+				Those misses are what measures the next pass.
+			</li>
 
-	<p>
-		Lorem ipsum dolor sit amet consectetur adipisicing elit. Consectetur enim deserunt labore nihil
-		necessitatibus dolores perspiciatis exercitationem repellendus blanditiis fugiat, cum tenetur
-		suscipit magni magnam dolorem, alias sequi! Cupiditate, laudantium?
-	</p>
+			<li class="pl-3">
+				Between passes the order is shuffled inside narrow rating bands, so what you recognise is
+				the position and not the sequence.
+			</li>
+		</ul>
 
-	<input appThemed type="text" label="Label" value="42" placeholder="Placeholder" />
+		<p class="fs-sm color-contrast-mid">
+			The whole program is meant to fit in weeks, not months — the effect comes from keeping the
+			passes close together.
+		</p>
+	</div>
 
-	<input appThemed type="text" value="42" label="Disabled" placeholder="Placeholder" disabled />
+	<div class="flex-col gap-2">
+		<h4>Your account</h4>
 
-	<select appThemed label="Number">
-		<option value="">Choose an option</option>
-		<option value="one">one</option>
-		<option value="two" selected>two</option>
-		<option value="three">three</option>
-	</select>
+		@if (session.isAuthenticated()) {
+			<p class="fs-sm color-contrast-mid">
+				@if (session.username(); as username) {
+					Logged in as {{ username }}.
+				} @else {
+					Your session is open.
+				}
+			</p>
 
-	<button appThemed>Show test notification</button>
+			<button appThemed (click)="logOut()">Log out</button>
+		} @else {
+			<p class="fs-sm color-contrast-mid">
+				An account opens a session against the Chess Pecker API. Carrying your sets and cycle times
+				between devices is what it is for, but nothing is stored server-side yet.
+			</p>
 
-	<img src="https://picsum.photos/800/600.webp?random=2" alt="photo" />
+			<div class="flex-col gap-2">
+				<button appThemed color="primary-mid" appRouterLink="/login">Log in</button>
 
-	<p>
-		Lorem ipsum dolor sit amet consectetur adipisicing elit. Corporis officia mollitia harum facilis
-		obcaecati error! Perferendis reprehenderit obcaecati rerum esse, itaque quibusdam, accusamus,
-		dolore optio molestiae sunt autem deleniti veritatis.
-	</p>
-
-	<img src="https://picsum.photos/800/600.webp?random=3" alt="photo" />
-
-	<p>
-		Lorem ipsum dolor sit amet consectetur adipisicing elit. Veritatis, ducimus, qui culpa eum error
-		quibusdam vel velit dolorum animi esse, tempora numquam. Sit, iste provident consequuntur error
-		alias dicta aliquam?
-	</p>
+				<button appThemed appRouterLink="/register">Create an account</button>
+			</div>
+		}
+	</div>
 </section>
