@@ -68,7 +68,7 @@ export default {
 			'@semantic-release/exec',
 			{
 				prepareCmd:
-					'node tools/scripts/sync-ngsw-version.mjs && pnpm exec prettier --write CHANGELOG.md src/ngsw-config.json',
+					'node tools/scripts/sync-ngsw-version.mjs && pnpm exec prettier --write CHANGELOG.md apps/web/src/ngsw-config.json',
 			},
 		],
 		[
@@ -83,7 +83,7 @@ export default {
 		[
 			'@semantic-release/git',
 			{
-				assets: ['package.json', 'CHANGELOG.md', 'src/ngsw-config.json'],
+				assets: ['package.json', 'CHANGELOG.md', 'apps/web/src/ngsw-config.json'],
 				message: '🎒 chore(release): v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}',
 			},
 		],

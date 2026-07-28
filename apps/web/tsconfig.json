@@ -1,0 +1,56 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
+{
+	"extends": "../../tsconfig.base.json",
+	"compileOnSave": false,
+	"compilerOptions": {
+		// Module & target
+		"target": "ES2022",
+		"module": "preserve",
+		"lib": ["ES2023", "DOM"],
+		"importHelpers": true,
+		"experimentalDecorators": true,
+
+		// Paths
+		"paths": {
+			"@app/package": ["../../package.json"],
+			"@app/tools/*": ["../../tools/*"],
+
+			"@app/app.config": ["./src/app/app.config.ts"],
+			"@app/app.routes": ["./src/app/app.routes.ts"],
+			"@app/app.component": ["./src/app/app.component.ts"],
+
+			"@app/component/*": ["./src/app/component/*"],
+			"@app/definition/*": ["./src/app/definition/*"],
+			"@app/directive/*": ["./src/app/directive/*"],
+			"@app/guard/*": ["./src/app/guard/*"],
+			"@app/layout/*": ["./src/app/layout/*"],
+			"@app/model/*": ["./src/app/model/*"],
+			"@app/page/*": ["./src/app/page/*"],
+			"@app/pipe/*": ["./src/app/pipe/*"],
+			"@app/repository/*": ["./src/app/repository/*"],
+			"@app/service/*": ["./src/app/service/*"],
+			"@app/store/*": ["./src/app/store/*"],
+			"@app/strategy/*": ["./src/app/strategy/*"],
+			"@app/testing/*": ["./src/app/testing/*"],
+			"@app/use-case/*": ["./src/app/use-case/*"],
+			"@app/util/*": ["./src/app/util/*"]
+		}
+	},
+	"angularCompilerOptions": {
+		"enableI18nLegacyMessageIdFormat": false,
+		"strictInjectionParameters": true,
+		"strictInputAccessModifiers": true,
+		"strictTemplates": true,
+		"strictStandalone": true
+	},
+	"files": [],
+	"references": [
+		{
+			"path": "./tsconfig.app.json"
+		},
+		{
+			"path": "./tsconfig.spec.json"
+		}
+	]
+}

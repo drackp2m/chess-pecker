@@ -1,0 +1,30 @@
+# Keep the build context small and, above all, keep secrets and host-only state
+# out of the image layers: `COPY . .` in the build stages would otherwise bake in
+# .env and the local dev certificates.
+.env
+*.env.local
+.cert
+
+.git
+.github
+.husky
+.vscode
+.devcontainer
+.docker
+.claude
+
+node_modules
+apps/*/node_modules
+.pnpm-store
+
+dist
+apps/*/dist
+apps/*/out-tsc
+.angular
+apps/*/.angular
+coverage
+.pgdata
+
+ideas
+*.md
+.DS_Store

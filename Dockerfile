@@ -1,6 +1,6 @@
 FROM node:26.5-alpine3.24 AS base
 
-RUN apk add --no-cache build-base python3 openssl
+RUN apk add --no-cache build-base python3 openssl pnpm
 
 ARG USER_GID
 ARG USER_UID
@@ -22,9 +22,14 @@ FROM base AS deps
 
 USER node
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=node:node apps/web/package.json ./apps/web/
+COPY --chown=node:node apps/api/package.json ./apps/api/
 
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
+# pnpm comes from `packageManager` in package.json rather than @latest, so a
+# --no-cache rebuild months from now installs the same version this lockfile was
+# written with instead of whatever pnpm is current that day.
+RUN pnpm install --frozen-lockfile
 
 
 
@@ -54,26 +59,50 @@ CMD ["sh", "-c", "tail -f /dev/null"]
 
 
 
-FROM deps AS build
+FROM base AS deps-api-prod
+
+USER node
+
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=node:node apps/web/package.json ./apps/web/
+COPY --chown=node:node apps/api/package.json ./apps/api/
+
+RUN pnpm install --frozen-lockfile --prod --filter @chesspecker/api
+
+
+
+FROM deps AS build-api
 
 USER node
 
 COPY . .
 
-RUN pnpm run build
+RUN pnpm --filter @chesspecker/api run build
 
 
 
-FROM build AS serve
+FROM base AS serve-api
 
-ARG APP_PORT
+ARG API_PORT=3000
 
-EXPOSE $APP_PORT
+# Not optional: below 'production' the API loads the local dev certificates
+# (BootstrapHelper.nestApplicationOptions reads ../../.cert/*.pem), which are not
+# in the image, and it would crash on boot.
+ENV NODE_ENV=production
+
+EXPOSE $API_PORT
+
+# mikro-orm.config.ts resolves its entity glob ('dist/module/**/*.entity.js') and
+# its migrations path relative to the cwd, so the app has to run from apps/api.
+WORKDIR /usr/src/app/apps/api
+
+RUN chown -R node:node /usr/src/app
 
 USER node
 
-COPY --from=build /usr/src/app/package.json ./package.json
-COPY --from=deps /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/dist/apps/app ./src
+COPY --chown=node:node --from=deps-api-prod /usr/src/app/node_modules /usr/src/app/node_modules
+COPY --chown=node:node --from=deps-api-prod /usr/src/app/apps/api/node_modules ./node_modules
+COPY --chown=node:node --from=build-api /usr/src/app/apps/api/package.json ./package.json
+COPY --chown=node:node --from=build-api /usr/src/app/apps/api/dist ./dist
 
-CMD ["node", "src/main.js"]
+CMD ["node", "dist/main.js"]

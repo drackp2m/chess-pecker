@@ -1,8 +1,14 @@
 /.devcontainer
 /.angular
+/.pgdata
 /.github
 /.husky
 /.pnpm-store
 /.vscode
 /dist
 /node_modules
+/apps/api/dist
+/apps/api/node_modules
+/apps/web/.angular
+/apps/web/dist
+/apps/web/node_modules

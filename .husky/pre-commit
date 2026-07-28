@@ -1,4 +1,4 @@
 pnpm run pnpm:match
 pnpm exec lint-staged
-pnpm typecheck
-pnpm test --watch=false
+pnpm run --filter @chesspecker/web typecheck
+pnpm run --filter @chesspecker/web test --watch=false

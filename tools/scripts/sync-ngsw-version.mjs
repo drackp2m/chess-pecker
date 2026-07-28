@@ -7,7 +7,7 @@ const C = '\x1b[94m';
 const G = '\x1b[92m';
 
 const pkgPath = join(process.cwd(), 'package.json');
-const ngswPath = join(process.cwd(), 'src', 'ngsw-config.json');
+const ngswPath = join(process.cwd(), 'apps', 'web', 'src', 'ngsw-config.json');
 
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 const ngswContent = readFileSync(ngswPath, 'utf8');

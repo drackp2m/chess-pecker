@@ -1,7 +1,8 @@
 #!/bin/sh
 
-CERT=".cert/cert.pem"
-KEY=".cert/key.pem"
+REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
+CERT="$REPO_ROOT/.cert/cert.pem"
+KEY="$REPO_ROOT/.cert/key.pem"
 APP_PORT=4201
 PROXY_PORT=4200
 
