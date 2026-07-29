@@ -1,0 +1,148 @@
+import { Injectable } from '@nestjs/common';
+
+import { CalibrationRoundOutcome } from '../definition/calibration-round-outcome.enum';
+import { TrainingPolicy } from '../definition/training-policy';
+import { CycleProgress, TrainingProgress } from '../definition/training-progress.interface';
+import { PuzzleAttempt } from '../puzzle-attempt.entity';
+import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
+import { TrainingCalibrationRoundRepository } from '../training-calibration-round.repository';
+import { TrainingCycleItemRepository } from '../training-cycle-item.repository';
+import { TrainingCycleRepository } from '../training-cycle.repository';
+import { TrainingGoalRepository } from '../training-goal.repository';
+import { TrainingPuzzleRepository } from '../training-puzzle.repository';
+import { Training } from '../training.entity';
+
+@Injectable()
+export class GetTrainingProgressUseCase {
+	constructor(
+		private readonly trainingCycleRepository: TrainingCycleRepository,
+		private readonly trainingCycleItemRepository: TrainingCycleItemRepository,
+		private readonly trainingPuzzleRepository: TrainingPuzzleRepository,
+		private readonly trainingGoalRepository: TrainingGoalRepository,
+		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
+		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
+	) {}
+
+	/**
+	 * Todo lo que se enseña del entrenamiento sale de aquí, y todo es agregado sobre
+	 * `puzzle_attempt`: ni el tiempo por ciclo ni la tasa de acierto se almacenan, porque son
+	 * sumas sobre filas que ya no cambian.
+	 */
+	async execute(training: Training): Promise<TrainingProgress> {
+		const rounds = await this.calibrationRoundRepository.getManyByTraining(training.uuid);
+		const accepted = rounds.find((round) => CalibrationRoundOutcome.Accept === round.outcome);
+
+		const calibrationAttempts =
+			undefined === accepted
+				? []
+				: await this.puzzleAttemptRepository.getManyByCalibrationRound(accepted.uuid);
+
+		const setSize = await this.trainingPuzzleRepository.countByTraining(training.uuid);
+		const goal = await this.trainingGoalRepository.getCurrentByTraining(training.uuid);
+		const cycles = await this.trainingCycleRepository.getManyByTraining(training.uuid);
+
+		const progress: CycleProgress[] = [];
+		let firstCycleDurationMs: number | null = null;
+
+		for (const cycle of cycles) {
+			const attempts = await this.puzzleAttemptRepository.getManyByCycle(cycle.uuid);
+			const total = await this.trainingCycleItemRepository.countByCycle(cycle.uuid);
+
+			const totalDurationMs = sumDuration(attempts);
+			const solved = attempts.filter((attempt) => attempt.solved).length;
+
+			if (1 === cycle.index) {
+				firstCycleDurationMs = totalDurationMs;
+			}
+
+			progress.push({
+				uuid: cycle.uuid,
+				index: cycle.index,
+				status: cycle.status,
+				attempted: attempts.length,
+				total,
+				solved,
+				accuracy: 0 === attempts.length ? 0 : solved / attempts.length,
+				totalDurationMs,
+				averageDurationMs:
+					0 === attempts.length ? 0 : Math.round(totalDurationMs / attempts.length),
+				targetDurationMs: GetTrainingProgressUseCase.resolveTarget(
+					cycle.index,
+					firstCycleDurationMs,
+				),
+				lastAttemptAt: lastAttemptAt(attempts),
+			});
+		}
+
+		const averageCalibrationMs =
+			0 === calibrationAttempts.length
+				? null
+				: Math.round(sumDuration(calibrationAttempts) / calibrationAttempts.length);
+
+		return {
+			calibration: {
+				rating: accepted?.rating ?? null,
+				averageDurationMs: averageCalibrationMs,
+				rounds: rounds.length,
+			},
+			setSize,
+			goal:
+				undefined === goal
+					? null
+					: { puzzlesPerDay: goal.puzzlesPerDay ?? null, endDate: goal.endDate ?? null },
+			estimatedFirstCycleDays:
+				undefined === goal?.puzzlesPerDay || 0 === setSize
+					? null
+					: Math.ceil(setSize / goal.puzzlesPerDay),
+			cycles: progress,
+			suggestFinish: GetTrainingProgressUseCase.shouldSuggestFinish(progress),
+		};
+	}
+
+	/**
+	 * Cada pasada se exige sobre el tiempo real de la primera, que es contra lo que el método
+	 * mide el éxito. El ciclo 1 no tiene objetivo: es el listón.
+	 */
+	private static resolveTarget(index: number, firstCycleDurationMs: number | null): number | null {
+		if (1 === index || null === firstCycleDurationMs || 0 === firstCycleDurationMs) {
+			return null;
+		}
+
+		// A partir del último factor se mantiene el último: los ciclos 5, 6 y 7 se exigen como
+		// el 4, que ya es "lo más rápido posible manteniendo aciertos".
+		const factors = TrainingPolicy.cycleTargetFactors;
+		const factor = factors[Math.min(index - 2, factors.length - 1)];
+
+		return Math.round(firstCycleDurationMs * factor);
+	}
+
+	private static shouldSuggestFinish(cycles: CycleProgress[]): boolean {
+		const finished = cycles.filter((cycle) => cycle.attempted === cycle.total && 0 < cycle.total);
+
+		if (finished.length < TrainingPolicy.minCycles) {
+			return false;
+		}
+
+		const last = finished.at(-1);
+		const previous = finished.at(-2);
+
+		if (undefined === last || undefined === previous || 0 === previous.totalDurationMs) {
+			return false;
+		}
+
+		const improvement =
+			(previous.totalDurationMs - last.totalDurationMs) / previous.totalDurationMs;
+
+		return improvement < TrainingPolicy.plateauImprovement;
+	}
+}
+
+const sumDuration = (attempts: PuzzleAttempt[]): number =>
+	attempts.reduce((total, attempt) => total + attempt.durationMs, 0);
+
+const lastAttemptAt = (attempts: PuzzleAttempt[]): Date | null =>
+	attempts.reduce<Date | null>(
+		(latest, attempt) =>
+			null === latest || attempt.updatedAt > latest ? attempt.updatedAt : latest,
+		null,
+	);

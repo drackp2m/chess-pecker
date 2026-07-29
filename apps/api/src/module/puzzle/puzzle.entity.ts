@@ -2,6 +2,8 @@ import { Entity, Index, Property } from '@mikro-orm/core';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 
+import { PuzzleRepository } from './puzzle.repository';
+
 /**
  * Catálogo global de ejercicios, compartido por todos los usuarios.
  *
@@ -9,7 +11,7 @@ import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
  * que manda el front cuando sube un set montado desde un CSV local, porque los uuid que
  * ese navegador inventó no son los de aquí.
  */
-@Entity()
+@Entity({ repository: () => PuzzleRepository })
 export class Puzzle extends CustomBaseEntity<Puzzle> {
 	@Property({ unique: true })
 	lichessId!: string;
@@ -27,16 +29,7 @@ export class Puzzle extends CustomBaseEntity<Puzzle> {
 	@Property()
 	rating!: number;
 
-	@Property()
-	popularity!: number;
-
-	@Property()
-	nbPlays!: number;
-
 	@Index({ type: 'gin' })
 	@Property({ type: 'string[]' })
 	themes!: string[];
-
-	@Property({ type: 'text' })
-	gameUrl!: string;
 }

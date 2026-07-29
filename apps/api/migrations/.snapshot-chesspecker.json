@@ -52,6 +52,176 @@
 					"enumItems": [],
 					"mappedType": "datetime"
 				},
+				"requester_uuid": {
+					"name": "requester_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"addressee_uuid": {
+					"name": "addressee_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": "'pending'",
+					"comment": null,
+					"enumItems": ["pending", "accepted", "declined"],
+					"mappedType": "enum"
+				}
+			},
+			"name": "friendship",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": [
+						"LEAST(requester_uuid, addressee_uuid)",
+						"GREATEST(requester_uuid, addressee_uuid)"
+					],
+					"composite": true,
+					"constraint": false,
+					"keyName": "friendship_active_pair_unique",
+					"unique": true,
+					"primary": false,
+					"expression": "CREATE UNIQUE INDEX friendship_active_pair_unique ON public.friendship USING btree (LEAST(requester_uuid, addressee_uuid), GREATEST(requester_uuid, addressee_uuid)) WHERE (status = ANY (ARRAY['pending'::text, 'accepted'::text]))"
+				},
+				{
+					"columnNames": ["addressee_uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "friendship_addressee_uuid_index",
+					"unique": false,
+					"primary": false
+				},
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "friendship_pkey",
+					"unique": true,
+					"primary": true
+				},
+				{
+					"columnNames": ["requester_uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "friendship_requester_uuid_index",
+					"unique": false,
+					"primary": false
+				}
+			],
+			"checks": [
+				{
+					"name": "friendship_check",
+					"columnName": "addressee_uuid",
+					"definition": "CHECK (((requester_uuid)::text <> (addressee_uuid)::text))",
+					"expression": "requester_uuid <> addressee_uuid"
+				}
+			],
+			"foreignKeys": {
+				"friendship_addressee_uuid_foreign": {
+					"columnNames": ["addressee_uuid"],
+					"constraintName": "friendship_addressee_uuid_foreign",
+					"localTableName": "public.friendship",
+					"referencedTableName": "public.user",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				},
+				"friendship_requester_uuid_foreign": {
+					"columnNames": ["requester_uuid"],
+					"constraintName": "friendship_requester_uuid_foreign",
+					"localTableName": "public.friendship",
+					"referencedTableName": "public.user",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
 				"lichess_id": {
 					"name": "lichess_id",
 					"type": "varchar(255)",
@@ -116,38 +286,6 @@
 					"enumItems": [],
 					"mappedType": "integer"
 				},
-				"popularity": {
-					"name": "popularity",
-					"type": "int4",
-					"unsigned": false,
-					"autoincrement": false,
-					"primary": false,
-					"nullable": false,
-					"unique": false,
-					"length": null,
-					"precision": 32,
-					"scale": 0,
-					"default": null,
-					"comment": null,
-					"enumItems": [],
-					"mappedType": "integer"
-				},
-				"nb_plays": {
-					"name": "nb_plays",
-					"type": "int4",
-					"unsigned": false,
-					"autoincrement": false,
-					"primary": false,
-					"nullable": false,
-					"unique": false,
-					"length": null,
-					"precision": 32,
-					"scale": 0,
-					"default": null,
-					"comment": null,
-					"enumItems": [],
-					"mappedType": "integer"
-				},
 				"themes": {
 					"name": "themes",
 					"type": "text[]",
@@ -163,22 +301,6 @@
 					"comment": null,
 					"enumItems": [],
 					"mappedType": "array"
-				},
-				"game_url": {
-					"name": "game_url",
-					"type": "text",
-					"unsigned": false,
-					"autoincrement": false,
-					"primary": false,
-					"nullable": false,
-					"unique": false,
-					"length": null,
-					"precision": null,
-					"scale": null,
-					"default": null,
-					"comment": null,
-					"enumItems": [],
-					"mappedType": "text"
 				}
 			},
 			"name": "puzzle",
@@ -219,6 +341,1146 @@
 			],
 			"checks": [],
 			"foreignKeys": {},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"training_uuid": {
+					"name": "training_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"kind": {
+					"name": "kind",
+					"type": "text",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": ["calibration", "cycle"],
+					"mappedType": "enum"
+				},
+				"calibration_round_uuid": {
+					"name": "calibration_round_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": true,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"cycle_item_uuid": {
+					"name": "cycle_item_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": true,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"puzzle_uuid": {
+					"name": "puzzle_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"duration_ms": {
+					"name": "duration_ms",
+					"type": "int4",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": 32,
+					"scale": 0,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "integer"
+				},
+				"solved": {
+					"name": "solved",
+					"type": "bool",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "boolean"
+				}
+			},
+			"name": "puzzle_attempt",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["cycle_item_uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "puzzle_attempt_cycle_item_uuid_index",
+					"unique": false,
+					"primary": false
+				},
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "puzzle_attempt_pkey",
+					"unique": true,
+					"primary": true
+				},
+				{
+					"columnNames": ["puzzle_uuid", "training_uuid"],
+					"composite": true,
+					"constraint": false,
+					"keyName": "puzzle_attempt_puzzle_uuid_training_uuid_index",
+					"unique": false,
+					"primary": false
+				},
+				{
+					"columnNames": ["training_uuid", "kind"],
+					"composite": true,
+					"constraint": false,
+					"keyName": "puzzle_attempt_training_uuid_kind_index",
+					"unique": false,
+					"primary": false
+				}
+			],
+			"checks": [
+				{
+					"name": "puzzle_attempt_kind_parent_check",
+					"columnName": "kind",
+					"definition": "CHECK ((((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))))",
+					"expression": "((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))"
+				}
+			],
+			"foreignKeys": {
+				"puzzle_attempt_calibration_round_uuid_foreign": {
+					"columnNames": ["calibration_round_uuid"],
+					"constraintName": "puzzle_attempt_calibration_round_uuid_foreign",
+					"localTableName": "public.puzzle_attempt",
+					"referencedTableName": "public.training_calibration_round",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				},
+				"puzzle_attempt_cycle_item_uuid_foreign": {
+					"columnNames": ["cycle_item_uuid"],
+					"constraintName": "puzzle_attempt_cycle_item_uuid_foreign",
+					"localTableName": "public.puzzle_attempt",
+					"referencedTableName": "public.training_cycle_item",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				},
+				"puzzle_attempt_puzzle_uuid_foreign": {
+					"columnNames": ["puzzle_uuid"],
+					"constraintName": "puzzle_attempt_puzzle_uuid_foreign",
+					"localTableName": "public.puzzle_attempt",
+					"referencedTableName": "public.puzzle",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "no action"
+				},
+				"puzzle_attempt_training_uuid_foreign": {
+					"columnNames": ["training_uuid"],
+					"constraintName": "puzzle_attempt_training_uuid_foreign",
+					"localTableName": "public.puzzle_attempt",
+					"referencedTableName": "public.training",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"user_uuid": {
+					"name": "user_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": "'calibrating'",
+					"comment": null,
+					"enumItems": ["calibrating", "planning", "running", "finished", "abandoned"],
+					"mappedType": "enum"
+				},
+				"finished_reason": {
+					"name": "finished_reason",
+					"type": "text",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": true,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": ["completed", "plateau", "max-cycles", "cancelled"],
+					"mappedType": "enum"
+				},
+				"finished_at": {
+					"name": "finished_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": true,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				}
+			},
+			"name": "training",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "training_pkey",
+					"unique": true,
+					"primary": true
+				},
+				{
+					"columnNames": ["user_uuid", "status"],
+					"composite": true,
+					"constraint": false,
+					"keyName": "training_user_uuid_status_index",
+					"unique": false,
+					"primary": false
+				}
+			],
+			"checks": [
+				{
+					"name": "training_abandoned_matches_reason_check",
+					"columnName": "finished_reason",
+					"definition": "CHECK (((finished_reason IS NULL) OR ((status = 'abandoned'::text) = (finished_reason = 'cancelled'::text))))",
+					"expression": "(finished_reason IS NULL) OR ((status = 'abandoned'::text) = (finished_reason = 'cancelled'::text))"
+				}
+			],
+			"foreignKeys": {
+				"training_user_uuid_foreign": {
+					"columnNames": ["user_uuid"],
+					"constraintName": "training_user_uuid_foreign",
+					"localTableName": "public.training",
+					"referencedTableName": "public.user",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"training_uuid": {
+					"name": "training_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": true,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"index": {
+					"name": "index",
+					"type": "int4",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": 32,
+					"scale": 0,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "integer"
+				},
+				"kind": {
+					"name": "kind",
+					"type": "text",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": ["scan", "refine"],
+					"mappedType": "enum"
+				},
+				"rating": {
+					"name": "rating",
+					"type": "int4",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": 32,
+					"scale": 0,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "integer"
+				},
+				"outcome": {
+					"name": "outcome",
+					"type": "text",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": "'pending'",
+					"comment": null,
+					"enumItems": ["pending", "raise", "lower", "accept"],
+					"mappedType": "enum"
+				}
+			},
+			"name": "training_calibration_round",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "training_calibration_round_pkey",
+					"unique": true,
+					"primary": true
+				},
+				{
+					"columnNames": ["training_uuid", "index"],
+					"composite": true,
+					"constraint": true,
+					"keyName": "training_calibration_round_training_uuid_index_unique",
+					"unique": true,
+					"primary": false
+				}
+			],
+			"checks": [
+				{
+					"name": "calibration_round_rating_bucket_check",
+					"columnName": "rating",
+					"definition": "CHECK (((rating % 100) = 0))",
+					"expression": "(rating % 100) = 0"
+				}
+			],
+			"foreignKeys": {
+				"training_calibration_round_training_uuid_foreign": {
+					"columnNames": ["training_uuid"],
+					"constraintName": "training_calibration_round_training_uuid_foreign",
+					"localTableName": "public.training_calibration_round",
+					"referencedTableName": "public.training",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"training_uuid": {
+					"name": "training_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": true,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"index": {
+					"name": "index",
+					"type": "int4",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": 32,
+					"scale": 0,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "integer"
+				},
+				"status": {
+					"name": "status",
+					"type": "text",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": null,
+					"scale": null,
+					"default": "'running'",
+					"comment": null,
+					"enumItems": ["running", "finished", "abandoned"],
+					"mappedType": "enum"
+				}
+			},
+			"name": "training_cycle",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "training_cycle_pkey",
+					"unique": true,
+					"primary": true
+				},
+				{
+					"columnNames": ["training_uuid", "index"],
+					"composite": true,
+					"constraint": true,
+					"keyName": "training_cycle_training_uuid_index_unique",
+					"unique": true,
+					"primary": false
+				}
+			],
+			"checks": [],
+			"foreignKeys": {
+				"training_cycle_training_uuid_foreign": {
+					"columnNames": ["training_uuid"],
+					"constraintName": "training_cycle_training_uuid_foreign",
+					"localTableName": "public.training_cycle",
+					"referencedTableName": "public.training",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"cycle_uuid": {
+					"name": "cycle_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": true,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"training_puzzle_uuid": {
+					"name": "training_puzzle_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"position": {
+					"name": "position",
+					"type": "int4",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": null,
+					"precision": 32,
+					"scale": 0,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "integer"
+				}
+			},
+			"name": "training_cycle_item",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["cycle_uuid", "position"],
+					"composite": true,
+					"constraint": true,
+					"keyName": "training_cycle_item_cycle_uuid_position_unique",
+					"unique": true,
+					"primary": false,
+					"expression": "CREATE UNIQUE INDEX training_cycle_item_cycle_uuid_position_unique ON public.training_cycle_item USING btree (cycle_uuid, \"position\")"
+				},
+				{
+					"columnNames": ["cycle_uuid", "training_puzzle_uuid"],
+					"composite": true,
+					"constraint": true,
+					"keyName": "training_cycle_item_cycle_uuid_training_puzzle_uuid_unique",
+					"unique": true,
+					"primary": false
+				},
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "training_cycle_item_pkey",
+					"unique": true,
+					"primary": true
+				}
+			],
+			"checks": [],
+			"foreignKeys": {
+				"training_cycle_item_cycle_uuid_foreign": {
+					"columnNames": ["cycle_uuid"],
+					"constraintName": "training_cycle_item_cycle_uuid_foreign",
+					"localTableName": "public.training_cycle_item",
+					"referencedTableName": "public.training_cycle",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				},
+				"training_cycle_item_training_puzzle_uuid_foreign": {
+					"columnNames": ["training_puzzle_uuid"],
+					"constraintName": "training_cycle_item_training_puzzle_uuid_foreign",
+					"localTableName": "public.training_cycle_item",
+					"referencedTableName": "public.training_puzzle",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"training_uuid": {
+					"name": "training_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"puzzles_per_day": {
+					"name": "puzzles_per_day",
+					"type": "int4",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": true,
+					"unique": false,
+					"length": null,
+					"precision": 32,
+					"scale": 0,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "integer"
+				},
+				"end_date": {
+					"name": "end_date",
+					"type": "date",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": true,
+					"unique": false,
+					"length": 0,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "date"
+				}
+			},
+			"name": "training_goal",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "training_goal_pkey",
+					"unique": true,
+					"primary": true
+				},
+				{
+					"columnNames": ["training_uuid", "created_at"],
+					"composite": true,
+					"constraint": false,
+					"keyName": "training_goal_training_uuid_created_at_index",
+					"unique": false,
+					"primary": false
+				}
+			],
+			"checks": [
+				{
+					"name": "training_goal_has_target_check",
+					"columnName": "end_date",
+					"definition": "CHECK (((puzzles_per_day IS NOT NULL) OR (end_date IS NOT NULL)))",
+					"expression": "(puzzles_per_day IS NOT NULL) OR (end_date IS NOT NULL)"
+				}
+			],
+			"foreignKeys": {
+				"training_goal_training_uuid_foreign": {
+					"columnNames": ["training_uuid"],
+					"constraintName": "training_goal_training_uuid_foreign",
+					"localTableName": "public.training_goal",
+					"referencedTableName": "public.training",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"training_uuid": {
+					"name": "training_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": true,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"puzzle_uuid": {
+					"name": "puzzle_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				}
+			},
+			"name": "training_puzzle",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "training_puzzle_pkey",
+					"unique": true,
+					"primary": true
+				},
+				{
+					"columnNames": ["training_uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "training_puzzle_training_uuid_index",
+					"unique": false,
+					"primary": false
+				},
+				{
+					"columnNames": ["training_uuid", "puzzle_uuid"],
+					"composite": true,
+					"constraint": true,
+					"keyName": "training_puzzle_training_uuid_puzzle_uuid_unique",
+					"unique": true,
+					"primary": false
+				}
+			],
+			"checks": [],
+			"foreignKeys": {
+				"training_puzzle_puzzle_uuid_foreign": {
+					"columnNames": ["puzzle_uuid"],
+					"constraintName": "training_puzzle_puzzle_uuid_foreign",
+					"localTableName": "public.training_puzzle",
+					"referencedTableName": "public.puzzle",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "no action"
+				},
+				"training_puzzle_training_uuid_foreign": {
+					"columnNames": ["training_uuid"],
+					"constraintName": "training_puzzle_training_uuid_foreign",
+					"localTableName": "public.training_puzzle",
+					"referencedTableName": "public.training",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
 			"nativeEnums": {},
 			"comment": null
 		},
@@ -367,6 +1629,140 @@
 			],
 			"checks": [],
 			"foreignKeys": {},
+			"nativeEnums": {},
+			"comment": null
+		},
+		{
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": true,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"created_at": {
+					"name": "created_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"updated_at": {
+					"name": "updated_at",
+					"type": "timestamptz(6)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 6,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "datetime"
+				},
+				"blocker_uuid": {
+					"name": "blocker_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": true,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				},
+				"blocked_uuid": {
+					"name": "blocked_uuid",
+					"type": "varchar(255)",
+					"unsigned": false,
+					"autoincrement": false,
+					"primary": false,
+					"nullable": false,
+					"unique": false,
+					"length": 255,
+					"precision": null,
+					"scale": null,
+					"default": null,
+					"comment": null,
+					"enumItems": [],
+					"mappedType": "string"
+				}
+			},
+			"name": "user_block",
+			"schema": "public",
+			"indexes": [
+				{
+					"columnNames": ["blocker_uuid", "blocked_uuid"],
+					"composite": true,
+					"constraint": true,
+					"keyName": "user_block_blocker_uuid_blocked_uuid_unique",
+					"unique": true,
+					"primary": false
+				},
+				{
+					"columnNames": ["uuid"],
+					"composite": false,
+					"constraint": false,
+					"keyName": "user_block_pkey",
+					"unique": true,
+					"primary": true
+				}
+			],
+			"checks": [
+				{
+					"name": "user_block_check",
+					"columnName": "blocker_uuid",
+					"definition": "CHECK (((blocker_uuid)::text <> (blocked_uuid)::text))",
+					"expression": "blocker_uuid <> blocked_uuid"
+				}
+			],
+			"foreignKeys": {
+				"user_block_blocked_uuid_foreign": {
+					"columnNames": ["blocked_uuid"],
+					"constraintName": "user_block_blocked_uuid_foreign",
+					"localTableName": "public.user_block",
+					"referencedTableName": "public.user",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				},
+				"user_block_blocker_uuid_foreign": {
+					"columnNames": ["blocker_uuid"],
+					"constraintName": "user_block_blocker_uuid_foreign",
+					"localTableName": "public.user_block",
+					"referencedTableName": "public.user",
+					"referencedColumnNames": ["uuid"],
+					"updateRule": "cascade",
+					"deleteRule": "cascade"
+				}
+			},
 			"nativeEnums": {},
 			"comment": null
 		},

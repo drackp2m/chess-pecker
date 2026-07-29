@@ -8,7 +8,11 @@ import { apiConfig } from '../../shared/module/config/register/api-config';
 import { databaseConfig } from '../../shared/module/config/register/database-config';
 import { jwtConfig } from '../../shared/module/config/register/jwt-config';
 import { AuthModule } from '../auth/auth.module';
+import { FriendshipModule } from '../friendship/friendship.module';
+import { PuzzleModule } from '../puzzle/puzzle.module';
+import { TrainingModule } from '../training/training.module';
 import { UserModule } from '../user/user.module';
+import { UserSettingModule } from '../user-setting/user-setting.module';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -25,6 +29,10 @@ import { AppService } from './app.service';
 		ConfigurationModule,
 		AuthModule,
 		UserModule,
+		UserSettingModule,
+		FriendshipModule,
+		PuzzleModule,
+		TrainingModule,
 	],
 	providers: [AppService],
 	controllers: [AppController],

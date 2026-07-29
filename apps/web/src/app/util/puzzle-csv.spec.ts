@@ -17,10 +17,7 @@ describe('PuzzleCsv', () => {
 			fen: '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27',
 			moves: ['f1f8', 'b2b1', 'b3d1', 'b1d1', 'f8f1', 'd1f1'],
 			rating: 536,
-			popularity: 100,
-			nbPlays: 2178,
 			themes: ['backRankMate', 'endgame', 'long', 'mate', 'mateIn3'],
-			gameUrl: 'https://lichess.org/fFWULcre#53',
 			selectedFor: '500-599 / backRankMate / endgame',
 		});
 	});
@@ -49,7 +46,6 @@ describe('PuzzleCsv', () => {
 		const { puzzles } = PuzzleCsv.parse(csv);
 
 		expect(puzzles[0]?.themes).toEqual(['mate,', 'short']);
-		expect(puzzles[0]?.gameUrl).toBe('https://x/?a=1,2');
 		expect(puzzles[0]?.selectedFor).toBe('say "hi"');
 	});
 

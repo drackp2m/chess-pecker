@@ -4,17 +4,7 @@
 			<h4 class="title color-contrast-mid">
 				Solving
 
-				@if ('' !== puzzle.gameUrl) {
-					<a
-						class="source color-contrast"
-						[href]="puzzle.gameUrl"
-						target="_blank"
-						rel="noopener noreferrer"
-						>{{ puzzle.id }}
-					</a>
-				} @else {
-					<span class="color-contrast">{{ puzzle.id }}</span>
-				}
+				<span class="color-contrast">{{ puzzle.id }}</span>
 			</h4>
 
 			<p
@@ -91,8 +81,7 @@
 			<aside class="panel flex-col gap-4">
 				<div class="flex-col gap-2">
 					<p class="fs-sm color-contrast-mid">
-						Rating {{ puzzle.rating }} · {{ puzzle.nbPlays }} plays · playing
-						{{ store.playerColor() }}
+						Rating {{ puzzle.rating }} · playing {{ store.playerColor() }}
 					</p>
 
 					<p class="fs-sm">

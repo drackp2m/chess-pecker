@@ -6,7 +6,9 @@ import { CustomBaseEntity } from './custom-base.entity';
 
 export class CustomRepository<T extends CustomBaseEntity<T>> {
 	constructor(
-		private readonly entityManager: EntityManager,
+		// `protected` para que los repositorios que extienden esta clase puedan escribir
+		// consultas que no encajan en los métodos genéricos de abajo (upserts, agregados).
+		protected readonly entityManager: EntityManager,
 		private readonly entityName: string,
 	) {}
 
@@ -42,6 +44,11 @@ export class CustomRepository<T extends CustomBaseEntity<T>> {
 		return entity;
 	}
 
+	/**
+	 * Alias de `insert`, y funciona: MikroORM decide entre insert y update según si la
+	 * entidad trae los datos con los que se cargó, aunque venga de otro fork. Existe para que
+	 * el caso de uso diga qué pretende, no porque haga otra cosa.
+	 */
 	async update(entity: T): Promise<T> {
 		return this.insert(entity);
 	}

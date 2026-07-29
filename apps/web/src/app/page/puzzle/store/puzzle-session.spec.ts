@@ -54,10 +54,7 @@ describe('openPuzzle', () => {
 			fen: '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27',
 			moves: ['f1f8', 'b2b1'],
 			rating: 0,
-			popularity: 0,
-			nbPlays: 0,
 			themes: [],
-			gameUrl: '',
 			selectedFor: '',
 		};
 

@@ -29,7 +29,7 @@ export class JwtGuard extends AuthGuard('jwt') {
 
 	override handleRequest<T>(error: Error | null, payload: T | false): T {
 		// Default-deny: sin @Public() hace falta un usuario válido.
-		if (null === error || false === payload) {
+		if (null !== error || false === payload) {
 			throw new UnauthorizedException('invalid access token', 'jwt');
 		}
 

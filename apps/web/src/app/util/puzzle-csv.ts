@@ -136,12 +136,9 @@ export abstract class PuzzleCsv {
 			fen,
 			moves,
 			rating: this.toNumber(read('rating')),
-			popularity: this.toNumber(read('popularity')),
-			nbPlays: this.toNumber(read('nbplays')),
 			themes: read('themes')
 				.split(/\s+/)
 				.filter((theme) => '' !== theme),
-			gameUrl: read('gameurl'),
 			selectedFor: read('selectedfor'),
 		};
 	}

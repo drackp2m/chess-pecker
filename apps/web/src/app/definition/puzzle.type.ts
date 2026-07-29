@@ -15,10 +15,7 @@ export interface Puzzle {
 	/** Moves in long algebraic (UCI) form, e.g. `f1f8` or `e7e8q`. */
 	readonly moves: readonly string[];
 	readonly rating: number;
-	readonly popularity: number;
-	readonly nbPlays: number;
 	readonly themes: readonly string[];
-	readonly gameUrl: string;
 	readonly selectedFor: string;
 }
 
