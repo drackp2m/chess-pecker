@@ -35,4 +35,11 @@ export class AuthRepository {
 			this.httpClient.get(`${this.baseUrl}/refresh-session`, { withCredentials: true }),
 		);
 	}
+
+	/** Who the session cookies belong to. Answers 401 when there is no session. */
+	async getCurrentUser(): Promise<AuthUser> {
+		return firstValueFrom(
+			this.httpClient.get<AuthUser>(`${this.baseUrl}/me`, { withCredentials: true }),
+		);
+	}
 }

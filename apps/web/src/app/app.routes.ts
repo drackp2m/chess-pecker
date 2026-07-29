@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { authenticatedGuard } from '@app/guard/authenticated.guard';
 import { MainLayout } from '@app/layout/main/main.layout';
 
 export const APP_ROUTES: Routes = [
@@ -18,6 +19,16 @@ export const APP_ROUTES: Routes = [
 			{
 				path: 'puzzles',
 				loadChildren: () => import('./page/puzzle/puzzle.routes'),
+			},
+			{
+				path: 'training',
+				canActivate: [authenticatedGuard],
+				loadChildren: () => import('./page/training/training.routes'),
+			},
+			{
+				path: 'friends',
+				canActivate: [authenticatedGuard],
+				loadChildren: () => import('./page/friend/friend.routes'),
 			},
 			{
 				path: 'settings',

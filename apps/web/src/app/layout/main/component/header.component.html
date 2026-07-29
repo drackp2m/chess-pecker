@@ -7,6 +7,18 @@
 	</button>
 
 	<div class="flex-row gap-2 align-center">
+		@if (session.isAuthenticated()) {
+			<button
+				appThemed
+				appRouterLink="/training"
+				icon="timer"
+				aria-label="Training"
+				[routerLinkActiveOptions]="{ exact: false }"
+			></button>
+
+			<button appThemed appRouterLink="/friends" icon="user-plus" aria-label="Friends"></button>
+		}
+
 		<button appThemed appRouterLink="/match" icon="dice"></button>
 		<button appThemed appRouterLink="/settings" icon="gear"></button>
 	</div>

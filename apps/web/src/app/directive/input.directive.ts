@@ -13,6 +13,9 @@ import {
 
 import { createTypedElement } from '@app/util/renderer';
 
+// ToDo => no `date`, which is why the training goal can only be expressed as exercises
+// per day and not as the end date the API also accepts. The floating label would have
+// to account for the native picker, which is always "filled".
 type InputDirectiveType = 'email' | 'number' | 'password' | 'search' | 'tel' | 'text' | 'url';
 let nextInputId = 0;
 

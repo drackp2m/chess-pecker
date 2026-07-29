@@ -21,6 +21,20 @@
 		</div>
 	</div>
 
+	@if (session.isAuthenticated()) {
+		<div class="flex-col gap-2">
+			<h4>Your program</h4>
+
+			<div class="flex-col gap-2">
+				<button appThemed color="accent" appRouterLink="/training">
+					Calibrate and run the cycles
+				</button>
+
+				<button appThemed appRouterLink="/friends">Friends</button>
+			</div>
+		</div>
+	}
+
 	<div class="flex-col gap-2">
 		<h4>The Woodpecker Method</h4>
 

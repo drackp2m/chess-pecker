@@ -1,0 +1,16 @@
+section {
+	width: 100%;
+	max-width: 34rem;
+}
+
+.error {
+	color: rgb(196 48 38);
+}
+
+.row {
+	border: 1px solid var(--color-contrast-mid);
+}
+
+.empty {
+	opacity: 0.7;
+}

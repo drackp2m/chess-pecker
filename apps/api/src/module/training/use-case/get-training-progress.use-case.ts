@@ -90,6 +90,11 @@ export class GetTrainingProgressUseCase {
 				undefined === goal
 					? null
 					: { puzzlesPerDay: goal.puzzlesPerDay ?? null, endDate: goal.endDate ?? null },
+			// ToDo => la estimación ignora las dos cosas que la harían personalizada: el
+			// tiempo medio de la calibración —que es de donde sale cuántos ejercicios entran
+			// en los minutos al día que el usuario quiere dedicar— y el `endDate` del
+			// objetivo, que es la otra mitad del ritmo y aquí no se mira, así que un objetivo
+			// fijado sólo por fecha estima `null`.
 			estimatedFirstCycleDays:
 				undefined === goal?.puzzlesPerDay || 0 === setSize
 					? null

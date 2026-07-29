@@ -11,6 +11,7 @@ interface AuthRepositoryStub {
 	logIn: (...args: unknown[]) => Promise<void>;
 	logOut: (...args: unknown[]) => Promise<void>;
 	refreshSession: (...args: unknown[]) => Promise<void>;
+	getCurrentUser: (...args: unknown[]) => Promise<AuthUser>;
 }
 
 const credentials = { username: 'pecker', password: 'secret42' };
@@ -32,6 +33,7 @@ function createRepository(overrides: Partial<AuthRepositoryStub> = {}): AuthRepo
 		logIn: vi.fn(() => Promise.resolve()),
 		logOut: vi.fn(() => Promise.resolve()),
 		refreshSession: vi.fn(rejectsWith(401, { message: { refreshToken: 'invalid' } })),
+		getCurrentUser: vi.fn(() => Promise.resolve(authUser)),
 		...overrides,
 	};
 }
@@ -53,16 +55,38 @@ describe('SessionStore', () => {
 		TestBed.resetTestingModule();
 	});
 
-	it('opens as authenticated when the cookies still refresh a session', async () => {
-		const store = await createStore(
-			createRepository({ refreshSession: vi.fn(() => Promise.resolve()) }),
-		);
+	it('opens as authenticated with whoever the cookies belong to', async () => {
+		const store = await createStore(createRepository());
 
+		expect(store.isAuthenticated()).toBe(true);
+		expect(store.username()).toBe('pecker');
+	});
+
+	it('refreshes once and asks again when the access cookie has expired', async () => {
+		let asked = 0;
+		const refreshSession = vi.fn(() => Promise.resolve());
+		const getCurrentUser = vi.fn(() => {
+			asked += 1;
+
+			if (1 === asked) {
+				throw new HttpErrorResponse({ status: 401, error: { message: { jwt: 'invalid' } } });
+			}
+
+			return Promise.resolve(authUser);
+		});
+
+		const store = await createStore(createRepository({ refreshSession, getCurrentUser }));
+
+		expect(refreshSession).toHaveBeenCalledTimes(1);
 		expect(store.isAuthenticated()).toBe(true);
 	});
 
-	it('falls back to anonymous when the refresh is rejected', async () => {
-		const store = await createStore(createRepository());
+	it('falls back to anonymous when the refresh is rejected too', async () => {
+		const store = await createStore(
+			createRepository({
+				getCurrentUser: vi.fn(rejectsWith(401, { message: { jwt: 'invalid' } })),
+			}),
+		);
 
 		expect(store.isAnonymous()).toBe(true);
 	});
@@ -78,8 +102,10 @@ describe('SessionStore', () => {
 	});
 
 	it('turns a rejected login into a readable error', async () => {
+		// No session to restore either: this is the login page of an anonymous visitor.
 		const store = await createStore(
 			createRepository({
+				getCurrentUser: vi.fn(rejectsWith(401, { message: { jwt: 'invalid' } })),
 				logIn: vi.fn(rejectsWith(401, { message: { password: 'not match' } })),
 			}),
 		);

@@ -55,15 +55,15 @@ describe('LogoutUseCase', () => {
 				secure: true,
 				httpOnly: true,
 				sameSite: 'none',
-				domain: 'localhost',
-				path: '/graphql',
+				domain: 'marcbook-air.local',
+				path: '/api',
 			});
 			expect(requestResponseClearCookie).toHaveBeenNthCalledWith(2, 'x-jwt-refresh-token', {
 				signed: true,
 				secure: true,
 				httpOnly: true,
 				sameSite: 'none',
-				domain: 'localhost',
+				domain: 'marcbook-air.local',
 				path: '/api/auth/refresh-session',
 			});
 		});

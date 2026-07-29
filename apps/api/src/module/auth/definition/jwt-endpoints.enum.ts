@@ -1,4 +1,4 @@
 export enum JwtEndpoints {
-	access = '/graphql',
+	access = '/api',
 	refresh = '/api/auth/refresh-session',
 }

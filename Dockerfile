@@ -1,6 +1,6 @@
 FROM node:26.5-alpine3.24 AS base
 
-RUN apk add --no-cache build-base python3 openssl pnpm
+RUN apk add --no-cache build-base python3 openssl pnpm zsh zsh-vcs
 
 ARG USER_GID
 ARG USER_UID
