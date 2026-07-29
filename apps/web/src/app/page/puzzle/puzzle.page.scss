@@ -32,9 +32,14 @@ section {
 	}
 }
 
+// The board is the page on a phone, so it cancels the section inset and runs edge to
+// edge. From lg it shares the row with the panel, where escaping would put it under
+// the gap, so there it just fills its own column.
 app-chess-board {
-	max-width: 34rem;
-	margin: 0 auto;
+	@include mix.media($until: lg) {
+		width: calc(100% + var(--page-padding) * 2);
+		margin-inline: calc(var(--page-padding) * -1);
+	}
 }
 
 .counter {

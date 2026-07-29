@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 
 import { SvgComponent } from '@app/component/svg/svg.component';
+import { Check } from '@app/util/check';
 
 type ButtonDirectiveType = 'button' | 'menu' | 'reset' | 'submit';
 type ButtonDirectiveColor = 'primary' | 'primary-mid' | 'contrast' | 'contrast-mid' | 'accent';
@@ -25,6 +26,7 @@ export class ButtonDirective implements OnInit {
 	readonly color = input<ButtonDirectiveColor>('contrast-mid');
 	readonly icon = input<string>();
 	readonly iconSize = input<number>(24);
+	readonly iconSquared = input(false, { transform: Check.isFalseAsStringOrTrue });
 
 	private readonly elementRef = inject<ElementRef<HTMLButtonElement>>(ElementRef);
 	private readonly renderer2 = inject(Renderer2);
@@ -72,11 +74,13 @@ export class ButtonDirective implements OnInit {
 
 	private createIcon(icon: string): ComponentRef<SvgComponent> {
 		const iconSize = this.iconSize();
+		const iconSquared = this.iconSquared();
 
 		const iconElement = this.viewContainerRef.createComponent(SvgComponent);
 
 		iconElement.setInput('icon', icon);
 		iconElement.setInput('size', iconSize);
+		iconElement.setInput('squared', iconSquared);
 
 		return iconElement;
 	}

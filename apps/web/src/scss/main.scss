@@ -22,9 +22,13 @@
 			background-color: var(--color-primary);
 
 			main {
+				// Named rather than inlined so a child that has to run edge to edge can
+				// cancel exactly this inset instead of hardcoding the same value again.
+				--page-padding: var(--spacing-4);
+
 				ng-component {
 					> section {
-						padding: var(--spacing-4);
+						padding: var(--page-padding);
 					}
 				}
 			}
