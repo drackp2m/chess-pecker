@@ -17,4 +17,4 @@ jobs:
     steps:
       - name: Ping API health endpoint
         run: |
-          curl --fail --silent --show-error --max-time 30 https://chesspecker-api.onrender.com/api
+          curl --fail --silent --show-error --max-time 60 https://chess.drackp2m.dev/api

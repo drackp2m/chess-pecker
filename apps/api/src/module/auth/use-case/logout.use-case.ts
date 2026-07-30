@@ -1,6 +1,6 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import type { Request } from 'express';
+import type { CookieOptions, Request } from 'express';
 
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
 import { getEnumKey } from '../../../shared/util/get-enum-key.util';
@@ -34,11 +34,11 @@ export class LogoutUseCase {
 		if (undefined !== enumKey) {
 			const path = JwtEndpoints[enumKey];
 			const cookieDomain = this.configService.api.cookieDomain;
-			const baseOptions = {
+			const baseOptions: CookieOptions = {
 				signed: true,
 				secure: true,
 				httpOnly: true,
-				sameSite: 'none',
+				sameSite: 'lax',
 				path,
 			} as const;
 

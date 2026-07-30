@@ -31,7 +31,7 @@ export class SetJwtTokenUseCase {
 				signed: true,
 				secure: true,
 				httpOnly: true,
-				sameSite: 'none',
+				sameSite: 'lax',
 				...('' === cookieDomain ? {} : { domain: cookieDomain }),
 				path,
 				// `maxAge` from config is a human string like "1d"; `ms()` turns it into milliseconds.
