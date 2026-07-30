@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 
@@ -13,12 +14,17 @@ async function bootstrap(): Promise<void> {
 	const allowedDomains = apiConfig.corsAllowedDomains;
 	const allowAnyOrigin = 'production' !== apiConfig.environment;
 
-	const app = await NestFactory.create(
+	const app = await NestFactory.create<NestExpressApplication>(
 		AppModule,
 		BootstrapHelper.nestApplicationOptions(apiConfig),
 	);
 
 	useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
+	// Express' default body-parser limit (100kb) is well under what a puzzle import batch
+	// needs: `ImportPuzzleRequestDto` allows up to 5000 puzzles per request, which serializes
+	// to close to 1MB.
+	app.useBodyParser('json', { limit: '2mb' });
 
 	app.setGlobalPrefix(...BootstrapHelper.globalPrefix(apiConfig));
 	app.useGlobalPipes(BootstrapHelper.validationPipe);

@@ -10,6 +10,7 @@
 		"update:deps": "sh tools/scripts/update-deps.sh",
 		"git:sync": "sh tools/scripts/sync-git-main.sh",
 		"pnpm:match": "node tools/scripts/match-pnpm-version.mjs",
+		"import:puzzles": "node tools/scripts/import-puzzles.mjs",
 		"prepare": "husky"
 	},
 	"devDependencies": {
