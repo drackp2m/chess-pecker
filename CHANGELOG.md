@@ -1,3 +1,21 @@
+# v1.3.0 (2026-07-30)
+
+## What's Changed
+
+### ✨ Features
+
+- add import puzzles script, enable updloads up to 2mb ([5d0c3ef](https://github.com/drackp2m/chess-pecker/commit/5d0c3efca9dd4227e0c301d68a08a9ec780dd465)) by Marc Jovaní González
+
+### 💻 Continuous Integration
+
+- copy ./patches folder on Dockerfile for render deploy ([7f6e2ae](https://github.com/drackp2m/chess-pecker/commit/7f6e2aed19d6a41d628c3ada4eb41392bfc3ca5c)) by Marc Jovaní González
+- fix ghp build ([76ff358](https://github.com/drackp2m/chess-pecker/commit/76ff3583cfeb45c8b11606a04bb64afa295d1f58)) by Marc Jovaní González
+- ghp cron for keep api on render, fix api url on frontend ([4fa80d5](https://github.com/drackp2m/chess-pecker/commit/4fa80d5fd4954a923dfea1f93132640ad399a297)) by Marc Jovaní González
+- ignore scripts for skip husky on deploy ([25fe53d](https://github.com/drackp2m/chess-pecker/commit/25fe53da0b659182daf8a59b7086e04d58185be9)) by Marc Jovaní González
+- permissions on copy in Dockerfile ([288f86c](https://github.com/drackp2m/chess-pecker/commit/288f86c06f720cb632adf56e6181178a5e6c5be6)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.2.0...v1.3.0
+
 # v1.2.0 (2026-07-30)
 
 ## What's Changed
