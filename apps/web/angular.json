@@ -54,7 +54,7 @@
 							"outputHashing": "all",
 							"define": {
 								"APP_DEBUG": "false",
-								"API_URL": "'/api'"
+								"API_URL": "'https://api.chess.drackp2m.dev/api'"
 							}
 						},
 						"development": {

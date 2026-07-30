@@ -53,11 +53,8 @@ export class BootstrapHelper {
 					callback(null, false);
 				}
 			},
-			// FixMe => esta lista es a mano y no la vigila nada: un verbo que falte no rompe el
-			// API, sólo el navegador, y en forma de preflight rechazado que no se parece a
-			// "método no permitido". `friendship` y `training` ya usan PATCH y DELETE, y hasta
-			// añadirlos aquí las respuestas llegaban correctas por curl y en blanco por la app.
 			methods: 'GET,POST,PATCH,DELETE',
+			maxAge: 86400,
 		};
 	};
 
