@@ -20,7 +20,8 @@
 		"test:cov": "vitest run --project unit --coverage",
 		"test:debug": "vitest --project unit --inspect-brk --no-file-parallelism",
 		"test:integration": "NODE_ENV=test vitest run --project integration",
-		"test:integration:watch": "NODE_ENV=test vitest --project integration"
+		"test:integration:watch": "NODE_ENV=test vitest --project integration",
+		"typecheck": "tsc --noEmit -p tsconfig.json"
 	},
 	"dependencies": {
 		"@mikro-orm/cli": "^6.6.7",
