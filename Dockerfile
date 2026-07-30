@@ -25,6 +25,7 @@ USER node
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=node:node apps/web/package.json ./apps/web/
 COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node patches ./patches
 
 # pnpm comes from `packageManager` in package.json rather than @latest, so a
 # --no-cache rebuild months from now installs the same version this lockfile was
@@ -66,6 +67,7 @@ USER node
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=node:node apps/web/package.json ./apps/web/
 COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node patches ./patches
 
 RUN pnpm install --frozen-lockfile --prod --filter @chesspecker/api
 
