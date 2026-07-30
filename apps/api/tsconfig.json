@@ -24,7 +24,7 @@
 		// TypeScript 6 no longer pulls in every @types/* package automatically, so
 		// each config states what it needs. This one covers the editor and the
 		// type-aware ESLint pass, which both see the spec files.
-		"types": ["node", "jest"],
+		"types": ["node", "vitest/globals"],
 
 		// Emit
 		"outDir": "./dist",

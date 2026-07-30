@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { API_BASE_URL } from '@app/definition/api.constant';
 import {
+	ApiPuzzle,
 	CalibrationAttemptResult,
 	CalibrationRound,
 	CalibrationRoundStart,
@@ -39,6 +40,15 @@ export class TrainingRunRepository {
 			this.httpClient.post<CalibrationRoundStart>(
 				`${this.baseUrl}/${uuid}/calibration/round`,
 				{},
+				{ withCredentials: true },
+			),
+		);
+	}
+
+	async listRoundPuzzles(uuid: string, roundUuid: string): Promise<ApiPuzzle[]> {
+		return firstValueFrom(
+			this.httpClient.get<ApiPuzzle[]>(
+				`${this.baseUrl}/${uuid}/calibration/round/${roundUuid}/puzzle`,
 				{ withCredentials: true },
 			),
 		);

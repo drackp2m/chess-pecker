@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
@@ -17,11 +17,11 @@ describe('RegisterUseCase', () => {
 	const userRepository = mock<UserRepository>();
 	const hashPasswordUseCase = mock<HashPasswordUseCase>();
 
-	jest
-		.spyOn(GenerateUuidUseCase.prototype, 'execute')
-		.mockReturnValue('9aae5da0-82d1-4580-8b4d-c7ab52f09cc0');
+	vi.spyOn(GenerateUuidUseCase.prototype, 'execute').mockReturnValue(
+		'9aae5da0-82d1-4580-8b4d-c7ab52f09cc0',
+	);
 
-	jest.spyOn(GenerateNowDateUseCase.prototype, 'execute').mockReturnValue(new Date());
+	vi.spyOn(GenerateNowDateUseCase.prototype, 'execute').mockReturnValue(new Date());
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -93,8 +93,8 @@ describe('RegisterUseCase', () => {
 
 			userRepository.getMany.mockResolvedValueOnce([]);
 			userRepository.insert.mockResolvedValueOnce(
-				new User({
-					...fakeUser,
+				UserFaker.makeOne({
+					username: fakeUser.username,
 					password: 'H4$h3d_p@$$w0rd',
 				}),
 			);

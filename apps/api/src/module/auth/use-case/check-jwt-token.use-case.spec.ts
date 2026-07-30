@@ -1,19 +1,38 @@
-import { JsonWebTokenError, JwtModule, JwtService } from '@nestjs/jwt';
+import {
+	JsonWebTokenError,
+	JwtModule,
+	JwtService,
+	NotBeforeError,
+	TokenExpiredError,
+} from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
 import { JwtFactory } from '../../../shared/module/config/factory/jwt.factory';
-import { EditableDate } from '../../../shared/util/editable-date';
 
 import { CheckJwtTokenUseCase } from './check-jwt-token.use-case';
+
+function shiftedDate(date: Date, unit: 'day' | 'month', amount: number): Date {
+	const shifted = new Date(date);
+
+	if ('day' === unit) {
+		shifted.setUTCDate(shifted.getUTCDate() + amount);
+	} else {
+		shifted.setUTCMonth(shifted.getUTCMonth() + amount);
+	}
+
+	return shifted;
+}
 
 describe('CheckJwtRefreshTokenUseCase', () => {
 	let module: TestingModule;
 	let useCase: CheckJwtTokenUseCase;
 
-	const jwtServiceVerify = jest.spyOn(JwtService.prototype, 'verify');
+	const jwtServiceVerify = vi.spyOn(JwtService.prototype, 'verify');
 	const validJwtDate = new Date('2024-03-20T22:10:42.000Z');
+	const jwtNotBeforeDate = new Date('2024-03-20T22:07:48.000Z');
+	const jwtExpirationDate = new Date('2024-04-04T21:52:48.000Z');
 	const fakeJwtRefreshToken =
 		'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MTA5NzE1NjgsIm5iZiI6MTcxMDk3MjQ2OCwiZXhwIjoxNzEyMjY3NTY4LCJhdWQiOiJ0ZXN0LXJ1bm5lci1yZWZyZXNoLXRva2VuIiwiaXNzIjoidGVzdCIsInN1YiI6InVzZXItdXVpZCIsImp0aSI6InV1aWQifQ.2hP7NbBjKGpUJ3rPLFo3qIhpTeSAVwl7uTW1gd4n1lutBpEwxIcSmi_WALMENNq9yl4Lkf2vjbhGxsLhx7WJJQ';
 
@@ -80,7 +99,7 @@ describe('CheckJwtRefreshTokenUseCase', () => {
 		});
 
 		it('throw JsonWebTokenError with "jwt jwtid invalid" when id is not valid', async () => {
-			jest.useFakeTimers().setSystemTime(validJwtDate);
+			vi.useFakeTimers().setSystemTime(validJwtDate);
 
 			const configurationService = mock<ConfigurationService>({
 				jwt: {
@@ -106,7 +125,7 @@ describe('CheckJwtRefreshTokenUseCase', () => {
 		});
 
 		it('throw JsonWebTokenError with "jwt audience invalid" when audience is not valid', async () => {
-			jest.useFakeTimers().setSystemTime(validJwtDate);
+			vi.useFakeTimers().setSystemTime(validJwtDate);
 
 			const configurationService = mock<ConfigurationService>({
 				jwt: {
@@ -132,7 +151,7 @@ describe('CheckJwtRefreshTokenUseCase', () => {
 		});
 
 		it('throw JsonWebTokenError with "jwt issuer invalid" when audience is not valid', async () => {
-			jest.useFakeTimers().setSystemTime(validJwtDate);
+			vi.useFakeTimers().setSystemTime(validJwtDate);
 
 			const configurationService = mock<ConfigurationService>({
 				jwt: {
@@ -158,10 +177,10 @@ describe('CheckJwtRefreshTokenUseCase', () => {
 		});
 
 		it('throw JsonWebTokenError with "jwt not active" when system date is below jwt notBefore time', () => {
-			jest.useFakeTimers().setSystemTime(new EditableDate(validJwtDate).edit('day', -1));
+			vi.useFakeTimers().setSystemTime(shiftedDate(validJwtDate, 'day', -1));
 
 			expect(() => useCase.execute(fakeJwtRefreshToken, 'refresh')).toThrow(
-				new JsonWebTokenError('jwt not active'),
+				new NotBeforeError('jwt not active', jwtNotBeforeDate),
 			);
 
 			expect(jwtServiceVerify).toHaveBeenCalledTimes(1);
@@ -173,10 +192,10 @@ describe('CheckJwtRefreshTokenUseCase', () => {
 		});
 
 		it('throw JsonWebTokenError with "jwt not active" when system date is above jwt expiration time', () => {
-			jest.useFakeTimers().setSystemTime(new EditableDate(validJwtDate).edit('month', 1));
+			vi.useFakeTimers().setSystemTime(shiftedDate(validJwtDate, 'month', 1));
 
 			expect(() => useCase.execute(fakeJwtRefreshToken, 'refresh')).toThrow(
-				new JsonWebTokenError('jwt expired'),
+				new TokenExpiredError('jwt expired', jwtExpirationDate),
 			);
 
 			expect(jwtServiceVerify).toHaveBeenCalledTimes(1);

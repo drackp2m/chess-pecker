@@ -2,14 +2,12 @@ import { Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
-import { PuzzleRepository } from '../../puzzle/puzzle.repository';
-import { CalibrationRoundKind } from '../definition/calibration-round-kind.enum';
 import { CalibrationRoundOutcome } from '../definition/calibration-round-outcome.enum';
 import { PuzzleAttemptKind } from '../definition/puzzle-attempt-kind.enum';
-import { TrainingPolicy } from '../definition/training-policy';
 import { SubmitCalibrationAttemptRequestDto } from '../dto/request/submit-calibration-attempt-request.dto';
 import { PuzzleAttempt } from '../puzzle-attempt.entity';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
+import { TrainingCalibrationPuzzleRepository } from '../training-calibration-puzzle.repository';
 import { TrainingCalibrationRoundRepository } from '../training-calibration-round.repository';
 import { Training } from '../training.entity';
 
@@ -21,7 +19,7 @@ export class SubmitCalibrationAttemptUseCase {
 	constructor(
 		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
 		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
-		private readonly puzzleRepository: PuzzleRepository,
+		private readonly calibrationPuzzleRepository: TrainingCalibrationPuzzleRepository,
 		private readonly closeCalibrationRoundUseCase: CloseCalibrationRoundUseCase,
 		private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase,
 	) {}
@@ -42,14 +40,28 @@ export class SubmitCalibrationAttemptUseCase {
 			throw new PreconditionFailedException('already closed', 'calibration');
 		}
 
-		const puzzle = await this.puzzleRepository.getOne({ uuid: submitRequest.puzzleUuid });
+		const dealt = await this.calibrationPuzzleRepository.getManyByRound(round.uuid);
+
+		const calibrationPuzzle = dealt.find(
+			(candidate) => candidate.puzzle.uuid === submitRequest.puzzleUuid,
+		);
+
+		if (undefined === calibrationPuzzle) {
+			throw new PreconditionFailedException('not dealt in this round', 'puzzle');
+		}
+
+		const previous = await this.puzzleAttemptRepository.getManyByCalibrationRound(round.uuid);
+
+		if (previous.some((attempt) => attempt.puzzle.uuid === submitRequest.puzzleUuid)) {
+			throw new PreconditionFailedException('already attempted', 'puzzle');
+		}
 
 		const attempt = this.applySyncTimestampsUseCase.execute(
 			new PuzzleAttempt({
 				training,
 				kind: PuzzleAttemptKind.Calibration,
 				calibrationRound: round,
-				puzzle,
+				puzzle: calibrationPuzzle.puzzle,
 				durationMs: submitRequest.durationMs,
 				solved: submitRequest.solved,
 			}),
@@ -58,10 +70,9 @@ export class SubmitCalibrationAttemptUseCase {
 
 		await this.puzzleAttemptRepository.insert(attempt);
 
-		const attempts = await this.puzzleAttemptRepository.getManyByCalibrationRound(round.uuid);
-		const expected = CalibrationRoundKind.Scan === round.kind ? 1 : TrainingPolicy.refinePuzzles;
+		const attempts = [...previous, attempt];
 
-		if (attempts.length < expected) {
+		if (attempts.length < dealt.length) {
 			return { attempt, outcome: CalibrationRoundOutcome.Pending };
 		}
 
@@ -70,7 +81,7 @@ export class SubmitCalibrationAttemptUseCase {
 		const outcome = await this.closeCalibrationRoundUseCase.execute(
 			round,
 			attempts,
-			rounds.filter((previous) => previous.uuid !== round.uuid),
+			rounds.filter((other) => other.uuid !== round.uuid),
 		);
 
 		return { attempt, outcome };

@@ -2,7 +2,7 @@ import { REQUEST } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 
 import { UnauthorizedException } from '../../../shared/exception/unauthorized-exception.exception';
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
@@ -22,7 +22,7 @@ describe('RefreshSessionUseCase', () => {
 	let module: TestingModule;
 	let useCase: RefreshSessionUseCase;
 
-	const checkJwtRefreshTokenExecute = jest.spyOn(CheckJwtTokenUseCase.prototype, 'execute');
+	const checkJwtRefreshTokenExecute = vi.spyOn(CheckJwtTokenUseCase.prototype, 'execute');
 
 	const createAccessToken = mock<CreateJwtAccessTokenUseCase>();
 	const createRefreshToken = mock<CreateJwtRefreshTokenUseCase>();
@@ -83,7 +83,7 @@ describe('RefreshSessionUseCase', () => {
 	// Without this the prototype spy keeps counting calls across tests, so the
 	// per-test `toHaveBeenCalledTimes` assertions below would see the running total.
 	beforeEach(() => {
-		jest.clearAllMocks();
+		vi.clearAllMocks();
 	});
 
 	it('should be defined', () => {

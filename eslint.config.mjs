@@ -55,6 +55,8 @@ export default typescriptEslint.config(
 			'**/dist/**',
 			'**/out-tsc/**',
 			'**/coverage/**',
+			'ideas/**',
+			'apps/api/migrations/**',
 		],
 	},
 	// ── Global ignores & settings ──────────────────────────────────────────────
@@ -65,10 +67,12 @@ export default typescriptEslint.config(
 		languageOptions: {
 			parserOptions: {
 				projectService: {
-					// Root-level ambient declarations belong to no workspace package, so no
-					// tsconfig `include` picks them up. Type them against the default project
+					// Files that no tsconfig `include` picks up: root-level ambient
+					// declarations belong to no workspace package, and `apps/api/vitest.config.ts`
+					// sits outside that package's `rootDir` of `src`, so adding it to the include
+					// would break `nest build` with TS6059. Type them against the default project
 					// instead of adding a root tsconfig just to satisfy the parser.
-					allowDefaultProject: ['.env.d.ts'],
+					allowDefaultProject: ['.env.d.ts', 'apps/api/vitest.config.ts'],
 				},
 				tsconfigRootDir: import.meta.dirname,
 			},
@@ -277,15 +281,6 @@ export default typescriptEslint.config(
 			'@typescript-eslint/no-unsafe-call': 'off',
 			'@typescript-eslint/no-unsafe-member-access': 'off',
 			'@typescript-eslint/no-unsafe-return': 'off',
-		},
-	},
-
-	// ── Migrations (apps/api) ──────────────────────────────────────────────────
-	{
-		name: 'Migrations',
-		files: ['apps/api/migrations/**/*.ts'],
-		rules: {
-			'@typescript-eslint/require-await': 'off',
 		},
 	},
 

@@ -86,7 +86,11 @@
 				}
 			</p>
 
-			<button appThemed (click)="logOut()">Log out</button>
+			<button appThemed [disabled]="session.isSubmitting()" (click)="logOut()">Log out</button>
+
+			@if (session.error(); as message) {
+				<p class="error fs-sm" role="alert">{{ message }}</p>
+			}
 		} @else {
 			<p class="fs-sm color-contrast-mid">
 				An account opens a session against the Chess Pecker API. Carrying your sets and cycle times

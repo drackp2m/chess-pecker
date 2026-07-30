@@ -1,7 +1,7 @@
 import { REQUEST } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Request } from 'express';
-import { mock } from 'jest-mock-extended';
+import { Request, Response } from 'express';
+import { mock } from 'vitest-mock-extended';
 
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
 
@@ -10,7 +10,8 @@ import { LogoutUseCase } from './logout.use-case';
 describe('LogoutUseCase', () => {
 	let useCase: LogoutUseCase;
 
-	const request = mock<Request>({ res: {} });
+	const response = mock<Response>();
+	const request = mock<Request>({ res: response });
 	const configurationService = mock<ConfigurationService>({
 		jwt: {
 			secret: 'secret',
@@ -23,10 +24,7 @@ describe('LogoutUseCase', () => {
 		},
 	});
 
-	const requestResponseClearCookie = jest.spyOn(
-		request.res ?? { clearCookie: Function },
-		'clearCookie',
-	);
+	const requestResponseClearCookie = response.clearCookie;
 
 	beforeAll(async () => {
 		const module: TestingModule = await Test.createTestingModule({
@@ -45,26 +43,39 @@ describe('LogoutUseCase', () => {
 	});
 
 	describe('execute', () => {
-		it('should call two times to clearCookie', () => {
+		// Dos por token: la variante de host y la de dominio. Una cookie guardada con
+		// `Domain` es otra cookie para el navegador, y caducar sólo una deja viva a la otra.
+		it('should expire both the host and the domain variant of each token', () => {
 			useCase.execute();
 
-			expect(requestResponseClearCookie).toHaveBeenCalledTimes(2);
+			expect(requestResponseClearCookie).toHaveBeenCalledTimes(4);
 
-			expect(requestResponseClearCookie).toHaveBeenNthCalledWith(1, 'x-jwt-access-token', {
+			const accessOptions = {
 				signed: true,
 				secure: true,
 				httpOnly: true,
 				sameSite: 'none',
-				domain: 'marcbook-air.local',
 				path: '/api',
+			};
+			const refreshOptions = { ...accessOptions, path: '/api/auth/refresh-session' };
+
+			expect(requestResponseClearCookie).toHaveBeenNthCalledWith(
+				1,
+				'x-jwt-access-token',
+				accessOptions,
+			);
+			expect(requestResponseClearCookie).toHaveBeenNthCalledWith(2, 'x-jwt-access-token', {
+				...accessOptions,
+				domain: 'localhost',
 			});
-			expect(requestResponseClearCookie).toHaveBeenNthCalledWith(2, 'x-jwt-refresh-token', {
-				signed: true,
-				secure: true,
-				httpOnly: true,
-				sameSite: 'none',
-				domain: 'marcbook-air.local',
-				path: '/api/auth/refresh-session',
+			expect(requestResponseClearCookie).toHaveBeenNthCalledWith(
+				3,
+				'x-jwt-refresh-token',
+				refreshOptions,
+			);
+			expect(requestResponseClearCookie).toHaveBeenNthCalledWith(4, 'x-jwt-refresh-token', {
+				...refreshOptions,
+				domain: 'localhost',
 			});
 		});
 	});

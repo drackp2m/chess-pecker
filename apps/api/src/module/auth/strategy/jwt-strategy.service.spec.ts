@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 
 import { NotFoundException } from '../../../shared/exception/not-found.exception';
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
@@ -34,9 +34,7 @@ describe('JwtStrategyService', () => {
 
 	describe('validate', () => {
 		it('throw NotFoundException when EntityManager.getOneBy throw NotFoundException', async () => {
-			userRepository.getOne.mockRejectedValueOnce(() => {
-				throw new NotFoundException();
-			});
+			userRepository.getOne.mockRejectedValueOnce(new NotFoundException());
 
 			const user = service.validate(fakeJwt);
 

@@ -17,7 +17,7 @@ Angular 22 (standalone components, signals) with `@ngrx/signals` for state store
 
 ## Commands
 
-**NEVER run tests, linters, or the app on your own.** Unless the user explicitly asks for it in a specific instruction, do NOT execute: `pnpm test` (or any Vitest run), `pnpm lint` / `pnpm lint:fix` (nor ESLint, Prettier, or Stylelint directly or on individual files), `pnpm start` / `ng serve` / `pnpm build`, nor install browsers (Chrome, Chromium, Playwright, etc.) or any other tooling to "see the web page" or manually verify changes. The USER is the only one who runs and verifies things. The commands below are documented for reference only.
+**NEVER run tests, linters, or the app on your own.** Unless the user explicitly asks for it in a specific instruction, do NOT execute: any test run (Vitest, `pnpm --filter … test`, `test:integration`), `pnpm lint` / `pnpm lint:fix` (nor ESLint, Prettier, or Stylelint directly or on individual files), any dev server or build (`ng serve`, `nest start`, `pnpm --filter … build`), nor install browsers (Chrome, Chromium, Playwright, etc.) or any other tooling to "see the web page" or manually verify changes. The USER is the only one who runs and verifies things. The commands below are documented for reference only.
 
 Package manager is **pnpm** — never use npm or yarn.
 
@@ -30,22 +30,38 @@ pnpm pnpm:match --fix     # rewrites the workflow versions to match
 
 `pnpm:match` (`tools/scripts/match-pnpm-version.mjs`) is the check half of that pair, and the `pre-commit` hook runs it _without_ `--fix` — so a bump that skips the second command fails the commit with a table of the mismatched jobs rather than drifting silently. Never edit the version by hand in one place only.
 
-Every command below runs from the repo root; the Angular ones are thin `pnpm --filter @chesspecker/web run …` wrappers, so extra flags still pass through (`pnpm build --base-href /x/`).
+The root `package.json` holds **only** repo-wide scripts. There are no `pnpm start` / `pnpm test` / `pnpm api:*` wrappers — everything that belongs to a package lives in `apps/web/package.json` or `apps/api/package.json` and runs as `pnpm --filter @chesspecker/<web|api> <script>`, from anywhere in the repo. Extra flags pass straight through (`pnpm --filter @chesspecker/web build --base-href /x/`).
 
-- `pnpm start` — dev server (`ng serve`)
-- `pnpm build` — production build, into `apps/web/dist/chesspecker/browser`
-- `pnpm test` — run unit tests (Vitest)
-- `pnpm typecheck` — `ng build --configuration typecheck` (compile only, no emit worth keeping)
+Root:
+
 - `pnpm lint` — ESLint → Stylelint → Prettier, in that order
 - `pnpm lint:fix` — same three tools in `--fix`/`--write` mode, plus per-file correction counts
-- `pnpm api:start` / `pnpm api:build` / `pnpm api:test` — the NestJS side
-- `pnpm --filter @chesspecker/web start:safari` and `pnpm --filter @chesspecker/api start:safari` — the same two servers over plain HTTP with TLS terminated in front of them. **Safari needs this for both**: neither server's own TLS works there, and the proxy answers HTTP/1.1 with the same mkcert pair. One generic script covers both — `sh tools/scripts/start-safari.sh --source <port> [--target <port>] [--host <name>] [--env KEY=VALUE]... -- <command…>` — where `--target` defaults to `source + 1`, `--host` only decorates the URL it prints, and everything after `--` is run through `env` with the given assignments. It delegates the TLS half to `tools/scripts/tls-proxy.sh`, which is usable on its own. The API's entry passes `--env API_PROTOCOL=http`, which is what stops `BootstrapHelper` from adding `httpsOptions`, plus `--env API_PORT=3001` so Nest listens where the proxy forwards.
+- `pnpm update:deps`, `pnpm git:sync`, `pnpm pnpm:match` — see below
+
+`pnpm --filter @chesspecker/web …`:
+
+- `start` — dev server (`ng serve`)
+- `build` — production build, into `apps/web/dist/chesspecker/browser`
+- `test` — unit tests (Vitest)
+- `typecheck` — `ng build --configuration typecheck` (compile only, no emit worth keeping)
+- `preview:pwa` — serve the built app over HTTPS so the service worker is exercised
+
+`pnpm --filter @chesspecker/api …`:
+
+- `start` / `start:dev` — Nest, once or in watch mode; `start:debug` adds the inspector, `start:prod` runs `dist/main`
+- `build` — `nest build`
+- `test` — unit tests (Vitest `unit` project: `src/**/*.spec.ts`, no I/O)
+- `test:watch`, `test:cov`, `test:debug` — same project, watching / with coverage / with the inspector
+- `test:integration` — the `integration` project (`src/**/*.test.ts`), against real Postgres. Needs the `chesspecker-db` container up; the script sets `NODE_ENV=test`, which is what switches `database-config.ts` to `DB_NAME_TEST` (`chesspecker_test`, created alongside the dev one by `tools/container/postgresql-multiple-databases.sh`). A `globalSetup` drops the schema and replays every migration before the run, and refuses to start if `NODE_ENV` is anything but `test`. Both projects live in the single `apps/api/vitest.config.ts`; a bare `vitest` with no `--project` would run both, so always go through the scripts.
+- `migration:create` / `migration:check` / `migration:execute` — MikroORM CLI, reading `MIKRO_ORM_CLI_CONFIG` from the compose environment
+
+`pnpm --filter @chesspecker/web start:safari` and `pnpm --filter @chesspecker/api start:safari` — the same two servers over plain HTTP with TLS terminated in front of them. **Safari needs this for both**: neither server's own TLS works there, and the proxy answers HTTP/1.1 with the same mkcert pair. One generic script covers both — `sh tools/scripts/start-safari.sh --source <port> [--target <port>] [--host <name>] [--env KEY=VALUE]... -- <command…>` — where `--target` defaults to `source + 1`, `--host` only decorates the URL it prints, and everything after `--` is run through `env` with the given assignments. It delegates the TLS half to `tools/scripts/tls-proxy.sh`, which is usable on its own. The API's entry passes `--env API_PROTOCOL=http`, which is what stops `BootstrapHelper` from adding `httpsOptions`, plus `--env API_PORT=3001` so Nest listens where the proxy forwards.
 
 Both lint scripts go through `tools/scripts/lint/lint.mjs`, a wrapper that runs the same three tools and prints one unified, ESLint-stylish summary (clickable `file:line:col`) instead of three separate outputs. With no arguments it covers the whole repo; given paths — which is how `lint-staged` calls it — it routes each file to the right tool by extension and reports anything no tool covers. Both are invoked with `--max-warnings 0`.
 
 `.prettierignore`'s root-anchored `/dir` entries double as the prune list for the repo walk in `walk-files.mjs`, so every new workspace package needs its `node_modules`/`dist` listed there or the whole-repo Prettier pass crawls them.
 
-CI (`.github/workflows/deploy.yml`) runs lint+test on every push to `main`, then semantic-release, then build+deploy. `HUSKY=0` is set during the release commit to skip local hooks.
+CI (`.github/workflows/deploy.yml`) runs lint+test on every push to `main`, then semantic-release, then build+deploy. `HUSKY=0` is set during the release commit to skip local hooks. The `test` job runs `pnpm --filter @chesspecker/web test` only, and Husky's `pre-commit` also covers web alone (`typecheck` + `test`) — **nothing runs the API suite automatically yet**. Adding it needs an env file in the job first: seven specs reach `shared/module/config/register/*`, which call `validate(process.env)` at import time and throw on a missing variable, and CI has no `.env`.
 
 ## Imports
 
@@ -58,11 +74,19 @@ The root-level singletons have their own exact aliases (no `/*`): `@app/app.conf
 
 `apps/web/src/app/` follows a clean-architecture-flavored split: `repository/` (data access), `use-case/` (business logic), `store/` (`@ngrx/signals` state), `service/`, `directive/`, `component/`, `layout/`, `page/`, `pipe/`, `model/`, `definition/`, `util/`, `strategy/`.
 
+## Database
+
+The entities under `apps/api/src/module/**/*.entity.ts` are the single source of truth for the schema — **never write or edit a migration by hand**. Change the entity first, then let the MikroORM CLI diff it against the database and emit the file: `pnpm --filter @chesspecker/api migration:create`. A hand-written migration drifts from what the ORM believes the schema is, and the next generated diff tries to "fix" the difference.
+
+`migration:create` needs the `chesspecker-db` container up, since it diffs against a live database. `migration:check` lists what is pending, `migration:execute` applies it. The integration suite replays every migration from scratch, so a migration that does not match its entity fails there first.
+
+Migrations are generated artifacts, so no linter touches them: `/apps/api/migrations` is in `.prettierignore` and `apps/api/migrations/**` in the `eslint.config.mjs` ignores. The CLI writes them and its formatting is not ours to reflow. That also retired the folder's own `tsconfig.json`, which existed only to give the type-aware ESLint pass a project — the MikroORM CLI runs the migrations through ts-node with `apps/api/tsconfig.json` and needs nothing extra.
+
 ## Code style
 
 TypeScript is strict beyond Angular CLI defaults. The baseline lives in the root `tsconfig.base.json`, which every package extends: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature`, `noFallthroughCasesInSwitch`. `apps/web` adds Angular's `strictTemplates`, `strictInjectionParameters`, `strictInputAccessModifiers`, `strictStandalone`; `apps/api` still relaxes five of the base flags under a TODO. A package that cannot meet the baseline relaxes the specific flag with a TODO — never by dropping the `extends`.
 
-- **TypeScript 6 no longer auto-includes every `@types/*` package**, so each tsconfig must declare `types` explicitly or globals like `expect`/`it` go missing. `apps/web` splits it across `tsconfig.app.json` (`[]`) and `tsconfig.spec.json` (`["vitest/globals"]`); `apps/api` across `tsconfig.json` (`["node", "jest"]`) and `tsconfig.build.json` (`["node"]`). A new package that skips this compiles until the first test file.
+- **TypeScript 6 no longer auto-includes every `@types/*` package**, so each tsconfig must declare `types` explicitly or globals like `expect`/`it` go missing. `apps/web` splits it across `tsconfig.app.json` (`[]`) and `tsconfig.spec.json` (`["vitest/globals"]`); `apps/api` across `tsconfig.json` (`["node", "vitest/globals"]`) and `tsconfig.build.json` (`["node"]`, which also excludes `src/shared/test/**` so the integration helpers stay out of `dist`). A new package that skips this compiles until the first test file.
 - Component selector prefix is `app`; directives are camelCase, components are kebab-case.
 - Component class names must end in `Layout`, `Page`, `Modal`, or `Component`.
 - Keep files under 250 lines and functions under 75 lines. Both rules are `warn`, but `pnpm lint` runs with `--max-warnings 0`, so a warning fails the lint run, the `pre-commit` hook and CI exactly like an error. Both count with `skipComments: true`, so comments are free.

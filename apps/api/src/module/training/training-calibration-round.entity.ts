@@ -15,16 +15,9 @@ import { Training } from './training.entity';
  * así que guardarlo sería guardar una constante.
  *
  * No hay `finishedAt`: `outcome <> 'pending'` ya dice que está cerrada. Ni tasa de acierto
- * ni tiempo medio: salen de `puzzle_attempt`.
+ * ni tiempo medio: salen de `puzzle_attempt`. Qué ejercicios repartió está en
+ * `training_calibration_puzzle`.
  */
-// FixMe => la ronda no guarda qué ejercicios repartió, sólo la franja, así que una que se
-// queda a medias no se puede reanudar: `CreateCalibrationRoundUseCase` responde 412
-// mientras siga `pending` y no existe nada que devuelva los que faltaban. Basta con que
-// el front recargue la página para dejar la calibración —y con ella el entrenamiento—
-// bloqueada. El front lo esquiva sacando un lote nuevo de la misma franja, que puede
-// repetir ejercicios ya preguntados y falsea la tasa de acierto con la que se juzga.
-// Hace falta persistir el reparto (una tabla `training_calibration_puzzle`, o reutilizar
-// `training_puzzle`) y que crear ronda devuelva la abierta con lo que le queda.
 @Entity({ repository: () => TrainingCalibrationRoundRepository })
 @Unique({ properties: ['training', 'index'] })
 @Check({ name: 'calibration_round_rating_bucket_check', expression: 'rating % 100 = 0' })

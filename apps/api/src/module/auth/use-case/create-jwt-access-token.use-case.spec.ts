@@ -1,6 +1,6 @@
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
 import { JwtFactory } from '../../../shared/module/config/factory/jwt.factory';
@@ -11,7 +11,7 @@ describe('CreateJwtAccessTokenUseCase', () => {
 	let module: TestingModule;
 	let useCase: CreateJwtAccessTokenUseCase;
 
-	const jwtServiceSign = jest.spyOn(JwtService.prototype, 'sign');
+	const jwtServiceSign = vi.spyOn(JwtService.prototype, 'sign');
 
 	const prepareTestingModule = async (
 		configurationService: ConfigurationService,

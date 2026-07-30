@@ -1,8 +1,8 @@
 import { REQUEST } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
-import { mock } from 'jest-mock-extended';
 import ms from 'ms';
+import { mock } from 'vitest-mock-extended';
 
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
@@ -49,7 +49,7 @@ describe('SetJwtTokenUseCase', () => {
 
 	describe('execute', () => {
 		it('calls once to cookie when called with type access ', () => {
-			jest.useFakeTimers();
+			vi.useFakeTimers();
 
 			const tokenType: JwtCookie = JwtCookie.access;
 			const tokenValue = 'fake-access-token';
@@ -63,14 +63,14 @@ describe('SetJwtTokenUseCase', () => {
 				httpOnly: true,
 				sameSite: 'none',
 				domain: 'localhost',
-				path: '/graphql',
+				path: '/api',
 				maxAge: ms('1d'),
 			});
 		});
 	});
 
 	it('calls once to cookie when called with type refresh ', () => {
-		jest.useFakeTimers();
+		vi.useFakeTimers();
 
 		const tokenType: JwtCookie = JwtCookie.refresh;
 		const tokenValue = 'fake-refresh-token';

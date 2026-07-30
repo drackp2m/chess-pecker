@@ -18,6 +18,9 @@ export interface TrainingRunProps {
 	mode: TrainingRunMode | null;
 	trainingUuid: string | null;
 	round: CalibrationRound | null;
+	/** 1-indexed position of `current` among the round's exercises, calibration only. */
+	roundPosition: number | null;
+	roundTotal: number | null;
 	current: TrainingRunSlot | null;
 	/** Already fetched, waiting for the user to leave the graded exercise behind. */
 	pending: TrainingRunSlot | null;
@@ -34,6 +37,8 @@ export const initialState: TrainingRunProps = {
 	mode: null,
 	trainingUuid: null,
 	round: null,
+	roundPosition: null,
+	roundTotal: null,
 	current: null,
 	pending: null,
 	queue: [],

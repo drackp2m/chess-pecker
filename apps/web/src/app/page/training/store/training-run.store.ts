@@ -10,12 +10,8 @@ import {
 	initialState,
 	toSlot,
 } from '@app/page/training/store/training-run-state';
-import { PuzzleCatalogRepository } from '@app/repository/puzzle-catalog.repository';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { HttpError } from '@app/util/http-error';
-
-const RATING_BAND_WIDTH = 100;
-const MAX_ROUND_PUZZLES = 10;
 
 /**
  * Drives one solving run — a calibration round, or a stretch of a cycle — against the
@@ -44,7 +40,6 @@ export class TrainingRunStore extends signalStore(
 	readonly hasNext = computed(() => null !== this.pending());
 
 	private readonly runRepository = inject(TrainingRunRepository);
-	private readonly catalogRepository = inject(PuzzleCatalogRepository);
 
 	async begin(training: Training): Promise<void> {
 		patchState(this, { ...initialState, trainingUuid: training.uuid, isLoading: true });
@@ -96,32 +91,24 @@ export class TrainingRunStore extends signalStore(
 			return;
 		}
 
-		patchState(this, { current: pending, pending: null, lastResult: null, notice: null });
+		const roundPosition =
+			'calibration' === this.mode() ? (this.roundPosition() ?? 0) + 1 : this.roundPosition();
+
+		patchState(this, {
+			current: pending,
+			pending: null,
+			lastResult: null,
+			notice: null,
+			roundPosition,
+		});
 	}
 
-	/**
-	 * A round left open cannot be handed its exercises back — it records the band it
-	 * probed, not which ones it dealt — so resuming draws a fresh batch from the same
-	 * band and submits until the API reports the round closed.
-	 */
-	// FixMe => that redraw is a workaround, and it shows: the fresh batch can repeat an
-	// exercise the round already asked (inflating the accuracy the band is judged on),
-	// and the client cannot tell how many attempts are still missing, so it fetches ten
-	// and hopes. The round has to remember what it dealt — a `training_calibration_puzzle`
-	// row per exercise, or reuse `training_puzzle` — and the create endpoint has to hand
-	// back the open round with its remaining exercises instead of answering 412.
 	private async beginCalibration(uuid: string): Promise<void> {
 		const rounds = await this.runRepository.listRounds(uuid);
 		const last = rounds.at(-1);
 
 		if ('pending' === last?.outcome) {
-			const puzzles = await this.catalogRepository.searchByRating(
-				last.rating,
-				last.rating + RATING_BAND_WIDTH - 1,
-				MAX_ROUND_PUZZLES,
-			);
-
-			this.openRound(last, puzzles);
+			this.openRound(last, await this.runRepository.listRoundPuzzles(uuid, last.uuid));
 
 			return;
 		}
@@ -137,6 +124,8 @@ export class TrainingRunStore extends signalStore(
 		patchState(this, {
 			mode: 'calibration',
 			round,
+			roundPosition: undefined === first ? null : 1,
+			roundTotal: puzzles.length,
 			current: undefined === first ? null : toSlot(first),
 			queue: rest,
 			notice: undefined === first ? 'The catalog has no exercises in that rating band.' : null,

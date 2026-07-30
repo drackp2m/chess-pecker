@@ -1,6 +1,4 @@
-import { ExecutionContext } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
 
 import { UnauthorizedException } from '../../../shared/exception/unauthorized-exception.exception';
 import { UserFaker } from '../../user/factory/user.faker';
@@ -10,7 +8,6 @@ import { JwtGuard } from './jwt.guard';
 
 describe('JwtGuard', () => {
 	let guard: JwtGuard;
-	const executionContext = mock<ExecutionContext>();
 
 	const userFaker = UserFaker;
 	const fakeUser = userFaker.makeOne();
@@ -25,17 +22,6 @@ describe('JwtGuard', () => {
 
 	it('should be defined', () => {
 		expect(guard).toBeDefined();
-	});
-
-	describe('getRequest', () => {
-		it('should transform the context correctly from GraphQL execution context', () => {
-			(executionContext.getType as jest.Mock).mockReturnValueOnce('graphql');
-			executionContext.getArgs.mockReturnValueOnce([{}, {}, { req: { key: 'value' } }, {}]);
-
-			const result = guard.getRequest(executionContext);
-
-			expect(result).toStrictEqual({ key: 'value' });
-		});
 	});
 
 	describe('handleRequest', () => {

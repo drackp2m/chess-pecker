@@ -1,32 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
+import { TestingModule } from '@nestjs/testing';
 
 import { NotFoundException } from '../../shared/exception/not-found.exception';
+import { createIntegrationTestingModule } from '../../shared/test/create-integration-testing-module';
 import { AppModule } from '../app/app.module';
-import { AuthModule } from '../auth/auth.module';
 
 import { User } from './user.entity';
 import { UserModule } from './user.module';
 import { UserRepository } from './user.repository';
 
 describe('UserRepository', () => {
+	let module: TestingModule;
 	let userRepository: UserRepository;
 
-	const authModule = mock<AuthModule>();
-
 	beforeAll(async () => {
-		const module: TestingModule = await Test.createTestingModule({
-			imports: [AppModule, UserModule],
-			providers: [
-				UserRepository,
-				{
-					provide: AuthModule,
-					useValue: authModule,
-				},
-			],
-		}).compile();
+		module = await createIntegrationTestingModule({ imports: [AppModule, UserModule] });
 
-		userRepository = await module.resolve(UserRepository);
+		userRepository = module.get(UserRepository);
+	});
+
+	afterAll(async () => {
+		await module.close();
 	});
 
 	beforeEach(async () => {

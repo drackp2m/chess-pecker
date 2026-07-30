@@ -47,7 +47,14 @@ export class TrainingSolvePage implements OnInit {
 		const position = this.run.current()?.position;
 
 		if (null !== round) {
-			return `Calibration · round ${round.index.toString()} · rating ${round.rating.toString()}`;
+			const roundPosition = this.run.roundPosition();
+			const roundTotal = this.run.roundTotal();
+			const progress =
+				null === roundPosition || null === roundTotal
+					? ''
+					: ` (${roundPosition.toString()} / ${roundTotal.toString()})`;
+
+			return `Calibration · round ${round.index.toString()}${progress} · ELO ${round.rating.toString()}`;
 		}
 
 		return null === position || undefined === position

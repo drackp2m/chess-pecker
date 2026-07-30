@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 
 import { NotFoundException } from '../../../shared/exception/not-found.exception';
 import { UnauthorizedException } from '../../../shared/exception/unauthorized-exception.exception';
@@ -42,9 +42,7 @@ describe('LoginUseCase', () => {
 
 	describe('execute', () => {
 		it('throw NotFoundException when UserService.getOne throw exception', async () => {
-			userRepository.getOne.mockRejectedValueOnce(() => {
-				throw new NotFoundException();
-			});
+			userRepository.getOne.mockRejectedValueOnce(new NotFoundException());
 
 			const tokenModel = useCase.execute({ username: 'not', password: 'found' });
 

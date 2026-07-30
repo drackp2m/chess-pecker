@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ValidationArguments } from 'class-validator';
-import { mock } from 'jest-mock-extended';
+import { mock } from 'vitest-mock-extended';
 
 import { NotFoundException } from '../../../shared/exception/not-found.exception';
 import { UserFaker } from '../factory/user.faker';

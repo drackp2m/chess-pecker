@@ -7,6 +7,8 @@ import { CalibrationRoundKind } from '../definition/calibration-round-kind.enum'
 import { CalibrationRoundOutcome } from '../definition/calibration-round-outcome.enum';
 import { TrainingPolicy } from '../definition/training-policy';
 import { TrainingStatus } from '../definition/training-status.enum';
+import { TrainingCalibrationPuzzle } from '../training-calibration-puzzle.entity';
+import { TrainingCalibrationPuzzleRepository } from '../training-calibration-puzzle.repository';
 import { TrainingCalibrationRound } from '../training-calibration-round.entity';
 import { TrainingCalibrationRoundRepository } from '../training-calibration-round.repository';
 import { Training } from '../training.entity';
@@ -20,6 +22,7 @@ import {
 export class CreateCalibrationRoundUseCase {
 	constructor(
 		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
+		private readonly calibrationPuzzleRepository: TrainingCalibrationPuzzleRepository,
 		private readonly puzzleRepository: PuzzleRepository,
 	) {}
 
@@ -54,6 +57,13 @@ export class CreateCalibrationRoundUseCase {
 
 		const round = await this.calibrationRoundRepository.insert(
 			new TrainingCalibrationRound({ training, index: rounds.length + 1, kind, rating }),
+		);
+
+		await this.calibrationPuzzleRepository.insertMany(
+			puzzles.map(
+				(puzzle, position) =>
+					new TrainingCalibrationPuzzle({ calibrationRound: round, puzzle, position }),
+			),
 		);
 
 		return { round, puzzles };

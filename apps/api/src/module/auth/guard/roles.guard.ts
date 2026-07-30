@@ -9,7 +9,7 @@ import { User } from '../../user/user.entity';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-	canActivate(context: ExecutionContext): Promise<boolean> {
+	canActivate(context: ExecutionContext): boolean {
 		const roles = new Reflector().get<UserRole[]>('roles', context.getHandler());
 
 		const request = context.switchToHttp().getRequest<Request & { user: User }>();
@@ -20,13 +20,13 @@ export class RolesGuard implements CanActivate {
 		}
 
 		if (0 === roles.length) {
-			return new Promise((resolve) => resolve.apply(true));
+			return true;
 		}
 
 		const hasRole = user.role === UserRole.Admin || roles.includes(user.role);
 
 		if (hasRole) {
-			return new Promise((resolve) => resolve.apply(true));
+			return true;
 		}
 
 		throw new ForbiddenException('not allowed', 'role');

@@ -10,6 +10,7 @@ import { PuzzleAttempt } from './puzzle-attempt.entity';
 import { TrainingCalibrationRound } from './training-calibration-round.entity';
 import { TrainingCalibrationRoundRepository } from './training-calibration-round.repository';
 import { CreateCalibrationRoundUseCase } from './use-case/create-calibration-round.use-case';
+import { GetCalibrationRoundPuzzlesUseCase } from './use-case/get-calibration-round-puzzles.use-case';
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
 import { SubmitCalibrationAttemptUseCase } from './use-case/submit-calibration-attempt.use-case';
 
@@ -18,6 +19,7 @@ export class TrainingCalibrationController {
 	constructor(
 		private readonly getOwnedTrainingUseCase: GetOwnedTrainingUseCase,
 		private readonly createCalibrationRoundUseCase: CreateCalibrationRoundUseCase,
+		private readonly getCalibrationRoundPuzzlesUseCase: GetCalibrationRoundPuzzlesUseCase,
 		private readonly submitCalibrationAttemptUseCase: SubmitCalibrationAttemptUseCase,
 		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
 	) {}
@@ -44,6 +46,17 @@ export class TrainingCalibrationController {
 		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);
 
 		return this.createCalibrationRoundUseCase.execute(training);
+	}
+
+	@Get('round/:roundUuid/puzzle')
+	async listRoundPuzzles(
+		@CurrentUser() user: User,
+		@Param('uuid') uuid: string,
+		@Param('roundUuid') roundUuid: string,
+	): Promise<Puzzle[]> {
+		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);
+
+		return this.getCalibrationRoundPuzzlesUseCase.execute(training, roundUuid);
 	}
 
 	/**

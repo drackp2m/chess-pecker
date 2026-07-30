@@ -78,10 +78,29 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		return this.logIn({ username: request.username, password: request.password });
 	}
 
-	async logOut(): Promise<void> {
-		await this.authRepository.logOut().catch(() => undefined);
+	/**
+	 * La sesión vive en cookies `httpOnly`, así que sólo el API puede cerrarla: si la
+	 * llamada falla no hay nada que el cliente pueda borrar por su cuenta. Pasar a
+	 * `anonymous` de todos modos dejaba una interfaz mintiendo, con la sesión intacta
+	 * esperando al siguiente refresco, así que el fallo se queda a la vista.
+	 */
+	async logOut(): Promise<boolean> {
+		patchState(this, { isSubmitting: true, error: null });
 
-		patchState(this, { status: 'anonymous', user: null, error: null });
+		try {
+			await this.authRepository.logOut();
+		} catch (error) {
+			patchState(this, {
+				isSubmitting: false,
+				error: HttpError.toMessage(error, 'Could not log out. Try again.'),
+			});
+
+			return false;
+		}
+
+		patchState(this, { status: 'anonymous', user: null, isSubmitting: false, error: null });
+
+		return true;
 	}
 
 	clearError(): void {

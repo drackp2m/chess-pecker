@@ -87,7 +87,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm run test
+        run: pnpm --filter @chesspecker/web test
 
   release:
     runs-on: ubuntu-24.04

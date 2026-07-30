@@ -9,6 +9,7 @@
 /.husky
 /.pgdata
 /.pnpm-store
+/ideas
 /.vscode
 /dist
 /node_modules
@@ -18,5 +19,6 @@
 /apps/web/out-tsc
 /apps/web/node_modules
 /apps/api/dist
+/apps/api/migrations
 /apps/api/node_modules
 Dockerfile

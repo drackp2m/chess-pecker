@@ -19,7 +19,7 @@ describe('GenerateNowDateUseCase', () => {
 
 	describe('execute', () => {
 		it('should return new Date()', () => {
-			jest.useFakeTimers().setSystemTime(new Date('1429-06-11'));
+			vi.useFakeTimers().setSystemTime(new Date('1429-06-11'));
 
 			const generatedDate = useCase.execute();
 

@@ -145,9 +145,21 @@ describe('SessionStore', () => {
 		const store = await createStore(createRepository());
 
 		await store.logIn(credentials);
-		await store.logOut();
 
+		expect(await store.logOut()).toBe(true);
 		expect(store.isAnonymous()).toBe(true);
 		expect(store.username()).toBeNull();
+	});
+
+	// Las cookies son `httpOnly`: si el API no las caduca, la sesión sigue abierta y
+	// pasar a `anonymous` sólo escondería que el logout no ha hecho nada.
+	it('keeps the session when the API cannot close it', async () => {
+		const store = await createStore(createRepository({ logOut: vi.fn(rejectsWith(500, null)) }));
+
+		await store.logIn(credentials);
+
+		expect(await store.logOut()).toBe(false);
+		expect(store.isAuthenticated()).toBe(true);
+		expect(store.error()).toBe('Could not log out. Try again.');
 	});
 });

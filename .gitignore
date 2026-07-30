@@ -54,6 +54,10 @@ Thumbs.db
 # Postgres data dir, bind-mounted by the chesspecker-db service
 .pgdata
 
+# MikroORM writes one schema snapshot per database; only the dev one is tracked,
+# the test one is a byproduct of `test:integration` replaying the migrations
+apps/api/migrations/.snapshot-*_test.json
+
 # Claude Code
 .claude/hook-errors.log
 
