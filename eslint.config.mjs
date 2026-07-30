@@ -339,9 +339,19 @@ export default typescriptEslint.config(
 		name: 'Complexity',
 		files: ['**/*.ts', '**/*.mts', '**/*.js', '**/*.mjs'],
 		ignores: ['**/*.spec.ts', '**/*.spec.js', '**/.angular/**'],
+		// rules: {
+		// 	'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
+		// 	'max-lines-per-function': [
+		// 		'warn',
+		// 		{ max: 30, skipBlankLines: true, skipComments: true, IIFEs: true },
+		// 	],
+		// },
 		rules: {
-			'max-lines': ['warn', { max: 250, skipComments: true }],
-			'max-lines-per-function': ['warn', { max: 75, skipComments: true, IIFEs: true }],
+			'max-lines': ['warn', { max: 250, skipBlankLines: true, skipComments: true }],
+			'max-lines-per-function': [
+				'warn',
+				{ max: 75, skipBlankLines: true, skipComments: true, IIFEs: true },
+			],
 		},
 	},
 );

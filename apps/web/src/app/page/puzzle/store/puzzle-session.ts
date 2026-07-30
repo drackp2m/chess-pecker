@@ -1,4 +1,4 @@
-import { BoardTransition } from '@app/definition/board-animation.type';
+import { BoardTransition, nextTransition } from '@app/definition/board-animation.type';
 import { PendingPromotion } from '@app/definition/board-presenter.interface';
 import {
 	ChessMove,
@@ -7,7 +7,13 @@ import {
 	PromotionPieceType,
 	Square,
 } from '@app/definition/chess.type';
-import { Puzzle, PuzzleMove, PuzzleOutcome, PuzzleProgress } from '@app/definition/puzzle.type';
+import {
+	Puzzle,
+	PuzzleMove,
+	PuzzleOutcome,
+	PuzzleProgress,
+	PuzzleResult,
+} from '@app/definition/puzzle.type';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
@@ -32,7 +38,13 @@ export interface PuzzleStoreProps {
 	selected: Square | undefined;
 	pendingPromotion: PendingPromotion | undefined;
 	outcome: PuzzleOutcome;
+	/** The graded verdict, kept once it is settled however the board moves on. */
+	result: PuzzleResult | undefined;
 	isReplaying: boolean;
+	/** The rest of the solution is being played out right now. */
+	isRevealing: boolean;
+	/** It has been played out at some point, so the board is showing the answer. */
+	isRevealed: boolean;
 }
 
 /** The slice of state that describes the played line. */
@@ -50,7 +62,10 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		selected: undefined,
 		pendingPromotion: undefined,
 		outcome: 'idle',
+		result: undefined,
 		isReplaying: false,
+		isRevealing: false,
+		isRevealed: false,
 	};
 }
 
@@ -73,7 +88,33 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		selected: undefined,
 		pendingPromotion: undefined,
 		outcome: 'opening',
+		result: undefined,
 		isReplaying: true,
+		isRevealing: false,
+		isRevealed: false,
+	};
+}
+
+/**
+ * Puts the line back where it stopped following the script, dropping the moves that
+ * strayed, so the solution can be played out from there.
+ */
+export function revealPatch(
+	state: LineState,
+	deviation: number | undefined,
+): Partial<PuzzleStoreProps> {
+	const cursor = Math.min(state.cursor, deviation ?? state.cursor);
+
+	return {
+		cursor,
+		line: state.line.slice(0, cursor),
+		positions: state.positions.slice(0, cursor + 1),
+		announced: undefined,
+		selected: undefined,
+		pendingPromotion: undefined,
+		transition: undefined,
+		isRevealing: true,
+		isRevealed: true,
 	};
 }
 
@@ -127,7 +168,7 @@ export function extendLine(state: LineState, move: PuzzleMove, next: ChessPositi
 
 /** State patch for a move that has been accepted into the line. */
 export function commitPatch(
-	state: LineState,
+	state: LineState & Pick<PuzzleStoreProps, 'transition'>,
 	position: ChessPosition,
 	move: ChessMove,
 	isOpponent: boolean,
@@ -136,6 +177,7 @@ export function commitPatch(
 		...extendLine(state, toRecord(position, move, isOpponent), ChessBoard.apply(position, move)),
 		selected: undefined,
 		pendingPromotion: undefined,
+		transition: nextTransition(state.transition, move, 'played'),
 	};
 }
 

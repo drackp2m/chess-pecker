@@ -4,6 +4,7 @@ export enum SettingType {
 	LAST_SEEN_VERSION = 'last-seen-version',
 	MOVE_ANIMATION = 'move-animation',
 	MOVE_INPUT = 'move-input',
+	MISTAKE_POLICY = 'mistake-policy',
 }
 
 export type SettingTypeKey = keyof typeof SettingType;

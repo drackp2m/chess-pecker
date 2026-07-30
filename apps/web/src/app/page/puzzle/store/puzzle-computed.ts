@@ -46,15 +46,12 @@ export function withPuzzleComputed() {
 				() => 'solving' === store.outcome() && position().turn === store.playerColor(),
 			);
 
-			const canPlay = computed(() => !store.isReplaying() && (isPlayerTurn() || isFreePlay()));
-
 			return {
 				puzzle,
 				position,
 				deviation,
 				isFreePlay,
 				isPlayerTurn,
-				canPlay,
 
 				legalMoves: computed(() => ChessMoveGenerator.legalMoves(position())),
 
@@ -88,7 +85,6 @@ export function withPuzzleComputed() {
 				),
 
 				isBusy: computed(() => store.isReplaying()),
-				isLocked: computed(() => undefined === puzzle() || !canPlay()),
 
 				canStepBackward: computed(() => 0 < store.cursor()),
 				canStepForward: computed(() => store.cursor() < store.line().length),

@@ -7,6 +7,7 @@ import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
+import { MistakePolicyService } from '@app/service/mistake-policy.service';
 
 const SAMPLE_CSV =
 	'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor\n' +
@@ -27,21 +28,9 @@ export class PuzzlePage {
 
 	readonly csvDraft = signal('');
 
-	readonly headline = computed(() => {
-		switch (this.store.outcome()) {
-			case 'idle':
-				return 'Load a set of exercises to begin';
-			case 'opening':
-			case 'replying':
-				return 'Opponent is moving…';
-			case 'failed':
-				return 'Not the move — play it out, or step back to try again';
-			case 'solved':
-				return 'Solved';
-			case 'solving':
-				return `Find the move for ${this.store.playerColor()}`;
-		}
-	});
+	private readonly policy = inject(MistakePolicyService).policy;
+
+	readonly headline = computed(() => this.describe());
 
 	readonly counter = computed(() => {
 		const total = this.store.library.puzzles().length;
@@ -89,5 +78,45 @@ export class PuzzlePage {
 
 		this.store.loadCsv(await file.text());
 		input.value = '';
+	}
+
+	private describe(): string {
+		if (this.store.isRevealing()) {
+			return 'Playing the solution…';
+		}
+
+		switch (this.store.outcome()) {
+			case 'idle':
+				return 'Load a set of exercises to begin';
+			case 'opening':
+			case 'replying':
+				return 'Opponent is moving…';
+			case 'failed':
+				return this.describeMiss();
+			case 'solved':
+				return this.describeSolved();
+			case 'solving':
+				return `Find the move for ${this.store.playerColor()}`;
+		}
+	}
+
+	private describeSolved(): string {
+		if (this.store.isRevealed()) {
+			return 'That was the line';
+		}
+
+		return 'failed' === this.store.result() ? 'Solved, after the miss' : 'Solved';
+	}
+
+	private describeMiss(): string {
+		const policy = this.policy();
+
+		if (policy.freePlay && policy.retry) {
+			return 'Not the move — play it out, or step back to try again';
+		}
+
+		return policy.retry
+			? 'Not the move — step back and try again'
+			: 'Not the move — step back to walk the line';
 	}
 }

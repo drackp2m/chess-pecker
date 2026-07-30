@@ -36,7 +36,7 @@
 						icon="backward-step"
 						iconSquared
 						aria-label="Step back one move"
-						[disabled]="!store.canStepBackward()"
+						[disabled]="store.isBusy() || !store.canStepBackward()"
 						(click)="store.stepBackward()"
 						class="px-2"
 					></button>
@@ -46,7 +46,7 @@
 						icon="forward-step"
 						iconSquared
 						aria-label="Step forward one move"
-						[disabled]="!store.canStepForward()"
+						[disabled]="store.isBusy() || !store.canStepForward()"
 						(click)="store.stepForward()"
 						class="px-2"
 					></button>
@@ -60,6 +60,18 @@
 						class="px-2"
 					></button>
 				</div>
+
+				@if (store.isSolutionOffered()) {
+					<div class="flex-row justify-center">
+						<button
+							appThemed
+							[disabled]="!store.canRevealSolution()"
+							(click)="store.revealSolution()"
+						>
+							Show solution
+						</button>
+					</div>
+				}
 
 				<div class="navigation flex-row gap-2 align-center justify-between">
 					<button
