@@ -23,7 +23,11 @@ export default (): MikroOrmModuleSyncOptions => ({
 	namingStrategy: MikroOrmNamingStrategy,
 	migrations: {
 		tableName: 'migrations',
-		path: 'migrations',
+		// Same auto-detection rationale as `entities` above: the `migrations`
+		// folder only holds .ts sources. `tsconfig.migrations.json` compiles them
+		// to dist/migrations so `mikro-orm migration:up` has somewhere to look
+		// once ts-node isn't installed (production `pnpm install --prod` deps).
+		path: 'production' === process.env.NODE_ENV ? 'dist/migrations' : 'migrations',
 		pathTs: 'migrations',
 		silent: true,
 	},

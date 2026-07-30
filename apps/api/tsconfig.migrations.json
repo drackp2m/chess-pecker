@@ -1,0 +1,9 @@
+{
+	"extends": "./tsconfig.build.json",
+	"compilerOptions": {
+		"rootDir": "migrations",
+		"outDir": "dist/migrations",
+		"tsBuildInfoFile": "./dist/tsconfig.migrations.tsbuildinfo"
+	},
+	"include": ["migrations/**/*.ts"]
+}

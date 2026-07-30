@@ -90,6 +90,11 @@ ARG API_PORT=3000
 # in the image, and it would crash on boot.
 ENV NODE_ENV=production
 
+# `mikro-orm` (the CLI, invoked from CMD below) doesn't know to look under
+# src/shared/module/config, and by the time this stage runs there's no
+# ts-node to read the .ts source anyway — point it at the compiled config.
+ENV MIKRO_ORM_CLI_CONFIG=dist/shared/module/config/mikro-orm.config.js
+
 EXPOSE $API_PORT
 
 # mikro-orm.config.ts resolves its entity glob ('dist/module/**/*.entity.js') and
@@ -105,4 +110,7 @@ COPY --chown=node:node --from=deps-api-prod /usr/src/app/apps/api/node_modules .
 COPY --chown=node:node --from=build-api /usr/src/app/apps/api/package.json ./package.json
 COPY --chown=node:node --from=build-api /usr/src/app/apps/api/dist ./dist
 
-CMD ["node", "dist/main.js"]
+# Runs pending migrations before every boot. Single instance only (this app
+# doesn't scale horizontally) — with more than one replica, concurrent
+# `migration:up` runs would race against each other.
+CMD ["sh", "-c", "node_modules/.bin/mikro-orm migration:up && node dist/main.js"]

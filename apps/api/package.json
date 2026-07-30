@@ -9,7 +9,7 @@
 		"migration:check": "mikro-orm migration:pending",
 		"migration:create": "mikro-orm migration:create",
 		"migration:execute": "mikro-orm migration:up",
-		"build": "nest build",
+		"build": "nest build && tsc -p tsconfig.migrations.json",
 		"start": "nest start",
 		"start:dev": "nest start --watch",
 		"start:safari": "sh ../../tools/scripts/start-safari.sh --source 3000 --env API_PROTOCOL=http --env API_PORT=3001 -- nest start --watch",
