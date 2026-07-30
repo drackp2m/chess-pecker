@@ -77,7 +77,7 @@ FROM deps AS build-api
 
 USER node
 
-COPY . .
+COPY --chown=node:node . .
 
 RUN pnpm --filter @chesspecker/api run build
 
