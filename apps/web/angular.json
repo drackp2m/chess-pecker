@@ -54,7 +54,7 @@
 							"outputHashing": "all",
 							"define": {
 								"APP_DEBUG": "false",
-								"API_URL": "'https://chesspecker-api.onrender.com/api'"
+								"API_URL": "'/api'"
 							}
 						},
 						"development": {

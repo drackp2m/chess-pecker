@@ -54,7 +54,7 @@ describe('LogoutUseCase', () => {
 				signed: true,
 				secure: true,
 				httpOnly: true,
-				sameSite: 'none',
+				sameSite: 'lax',
 				path: '/api',
 			};
 			const refreshOptions = { ...accessOptions, path: '/api/auth/refresh-session' };
