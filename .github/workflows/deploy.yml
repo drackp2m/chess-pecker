@@ -175,7 +175,7 @@ jobs:
       - name: Build application
         run: |
           set -o pipefail
-          pnpm run build --base-href ${{ steps.pages.outputs.base_url }}/ 2>&1 | tee /tmp/build.log
+          pnpm --filter @chesspecker/web build --base-href ${{ steps.pages.outputs.base_url }}/ 2>&1 | tee /tmp/build.log
 
       - name: Build summary
         if: always()
