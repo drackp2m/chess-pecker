@@ -69,7 +69,7 @@ COPY --chown=node:node apps/web/package.json ./apps/web/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node patches ./patches
 
-RUN pnpm install --frozen-lockfile --prod --filter @chesspecker/api
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @chesspecker/api
 
 
 
