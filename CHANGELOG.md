@@ -1,3 +1,17 @@
+# v1.4.0 (2026-07-30)
+
+## What's Changed
+
+### ✨ Features
+
+- now can get the puzzle solution ([32cc7b3](https://github.com/drackp2m/chess-pecker/commit/32cc7b3a8713bebcc386e1acf1a33b54d99099e1)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- adapt to new eslint rules ([14ceae1](https://github.com/drackp2m/chess-pecker/commit/14ceae1ef3d2070cabf962395140c022955fb16e)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.3.0...v1.4.0
+
 # v1.3.0 (2026-07-30)
 
 ## What's Changed
