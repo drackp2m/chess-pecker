@@ -51,7 +51,11 @@
 									"maximumError": "8kB"
 								}
 							],
-							"outputHashing": "all"
+							"outputHashing": "all",
+							"define": {
+								"APP_DEBUG": "false",
+								"API_URL": "'https://chesspecker-api.onrender.com/api'"
+							}
 						},
 						"development": {
 							"optimization": false,
