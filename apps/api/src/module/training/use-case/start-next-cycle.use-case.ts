@@ -25,29 +25,7 @@ export class StartNextCycleUseCase {
 	) {}
 
 	async execute(training: Training): Promise<TrainingCycle> {
-		if (![TrainingStatus.Planning, TrainingStatus.Running].includes(training.status)) {
-			throw new PreconditionFailedException('not ready for cycles', 'training');
-		}
-
-		const cycles = await this.trainingCycleRepository.getManyByTraining(training.uuid);
-
-		if (cycles.some((cycle) => TrainingCycleStatus.Running === cycle.status)) {
-			throw new PreconditionFailedException('cycle in progress', 'cycle');
-		}
-
-		if (TrainingPolicy.maxCycles <= cycles.length) {
-			throw new PreconditionFailedException('max cycles reached', 'cycle');
-		}
-
-		// El ritmo del ciclo 1 lo fija el usuario y de él sale todo lo demás, así que sin
-		// objetivo no se arranca.
-		if (0 === cycles.length) {
-			const goal = await this.trainingGoalRepository.getCurrentByTraining(training.uuid);
-
-			if (undefined === goal) {
-				throw new PreconditionFailedException('goal is required', 'goal');
-			}
-		}
+		const cycles = await this.assertCanStart(training);
 
 		const trainingPuzzles = await this.trainingPuzzleRepository.getManyByTraining(training.uuid);
 
@@ -93,6 +71,35 @@ export class StartNextCycleUseCase {
 		return [...blocks.keys()]
 			.sort((one, other) => one - other)
 			.flatMap((block) => shuffle(blocks.get(block) ?? []));
+	}
+
+	/** Todo lo que impide abrir una pasada nueva; devuelve las que ya hay si no impide nada. */
+	private async assertCanStart(training: Training): Promise<TrainingCycle[]> {
+		if (![TrainingStatus.Planning, TrainingStatus.Running].includes(training.status)) {
+			throw new PreconditionFailedException('not ready for cycles', 'training');
+		}
+
+		const cycles = await this.trainingCycleRepository.getManyByTraining(training.uuid);
+
+		if (cycles.some((cycle) => TrainingCycleStatus.Running === cycle.status)) {
+			throw new PreconditionFailedException('cycle in progress', 'cycle');
+		}
+
+		if (TrainingPolicy.maxCycles <= cycles.length) {
+			throw new PreconditionFailedException('max cycles reached', 'cycle');
+		}
+
+		// El ritmo del ciclo 1 lo fija el usuario y de él sale todo lo demás, así que sin
+		// objetivo no se arranca.
+		if (0 === cycles.length) {
+			const goal = await this.trainingGoalRepository.getCurrentByTraining(training.uuid);
+
+			if (undefined === goal) {
+				throw new PreconditionFailedException('goal is required', 'goal');
+			}
+		}
+
+		return cycles;
 	}
 }
 

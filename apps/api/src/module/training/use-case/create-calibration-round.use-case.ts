@@ -41,19 +41,7 @@ export class CreateCalibrationRoundUseCase {
 		}
 
 		const { kind, rating } = CreateCalibrationRoundUseCase.resolveNext(rounds);
-		const size = CalibrationRoundKind.Scan === kind ? 1 : TrainingPolicy.refinePuzzles;
-
-		const puzzles = await this.puzzleRepository.getManyRandomByRating(
-			rating,
-			ratingBucketCeiling(rating),
-			size,
-		);
-
-		// Sin ejercicios suficientes la ronda no podría cerrarse nunca, así que se falla aquí
-		// en lugar de dejar la calibración colgada esperando intentos que no van a llegar.
-		if (puzzles.length < size) {
-			throw new PreconditionFailedException('not enough puzzles', 'rating');
-		}
+		const puzzles = await this.dealPuzzles(kind, rating);
 
 		const round = await this.calibrationRoundRepository.insert(
 			new TrainingCalibrationRound({ training, index: rounds.length + 1, kind, rating }),
@@ -104,6 +92,25 @@ export class CreateCalibrationRoundUseCase {
 		}
 
 		return { kind: CalibrationRoundKind.Refine, rating };
+	}
+
+	/** Los ejercicios de la ronda: un sondeo reparte uno, un afinado la tanda entera. */
+	private async dealPuzzles(kind: CalibrationRoundKind, rating: number): Promise<Puzzle[]> {
+		const size = CalibrationRoundKind.Scan === kind ? 1 : TrainingPolicy.refinePuzzles;
+
+		const puzzles = await this.puzzleRepository.getManyRandomByRating(
+			rating,
+			ratingBucketCeiling(rating),
+			size,
+		);
+
+		// Sin ejercicios suficientes la ronda no podría cerrarse nunca, así que se falla aquí
+		// en lugar de dejar la calibración colgada esperando intentos que no van a llegar.
+		if (puzzles.length < size) {
+			throw new PreconditionFailedException('not enough puzzles', 'rating');
+		}
+
+		return puzzles;
 	}
 }
 

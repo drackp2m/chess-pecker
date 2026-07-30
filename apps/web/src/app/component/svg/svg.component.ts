@@ -2,6 +2,30 @@ import { Component, computed, input } from '@angular/core';
 
 import { Check } from '@app/util/check';
 
+/** Intrinsic viewBox of each icon, keyed by its Font Awesome name. */
+const ASPECT_RATIOS: Record<string, [number, number]> = {
+	'backward-step': [320, 512],
+	'chevron-left': [320, 512],
+	'chevron-right': [320, 512],
+	'forward-step': [320, 512],
+	pause: [320, 512],
+
+	ghost: [384, 512],
+	play: [384, 512],
+	stop: [384, 512],
+	xmark: [384, 512],
+
+	rabbit: [448, 512],
+	trash: [448, 512],
+
+	turtle: [512, 398],
+
+	'delete-left': [576, 512],
+
+	dice: [640, 512],
+	'user-plus': [640, 512],
+};
+
 @Component({
 	selector: 'app-svg',
 	templateUrl: './svg.component.html',
@@ -41,36 +65,6 @@ export class SvgComponent {
 		const match = iconNameRegex.exec(icon);
 		const iconName = match?.[1];
 
-		switch (iconName) {
-			case 'backward-step':
-			case 'chevron-left':
-			case 'chevron-right':
-			case 'forward-step':
-			case 'pause':
-				return [320, 512];
-
-			case 'ghost':
-			case 'play':
-			case 'stop':
-			case 'xmark':
-				return [384, 512];
-
-			case 'rabbit':
-			case 'trash':
-				return [448, 512];
-
-			case 'turtle':
-				return [512, 398];
-
-			case 'delete-left':
-				return [576, 512];
-
-			case 'dice':
-			case 'user-plus':
-				return [640, 512];
-
-			default:
-				return [1, 1];
-		}
+		return (undefined === iconName ? undefined : ASPECT_RATIOS[iconName]) ?? [1, 1];
 	}
 }

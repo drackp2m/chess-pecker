@@ -1,5 +1,12 @@
 import { DestroyRef, Signal, inject } from '@angular/core';
-import { patchState, signalStoreFeature, type, withMethods } from '@ngrx/signals';
+import {
+	StateSignals,
+	WritableStateSource,
+	patchState,
+	signalStoreFeature,
+	type,
+	withMethods,
+} from '@ngrx/signals';
 
 import { ChessMove, ChessPosition } from '@app/definition/chess.type';
 import { Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
@@ -25,6 +32,72 @@ interface PuzzlePlaybackInput {
 	readonly mistake: Signal<ChessMove | undefined>;
 }
 
+type PlaybackStore = StateSignals<PuzzleStoreProps> &
+	WritableStateSource<PuzzleStoreProps> &
+	PuzzlePlaybackInput;
+
+function outcomeAt(store: PlaybackStore, cursor: number): PuzzleOutcome {
+	const puzzle = store.puzzle();
+
+	// A replay in flight owns the outcome until it lands.
+	return undefined === puzzle || store.isReplaying()
+		? store.outcome()
+		: describeOutcome(store.positions(), puzzle, store.deviation(), cursor);
+}
+
+function commit(store: PlaybackStore, move: ChessMove, isOpponent: boolean): void {
+	const position = store.position();
+
+	patchState(store, (state) => commitPatch(state, position, move, isOpponent));
+}
+
+/**
+ * Plays the scripted ply at the cursor in two beats: the piece lights up on
+ * its own square first, so it can be seen before it slides across the board.
+ */
+function playScripted(store: PlaybackStore, scheduled: ScheduledAction): void {
+	scheduled.cancel();
+	patchState(store, { isReplaying: true });
+
+	scheduled.run(() => {
+		const expected = store.puzzle()?.moves[store.cursor()];
+		const move =
+			undefined === expected ? undefined : ChessNotation.parse(store.position(), expected);
+
+		patchState(store, { announced: move });
+		scheduled.run(() => {
+			land(store, scheduled, move);
+		}, ANNOUNCE_DELAY);
+	}, REPLAY_DELAY);
+}
+
+/**
+ * A reveal walks the whole rest of the line, so it comes back here for the
+ * next ply; a lone reply stops. Either way the line can run out early — a
+ * mate cuts the script short, and from a finished position there is nothing
+ * left to parse.
+ */
+function land(store: PlaybackStore, scheduled: ScheduledAction, move: ChessMove | undefined): void {
+	patchState(store, { announced: undefined });
+
+	if (undefined !== move) {
+		commit(store, move, store.position().turn !== store.playerColor());
+	}
+
+	const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
+
+	if (store.isRevealing() && undefined !== move && isScriptLeft) {
+		playScripted(store, scheduled);
+
+		return;
+	}
+
+	// Real Lichess lines end on a player move, but a set that ends on the
+	// opponent's would otherwise leave the exercise waiting forever.
+	patchState(store, { isReplaying: false, isRevealing: false });
+	patchState(store, { outcome: outcomeAt(store, store.cursor()) });
+}
+
 /**
  * Everything the board plays by itself, on a timer: the opponent's scripted replies,
  * the solution when it is asked for, and the take-back of a refuted move. The store
@@ -40,73 +113,16 @@ export function withPuzzlePlayback() {
 				scheduled.cancel();
 			});
 
-			function outcomeAt(cursor: number): PuzzleOutcome {
-				const puzzle = store.puzzle();
-
-				// A replay in flight owns the outcome until it lands.
-				return undefined === puzzle || store.isReplaying()
-					? store.outcome()
-					: describeOutcome(store.positions(), puzzle, store.deviation(), cursor);
-			}
-
-			function commit(move: ChessMove, isOpponent: boolean): void {
-				const position = store.position();
-
-				patchState(store, (state) => commitPatch(state, position, move, isOpponent));
-			}
-
-			/**
-			 * Plays the scripted ply at the cursor in two beats: the piece lights up on
-			 * its own square first, so it can be seen before it slides across the board.
-			 */
-			function playScripted(): void {
-				scheduled.cancel();
-				patchState(store, { isReplaying: true });
-
-				scheduled.run(() => {
-					const expected = store.puzzle()?.moves[store.cursor()];
-					const move =
-						undefined === expected ? undefined : ChessNotation.parse(store.position(), expected);
-
-					patchState(store, { announced: move });
-					// eslint-disable-next-line sonarjs/no-nested-functions
-					scheduled.run(() => {
-						land(move);
-					}, ANNOUNCE_DELAY);
-				}, REPLAY_DELAY);
-			}
-
-			/**
-			 * A reveal walks the whole rest of the line, so it comes back here for the
-			 * next ply; a lone reply stops. Either way the line can run out early — a
-			 * mate cuts the script short, and from a finished position there is nothing
-			 * left to parse.
-			 */
-			function land(move: ChessMove | undefined): void {
-				patchState(store, { announced: undefined });
-
-				if (undefined !== move) {
-					commit(move, store.position().turn !== store.playerColor());
-				}
-
-				const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
-
-				if (store.isRevealing() && undefined !== move && isScriptLeft) {
-					playScripted();
-
-					return;
-				}
-
-				// Real Lichess lines end on a player move, but a set that ends on the
-				// opponent's would otherwise leave the exercise waiting forever.
-				patchState(store, { isReplaying: false, isRevealing: false });
-				patchState(store, { outcome: outcomeAt(store.cursor()) });
-			}
-
 			return {
-				outcomeAt,
-				commit,
-				playScripted,
+				outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
+
+				commit: (move: ChessMove, isOpponent: boolean): void => {
+					commit(store, move, isOpponent);
+				},
+
+				playScripted: (): void => {
+					playScripted(store, scheduled);
+				},
 
 				cancelPlayback(): void {
 					scheduled.cancel();
