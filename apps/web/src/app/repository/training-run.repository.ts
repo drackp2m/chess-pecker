@@ -1,0 +1,106 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+
+import { API_BASE_URL } from '@app/definition/api.constant';
+import {
+	ApiPuzzle,
+	CalibrationAttemptResult,
+	CalibrationRound,
+	CalibrationRoundStart,
+	CycleAttemptResult,
+	SubmitCalibrationAttemptRequest,
+	SubmitCycleAttemptRequest,
+	TrainingCycle,
+	TrainingCycleItem,
+} from '@app/definition/training.interface';
+
+/**
+ * Everything that happens while a training is being solved: the calibration rounds and
+ * the cycles. Split off `TrainingRepository`, which only deals with the training itself.
+ */
+@Injectable({
+	providedIn: 'root',
+})
+export class TrainingRunRepository {
+	private readonly httpClient = inject(HttpClient);
+	private readonly baseUrl = `${API_BASE_URL}/training`;
+
+	async listRounds(uuid: string): Promise<CalibrationRound[]> {
+		return firstValueFrom(
+			this.httpClient.get<CalibrationRound[]>(`${this.baseUrl}/${uuid}/calibration/round`, {
+				withCredentials: true,
+			}),
+		);
+	}
+
+	/** Opens the next round and hands back its exercises: one to scan, ten to refine. */
+	async createRound(uuid: string): Promise<CalibrationRoundStart> {
+		return firstValueFrom(
+			this.httpClient.post<CalibrationRoundStart>(
+				`${this.baseUrl}/${uuid}/calibration/round`,
+				{},
+				{ withCredentials: true },
+			),
+		);
+	}
+
+	async listRoundPuzzles(uuid: string, roundUuid: string): Promise<ApiPuzzle[]> {
+		return firstValueFrom(
+			this.httpClient.get<ApiPuzzle[]>(
+				`${this.baseUrl}/${uuid}/calibration/round/${roundUuid}/puzzle`,
+				{ withCredentials: true },
+			),
+		);
+	}
+
+	async submitCalibrationAttempt(
+		uuid: string,
+		request: SubmitCalibrationAttemptRequest,
+	): Promise<CalibrationAttemptResult> {
+		return firstValueFrom(
+			this.httpClient.post<CalibrationAttemptResult>(
+				`${this.baseUrl}/${uuid}/calibration/attempt`,
+				request,
+				{ withCredentials: true },
+			),
+		);
+	}
+
+	async listCycles(uuid: string): Promise<TrainingCycle[]> {
+		return firstValueFrom(
+			this.httpClient.get<TrainingCycle[]>(`${this.baseUrl}/${uuid}/cycle`, {
+				withCredentials: true,
+			}),
+		);
+	}
+
+	async startCycle(uuid: string): Promise<TrainingCycle> {
+		return firstValueFrom(
+			this.httpClient.post<TrainingCycle>(
+				`${this.baseUrl}/${uuid}/cycle`,
+				{},
+				{ withCredentials: true },
+			),
+		);
+	}
+
+	async getNextItem(uuid: string): Promise<TrainingCycleItem> {
+		return firstValueFrom(
+			this.httpClient.get<TrainingCycleItem>(`${this.baseUrl}/${uuid}/cycle/next`, {
+				withCredentials: true,
+			}),
+		);
+	}
+
+	async submitCycleAttempt(
+		uuid: string,
+		request: SubmitCycleAttemptRequest,
+	): Promise<CycleAttemptResult> {
+		return firstValueFrom(
+			this.httpClient.post<CycleAttemptResult>(`${this.baseUrl}/${uuid}/cycle/attempt`, request, {
+				withCredentials: true,
+			}),
+		);
+	}
+}

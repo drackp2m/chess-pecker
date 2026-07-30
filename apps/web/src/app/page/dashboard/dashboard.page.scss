@@ -1,0 +1,9 @@
+.method {
+	li {
+		text-indent: calc(var(--spacing-3) * -1);
+
+		&::before {
+			content: '· ';
+		}
+	}
+}

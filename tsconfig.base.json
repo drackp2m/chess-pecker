@@ -1,0 +1,22 @@
+/* Repo-wide TypeScript baseline. Every workspace package extends this file and
+   adds only what its platform needs (module system, lib, emit, path aliases).
+   The strictness block below is the standard documented in AGENTS.md — a package
+   that cannot meet it yet relaxes the specific flag with a TODO, never by
+   dropping the extends. */
+{
+	"compilerOptions": {
+		// Strictness
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"noImplicitOverride": true,
+		"noImplicitReturns": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noFallthroughCasesInSwitch": true,
+
+		// Shared compiler behaviour
+		"isolatedModules": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true
+	}
+}

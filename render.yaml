@@ -1,0 +1,60 @@
+services:
+  - type: web
+    name: chesspecker-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    region: frankfurt
+    plan: free
+    branch: main
+    healthCheckPath: /api
+    envVars:
+      # Non-sensitive: same for every environment, safe to commit.
+      - key: API_PROTOCOL
+        value: https
+      - key: API_PORT
+        value: 3000
+      - key: API_PREFIX
+        value: /api
+      - key: JWT_ID
+        value: chesspecker
+      - key: JWT_ALGORITHM
+        value: HS512
+      - key: JWT_ISSUER
+        value: chesspecker
+      - key: JWT_AUDIENCE
+        value: chesspecker
+      - key: JWT_ACCESS_TOKEN_EXPIRES_IN
+        value: 1d
+      - key: JWT_REFRESH_TOKEN_EXPIRES_IN
+        value: 15d
+
+      # Secrets: never get a value here, `sync: false` makes Render prompt
+      # for them once in the dashboard instead.
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_NAME_TEST
+        sync: false
+      - key: DB_CERT
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: API_COOKIE_SECRET
+        sync: false
+
+      # Deployment-topology-dependent: depends on where the frontend ends up
+      # living, not known yet — fill in once that's decided.
+      - key: API_DOMAIN
+        sync: false
+      - key: API_CORS_ALLOWED_DOMAINS
+        sync: false
+      - key: API_COOKIE_DOMAIN
+        sync: false

@@ -1,13 +1,13 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/dist
+dist/
 /tmp
-/out-tsc
+out-tsc/
 /bazel-out
 
 # Node
-/node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
 
@@ -29,13 +29,19 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
 .sass-cache/
 /connect.lock
-/coverage
+coverage/
 /libpeerconnection.log
 testem.log
 /typings
+
+# Environment
+# One .env at the repo root, never committed: Docker Compose reads it to
+# interpolate ${APP_PORT}, and the API loads it too (see env.validation.ts).
+# .env.example is the tracked template — copy it on a fresh clone.
+.env
+*.env.local
 
 # System files
 .DS_Store
@@ -45,8 +51,17 @@ Thumbs.db
 .docker
 .pnpm-store
 
+# Postgres data dir, bind-mounted by the chesspecker-db service
+.pgdata
+
+# MikroORM writes one schema snapshot per database; only the dev one is tracked,
+# the test one is a byproduct of `test:integration` replaying the migrations
+apps/api/migrations/.snapshot-*_test.json
+
 # Claude Code
 .claude/hook-errors.log
 
 # Local dev SSL certificates (mkcert)
 .cert/
+
+/ideas

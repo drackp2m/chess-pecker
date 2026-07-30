@@ -1,0 +1,164 @@
+<section class="flex-col gap-6">
+	<header class="flex-col gap-1">
+		<h4>Training</h4>
+
+		<p class="fs-sm color-contrast-mid">
+			One program: the calibration finds your level, the set is fixed once, and every cycle runs
+			over that same set faster than the one before.
+		</p>
+	</header>
+
+	@if (store.error(); as message) {
+		<p class="error fs-sm" role="alert">{{ message }}</p>
+	}
+
+	@if (store.isLoading()) {
+		<p class="empty fs-sm color-contrast-mid">Loading…</p>
+	} @else if (store.active(); as active) {
+		<div class="flex-col gap-2">
+			<h5>{{ phaseLabel() }}</h5>
+
+			@if (store.progress(); as progress) {
+				<p class="fs-sm color-contrast-mid">
+					Calibration rounds: {{ progress.calibration.rounds }} · rating
+					{{ progress.calibration.rating ?? '—' }} · average
+					{{ formatDuration(progress.calibration.averageDurationMs) }}
+				</p>
+
+				<p class="fs-sm color-contrast-mid">
+					Set: {{ progress.setSize }} exercises · pace {{ progress.goal?.puzzlesPerDay ?? '—' }}/day
+					@if (progress.estimatedFirstCycleDays; as days) {
+						· first cycle ≈ {{ days }} days
+					}
+				</p>
+			}
+		</div>
+
+		@if ('calibrating' === active.status) {
+			<div class="flex-col gap-2">
+				<p class="fs-sm color-contrast-mid">
+					A scan is a single exercise, a refine is ten of them. Each round decides whether the next
+					one probes higher or lower.
+				</p>
+
+				<button appThemed color="accent" appRouterLink="/training/solve">
+					Open the next round
+				</button>
+			</div>
+		}
+
+		@if ('planning' === active.status) {
+			<div class="flex-col gap-3">
+				<h5>Pick the set</h5>
+
+				@if (store.progress(); as progress) {
+					@if (0 === progress.setSize) {
+						<form [formGroup]="setForm" class="flex-col gap-3" (ngSubmit)="selectSet()">
+							<input appThemed type="number" label="Exercises" formControlName="size" />
+
+							<button appThemed color="accent" type="submit" [disabled]="store.isSubmitting()">
+								Fix the set
+							</button>
+						</form>
+					} @else {
+						<p class="fs-sm color-contrast-mid">
+							{{ progress.setSize }} exercises are already fixed for every cycle.
+						</p>
+					}
+				}
+
+				<h5>Commit to a pace</h5>
+
+				<form [formGroup]="goalForm" class="flex-col gap-3" (ngSubmit)="saveGoal()">
+					<input
+						appThemed
+						type="number"
+						label="Exercises per day"
+						formControlName="puzzlesPerDay"
+					/>
+
+					<button appThemed type="submit" [disabled]="store.isSubmitting()">Save the pace</button>
+				</form>
+			</div>
+		}
+
+		@if (store.progress(); as progress) {
+			@if (0 < progress.cycles.length) {
+				<div class="flex-col gap-2">
+					<h5>Cycles</h5>
+
+					<ul class="flex-col gap-2">
+						@for (cycle of progress.cycles; track cycle.uuid) {
+							<li class="row flex-col gap-1 p-2 br-1">
+								<span class="fw-lg">Cycle {{ cycle.index }} · {{ cycle.status }}</span>
+
+								<span class="fs-sm color-contrast-mid">{{ describeCycle(cycle) }}</span>
+
+								<span class="fs-sm color-contrast-mid">
+									Total {{ formatDuration(cycle.totalDurationMs) }} · average
+									{{ formatDuration(cycle.averageDurationMs) }}
+									@if (cycle.targetDurationMs; as target) {
+										· target {{ formatDuration(target) }}
+									}
+								</span>
+							</li>
+						}
+					</ul>
+				</div>
+			}
+
+			<div class="flex-col gap-2">
+				@if (store.runningCycle()) {
+					<button appThemed color="accent" appRouterLink="/training/solve">
+						Continue the cycle
+					</button>
+				} @else if (store.canStartCycle()) {
+					<button appThemed color="accent" [disabled]="store.isSubmitting()" (click)="startCycle()">
+						Start cycle {{ progress.cycles.length + 1 }}
+					</button>
+				}
+
+				@if (progress.suggestFinish) {
+					<p class="fs-sm color-contrast-mid">
+						The minimum number of passes is done and the times have stopped dropping.
+					</p>
+
+					<button appThemed [disabled]="store.isSubmitting()" (click)="finish()">
+						Close the training
+					</button>
+				}
+
+				<button appThemed [disabled]="store.isSubmitting()" (click)="cancel()">
+					Cancel the training
+				</button>
+			</div>
+		}
+	} @else {
+		<div class="flex-col gap-2">
+			<p class="fs-sm color-contrast-mid">
+				Nothing in progress. Starting one opens the calibration, which is where your working rating
+				comes from — you are not asked for it.
+			</p>
+
+			<button appThemed color="accent" [disabled]="store.isSubmitting()" (click)="start()">
+				Start a training
+			</button>
+		</div>
+	}
+
+	@if (0 < store.trainings().length) {
+		<div class="flex-col gap-2">
+			<h5>History</h5>
+
+			<ul class="flex-col gap-2">
+				@for (training of store.trainings(); track training.uuid) {
+					<li class="row flex-col gap-1 p-2 br-1">
+						<span class="fw-lg">{{ training.status }}</span>
+
+						<span class="mono fs-sm color-contrast-mid">{{ training.createdAt }}</span>
+					</li>
+				}
+			</ul>
+		</div>
+	}
+</section>

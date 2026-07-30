@@ -1,12 +1,24 @@
-# Add files here to ignore them from prettier formatting
+# Add files here to ignore them from prettier formatting.
+# Root-anchored "/dir" entries are also what tools/scripts/lint/walk-files.mjs
+# prunes before descending, so every heavy directory needs its own entry here —
+# including the per-workspace node_modules pnpm creates under apps/*.
 /.angular
 /.devcontainer
 /.docker
 /.github/release-notes
 /.husky
+/.pgdata
 /.pnpm-store
+/ideas
 /.vscode
 /dist
 /node_modules
 /coverage
+/apps/web/.angular
+/apps/web/dist
+/apps/web/out-tsc
+/apps/web/node_modules
+/apps/api/dist
+/apps/api/migrations
+/apps/api/node_modules
 Dockerfile

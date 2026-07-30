@@ -1,0 +1,15 @@
+:host {
+	overflow-y: auto;
+	display: block;
+	max-height: 16rem;
+}
+
+.turn {
+	display: grid;
+	grid-template-columns: 2.5rem 1fr 1fr;
+	font-variant-numeric: tabular-nums;
+
+	&:nth-child(odd) {
+		background-color: color-mix(in oklab, var(--color-contrast) 6%, transparent);
+	}
+}

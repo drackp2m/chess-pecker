@@ -1,0 +1,52 @@
+@use '../../../scss/abstract/mixin' as mix;
+
+section {
+	height: 100%;
+
+	.title {
+		span {
+			text-decoration: underline;
+			text-decoration-thickness: 2px;
+		}
+	}
+}
+
+.headline.check .badge {
+	color: rgb(255 255 255);
+	background-color: rgb(214 64 52);
+}
+
+// One column on phones, board beside its panel once there is room for both.
+.layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--spacing-6);
+	align-items: start;
+
+	@include mix.media($from: lg) {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+	}
+}
+
+// The board is the page on a phone, so it cancels the section inset and runs edge to
+// edge. From lg it shares the row with the panel, where escaping would put it under
+// the gap, so there it just fills its own column.
+app-chess-board {
+	@include mix.media($until: lg) {
+		width: calc(100% + var(--page-padding) * 2);
+		margin-inline: calc(var(--page-padding) * -1);
+	}
+}
+
+.fen {
+	overflow-wrap: anywhere;
+}
+
+.error {
+	background-color: color-mix(in oklab, rgb(214 64 52) 18%, transparent);
+
+	.dismiss {
+		cursor: pointer;
+		text-decoration: underline;
+	}
+}

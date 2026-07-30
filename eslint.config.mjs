@@ -48,12 +48,15 @@ function transformEslintConfigs(config) {
 export default typescriptEslint.config(
 	{
 		ignores: [
-			'.angular/**',
+			'**/.angular/**',
 			'.pnpm-store/**',
 			'.devcontainers/**',
-			'node_modules/**',
-			'dist/**',
-			'coverage/**',
+			'**/node_modules/**',
+			'**/dist/**',
+			'**/out-tsc/**',
+			'**/coverage/**',
+			'ideas/**',
+			'apps/api/migrations/**',
 		],
 	},
 	// ── Global ignores & settings ──────────────────────────────────────────────
@@ -63,7 +66,14 @@ export default typescriptEslint.config(
 		},
 		languageOptions: {
 			parserOptions: {
-				projectService: true,
+				projectService: {
+					// Files that no tsconfig `include` picks up: root-level ambient
+					// declarations belong to no workspace package, and `apps/api/vitest.config.ts`
+					// sits outside that package's `rootDir` of `src`, so adding it to the include
+					// would break `nest build` with TS6059. Type them against the default project
+					// instead of adding a root tsconfig just to satisfy the parser.
+					allowDefaultProject: ['.env.d.ts', 'apps/api/vitest.config.ts'],
+				},
 				tsconfigRootDir: import.meta.dirname,
 			},
 		},
@@ -117,7 +127,7 @@ export default typescriptEslint.config(
 	// ── App source: enforce path aliases ───────────────────────────────────────
 	{
 		name: 'App source',
-		files: ['src/**/*.ts'],
+		files: ['apps/web/src/**/*.ts'],
 		rules: {
 			'no-restricted-imports': [
 				'warn',
@@ -140,7 +150,6 @@ export default typescriptEslint.config(
 		plugins: {
 			sonarjs: eslintPluginSonarjs,
 			rxjs: eslintPluginRxjs,
-			'angular-custom': angularCustomPlugin,
 		},
 		extends: [
 			transformEslintConfigs(eslint.configs.recommended),
@@ -148,34 +157,9 @@ export default typescriptEslint.config(
 			transformEslintConfigs(typescriptEslint.configs.strictTypeChecked),
 			transformEslintConfigs(typescriptEslint.configs.stylisticTypeChecked),
 			transformEslintConfigs(eslintPluginRxjs.configs.recommended),
-			transformEslintConfigs(angularEslint.configs.tsRecommended),
 		],
-		processor: angularEslint.processInlineTemplates,
 		rules: {
 			...eslintErrorsToWarnings(eslintPluginSonarjs.configs.recommended.rules),
-
-			// Angular
-			'@angular-eslint/directive-selector': [
-				'warn',
-				{ type: 'attribute', prefix: 'app', style: 'camelCase' },
-			],
-			'@angular-eslint/component-selector': [
-				'warn',
-				{ type: 'element', prefix: 'app', style: 'kebab-case' },
-			],
-			'@angular-eslint/component-class-suffix': [
-				'warn',
-				{ suffixes: ['Layout', 'Page', 'Modal', 'Component'] },
-			],
-			'angular-custom/no-page-selector': 'warn',
-			'angular-custom/component-property-order': [
-				'warn',
-				['selector', 'templateUrl', 'styleUrl', 'imports'],
-			],
-			'angular-custom/no-forbidden-component-property': [
-				'warn',
-				['animations', 'template', 'styles'],
-			],
 
 			// TypeScript
 			'@typescript-eslint/no-extraneous-class': 'off',
@@ -226,6 +210,80 @@ export default typescriptEslint.config(
 		},
 	},
 
+	// ── Angular (apps/web) ─────────────────────────────────────────────────────
+	{
+		name: 'Angular',
+		files: ['apps/web/**/*.ts'],
+		plugins: {
+			'angular-custom': angularCustomPlugin,
+		},
+		extends: [transformEslintConfigs(angularEslint.configs.tsRecommended)],
+		processor: angularEslint.processInlineTemplates,
+		rules: {
+			// Angular fails a request with `HttpErrorResponse`, which implements `Error`
+			// without extending it. Both rules would otherwise reject the one error type
+			// this app actually handles, in the code under test and in the stubs alike.
+			'@typescript-eslint/only-throw-error': [
+				'warn',
+				{ allow: [{ from: 'package', name: 'HttpErrorResponse', package: '@angular/common' }] },
+			],
+			'@typescript-eslint/prefer-promise-reject-errors': [
+				'warn',
+				{ allow: [{ from: 'package', name: 'HttpErrorResponse', package: '@angular/common' }] },
+			],
+
+			'@angular-eslint/directive-selector': [
+				'warn',
+				{ type: 'attribute', prefix: 'app', style: 'camelCase' },
+			],
+			'@angular-eslint/component-selector': [
+				'warn',
+				{ type: 'element', prefix: 'app', style: 'kebab-case' },
+			],
+			'@angular-eslint/component-class-suffix': [
+				'warn',
+				{ suffixes: ['Layout', 'Page', 'Modal', 'Component'] },
+			],
+			'angular-custom/no-page-selector': 'warn',
+			'angular-custom/component-property-order': [
+				'warn',
+				['selector', 'templateUrl', 'styleUrl', 'imports'],
+			],
+			'angular-custom/no-forbidden-component-property': [
+				'warn',
+				['animations', 'template', 'styles'],
+			],
+		},
+	},
+
+	// ── NestJS (apps/api) ──────────────────────────────────────────────────────
+	{
+		name: 'NestJS',
+		files: ['apps/api/**/*.ts'],
+		languageOptions: {
+			globals: {
+				...globals.node,
+				...globals.jest,
+			},
+		},
+		rules: {
+			// ToDo => remove this whole `rules` block once the API is fully integrated.
+			// Five packages it imports are not installed (@nestjs/graphql, graphql,
+			// graphql-subscriptions, graphql-ws, @playsetonline/api-definitions) and ten
+			// relative imports point at files that were left behind in the project it
+			// came from, so those modules resolve to `any` and every type-aware rule
+			// below fires on code that is not actually unsafe. Re-enable them — one by
+			// one — as the missing dependencies and files land, together with the
+			// matching TODO in apps/api/tsconfig.json.
+			'@typescript-eslint/no-explicit-any': 'off',
+			'@typescript-eslint/no-unsafe-argument': 'off',
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+			'@typescript-eslint/no-unsafe-call': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+			'@typescript-eslint/no-unsafe-return': 'off',
+		},
+	},
+
 	// ── JavaScript ─────────────────────────────────────────────────────────────
 	{
 		name: 'JavaScript',
@@ -244,7 +302,7 @@ export default typescriptEslint.config(
 	// ── HTML ───────────────────────────────────────────────────────────────────
 	{
 		name: 'HTML',
-		files: ['**/*.html'],
+		files: ['apps/web/**/*.html'],
 		extends: [
 			...angularEslint.configs.templateRecommended,
 			...angularEslint.configs.templateAccessibility,
@@ -280,7 +338,7 @@ export default typescriptEslint.config(
 	{
 		name: 'Complexity',
 		files: ['**/*.ts', '**/*.mts', '**/*.js', '**/*.mjs'],
-		ignores: ['**/*.spec.ts', '**/*.spec.js', '.angular/**'],
+		ignores: ['**/*.spec.ts', '**/*.spec.js', '**/.angular/**'],
 		rules: {
 			'max-lines': ['warn', { max: 250, skipComments: true }],
 			'max-lines-per-function': ['warn', { max: 75, skipComments: true, IIFEs: true }],

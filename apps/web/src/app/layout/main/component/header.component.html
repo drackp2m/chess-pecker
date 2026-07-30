@@ -1,0 +1,25 @@
+<section
+	class="header force-light pb-2 px-4 surface-contrast color-primary flex-row align-center justify-between"
+>
+	<button appRouterLink="/" class="logo flex-row gap-2 align-center color-primary">
+		<img src="icon-solo-dark.svg" alt="App Logo" />
+		<h3>{{ title() }}</h3>
+	</button>
+
+	<div class="flex-row gap-2 align-center">
+		@if (session.isAuthenticated()) {
+			<button
+				appThemed
+				appRouterLink="/training"
+				icon="timer"
+				aria-label="Training"
+				[routerLinkActiveOptions]="{ exact: false }"
+			></button>
+
+			<button appThemed appRouterLink="/friends" icon="user-plus" aria-label="Friends"></button>
+		}
+
+		<button appThemed appRouterLink="/match" icon="dice"></button>
+		<button appThemed appRouterLink="/settings" icon="gear"></button>
+	</div>
+</section>

@@ -1,0 +1,84 @@
+<section class="flex-col gap-4">
+	<header class="flex-col gap-1">
+		<h4 class="color-contrast-mid">{{ label() }}</h4>
+
+		<p
+			class="headline fs-lg fw-lg"
+			[class.failed]="'failed' === run.lastResult()"
+			[class.solved]="'solved' === run.lastResult()"
+		>
+			{{ headline() }}
+		</p>
+	</header>
+
+	@if (run.error(); as message) {
+		<p class="error fs-sm" role="alert">{{ message }}</p>
+	}
+
+	@if (run.notice(); as message) {
+		<p class="fs-sm" role="status">{{ message }}</p>
+	}
+
+	@if (null !== run.current()) {
+		<div class="flex-col gap-3">
+			<app-chess-board />
+
+			<div class="controls flex-row gap-2 justify-center">
+				<button
+					appThemed
+					icon="backward-fast"
+					iconSquared
+					aria-label="Restart exercise"
+					[disabled]="0 === board.cursor() && !board.canStepBackward()"
+					(click)="board.restart()"
+					class="px-2"
+				></button>
+
+				<button
+					appThemed
+					icon="backward-step"
+					iconSquared
+					aria-label="Step back one move"
+					[disabled]="!board.canStepBackward()"
+					(click)="board.stepBackward()"
+					class="px-2"
+				></button>
+
+				<button
+					appThemed
+					icon="forward-step"
+					iconSquared
+					aria-label="Step forward one move"
+					[disabled]="!board.canStepForward()"
+					(click)="board.stepForward()"
+					class="px-2"
+				></button>
+
+				<button
+					appThemed
+					icon="rotate"
+					iconSquared
+					aria-label="Flip board"
+					(click)="board.flipBoard()"
+					class="px-2"
+				></button>
+			</div>
+
+			<div class="flex-col gap-2">
+				<h5>Line</h5>
+
+				<app-move-history />
+			</div>
+		</div>
+	}
+
+	<div class="flex-row flex-wrap gap-2 align-center justify-between">
+		<button appThemed appRouterLink="/training">Back to the training</button>
+
+		@if (run.hasNext()) {
+			<button appThemed color="accent" [disabled]="run.isBusy()" (click)="next()">
+				Next exercise
+			</button>
+		}
+	</div>
+</section>

@@ -1,0 +1,50 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		// Module & target
+		"target": "ES2023",
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
+		"resolvePackageJsonExports": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+
+		// Con `target` en ES2022 o superior esto vale `true` por defecto, y entonces los
+		// campos declarados sin inicializador (`username!: string`) se definen como
+		// `undefined` *después* de que corra el constructor de la clase base. Es decir, el
+		// `Object.assign(this, init)` de `CustomBaseEntity` se pierde para todo campo de la
+		// subclase: `new User({ username }).username` es `undefined`. Sólo parece funcionar
+		// porque MikroORM ya había capturado el valor en sus accesores y lo usa al insertar y
+		// al serializar; cualquier código que lea la propiedad de la entidad recién creada ve
+		// el hueco. Los decoradores heredados de Nest y MikroORM asumen semántica `[[Set]]`.
+		"useDefineForClassFields": false,
+
+		// TypeScript 6 no longer pulls in every @types/* package automatically, so
+		// each config states what it needs. This one covers the editor and the
+		// type-aware ESLint pass, which both see the spec files.
+		"types": ["node", "vitest/globals"],
+
+		// Emit
+		"outDir": "./dist",
+		"rootDir": "src",
+		"sourceMap": true,
+		"removeComments": true,
+		"incremental": true,
+		"tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
+
+		// TODO: delete every flag below and inherit the full strictness baseline
+		// from tsconfig.base.json. They are the boilerplate this app arrived with,
+		// not a decision — the repo standard (AGENTS.md) is the base file. Remove
+		// them one at a time and fix the fallout, together with the matching TODO
+		// block in the root eslint.config.mjs.
+		"noImplicitAny": false,
+		"strictBindCallApply": false,
+		"noUncheckedIndexedAccess": false,
+		"exactOptionalPropertyTypes": false,
+		"noPropertyAccessFromIndexSignature": false
+	},
+	"include": ["src/**/*"],
+	"exclude": ["dist"]
+}

@@ -1,0 +1,96 @@
+@use '../../../scss/abstract/mixin' as mix;
+
+section {
+	height: 100%;
+
+	.title {
+		span {
+			text-decoration: underline;
+			text-decoration-thickness: 2px;
+		}
+	}
+}
+
+.headline {
+	&.failed {
+		color: rgb(196 48 38);
+	}
+
+	&.solved {
+		color: var(--color-accent);
+	}
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: var(--spacing-6);
+	align-items: start;
+
+	@include mix.media($from: lg) {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+	}
+}
+
+// The board is the page on a phone, so it cancels the section inset and runs edge to
+// edge. From lg it shares the row with the panel, where escaping would put it under
+// the gap, so there it just fills its own column.
+app-chess-board {
+	@include mix.media($until: lg) {
+		width: calc(100% + var(--page-padding) * 2);
+		margin-inline: calc(var(--page-padding) * -1);
+	}
+}
+
+.counter {
+	font-variant-numeric: tabular-nums;
+}
+
+.themes {
+	list-style: none;
+}
+
+.theme {
+	background-color: color-mix(in oklab, var(--color-contrast) 10%, transparent);
+}
+
+.import {
+	background-color: color-mix(in oklab, var(--color-contrast) 5%, transparent);
+
+	summary {
+		cursor: pointer;
+	}
+}
+
+textarea {
+	resize: vertical;
+	width: 100%;
+	border: 1px solid color-mix(in oklab, var(--color-contrast) 25%, transparent);
+	background-color: var(--color-primary);
+}
+
+// The native file input is replaced by its own label, styled like a button.
+.file-input {
+	position: absolute;
+
+	overflow: hidden;
+
+	width: 1px;
+	height: 1px;
+
+	clip-path: inset(50%);
+}
+
+.file-button {
+	cursor: pointer;
+	display: inline-flex;
+	background-color: var(--color-primary-mid);
+
+	&:hover {
+		background-color: var(--color-primary-mid-hover);
+	}
+}
+
+.error {
+	color: rgb(196 48 38);
+}

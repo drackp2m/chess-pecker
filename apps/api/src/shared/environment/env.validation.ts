@@ -1,0 +1,134 @@
+import { existsSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+
+import { plainToInstance } from 'class-transformer';
+import { IsNotEmpty, IsNumber, IsString, validateSync } from 'class-validator';
+import { config } from 'dotenv';
+
+import type { ApiProtocol } from './api-protocol.type';
+import type { JwtAlgorithm } from './jwt-algorithm.type';
+import type { NodeEnv } from './node-env.type';
+
+function workspaceRoot(): string {
+	let current = process.cwd();
+
+	while (!existsSync(join(current, 'pnpm-workspace.yaml'))) {
+		const parent = dirname(current);
+
+		if (parent === current) {
+			return process.cwd();
+		}
+
+		current = parent;
+	}
+
+	return current;
+}
+
+config({ path: join(workspaceRoot(), '.env') });
+
+class EnvironmentVariables {
+	@IsString()
+	@IsNotEmpty()
+	NODE_ENV!: NodeEnv;
+
+	@IsString()
+	@IsNotEmpty()
+	DB_HOST!: string;
+
+	@IsNumber()
+	DB_PORT!: number;
+
+	@IsString()
+	@IsNotEmpty()
+	DB_USER!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	DB_PASS!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	DB_NAME!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	DB_NAME_TEST!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	DB_CERT!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	API_PROTOCOL!: ApiProtocol;
+
+	@IsString()
+	@IsNotEmpty()
+	API_DOMAIN!: string;
+
+	@IsNumber()
+	API_PORT!: number;
+
+	@IsString()
+	@IsNotEmpty()
+	API_PREFIX!: string;
+
+	@IsNumber()
+	API_DEBUG_PORT?: number;
+
+	@IsString()
+	@IsNotEmpty()
+	API_CORS_ALLOWED_DOMAINS!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	API_COOKIE_SECRET!: string;
+
+	@IsString()
+	API_COOKIE_DOMAIN!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	JWT_ID!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	JWT_ALGORITHM!: JwtAlgorithm;
+
+	@IsString()
+	@IsNotEmpty()
+	JWT_ISSUER!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	JWT_AUDIENCE!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	JWT_ACCESS_TOKEN_EXPIRES_IN!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	JWT_REFRESH_TOKEN_EXPIRES_IN!: string;
+
+	@IsString()
+	@IsNotEmpty()
+	JWT_SECRET!: string;
+}
+
+export function validate(config: Record<string, unknown>): EnvironmentVariables {
+	const validatedConfig = plainToInstance(EnvironmentVariables, config, {
+		enableImplicitConversion: true,
+	});
+
+	const errors = validateSync(validatedConfig, {
+		skipMissingProperties: true,
+	});
+
+	if (0 < errors.length) {
+		throw new Error(errors.toString());
+	}
+
+	return validatedConfig;
+}

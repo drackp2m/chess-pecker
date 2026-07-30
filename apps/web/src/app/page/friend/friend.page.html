@@ -1,0 +1,137 @@
+<section class="flex-col gap-6">
+	<div class="flex-col gap-2">
+		<h4>Add a friend</h4>
+
+		<p class="fs-sm color-contrast-mid">
+			People are found by the start of their username. Nothing is sent until you pick one of the
+			results.
+		</p>
+
+		<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
+			<input appThemed type="text" label="Username" autocomplete="off" formControlName="username" />
+
+			<button appThemed type="submit" color="accent" [disabled]="store.isSearching()">
+				{{ store.isSearching() ? 'Searching…' : 'Search' }}
+			</button>
+		</form>
+
+		@if (store.searchTerm(); as term) {
+			@if (0 === store.matches().length) {
+				<p class="empty fs-sm color-contrast-mid">No account starts with “{{ term }}”.</p>
+			} @else {
+				<ul class="flex-col gap-2">
+					@for (match of store.matches(); track match.uuid) {
+						<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+							<span class="fw-lg">{{ match.username }}</span>
+
+							<span class="flex-row gap-2">
+								<button
+									appThemed
+									color="accent"
+									[disabled]="store.isSubmitting()"
+									(click)="sendRequest(match.username)"
+								>
+									Send request
+								</button>
+
+								<button appThemed (click)="block(match.username)">Block</button>
+							</span>
+						</li>
+					}
+				</ul>
+			}
+		}
+
+		@if (store.error(); as message) {
+			<p class="error fs-sm" role="alert">{{ message }}</p>
+		}
+
+		@if (store.notice(); as message) {
+			<p class="fs-sm" role="status">{{ message }}</p>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>Requests received</h4>
+
+		@if (0 === store.received().length) {
+			<p class="empty fs-sm color-contrast-mid">Nothing waiting for an answer.</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (request of store.received(); track request.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="fw-lg">{{ request.requester.username }}</span>
+
+						<span class="flex-row gap-2">
+							<button appThemed color="accent" (click)="accept(request.uuid)">Accept</button>
+							<button appThemed (click)="decline(request.uuid)">Decline</button>
+							<button appThemed (click)="block(request.requester.username)">Block</button>
+						</span>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>Requests sent</h4>
+
+		@if (0 === store.sent().length) {
+			<p class="empty fs-sm color-contrast-mid">You have not asked anyone yet.</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (request of store.sent(); track request.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="fw-lg">{{ request.addressee.username }}</span>
+
+						<button appThemed (click)="remove(request.uuid)">Cancel</button>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>Friends</h4>
+
+		@if (store.isLoading()) {
+			<p class="empty fs-sm color-contrast-mid">Loading…</p>
+		} @else if (0 === store.friends().length) {
+			<p class="empty fs-sm color-contrast-mid">No friends yet.</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (friend of store.friends(); track friend.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="fw-lg">{{ friend.username }}</span>
+
+						<span class="flex-row gap-2">
+							<button appThemed [disabled]="store.isSubmitting()" (click)="unfriend(friend)">
+								Unfriend
+							</button>
+
+							<button appThemed (click)="block(friend.username)">Block</button>
+						</span>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>Blocked</h4>
+
+		@if (0 === store.blocked().length) {
+			<p class="empty fs-sm color-contrast-mid">Nobody is blocked.</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (entry of store.blocked(); track entry.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="fw-lg">{{ entry.blocked.username }}</span>
+
+						<button appThemed (click)="unblock(entry.uuid)">Unblock</button>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+</section>
