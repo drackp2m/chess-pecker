@@ -1,3 +1,33 @@
+# v1.2.0 (2026-07-30)
+
+## What's Changed
+
+### ✨ Features
+
+- add friendship, user-block, training, puzzle, etc entities to api ([e80e1bb](https://github.com/drackp2m/chess-pecker/commit/e80e1bb44a7181a3c55874b3ff377d9548435c13)) by Marc Jovaní González
+- add register and login ([1e15a96](https://github.com/drackp2m/chess-pecker/commit/1e15a965b3fcbec29c6d84b135027733a9932003)) by Marc Jovaní González
+- create pages to manage friends and play exercises ([c48e7a2](https://github.com/drackp2m/chess-pecker/commit/c48e7a2cffeecf4dee151da60411afbb6ff6588f)) by Marc Jovaní González
+- create pnpm workspace and add nestJS api ([2336854](https://github.com/drackp2m/chess-pecker/commit/23368541ee132594031854c9befbde3605f4b30c)) by Marc Jovaní González
+- puzzle and user-setting entities ([bd6d28d](https://github.com/drackp2m/chess-pecker/commit/bd6d28d9393b1f5f8e0edc9fbcd7d57c1d787195)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- using vitest ([bb01707](https://github.com/drackp2m/chess-pecker/commit/bb01707cb340c23c45f97ce676ff3bbfb9356fb6)) by Marc Jovaní González
+
+### 📚 Documentation
+
+- added ToDo's and FixMe's to the entrie project ([c0be2d2](https://github.com/drackp2m/chess-pecker/commit/c0be2d2aa4e7293776c07190523e66734a0a6147)) by Marc Jovaní González
+
+### 💻 Continuous Integration
+
+- prepare Dockerfile and render.yaml for api deploy ([b247a01](https://github.com/drackp2m/chess-pecker/commit/b247a01ecfaf26b1693dfdbf8a641edbed6ba1f0)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- add api typecheck and tests to pre-commit hook ([1a848cd](https://github.com/drackp2m/chess-pecker/commit/1a848cdeba76a82ba01d2398f8569a5b598a9d9b)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.1.0...v1.2.0
+
 # v1.1.0 (2026-07-27)
 
 ## What's Changed
