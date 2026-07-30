@@ -14,6 +14,14 @@ const DEFAULT_COLUMNS = [
 	'selectedfor',
 ];
 
+/** The scanner's position mid-file: the row being built, and whether quotes are open. */
+interface CsvScan {
+	rows: string[][];
+	row: string[];
+	field: string;
+	isQuoted: boolean;
+}
+
 /**
  * Reads the Lichess puzzle CSV. A header row is honoured when present — columns are
  * then matched by name, so extra columns or a different order are fine — and falls
@@ -71,48 +79,62 @@ export abstract class PuzzleCsv {
 	// — with filtering by rating/theme applied during the scan rather than after it.
 	private static toRows(text: string): string[][] {
 		const source = text.replace(/\r\n?/g, '\n');
-		const rows: string[][] = [];
-		let row: string[] = [];
-		let field = '';
-		let isQuoted = false;
+		const scan: CsvScan = { rows: [], row: [], field: '', isQuoted: false };
 
 		for (let index = 0; index < source.length; index++) {
 			const character = source.charAt(index);
 
-			if (isQuoted) {
-				const isEscapedQuote = '"' === character && '"' === source.charAt(index + 1);
-
-				if (isEscapedQuote) {
-					field += '"';
-					index++;
-				} else if ('"' === character) {
-					isQuoted = false;
-				} else {
-					field += character;
-				}
+			if (scan.isQuoted) {
+				index += this.readQuoted(scan, character, source.charAt(index + 1));
 
 				continue;
 			}
 
-			if ('"' === character) {
-				isQuoted = true;
-			} else if (',' === character) {
-				row.push(field);
-				field = '';
-			} else if ('\n' === character) {
-				row.push(field);
-				rows.push(row);
-				row = [];
-				field = '';
-			} else {
-				field += character;
-			}
+			this.readUnquoted(scan, character);
 		}
 
-		row.push(field);
-		rows.push(row);
+		scan.row.push(scan.field);
+		scan.rows.push(scan.row);
 
-		return rows;
+		return scan.rows;
+	}
+
+	/**
+	 * One character inside a quoted field: `""` is a literal quote and eats the next
+	 * character, a lone quote closes the field, anything else is content. Returns how
+	 * many extra characters it swallowed.
+	 */
+	private static readQuoted(scan: CsvScan, character: string, next: string): number {
+		if ('"' === character && '"' === next) {
+			scan.field += '"';
+
+			return 1;
+		}
+
+		if ('"' === character) {
+			scan.isQuoted = false;
+		} else {
+			scan.field += character;
+		}
+
+		return 0;
+	}
+
+	/** Outside quotes a comma ends the field and a newline ends the row. */
+	private static readUnquoted(scan: CsvScan, character: string): void {
+		if ('"' === character) {
+			scan.isQuoted = true;
+		} else if (',' === character) {
+			scan.row.push(scan.field);
+			scan.field = '';
+		} else if ('\n' === character) {
+			scan.row.push(scan.field);
+			scan.rows.push(scan.row);
+			scan.row = [];
+			scan.field = '';
+		} else {
+			scan.field += character;
+		}
 	}
 
 	private static toColumns(header: readonly string[]): string[] {

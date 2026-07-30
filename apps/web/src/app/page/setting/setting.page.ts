@@ -9,10 +9,12 @@ import {
 	MoveAnimation,
 } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_LABEL, buildMoveInputMethods } from '@app/definition/board-input.type';
+import { MISTAKE_POLICY_LABEL } from '@app/definition/mistake-policy.type';
 import { Theme } from '@app/definition/service/theme.type';
 import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
 import { version } from '@app/package';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { ThemeService } from '@app/service/theme.service';
 
 @Component({
@@ -27,14 +29,17 @@ export class SettingPage {
 	readonly moveAnimations = MOVE_ANIMATIONS;
 	readonly animationLabel = MOVE_ANIMATION_LABEL;
 	readonly inputLabel = MOVE_INPUT_LABEL;
+	readonly mistakeLabel = MISTAKE_POLICY_LABEL;
 
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
+	private readonly mistakePolicy = inject(MistakePolicyService);
 	private readonly router = inject(Router);
 
 	private firstChangeIgnored = false;
 	private firstAnimationChangeIgnored = false;
 	private firstInputChangeIgnored = false;
+	private firstMistakeChangeIgnored = false;
 
 	readonly form = new FormGroup({
 		appearance: new FormControl<Theme | 'system'>(this.themeService.selectedTheme(), {
@@ -47,6 +52,18 @@ export class SettingPage {
 		}),
 		clickToMove: new FormControl<boolean>(this.isMethodEnabled('click'), { nonNullable: true }),
 		dragToMove: new FormControl<boolean>(this.isMethodEnabled('drag'), { nonNullable: true }),
+		mistake: new FormGroup({
+			undoMistake: new FormControl<boolean>(this.mistakePolicy.policy().undoMistake, {
+				nonNullable: true,
+			}),
+			freePlay: new FormControl<boolean>(this.mistakePolicy.policy().freePlay, {
+				nonNullable: true,
+			}),
+			retry: new FormControl<boolean>(this.mistakePolicy.policy().retry, { nonNullable: true }),
+			showSolution: new FormControl<boolean>(this.mistakePolicy.policy().showSolution, {
+				nonNullable: true,
+			}),
+		}),
 	});
 
 	private readonly appearanceChange: Signal<Theme | 'system'> = toSignal(
@@ -69,10 +86,15 @@ export class SettingPage {
 		{ initialValue: this.isMethodEnabled('drag') },
 	);
 
+	private readonly mistakeChange = toSignal(this.form.controls.mistake.valueChanges, {
+		initialValue: this.mistakePolicy.policy(),
+	});
+
 	constructor() {
 		this.syncAppearance();
 		this.syncMoveAnimation();
 		this.syncMoveInput();
+		this.syncMistakePolicy();
 	}
 
 	private syncAppearance(): void {
@@ -129,6 +151,22 @@ export class SettingPage {
 				this.boardPreference.updateMoveInputMethods(methods);
 			} else {
 				this.firstInputChangeIgnored = true;
+			}
+		});
+	}
+
+	private syncMistakePolicy(): void {
+		effect(() => {
+			this.form.controls.mistake.setValue(this.mistakePolicy.policy(), { emitEvent: false });
+		});
+
+		effect(() => {
+			this.mistakeChange();
+
+			if (this.firstMistakeChangeIgnored) {
+				this.mistakePolicy.update(this.form.controls.mistake.getRawValue());
+			} else {
+				this.firstMistakeChangeIgnored = true;
 			}
 		});
 	}

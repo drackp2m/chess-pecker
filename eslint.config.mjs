@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import eslint from '@eslint/js';
 import stylistic from '@stylistic/eslint-plugin';
 import angularEslint from 'angular-eslint';
@@ -338,10 +337,13 @@ export default typescriptEslint.config(
 	{
 		name: 'Complexity',
 		files: ['**/*.ts', '**/*.mts', '**/*.js', '**/*.mjs'],
-		ignores: ['**/*.spec.ts', '**/*.spec.js', '**/.angular/**'],
+		ignores: ['**/*.spec.ts', '**/*.spec.js', '**/*.test.ts', '**/.angular/**'],
 		rules: {
-			'max-lines': ['warn', { max: 250, skipComments: true }],
-			'max-lines-per-function': ['warn', { max: 75, skipComments: true, IIFEs: true }],
+			'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
+			'max-lines-per-function': [
+				'warn',
+				{ max: 30, skipBlankLines: true, skipComments: true, IIFEs: true },
+			],
 		},
 	},
 );

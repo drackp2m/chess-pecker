@@ -1,8 +1,11 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-policy.type';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
+import { MistakePolicyService } from '@app/service/mistake-policy.service';
 
 const HEADER = 'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor';
 const MATE_IN_3 =
@@ -16,10 +19,24 @@ const ALT_MATE =
 /** Long enough for both beats of the replay: the piece lights up, then it moves. */
 const REPLAY_TOTAL = 1500;
 
-function createStore(csv: string): PuzzleStore {
-	TestBed.configureTestingModule({ providers: [PuzzleLibraryStore, PuzzleStore] });
+/** Stubbed whole, so the store is tested against a policy and not against IndexedDB. */
+function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
+	TestBed.configureTestingModule({
+		providers: [
+			PuzzleLibraryStore,
+			PuzzleStore,
+			{
+				provide: MistakePolicyService,
+				useValue: { policy: signal({ ...DEFAULT_MISTAKE_POLICY, ...policy }) },
+			},
+		],
+	});
 
-	const store = TestBed.inject(PuzzleStore);
+	return TestBed.inject(PuzzleStore);
+}
+
+function createStore(csv: string, policy: Partial<MistakePolicy> = {}): PuzzleStore {
+	const store = configure(policy);
 
 	store.loadCsv(csv);
 	vi.advanceTimersByTime(REPLAY_TOTAL);
@@ -50,9 +67,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('lights the opponent piece up before it actually moves', () => {
-		TestBed.configureTestingModule({ providers: [PuzzleLibraryStore, PuzzleStore] });
-
-		const store = TestBed.inject(PuzzleStore);
+		const store = configure();
 
 		store.loadCsv(`${HEADER}\n${MATE_IN_3}`);
 		vi.advanceTimersByTime(350);
@@ -219,6 +234,110 @@ describe('PuzzleStore', () => {
 		expect(store.history()[1]?.san).toBe('Rb1+');
 	});
 
+	it('settles the verdict on the first try and keeps it through a retry', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+
+		expect(store.result()).toBe('failed');
+
+		store.stepBackward();
+		store.selectSquare('b2');
+		store.selectSquare('b1');
+
+		// The board moves on, the recorded verdict does not.
+		expect(store.outcome()).toBe('replying');
+		expect(store.result()).toBe('failed');
+		expect(store.isPractice()).toBe(true);
+	});
+
+	it('takes the wrong move back on its own when asked to', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { undoMistake: true });
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+
+		// It stays up long enough to be seen.
+		expect(store.mistake()?.to).toBe('c2');
+		expect(store.cursor()).toBe(2);
+
+		vi.advanceTimersByTime(1000);
+
+		expect(store.mistake()).toBeUndefined();
+		expect(store.cursor()).toBe(1);
+		expect(store.outcome()).toBe('solving');
+		expect(store.canPlay()).toBe(true);
+	});
+
+	it('locks the board after a miss when free play is off', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { freePlay: false });
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+
+		expect(store.isFreePlay()).toBe(true);
+		expect(store.isLocked()).toBe(true);
+
+		store.selectSquare('a2');
+		store.selectSquare('a3');
+
+		expect(store.history()).toHaveLength(2);
+	});
+
+	it('refuses a second attempt when retrying is off', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { retry: false });
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+		store.stepBackward();
+
+		// Back on the script, and still not yours to play.
+		expect(store.outcome()).toBe('solving');
+		expect(store.isLocked()).toBe(true);
+
+		store.selectSquare('b2');
+		store.selectSquare('b1');
+
+		expect(store.selected()).toBeUndefined();
+		expect(store.line()).toHaveLength(2);
+	});
+
+	it('plays the rest of the solution out, without touching the verdict', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+		store.revealSolution();
+
+		expect(store.isRevealing()).toBe(true);
+
+		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+		// The move that strayed is gone and the scripted line stands in its place.
+		expect(store.isRevealing()).toBe(false);
+		expect(store.history()).toHaveLength(6);
+		expect(store.history()[1]?.san).toBe('Rb1+');
+		expect(store.history().at(-1)?.san).toBe('Rxf1#');
+		expect(store.outcome()).toBe('solved');
+		expect(store.result()).toBe('failed');
+	});
+
+	it('offers the solution only while the setting allows it', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { showSolution: false });
+
+		store.selectSquare('b2');
+		store.selectSquare('c2');
+
+		expect(store.isSolutionOffered()).toBe(false);
+		expect(store.canRevealSolution()).toBe(false);
+
+		store.revealSolution();
+
+		expect(store.isRevealing()).toBe(false);
+		expect(store.history()).toHaveLength(2);
+	});
+
 	it('reports each kind of transition so the policy can judge it', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
@@ -300,9 +419,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('reports an unreadable import', () => {
-		TestBed.configureTestingModule({ providers: [PuzzleLibraryStore, PuzzleStore] });
-
-		const store = TestBed.inject(PuzzleStore);
+		const store = configure();
 
 		expect(store.loadCsv('nonsense')).toBe(false);
 		expect(store.library.importError()).toBeDefined();

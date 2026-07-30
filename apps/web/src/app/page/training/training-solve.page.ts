@@ -3,13 +3,14 @@ import { Component, HostListener, OnInit, computed, effect, inject } from '@angu
 import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
 import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
-import { PuzzleOutcome } from '@app/definition/puzzle.type';
+import { PuzzleResult } from '@app/definition/puzzle.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
 import { TrainingRunSlot } from '@app/page/training/store/training-run-state';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
+import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { TrainingStore } from '@app/store/training.store';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
 import { SolveTimer } from '@app/util/solve-timer';
@@ -25,11 +26,6 @@ import { SolveTimer } from '@app/util/solve-timer';
 		{ provide: BOARD_PRESENTER, useExisting: PuzzleStore },
 	],
 })
-// ToDo => a miss is marked and left behind, but the solution is never shown, and the
-// method asks for it: seeing the right move is the part that teaches, even though it
-// does not change the recorded result. The line is already in `puzzle.moves`, so it is
-// a matter of replaying it on the board once the attempt has been submitted.
-//
 // FixMe => leaving the page mid-exercise drops the attempt: the store is provided by
 // this component, so the accumulated time and the fact that it was ever opened die with
 // it, and the exercise comes back untouched with the clock at zero. Same hole
@@ -41,6 +37,25 @@ export class TrainingSolvePage implements OnInit {
 	readonly training = inject(TrainingStore);
 
 	readonly headline = computed(() => this.describe());
+
+	/**
+	 * Said out loud as soon as the miss is in, so playing on never leaves any doubt
+	 * about what was recorded — least of all in a calibration round.
+	 */
+	readonly practiceNotice = computed(() => {
+		if ('failed' !== this.run.lastResult()) {
+			return null;
+		}
+
+		return 'calibration' === this.run.mode()
+			? 'The miss is recorded. Anything from here on is practice and does not count towards the calibration.'
+			: 'The miss is recorded. Anything from here on is practice and does not change the result.';
+	});
+
+	/** Woodpecker asks for the solution after a miss, and only then. */
+	readonly canReveal = computed(
+		() => 'failed' === this.run.lastResult() && this.board.isSolutionOffered(),
+	);
 
 	readonly label = computed(() => {
 		const round = this.run.round();
@@ -62,6 +77,8 @@ export class TrainingSolvePage implements OnInit {
 			: `Cycle · exercise ${(position + 1).toString()}`;
 	});
 
+	private readonly policy = inject(MistakePolicyService).policy;
+
 	private readonly timer = new SolveTimer();
 
 	/** The exercise the board is showing, kept in step with the run's `current`. */
@@ -74,7 +91,7 @@ export class TrainingSolvePage implements OnInit {
 		});
 
 		effect(() => {
-			this.gradeIfSettled(this.board.outcome());
+			this.gradeIfSettled(this.board.result());
 		});
 	}
 
@@ -122,26 +139,26 @@ export class TrainingSolvePage implements OnInit {
 		this.timer.start();
 	}
 
-	private gradeIfSettled(outcome: PuzzleOutcome): void {
+	/**
+	 * The board settles its verdict on the first try and keeps it, so a retry or a
+	 * reveal never reaches this — the attempt is submitted exactly once.
+	 */
+	private gradeIfSettled(result: PuzzleResult | undefined): void {
 		const slot = this.boardSlot;
 
-		if (undefined === slot || this.gradedUuid === slot.puzzle.uuid) {
-			return;
-		}
-
-		if ('solved' !== outcome && 'failed' !== outcome) {
+		if (undefined === slot || undefined === result || this.gradedUuid === slot.puzzle.uuid) {
 			return;
 		}
 
 		this.gradedUuid = slot.puzzle.uuid;
-		void this.run.grade(outcome, this.timer.stop());
+		void this.run.grade(result, this.timer.stop());
 	}
 
 	private describe(): string {
 		const result = this.run.lastResult();
 
 		if ('failed' === result) {
-			return 'Missed. No retry — step back to walk the line, then move on.';
+			return this.describeMiss();
 		}
 
 		if ('solved' === result) {
@@ -160,5 +177,20 @@ export class TrainingSolvePage implements OnInit {
 			case 'solved':
 				return 'Recording the attempt…';
 		}
+	}
+
+	/** The exercise is graded by now, so this only says what is left to do with it. */
+	private describeMiss(): string {
+		if (this.board.isRevealed()) {
+			return this.board.isRevealing() ? 'Missed. Watch how it went.' : 'Missed. That was the line.';
+		}
+
+		if ('solved' === this.board.outcome()) {
+			return 'Missed. Found it on the retry, which leaves the attempt as it was.';
+		}
+
+		return this.policy().retry
+			? 'Missed. Step back to try it again, or move on.'
+			: 'Missed. Step back to walk the line, then move on.';
 	}
 }

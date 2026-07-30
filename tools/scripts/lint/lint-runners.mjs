@@ -22,43 +22,42 @@ export const STYLELINT_EXT = ['.css', '.scss'];
 export const withExt = (files, exts) =>
 	files.filter((file) => exts.some((ext) => file.endsWith(ext)));
 
-export async function runEslint(targets, fix, verbose) {
-	if (0 === targets.length) {
-		return { skipped: true, fixed: [], remaining: [] };
+// A pre-pass without fixing counts the auto-fixable problems per file (= corrections
+// the fix pass will apply), since ESLint doesn't report applied-fix counts. It's the
+// expensive second pass, so it only runs with --verbose.
+async function countEslintFixable(targets) {
+	const fixableByFile = new Map();
+
+	for (const result of await new ESLint({ warnIgnored: false }).lintFiles(targets)) {
+		const count = result.messages.filter((message) => undefined !== message.fix).length;
+
+		if (0 !== count) {
+			fixableByFile.set(result.filePath, count);
+		}
 	}
+
+	return fixableByFile;
+}
+
+async function fixWithEslint(targets, verbose) {
+	const fixableByFile = verbose ? await countEslintFixable(targets) : new Map();
+
+	const results = await new ESLint({ fix: true, warnIgnored: false }).lintFiles(targets);
+	await ESLint.outputFixes(results);
 
 	const fixed = [];
-	let results;
 
-	if (fix) {
-		// Only with --verbose: a pre-pass without fixing counts the auto-fixable
-		// problems per file (= corrections the fix pass will apply), since ESLint
-		// doesn't report applied-fix counts. It's the expensive second pass.
-		const fixableByFile = new Map();
-
-		if (verbose) {
-			for (const result of await new ESLint({ warnIgnored: false }).lintFiles(targets)) {
-				const count = result.messages.filter((message) => undefined !== message.fix).length;
-
-				if (0 !== count) {
-					fixableByFile.set(result.filePath, count);
-				}
-			}
+	for (const result of results) {
+		if (undefined !== result.output) {
+			const count = fixableByFile.get(result.filePath) ?? null;
+			fixed.push({ file: rel(result.filePath), count });
 		}
-
-		results = await new ESLint({ fix: true, warnIgnored: false }).lintFiles(targets);
-		await ESLint.outputFixes(results);
-
-		for (const result of results) {
-			if (undefined !== result.output) {
-				const count = fixableByFile.get(result.filePath) ?? null;
-				fixed.push({ file: rel(result.filePath), count });
-			}
-		}
-	} else {
-		results = await new ESLint({ warnIgnored: false }).lintFiles(targets);
 	}
 
+	return { results, fixed };
+}
+
+function toEslintProblems(results) {
 	const remaining = [];
 
 	for (const result of results) {
@@ -74,57 +73,72 @@ export async function runEslint(targets, fix, verbose) {
 		}
 	}
 
-	return { fixed, remaining };
+	return remaining;
 }
 
-export async function runStylelint(files, fix, verbose) {
-	if (0 === files.length) {
+export async function runEslint(targets, fix, verbose) {
+	if (0 === targets.length) {
 		return { skipped: true, fixed: [], remaining: [] };
 	}
 
-	const fixed = [];
-	let results;
-
 	if (!fix) {
-		({ results } = await stylelint.lint({ files }));
-	} else if (verbose) {
-		// Before/after diff gives the per-file correction count (cheap for Stylelint).
-		const before = new Map();
+		const results = await new ESLint({ warnIgnored: false }).lintFiles(targets);
 
-		for (const result of (await stylelint.lint({ files })).results) {
-			before.set(result.source, result.warnings.length);
-		}
+		return { fixed: [], remaining: toEslintProblems(results) };
+	}
 
-		({ results } = await stylelint.lint({ files, fix: true }));
+	const { results, fixed } = await fixWithEslint(targets, verbose);
 
-		for (const result of results) {
-			const corrected = (before.get(result.source) ?? 0) - result.warnings.length;
+	return { fixed, remaining: toEslintProblems(results) };
+}
 
-			if (0 < corrected) {
-				fixed.push({ file: rel(result.source), count: corrected });
-			}
-		}
-	} else {
-		// Single pass: fix each file in memory, write only when it changed (no counts).
-		results = [];
+// Before/after diff gives the per-file correction count (cheap for Stylelint).
+async function fixWithStylelintVerbose(files) {
+	const before = new Map();
 
-		for (const file of files) {
-			const code = await readFile(file, 'utf8').catch(() => null);
+	for (const result of (await stylelint.lint({ files })).results) {
+		before.set(result.source, result.warnings.length);
+	}
 
-			if (null === code) {
-				continue;
-			}
+	const { results } = await stylelint.lint({ files, fix: true });
+	const fixed = [];
 
-			const result = await stylelint.lint({ code, codeFilename: file, fix: true });
-			results.push(...result.results);
+	for (const result of results) {
+		const corrected = (before.get(result.source) ?? 0) - result.warnings.length;
 
-			if (undefined !== result.code && result.code !== code) {
-				await writeFile(file, result.code);
-				fixed.push({ file: rel(abs(file)), count: null });
-			}
+		if (0 < corrected) {
+			fixed.push({ file: rel(result.source), count: corrected });
 		}
 	}
 
+	return { results, fixed };
+}
+
+// Single pass: fix each file in memory, write only when it changed (no counts).
+async function fixWithStylelint(files) {
+	const results = [];
+	const fixed = [];
+
+	for (const file of files) {
+		const code = await readFile(file, 'utf8').catch(() => null);
+
+		if (null === code) {
+			continue;
+		}
+
+		const result = await stylelint.lint({ code, codeFilename: file, fix: true });
+		results.push(...result.results);
+
+		if (undefined !== result.code && result.code !== code) {
+			await writeFile(file, result.code);
+			fixed.push({ file: rel(abs(file)), count: null });
+		}
+	}
+
+	return { results, fixed };
+}
+
+function toStylelintProblems(results) {
 	const remaining = [];
 
 	for (const result of results) {
@@ -144,7 +158,88 @@ export async function runStylelint(files, fix, verbose) {
 		}
 	}
 
-	return { fixed, remaining };
+	return remaining;
+}
+
+export async function runStylelint(files, fix, verbose) {
+	if (0 === files.length) {
+		return { skipped: true, fixed: [], remaining: [] };
+	}
+
+	if (!fix) {
+		const { results } = await stylelint.lint({ files });
+
+		return { fixed: [], remaining: toStylelintProblems(results) };
+	}
+
+	const { results, fixed } = verbose
+		? await fixWithStylelintVerbose(files)
+		: await fixWithStylelint(files);
+
+	return { fixed, remaining: toStylelintProblems(results) };
+}
+
+async function formatFile(file, content, options) {
+	const formatted = await prettier.format(content, options);
+
+	if (formatted === content) {
+		return {};
+	}
+
+	await writeFile(file, formatted);
+
+	return { fixed: { file: rel(abs(file)), count: null } };
+}
+
+// A gate like `prettier --check`: unformatted files fail the run.
+async function checkFile(file, content, options) {
+	if (await prettier.check(content, options)) {
+		return {};
+	}
+
+	return {
+		problem: {
+			file: abs(file),
+			line: undefined,
+			col: undefined,
+			severity: 'error',
+			message: 'needs formatting (run lint:fix)',
+			rule: 'prettier',
+		},
+	};
+}
+
+// One file, formatted or checked; returns at most one `fixed` or one `problem`.
+async function processWithPrettier(file, fix) {
+	let content;
+
+	try {
+		content = await readFile(file, 'utf8');
+	} catch {
+		return {};
+	}
+
+	try {
+		// editorconfig: true is required for the programmatic API to honor
+		// .editorconfig (indent_style=tab, …); the CLI reads it by default.
+		const config = await prettier.resolveConfig(file, { editorconfig: true });
+		const options = { ...config, filepath: file };
+
+		return fix ? await formatFile(file, content, options) : await checkFile(file, content, options);
+	} catch (error) {
+		const location = error.loc?.start;
+
+		return {
+			problem: {
+				file: abs(file),
+				line: location?.line,
+				col: location?.column,
+				severity: 'error',
+				message: String(error.message).split('\n')[0],
+				rule: null,
+			},
+		};
+	}
 }
 
 export async function runPrettier(files, fix) {
@@ -165,48 +260,14 @@ export async function runPrettier(files, fix) {
 
 		processed++;
 
-		let content;
+		const outcome = await processWithPrettier(file, fix);
 
-		try {
-			content = await readFile(file, 'utf8');
-		} catch {
-			continue;
+		if (undefined !== outcome.fixed) {
+			fixed.push(outcome.fixed);
 		}
 
-		try {
-			// editorconfig: true is required for the programmatic API to honor
-			// .editorconfig (indent_style=tab, …); the CLI reads it by default.
-			const config = await prettier.resolveConfig(file, { editorconfig: true });
-			const options = { ...config, filepath: file };
-
-			if (fix) {
-				const formatted = await prettier.format(content, options);
-
-				if (formatted !== content) {
-					await writeFile(file, formatted);
-					fixed.push({ file: rel(abs(file)), count: null });
-				}
-			} else if (!(await prettier.check(content, options))) {
-				// A gate like `prettier --check`: unformatted files fail the run.
-				remaining.push({
-					file: abs(file),
-					line: undefined,
-					col: undefined,
-					severity: 'error',
-					message: 'needs formatting (run lint:fix)',
-					rule: 'prettier',
-				});
-			}
-		} catch (error) {
-			const location = error.loc?.start;
-			remaining.push({
-				file: abs(file),
-				line: location?.line,
-				col: location?.column,
-				severity: 'error',
-				message: String(error.message).split('\n')[0],
-				rule: null,
-			});
+		if (undefined !== outcome.problem) {
+			remaining.push(outcome.problem);
 		}
 	}
 

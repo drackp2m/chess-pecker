@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
+import { Puzzle } from '../../puzzle/puzzle.entity';
 import { CalibrationRoundOutcome } from '../definition/calibration-round-outcome.enum';
 import { PuzzleAttemptKind } from '../definition/puzzle-attempt-kind.enum';
 import { SubmitCalibrationAttemptRequestDto } from '../dto/request/submit-calibration-attempt-request.dto';
 import { PuzzleAttempt } from '../puzzle-attempt.entity';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
+import { TrainingCalibrationPuzzle } from '../training-calibration-puzzle.entity';
 import { TrainingCalibrationPuzzleRepository } from '../training-calibration-puzzle.repository';
+import { TrainingCalibrationRound } from '../training-calibration-round.entity';
 import { TrainingCalibrationRoundRepository } from '../training-calibration-round.repository';
 import { Training } from '../training.entity';
 
@@ -28,27 +31,9 @@ export class SubmitCalibrationAttemptUseCase {
 		training: Training,
 		submitRequest: SubmitCalibrationAttemptRequestDto,
 	): Promise<{ attempt: PuzzleAttempt; outcome: CalibrationRoundOutcome }> {
-		const round = await this.calibrationRoundRepository.getOne({
-			uuid: submitRequest.roundUuid,
-		});
-
-		if (round.training.uuid !== training.uuid) {
-			throw new ForbiddenException('not allowed', 'calibration');
-		}
-
-		if (CalibrationRoundOutcome.Pending !== round.outcome) {
-			throw new PreconditionFailedException('already closed', 'calibration');
-		}
-
+		const round = await this.resolveOpenRound(training, submitRequest.roundUuid);
 		const dealt = await this.calibrationPuzzleRepository.getManyByRound(round.uuid);
-
-		const calibrationPuzzle = dealt.find(
-			(candidate) => candidate.puzzle.uuid === submitRequest.puzzleUuid,
-		);
-
-		if (undefined === calibrationPuzzle) {
-			throw new PreconditionFailedException('not dealt in this round', 'puzzle');
-		}
+		const puzzle = SubmitCalibrationAttemptUseCase.resolveDealtPuzzle(dealt, submitRequest);
 
 		const previous = await this.puzzleAttemptRepository.getManyByCalibrationRound(round.uuid);
 
@@ -61,7 +46,7 @@ export class SubmitCalibrationAttemptUseCase {
 				training,
 				kind: PuzzleAttemptKind.Calibration,
 				calibrationRound: round,
-				puzzle: calibrationPuzzle.puzzle,
+				puzzle,
 				durationMs: submitRequest.durationMs,
 				solved: submitRequest.solved,
 			}),
@@ -76,14 +61,55 @@ export class SubmitCalibrationAttemptUseCase {
 			return { attempt, outcome: CalibrationRoundOutcome.Pending };
 		}
 
+		return { attempt, outcome: await this.closeRound(training, round, attempts) };
+	}
+
+	/** Sólo se puede intentar lo que la ronda repartió, no cualquier ejercicio del catálogo. */
+	private static resolveDealtPuzzle(
+		dealt: TrainingCalibrationPuzzle[],
+		submitRequest: SubmitCalibrationAttemptRequestDto,
+	): Puzzle {
+		const calibrationPuzzle = dealt.find(
+			(candidate) => candidate.puzzle.uuid === submitRequest.puzzleUuid,
+		);
+
+		if (undefined === calibrationPuzzle) {
+			throw new PreconditionFailedException('not dealt in this round', 'puzzle');
+		}
+
+		return calibrationPuzzle.puzzle;
+	}
+
+	/** El último intento cierra la ronda, que se juzga contra lo que dijeron las anteriores. */
+	private async closeRound(
+		training: Training,
+		round: TrainingCalibrationRound,
+		attempts: PuzzleAttempt[],
+	): Promise<CalibrationRoundOutcome> {
 		const rounds = await this.calibrationRoundRepository.getManyByTraining(training.uuid);
 
-		const outcome = await this.closeCalibrationRoundUseCase.execute(
+		return this.closeCalibrationRoundUseCase.execute(
 			round,
 			attempts,
 			rounds.filter((other) => other.uuid !== round.uuid),
 		);
+	}
 
-		return { attempt, outcome };
+	/** La ronda que se está intentando, siempre que sea de este entrenamiento y siga abierta. */
+	private async resolveOpenRound(
+		training: Training,
+		roundUuid: string,
+	): Promise<TrainingCalibrationRound> {
+		const round = await this.calibrationRoundRepository.getOne({ uuid: roundUuid });
+
+		if (round.training.uuid !== training.uuid) {
+			throw new ForbiddenException('not allowed', 'calibration');
+		}
+
+		if (CalibrationRoundOutcome.Pending !== round.outcome) {
+			throw new PreconditionFailedException('already closed', 'calibration');
+		}
+
+		return round;
 	}
 }

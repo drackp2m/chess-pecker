@@ -41,5 +41,33 @@
 		</form>
 	</div>
 
+	<div class="flex-col gap-2">
+		<h4>When you miss</h4>
+
+		<p class="fs-sm color-contrast-mid">
+			A miss is graded on the first try, so these only change what the board lets you do next.
+		</p>
+
+		<form [formGroup]="form.controls.mistake" class="flex-col gap-1">
+			<input
+				appThemed
+				type="checkbox"
+				[label]="mistakeLabel.undoMistake"
+				formControlName="undoMistake"
+			/>
+
+			<input appThemed type="checkbox" [label]="mistakeLabel.freePlay" formControlName="freePlay" />
+
+			<input appThemed type="checkbox" [label]="mistakeLabel.retry" formControlName="retry" />
+
+			<input
+				appThemed
+				type="checkbox"
+				[label]="mistakeLabel.showSolution"
+				formControlName="showSolution"
+			/>
+		</form>
+	</div>
+
 	<p class="flex-row flex-grow justify-center align-end mono fs-sm">version {{ VERSION }}</p>
 </section>

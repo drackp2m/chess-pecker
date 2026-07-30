@@ -46,6 +46,39 @@ function printProblems(problems) {
 	}
 }
 
+// The problems left, followed by the error/warning tally ESLint prints under them.
+function printRemaining(remaining) {
+	console.log(`  ${c.dim}Files with problems:${c.reset}`);
+	printProblems(remaining);
+
+	const errors = remaining.filter((problem) => 'error' === problem.severity).length;
+	const warnings = remaining.length - errors;
+	const icon = 0 !== errors ? `${c.red}✖${c.reset}` : `${c.yellow}⚠${c.reset}`;
+	const errorBlock =
+		0 !== errors ? `${c.red}${plural(errors, 'error')}${c.reset}` : plural(errors, 'error');
+	const warningBlock =
+		0 !== warnings
+			? `${c.yellow}${plural(warnings, 'warning')}${c.reset}`
+			: plural(warnings, 'warning');
+
+	console.log(
+		`\n  ${icon} ${plural(remaining.length, 'problem')} (${errorBlock}, ${warningBlock})`,
+	);
+}
+
+function printFixed(fixed, printedBlock) {
+	console.log(`${printedBlock ? '\n' : ''}  ${c.dim}Files fixed automatically:${c.reset}`);
+
+	for (const entry of fixed) {
+		const fixes = null !== entry.count ? `  ${c.dim}(${entry.count})${c.reset}` : '';
+		console.log(`      ${entry.file}${fixes}`);
+	}
+
+	const total = fixed.reduce((sum, entry) => sum + (entry.count ?? 0), 0);
+	const tally = 0 !== total ? ` ${c.dim}· ${plural(total, 'correction')}${c.reset}` : '';
+	console.log(`\n  ${c.green}✔ ${plural(fixed.length, 'file')} fixed${c.reset}${tally}`);
+}
+
 export function printSection(name, { fixed, remaining, skipped }) {
 	console.log(`\n${c.bold}${c.cyan}━━ ${name} ━━${c.reset}`);
 
@@ -61,38 +94,14 @@ export function printSection(name, { fixed, remaining, skipped }) {
 		return;
 	}
 
-	let printedBlock = false;
+	const printedBlock = 0 !== remaining.length;
 
-	if (0 !== remaining.length) {
-		console.log(`  ${c.dim}Files with problems:${c.reset}`);
-		printProblems(remaining);
-
-		const errors = remaining.filter((problem) => 'error' === problem.severity).length;
-		const warnings = remaining.length - errors;
-		const icon = 0 !== errors ? `${c.red}✖${c.reset}` : `${c.yellow}⚠${c.reset}`;
-		const errorBlock =
-			0 !== errors ? `${c.red}${plural(errors, 'error')}${c.reset}` : plural(errors, 'error');
-		const warningBlock =
-			0 !== warnings
-				? `${c.yellow}${plural(warnings, 'warning')}${c.reset}`
-				: plural(warnings, 'warning');
-		console.log(
-			`\n  ${icon} ${plural(remaining.length, 'problem')} (${errorBlock}, ${warningBlock})`,
-		);
-		printedBlock = true;
+	if (printedBlock) {
+		printRemaining(remaining);
 	}
 
 	if (0 !== fixed.length) {
-		console.log(`${printedBlock ? '\n' : ''}  ${c.dim}Files fixed automatically:${c.reset}`);
-
-		for (const entry of fixed) {
-			const fixes = null !== entry.count ? `  ${c.dim}(${entry.count})${c.reset}` : '';
-			console.log(`      ${entry.file}${fixes}`);
-		}
-
-		const total = fixed.reduce((sum, entry) => sum + (entry.count ?? 0), 0);
-		const tally = 0 !== total ? ` ${c.dim}· ${plural(total, 'correction')}${c.reset}` : '';
-		console.log(`\n  ${c.green}✔ ${plural(fixed.length, 'file')} fixed${c.reset}${tally}`);
+		printFixed(fixed, printedBlock);
 	}
 }
 

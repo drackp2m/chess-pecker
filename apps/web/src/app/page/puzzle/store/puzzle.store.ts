@@ -1,58 +1,51 @@
-import { DestroyRef, Injectable, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
-import { Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
+import { Puzzle, PuzzleOutcome, PuzzleResult, settleResult } from '@app/definition/puzzle.type';
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle-computed';
+import { withPuzzleGating } from '@app/page/puzzle/store/puzzle-gating';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
+import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle-playback';
 import {
 	buildPuzzleState,
-	commitPatch,
-	describeOutcome,
 	findPromotion,
 	isSolution,
 	nextSelection,
 	openPuzzle,
+	revealPatch,
 } from '@app/page/puzzle/store/puzzle-session';
-import { ChessNotation } from '@app/util/chess/chess-notation';
-import { ScheduledAction } from '@app/util/scheduled-action';
+import { MistakePolicyService } from '@app/service/mistake-policy.service';
 
 // ToDo => Woodpecker needs a clock, and nothing here measures time. The method is
 // scored on how long a cycle takes, so a session needs: when the exercise became
 // solvable (`outcome` reaching `'solving'`), when it was solved, how long the tab was
 // hidden in between (`visibilitychange`, otherwise a backgrounded tab inflates every
-// time), and whether the first attempt was correct — `deviation` already knows, but
-// it is discarded the moment the cursor is rewound. Capture it in the state built by
-// `buildPuzzleState`, keep it out of the animation timers, and hand it to a
-// use-case that writes an attempt row.
+// time), and whether the first attempt was correct — `result` now knows that much.
+// Capture the rest in the state built by `buildPuzzleState`, keep it out of the
+// animation timers, and hand it to a use-case that writes an attempt row.
 //
 // ToDo => an attempt is also lost on navigation: the store is provided by
 // `PuzzlePage`, so leaving the page destroys the session with no flush.
 
-/** Pause before the opponent's piece lights up. */
-const REPLAY_DELAY = 300;
-/** How long it stays lit before it slides to its destination. */
-const ANNOUNCE_DELAY = 450;
-
 @Injectable()
 export class PuzzleStore
-	extends signalStore({ protectedState: false }, withState(buildPuzzleState), withPuzzleComputed())
+	extends signalStore(
+		{ protectedState: false },
+		withState(buildPuzzleState),
+		withPuzzleComputed(),
+		withPuzzleGating(),
+		withPuzzlePlayback(),
+	)
 	implements BoardPresenter
 {
 	/** The loaded set and the cursor over it; the template reads it directly. */
 	readonly library = inject(PuzzleLibraryStore);
 
-	private readonly scheduled = new ScheduledAction();
-
-	constructor() {
-		super();
-
-		inject(DestroyRef).onDestroy(() => {
-			this.scheduled.cancel();
-		});
-	}
+	/** What a miss is allowed to lead to, chosen in the settings. */
+	private readonly policy = inject(MistakePolicyService).policy;
 
 	/** Imports exercises from raw CSV text and opens the first one. */
 	loadCsv(text: string): boolean {
@@ -89,44 +82,40 @@ export class PuzzleStore
 		}
 	}
 
+	/** Same exercise, so the verdict it was graded on survives the reopening. */
 	restart(): void {
-		this.open();
+		this.open(this.result());
+	}
+
+	/**
+	 * Plays what is left of the solution, from wherever the line stopped following it.
+	 * The result was settled on the first try, so watching the answer never revises it.
+	 */
+	revealSolution(): void {
+		if (!this.canRevealSolution()) {
+			return;
+		}
+
+		this.cancelPlayback();
+		patchState(this, revealPatch(this.lineState(), this.deviation()));
+		this.playScripted();
 	}
 
 	/**
 	 * Rewinds one ply. Stepping back over the move that broke the script puts the
-	 * exercise back on the rails, so a wrong move can always be retried.
+	 * exercise back on the rails, so a wrong move can be tried again — unless the
+	 * settings say a miss is final.
 	 */
-	// FixMe => neither stepper cancels a scripted reply already in flight, and the
-	// template does not disable them while `isReplaying()`. Play the right move, then
-	// step back inside the 750ms window: `replayAnnounced` still fires and commits the
-	// opponent's move through `commitPatch`, which truncates the line at the rewound
-	// cursor. The result is a line that never happened and an outcome that no longer
-	// matches it. Either cancel `this.scheduled` here or gate the buttons on `isBusy`.
 	stepBackward(): void {
 		const undone = this.line()[this.cursor() - 1];
-		const cursor = Math.max(0, this.cursor() - 1);
 
-		patchState(this, {
-			cursor,
-			selected: undefined,
-			outcome: this.outcomeAt(cursor),
-			transition:
-				undefined === undone ? undefined : nextTransition(this.transition(), undone, 'backward'),
-		});
+		this.moveCursor(Math.max(0, this.cursor() - 1), undone, 'backward');
 	}
 
 	stepForward(): void {
 		const replayed = this.line()[this.cursor()];
-		const cursor = Math.min(this.line().length, this.cursor() + 1);
 
-		patchState(this, {
-			cursor,
-			selected: undefined,
-			outcome: this.outcomeAt(cursor),
-			transition:
-				undefined === replayed ? undefined : nextTransition(this.transition(), replayed, 'forward'),
-		});
+		this.moveCursor(Math.min(this.line().length, this.cursor() + 1), replayed, 'forward');
 	}
 
 	selectSquare(square: Square): void {
@@ -176,10 +165,10 @@ export class PuzzleStore
 		patchState(this, { orientation: 'white' === this.orientation() ? 'black' : 'white' });
 	}
 
-	private open(): void {
+	private open(result?: PuzzleResult): void {
 		const puzzle = this.puzzle();
 
-		this.scheduled.cancel();
+		this.cancelPlayback();
 
 		if (undefined === puzzle) {
 			patchState(this, buildPuzzleState());
@@ -187,89 +176,64 @@ export class PuzzleStore
 			return;
 		}
 
-		patchState(this, openPuzzle(puzzle));
-		this.scheduleScriptedMove();
+		patchState(this, { ...openPuzzle(puzzle), result });
+		this.playScripted();
+	}
+
+	private lineState() {
+		return { positions: this.positions(), line: this.line(), cursor: this.cursor() };
+	}
+
+	/** Both steppers land here, so the verdict is read the same way either way. */
+	private moveCursor(
+		cursor: number,
+		stepped: ChessMove | undefined,
+		kind: 'backward' | 'forward',
+	): void {
+		const outcome = this.outcomeAt(cursor);
+
+		patchState(this, {
+			cursor,
+			selected: undefined,
+			outcome,
+			result: settleResult(this.result(), outcome),
+			transition:
+				undefined === stepped ? undefined : nextTransition(this.transition(), stepped, kind),
+		});
 	}
 
 	/**
 	 * Grades the player's move, then lets the opponent answer if it was right. A move
-	 * that leaves the script is kept anyway: from there the board is played freely,
-	 * both sides by hand, until the cursor is rewound back onto the solution.
+	 * that leaves the script is kept on the board, and what can be done from there —
+	 * take it back, play on freely, rewind and retry — is the user's to configure.
 	 */
 	private attemptMove(move: ChessMove): void {
 		const position = this.position();
-		const puzzle = this.puzzle();
-		const expected = puzzle?.moves[this.cursor()];
+		const expected = this.puzzle()?.moves[this.cursor()];
+		const isFreePlay = this.isFreePlay();
 
-		if (this.isFreePlay() || !isSolution(position, move, expected)) {
+		if (isFreePlay || !isSolution(position, move, expected)) {
 			this.commit(move, position.turn !== this.playerColor());
-			patchState(this, { outcome: 'failed' });
+			patchState(this, { outcome: 'failed', result: settleResult(this.result(), 'failed') });
+
+			if (!isFreePlay && this.policy().undoMistake) {
+				this.scheduleUndo(() => {
+					this.stepBackward();
+				});
+			}
 
 			return;
 		}
 
 		this.commit(move, false);
 
-		const isComplete = 'solved' === this.outcomeAt(this.cursor());
+		const outcome: PuzzleOutcome =
+			'solved' === this.outcomeAt(this.cursor()) ? 'solved' : 'replying';
 
-		patchState(this, { outcome: isComplete ? 'solved' : 'replying' });
+		patchState(this, { outcome, result: settleResult(this.result(), outcome) });
 
-		if (!isComplete) {
-			this.scheduleScriptedMove();
+		if ('solved' !== outcome) {
+			this.playScripted();
 		}
-	}
-
-	private outcomeAt(cursor: number): PuzzleOutcome {
-		const puzzle = this.puzzle();
-
-		// A replay in flight owns the outcome until it lands.
-		return undefined === puzzle || this.isReplaying()
-			? this.outcome()
-			: describeOutcome(this.positions(), puzzle, this.deviation(), cursor);
-	}
-
-	private commit(move: ChessMove, isOpponent: boolean): void {
-		patchState(this, {
-			...commitPatch(
-				{ positions: this.positions(), line: this.line(), cursor: this.cursor() },
-				this.position(),
-				move,
-				isOpponent,
-			),
-			transition: nextTransition(this.transition(), move, 'played'),
-		});
-	}
-
-	/**
-	 * Replays the opponent's scripted ply in two beats: the piece lights up on its
-	 * own square first, so it can be seen before it slides across the board.
-	 */
-	private scheduleScriptedMove(): void {
-		this.scheduled.cancel();
-		patchState(this, { isReplaying: true });
-
-		this.scheduled.run(() => {
-			const expected = this.puzzle()?.moves[this.cursor()];
-			const move =
-				undefined === expected ? undefined : ChessNotation.parse(this.position(), expected);
-
-			patchState(this, { announced: move });
-			this.scheduled.run(() => {
-				this.replayAnnounced(move);
-			}, ANNOUNCE_DELAY);
-		}, REPLAY_DELAY);
-	}
-
-	private replayAnnounced(move: ChessMove | undefined): void {
-		patchState(this, { announced: undefined });
-
-		if (undefined !== move) {
-			this.commit(move, true);
-		}
-
-		// Real Lichess lines end on a player move, but a set that ends on the
-		// opponent's would otherwise leave the exercise waiting forever.
-		patchState(this, { isReplaying: false });
-		patchState(this, { outcome: this.outcomeAt(this.cursor()) });
 	}
 }

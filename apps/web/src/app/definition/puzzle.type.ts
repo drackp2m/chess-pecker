@@ -19,12 +19,14 @@ export interface Puzzle {
 	readonly selectedFor: string;
 }
 
-// ToDo => this outcome is a *view* state, not a result. `failed` is reversible by
-// rewinding the cursor, and once the line is back on the script the exercise reads
-// `solved` with nothing left to say that the first attempt was wrong. Woodpecker
-// grades on exactly that — first-try correct, and how long it took — so the result of
-// an attempt has to be recorded separately from what the board is currently showing,
-// and settled at the moment the first player move is committed rather than at the end.
+/**
+ * How the attempt was graded, settled the first time the exercise is either finished
+ * or left the script, and never revised after that. Woodpecker scores the first try,
+ * so anything played from there on — a retry, a reveal — leaves this untouched.
+ */
+export type PuzzleResult = 'solved' | 'failed';
+
+/** What the board is currently showing, which a rewound cursor changes freely. */
 export type PuzzleOutcome =
 	/** No exercise loaded. */
 	| 'idle'
@@ -35,12 +37,30 @@ export type PuzzleOutcome =
 	/** The opponent's scripted reply is being played. */
 	| 'replying'
 	/**
-	 * A move left the script. It stays on the board and play continues freely from
-	 * there, both sides by hand, until the cursor is rewound back onto the solution.
+	 * A move left the script. What happens next is the user's to choose: the move can
+	 * be taken back on its own, the position can be played on freely with both sides
+	 * by hand, or the board can be locked until the cursor is rewound onto the
+	 * solution — see `MistakePolicy`.
 	 */
 	| 'failed'
 	/** The whole line was found. */
 	| 'solved';
+
+/**
+ * The verdict to keep. The first one the exercise reaches is the one it is graded on,
+ * so a later `solved` — after a retry, or after the solution was played out — never
+ * replaces the `failed` that was already recorded.
+ */
+export function settleResult(
+	current: PuzzleResult | undefined,
+	outcome: PuzzleOutcome,
+): PuzzleResult | undefined {
+	if (undefined !== current) {
+		return current;
+	}
+
+	return 'solved' === outcome || 'failed' === outcome ? outcome : undefined;
+}
 
 /** A move played during a session, plus where it came from. */
 export interface PuzzleMove extends ChessMoveRecord {

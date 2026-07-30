@@ -7,6 +7,7 @@ import { PuzzleAttempt } from '../puzzle-attempt.entity';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
 import { TrainingCalibrationRoundRepository } from '../training-calibration-round.repository';
 import { TrainingCycleItemRepository } from '../training-cycle-item.repository';
+import { TrainingCycle } from '../training-cycle.entity';
 import { TrainingCycleRepository } from '../training-cycle.repository';
 import { TrainingGoalRepository } from '../training-goal.repository';
 import { TrainingPuzzleRepository } from '../training-puzzle.repository';
@@ -29,62 +30,13 @@ export class GetTrainingProgressUseCase {
 	 * sumas sobre filas que ya no cambian.
 	 */
 	async execute(training: Training): Promise<TrainingProgress> {
-		const rounds = await this.calibrationRoundRepository.getManyByTraining(training.uuid);
-		const accepted = rounds.find((round) => CalibrationRoundOutcome.Accept === round.outcome);
-
-		const calibrationAttempts =
-			undefined === accepted
-				? []
-				: await this.puzzleAttemptRepository.getManyByCalibrationRound(accepted.uuid);
-
+		const calibration = await this.resolveCalibration(training);
 		const setSize = await this.trainingPuzzleRepository.countByTraining(training.uuid);
 		const goal = await this.trainingGoalRepository.getCurrentByTraining(training.uuid);
-		const cycles = await this.trainingCycleRepository.getManyByTraining(training.uuid);
-
-		const progress: CycleProgress[] = [];
-		let firstCycleDurationMs: number | null = null;
-
-		for (const cycle of cycles) {
-			const attempts = await this.puzzleAttemptRepository.getManyByCycle(cycle.uuid);
-			const total = await this.trainingCycleItemRepository.countByCycle(cycle.uuid);
-
-			const totalDurationMs = sumDuration(attempts);
-			const solved = attempts.filter((attempt) => attempt.solved).length;
-
-			if (1 === cycle.index) {
-				firstCycleDurationMs = totalDurationMs;
-			}
-
-			progress.push({
-				uuid: cycle.uuid,
-				index: cycle.index,
-				status: cycle.status,
-				attempted: attempts.length,
-				total,
-				solved,
-				accuracy: 0 === attempts.length ? 0 : solved / attempts.length,
-				totalDurationMs,
-				averageDurationMs:
-					0 === attempts.length ? 0 : Math.round(totalDurationMs / attempts.length),
-				targetDurationMs: GetTrainingProgressUseCase.resolveTarget(
-					cycle.index,
-					firstCycleDurationMs,
-				),
-				lastAttemptAt: lastAttemptAt(attempts),
-			});
-		}
-
-		const averageCalibrationMs =
-			0 === calibrationAttempts.length
-				? null
-				: Math.round(sumDuration(calibrationAttempts) / calibrationAttempts.length);
+		const progress = await this.resolveCycles(training);
 
 		return {
-			calibration: {
-				rating: accepted?.rating ?? null,
-				averageDurationMs: averageCalibrationMs,
-				rounds: rounds.length,
-			},
+			calibration,
 			setSize,
 			goal:
 				undefined === goal
@@ -101,6 +53,30 @@ export class GetTrainingProgressUseCase {
 					: Math.ceil(setSize / goal.puzzlesPerDay),
 			cycles: progress,
 			suggestFinish: GetTrainingProgressUseCase.shouldSuggestFinish(progress),
+		};
+	}
+
+	private static toCycleProgress(
+		cycle: TrainingCycle,
+		attempts: PuzzleAttempt[],
+		total: number,
+		firstCycleDurationMs: number | null,
+	): CycleProgress {
+		const totalDurationMs = sumDuration(attempts);
+		const solved = attempts.filter((attempt) => attempt.solved).length;
+
+		return {
+			uuid: cycle.uuid,
+			index: cycle.index,
+			status: cycle.status,
+			attempted: attempts.length,
+			total,
+			solved,
+			accuracy: 0 === attempts.length ? 0 : solved / attempts.length,
+			totalDurationMs,
+			averageDurationMs: 0 === attempts.length ? 0 : Math.round(totalDurationMs / attempts.length),
+			targetDurationMs: GetTrainingProgressUseCase.resolveTarget(cycle.index, firstCycleDurationMs),
+			lastAttemptAt: lastAttemptAt(attempts),
 		};
 	}
 
@@ -139,6 +115,50 @@ export class GetTrainingProgressUseCase {
 			(previous.totalDurationMs - last.totalDurationMs) / previous.totalDurationMs;
 
 		return improvement < TrainingPolicy.plateauImprovement;
+	}
+
+	/** El ELO con el que se cerró la calibración, y lo que costó llegar hasta él. */
+	private async resolveCalibration(training: Training): Promise<TrainingProgress['calibration']> {
+		const rounds = await this.calibrationRoundRepository.getManyByTraining(training.uuid);
+		const accepted = rounds.find((round) => CalibrationRoundOutcome.Accept === round.outcome);
+
+		const attempts =
+			undefined === accepted
+				? []
+				: await this.puzzleAttemptRepository.getManyByCalibrationRound(accepted.uuid);
+
+		return {
+			rating: accepted?.rating ?? null,
+			averageDurationMs:
+				0 === attempts.length ? null : Math.round(sumDuration(attempts) / attempts.length),
+			rounds: rounds.length,
+		};
+	}
+
+	/**
+	 * Una pasada por ciclo, en orden: el objetivo de cada uno se mide contra la duración real
+	 * del primero, así que hay que haberlo recorrido antes de poder exigir nada a los demás.
+	 */
+	private async resolveCycles(training: Training): Promise<CycleProgress[]> {
+		const cycles = await this.trainingCycleRepository.getManyByTraining(training.uuid);
+
+		const progress: CycleProgress[] = [];
+		let firstCycleDurationMs: number | null = null;
+
+		for (const cycle of cycles) {
+			const attempts = await this.puzzleAttemptRepository.getManyByCycle(cycle.uuid);
+			const total = await this.trainingCycleItemRepository.countByCycle(cycle.uuid);
+
+			if (1 === cycle.index) {
+				firstCycleDurationMs = sumDuration(attempts);
+			}
+
+			progress.push(
+				GetTrainingProgressUseCase.toCycleProgress(cycle, attempts, total, firstCycleDurationMs),
+			);
+		}
+
+		return progress;
 	}
 }
 
