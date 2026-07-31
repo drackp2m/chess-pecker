@@ -1,3 +1,13 @@
+# v1.6.0 (2026-07-31)
+
+## What's Changed
+
+### ✨ Features
+
+- add settings for move speed and autoplay answer after fail ([f6e83db](https://github.com/drackp2m/chess-pecker/commit/f6e83db5a9784130da912318d5fb3632ab057e8c)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.5.0...v1.6.0
+
 # v1.5.0 (2026-07-31)
 
 ## What's Changed
