@@ -5,6 +5,7 @@ export enum SettingType {
 	MOVE_ANIMATION = 'move-animation',
 	MOVE_INPUT = 'move-input',
 	MISTAKE_POLICY = 'mistake-policy',
+	SOUND = 'sound',
 }
 
 export type SettingTypeKey = keyof typeof SettingType;

@@ -18,6 +18,7 @@ import {
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle-session';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
+import { SoundService } from '@app/service/sound.service';
 
 // ToDo => Woodpecker needs a clock, and nothing here measures time. The method is
 // scored on how long a cycle takes, so a session needs: when the exercise became
@@ -46,6 +47,8 @@ export class PuzzleStore
 
 	/** What a miss is allowed to lead to, chosen in the settings. */
 	private readonly policy = inject(MistakePolicyService).policy;
+
+	private readonly sound = inject(SoundService);
 
 	/** Imports exercises from raw CSV text and opens the first one. */
 	loadCsv(text: string): boolean {
@@ -191,6 +194,7 @@ export class PuzzleStore
 		kind: 'backward' | 'forward',
 	): void {
 		const outcome = this.outcomeAt(cursor);
+		const previous = this.position();
 
 		patchState(this, {
 			cursor,
@@ -200,6 +204,12 @@ export class PuzzleStore
 			transition:
 				undefined === stepped ? undefined : nextTransition(this.transition(), stepped, kind),
 		});
+
+		if (undefined !== stepped) {
+			// The move is judged from the position that has it on the board: stepping
+			// forward lands on it, stepping back is leaving it behind.
+			this.sound.playMove('backward' === kind ? previous : this.position(), stepped, kind);
+		}
 	}
 
 	/**

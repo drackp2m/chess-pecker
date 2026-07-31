@@ -42,6 +42,19 @@
 	</div>
 
 	<div class="flex-col gap-2">
+		<h4>Sound</h4>
+
+		<p class="fs-sm color-contrast-mid">
+			A piece landing picks a sound at random, never the one before it. Captures, check and mate
+			have their own. Stepping back through a line plays them reversed.
+		</p>
+
+		<form [formGroup]="form" class="flex-col gap-1">
+			<input appThemed type="checkbox" label="Play a sound on every move" formControlName="sound" />
+		</form>
+	</div>
+
+	<div class="flex-col gap-2">
 		<h4>When you miss</h4>
 
 		<p class="fs-sm color-contrast-mid">

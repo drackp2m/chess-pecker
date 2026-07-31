@@ -15,6 +15,7 @@ import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-chec
 import { version } from '@app/package';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
+import { SoundService } from '@app/service/sound.service';
 import { ThemeService } from '@app/service/theme.service';
 
 @Component({
@@ -34,12 +35,14 @@ export class SettingPage {
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
 	private readonly mistakePolicy = inject(MistakePolicyService);
+	private readonly sound = inject(SoundService);
 	private readonly router = inject(Router);
 
 	private firstChangeIgnored = false;
 	private firstAnimationChangeIgnored = false;
 	private firstInputChangeIgnored = false;
 	private firstMistakeChangeIgnored = false;
+	private firstSoundChangeIgnored = false;
 
 	readonly form = new FormGroup({
 		appearance: new FormControl<Theme | 'system'>(this.themeService.selectedTheme(), {
@@ -52,6 +55,7 @@ export class SettingPage {
 		}),
 		clickToMove: new FormControl<boolean>(this.isMethodEnabled('click'), { nonNullable: true }),
 		dragToMove: new FormControl<boolean>(this.isMethodEnabled('drag'), { nonNullable: true }),
+		sound: new FormControl<boolean>(this.sound.isEnabled(), { nonNullable: true }),
 		mistake: new FormGroup({
 			undoMistake: new FormControl<boolean>(this.mistakePolicy.policy().undoMistake, {
 				nonNullable: true,
@@ -86,6 +90,10 @@ export class SettingPage {
 		{ initialValue: this.isMethodEnabled('drag') },
 	);
 
+	private readonly soundChange: Signal<boolean> = toSignal(this.form.controls.sound.valueChanges, {
+		initialValue: this.sound.isEnabled(),
+	});
+
 	private readonly mistakeChange = toSignal(this.form.controls.mistake.valueChanges, {
 		initialValue: this.mistakePolicy.policy(),
 	});
@@ -94,6 +102,7 @@ export class SettingPage {
 		this.syncAppearance();
 		this.syncMoveAnimation();
 		this.syncMoveInput();
+		this.syncSound();
 		this.syncMistakePolicy();
 	}
 
@@ -151,6 +160,22 @@ export class SettingPage {
 				this.boardPreference.updateMoveInputMethods(methods);
 			} else {
 				this.firstInputChangeIgnored = true;
+			}
+		});
+	}
+
+	private syncSound(): void {
+		effect(() => {
+			this.form.controls.sound.setValue(this.sound.isEnabled(), { emitEvent: false });
+		});
+
+		effect(() => {
+			const isEnabled = this.soundChange();
+
+			if (this.firstSoundChangeIgnored) {
+				this.sound.update(isEnabled);
+			} else {
+				this.firstSoundChangeIgnored = true;
 			}
 		});
 	}

@@ -15,6 +15,7 @@ import {
 	commitPatch,
 	describeOutcome,
 } from '@app/page/puzzle/store/puzzle-session';
+import { SoundService } from '@app/service/sound.service';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
@@ -45,17 +46,25 @@ function outcomeAt(store: PlaybackStore, cursor: number): PuzzleOutcome {
 		: describeOutcome(store.positions(), puzzle, store.deviation(), cursor);
 }
 
-function commit(store: PlaybackStore, move: ChessMove, isOpponent: boolean): void {
+function commit(
+	store: PlaybackStore,
+	sound: SoundService,
+	move: ChessMove,
+	isOpponent: boolean,
+): void {
 	const position = store.position();
 
 	patchState(store, (state) => commitPatch(state, position, move, isOpponent));
+
+	// Read after the patch, so it is the position the move produced that is judged.
+	sound.playMove(store.position(), move);
 }
 
 /**
  * Plays the scripted ply at the cursor in two beats: the piece lights up on
  * its own square first, so it can be seen before it slides across the board.
  */
-function playScripted(store: PlaybackStore, scheduled: ScheduledAction): void {
+function playScripted(store: PlaybackStore, sound: SoundService, scheduled: ScheduledAction): void {
 	scheduled.cancel();
 	patchState(store, { isReplaying: true });
 
@@ -66,7 +75,7 @@ function playScripted(store: PlaybackStore, scheduled: ScheduledAction): void {
 
 		patchState(store, { announced: move });
 		scheduled.run(() => {
-			land(store, scheduled, move);
+			land(store, sound, scheduled, move);
 		}, ANNOUNCE_DELAY);
 	}, REPLAY_DELAY);
 }
@@ -77,17 +86,22 @@ function playScripted(store: PlaybackStore, scheduled: ScheduledAction): void {
  * mate cuts the script short, and from a finished position there is nothing
  * left to parse.
  */
-function land(store: PlaybackStore, scheduled: ScheduledAction, move: ChessMove | undefined): void {
+function land(
+	store: PlaybackStore,
+	sound: SoundService,
+	scheduled: ScheduledAction,
+	move: ChessMove | undefined,
+): void {
 	patchState(store, { announced: undefined });
 
 	if (undefined !== move) {
-		commit(store, move, store.position().turn !== store.playerColor());
+		commit(store, sound, move, store.position().turn !== store.playerColor());
 	}
 
 	const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
 
 	if (store.isRevealing() && undefined !== move && isScriptLeft) {
-		playScripted(store, scheduled);
+		playScripted(store, sound, scheduled);
 
 		return;
 	}
@@ -96,6 +110,15 @@ function land(store: PlaybackStore, scheduled: ScheduledAction, move: ChessMove 
 	// opponent's would otherwise leave the exercise waiting forever.
 	patchState(store, { isReplaying: false, isRevealing: false });
 	patchState(store, { outcome: outcomeAt(store, store.cursor()) });
+}
+
+/** Leaves the refuted move up long enough to be seen, then takes it back. */
+function scheduleUndo(store: PlaybackStore, scheduled: ScheduledAction, undo: () => void): void {
+	scheduled.run(() => {
+		if (undefined !== store.mistake()) {
+			undo();
+		}
+	}, UNDO_DELAY);
 }
 
 /**
@@ -108,6 +131,7 @@ export function withPuzzlePlayback() {
 		{ state: type<PuzzleStoreProps>(), props: type<PuzzlePlaybackInput>() },
 		withMethods((store) => {
 			const scheduled = new ScheduledAction();
+			const sound = inject(SoundService);
 
 			inject(DestroyRef).onDestroy(() => {
 				scheduled.cancel();
@@ -117,24 +141,19 @@ export function withPuzzlePlayback() {
 				outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
 
 				commit: (move: ChessMove, isOpponent: boolean): void => {
-					commit(store, move, isOpponent);
+					commit(store, sound, move, isOpponent);
 				},
 
 				playScripted: (): void => {
-					playScripted(store, scheduled);
+					playScripted(store, sound, scheduled);
 				},
 
 				cancelPlayback(): void {
 					scheduled.cancel();
 				},
 
-				/** Leaves the refuted move up long enough to be seen, then takes it back. */
 				scheduleUndo(undo: () => void): void {
-					scheduled.run(() => {
-						if (undefined !== store.mistake()) {
-							undo();
-						}
-					}, UNDO_DELAY);
+					scheduleUndo(store, scheduled, undo);
 				},
 			};
 		}),
