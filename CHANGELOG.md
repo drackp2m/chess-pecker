@@ -1,3 +1,23 @@
+# v1.5.0 (2026-07-31)
+
+## What's Changed
+
+### ✨ Features
+
+- add sound to exercises moves ([96d369f](https://github.com/drackp2m/chess-pecker/commit/96d369f88dd9ceefca43df20628c1d340669420b)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- enable sonarjs/pseudo-random ([cd38a29](https://github.com/drackp2m/chess-pecker/commit/cd38a291a7daa4a69ab270a693772dd9c9c264a5)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- create web CNAME ([0498e0d](https://github.com/drackp2m/chess-pecker/commit/0498e0d5ecf6b27daa386eb7fb7d0a349a9750f5)) by Marc Jovaní González
+- try to use new domain on backend ([d3f507a](https://github.com/drackp2m/chess-pecker/commit/d3f507a9a1a1c0fb1dee67566dfa52e42854a270)) by Marc Jovaní González
+- use api.chess.drackp2m.dev as backend url ([dd1dcba](https://github.com/drackp2m/chess-pecker/commit/dd1dcba727ff76a753d60e559683a6c5ff42d332)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.4.0...v1.5.0
+
 # v1.4.0 (2026-07-30)
 
 ## What's Changed
