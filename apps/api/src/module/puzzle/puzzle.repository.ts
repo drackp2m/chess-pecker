@@ -41,7 +41,6 @@ export class PuzzleRepository extends CustomRepository<Puzzle> {
 			return [];
 		}
 
-		// eslint-disable-next-line sonarjs/pseudo-random -- elegir ejercicios no es una decisión de seguridad
 		const offset = Math.floor(Math.random() * Math.max(1, total - limit + 1));
 
 		const puzzles = await this.getMany(query, { limit, offset, orderBy: { uuid: 'asc' } });
@@ -54,7 +53,6 @@ const shuffle = (puzzles: Puzzle[]): Puzzle[] => {
 	const shuffled = [...puzzles];
 
 	for (let index = shuffled.length - 1; 0 < index; index--) {
-		// eslint-disable-next-line sonarjs/pseudo-random -- barajar ejercicios no es una decisión de seguridad
 		const target = Math.floor(Math.random() * (index + 1));
 
 		[shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]];

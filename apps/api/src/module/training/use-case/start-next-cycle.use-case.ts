@@ -107,7 +107,6 @@ const shuffle = <T>(items: T[]): T[] => {
 	const shuffled = [...items];
 
 	for (let index = shuffled.length - 1; 0 < index; index--) {
-		// eslint-disable-next-line sonarjs/pseudo-random -- barajar ejercicios no es una decisión de seguridad
 		const target = Math.floor(Math.random() * (index + 1));
 
 		[shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]];
