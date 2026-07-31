@@ -1,6 +1,8 @@
 import { Component, ElementRef, computed, effect, inject, input } from '@angular/core';
 
 import { PieceColor, PieceType } from '@app/definition/chess.type';
+import { SLIDE_DURATION, scaleForSpeed } from '@app/definition/move-speed.type';
+import { BoardPreferenceService } from '@app/service/board-preference.service';
 
 /** Where a piece came from, as a percentage of one square, plus the ply it belongs to. */
 export interface PieceSlide {
@@ -9,8 +11,6 @@ export interface PieceSlide {
 	/** Identifies the move, so the same slide never plays twice. */
 	readonly key: number;
 }
-
-const SLIDE_DURATION = 220;
 
 /**
  * Draws one piece by masking a flat colour with the silhouette extracted from the
@@ -33,6 +33,8 @@ export class ChessPieceComponent {
 	readonly maskImage = computed(() => `url(svg/chess-${this.type()}-solid.svg)`);
 
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+	private readonly speed = inject(BoardPreferenceService).moveSpeed;
 
 	private animatedKey: number | undefined;
 
@@ -66,7 +68,7 @@ export class ChessPieceComponent {
 				{ transform: `translate(${slide.x.toString()}%, ${slide.y.toString()}%)` },
 				{ transform: 'none' },
 			],
-			{ duration: SLIDE_DURATION, easing: 'ease-out' },
+			{ duration: scaleForSpeed(SLIDE_DURATION, this.speed()), easing: 'ease-out' },
 		);
 	}
 }

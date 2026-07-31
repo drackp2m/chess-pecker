@@ -7,7 +7,6 @@ import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 
 const SAMPLE_CSV =
 	'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor\n' +
@@ -27,8 +26,6 @@ export class PuzzlePage {
 	readonly store = inject(PuzzleStore);
 
 	readonly csvDraft = signal('');
-
-	private readonly policy = inject(MistakePolicyService).policy;
 
 	readonly headline = computed(() => this.describe());
 
@@ -81,6 +78,10 @@ export class PuzzlePage {
 	}
 
 	private describe(): string {
+		if (this.store.isFreePlay()) {
+			return 'Free play — both sides are yours, and none of it counts';
+		}
+
 		if (this.store.isRevealing()) {
 			return 'Playing the solution…';
 		}
@@ -92,7 +93,7 @@ export class PuzzlePage {
 			case 'replying':
 				return 'Opponent is moving…';
 			case 'failed':
-				return this.describeMiss();
+				return 'Not the move — taking it back so you can try again';
 			case 'solved':
 				return this.describeSolved();
 			case 'solving':
@@ -106,17 +107,5 @@ export class PuzzlePage {
 		}
 
 		return 'failed' === this.store.result() ? 'Solved, after the miss' : 'Solved';
-	}
-
-	private describeMiss(): string {
-		const policy = this.policy();
-
-		if (policy.freePlay && policy.retry) {
-			return 'Not the move — play it out, or step back to try again';
-		}
-
-		return policy.retry
-			? 'Not the move — step back and try again'
-			: 'Not the move — step back to walk the line';
 	}
 }

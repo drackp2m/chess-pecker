@@ -5,6 +5,7 @@ import { ChessMove, ChessPosition, PieceColor, Square } from '@app/definition/ch
 import { Puzzle, PuzzleMove } from '@app/definition/puzzle.type';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import {
+	FreePlayAnchor,
 	PuzzleStoreProps,
 	describeProgress,
 	findDeviation,
@@ -13,6 +14,13 @@ import {
 } from '@app/page/puzzle/store/puzzle-session';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
+
+interface ScriptInput {
+	readonly positions: Signal<ChessPosition[]>;
+	readonly line: Signal<PuzzleMove[]>;
+	readonly cursor: Signal<number>;
+	readonly freePlay: Signal<FreePlayAnchor | undefined>;
+}
 
 interface SessionInput {
 	readonly announced: Signal<ChessMove | undefined>;
@@ -23,24 +31,43 @@ interface SessionInput {
 
 /** What the board offers from the position on screen, script aside. */
 function boardComputed(position: Signal<ChessPosition>, selected: Signal<Square | undefined>) {
-	return {
-		legalMoves: computed(() => ChessMoveGenerator.legalMoves(position())),
+	const legalMoves = computed(() => ChessMoveGenerator.legalMoves(position()));
 
-		// ToDo => generates the moves a second time instead of reusing the
-		// `legalMoves` computed declared just above, so every click re-runs the
-		// generator for a list that is already memoised. `MatchStore` gets this
-		// right (`this.legalMoves().filter(...)`); the only reason it cannot be
-		// written the same way here is that `legalMoves` is being defined in the
-		// same object literal — hoisting it next to `position` fixes both.
+	return {
+		legalMoves,
+
 		movesFromSelection: computed(() => {
 			const current = selected();
 
-			return undefined === current
-				? []
-				: ChessMoveGenerator.legalMoves(position()).filter((move) => current === move.from);
+			return undefined === current ? [] : legalMoves().filter((move) => current === move.from);
 		}),
 
 		checkedSquare: computed<Square | undefined>(() => ChessMoveGenerator.checkedSquare(position())),
+	};
+}
+
+/** Where the line stands against the script, which free play freezes for as long as it lasts. */
+function scriptComputed(store: ScriptInput, puzzle: Signal<Puzzle | undefined>) {
+	const played = computed(() =>
+		findDeviation({ positions: store.positions(), line: store.line() }, puzzle()),
+	);
+
+	const deviation = computed(() => {
+		const anchor = store.freePlay();
+
+		return undefined === anchor ? played() : anchor.deviation;
+	});
+
+	return {
+		deviation,
+
+		isFreePlay: computed(() => undefined !== store.freePlay()),
+
+		/** The position on screen is one the script has nothing to say about. */
+		isOffScript: computed(() => isPastDeviation(deviation(), store.cursor())),
+
+		/** How far the exercise itself got, which free play leaves where it found it. */
+		scriptCursor: computed(() => Math.min(store.cursor(), store.freePlay()?.cursor ?? Infinity)),
 	};
 }
 
@@ -67,7 +94,7 @@ function lineComputed(
 function sessionComputed(
 	puzzle: Signal<Puzzle | undefined>,
 	store: SessionInput,
-	deviation: Signal<number | undefined>,
+	script: { deviation: Signal<number | undefined>; scriptCursor: Signal<number> },
 ) {
 	return {
 		announcedMove: computed(() => store.announced()),
@@ -75,7 +102,7 @@ function sessionComputed(
 		isBusy: computed(() => store.isReplaying()),
 
 		progress: computed(() =>
-			describeProgress(store.cursor(), puzzle(), store.playerColor(), deviation()),
+			describeProgress(script.scriptCursor(), puzzle(), store.playerColor(), script.deviation()),
 		),
 	};
 }
@@ -92,22 +119,7 @@ export function withPuzzleComputed() {
 
 			const position = computed(() => store.positions()[store.cursor()] ?? ChessFen.initial());
 
-			// ToDo => `findDeviation` rescans the whole line on every cursor change, and
-			// each ply costs an `isSolution` — a full `legalMoves` to parse the scripted
-			// move, plus a second one via `status()` whenever the first check fails. It
-			// also depends on `cursor`, which it never reads, so stepping through a line
-			// re-derives a value that cannot have changed. Dropping `cursor` from the
-			// input (it belongs to `isPastDeviation`, which already takes it separately)
-			// makes this recompute only when a move is actually played.
-			const deviation = computed(() =>
-				findDeviation(
-					{ positions: store.positions(), line: store.line(), cursor: store.cursor() },
-					puzzle(),
-				),
-			);
-
-			/** Past the deviation the script no longer applies, so both sides are yours. */
-			const isFreePlay = computed(() => isPastDeviation(deviation(), store.cursor()));
+			const { scriptCursor, ...script } = scriptComputed(store, puzzle);
 
 			const isPlayerTurn = computed(
 				() => 'solving' === store.outcome() && position().turn === store.playerColor(),
@@ -116,13 +128,12 @@ export function withPuzzleComputed() {
 			return {
 				puzzle,
 				position,
-				deviation,
-				isFreePlay,
 				isPlayerTurn,
 
+				...script,
 				...boardComputed(position, store.selected),
-				...lineComputed(store.line, store.cursor, deviation),
-				...sessionComputed(puzzle, store, deviation),
+				...lineComputed(store.line, store.cursor, script.deviation),
+				...sessionComputed(puzzle, store, { ...script, scriptCursor }),
 			};
 		}),
 	);

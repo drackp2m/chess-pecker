@@ -61,17 +61,19 @@
 					></button>
 				</div>
 
-				@if (store.isSolutionOffered()) {
-					<div class="flex-row justify-center">
-						<button
-							appThemed
-							[disabled]="!store.canRevealSolution()"
-							(click)="store.revealSolution()"
-						>
-							Show solution
-						</button>
-					</div>
-				}
+				<div class="flex-row flex-wrap gap-2 justify-center">
+					<button
+						appThemed
+						[disabled]="!store.canRevealSolution()"
+						(click)="store.revealSolution()"
+					>
+						Show solution
+					</button>
+
+					<button appThemed (click)="store.toggleFreePlay()">
+						{{ store.isFreePlay() ? 'Leave free play' : 'Free play' }}
+					</button>
+				</div>
 
 				<div class="navigation flex-row gap-2 align-center justify-between">
 					<button

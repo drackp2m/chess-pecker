@@ -12,18 +12,15 @@ import {
 	PromotionPieceType,
 	Square,
 } from '@app/definition/chess.type';
+import { ANNOUNCE_DELAY, THINK_DELAY, scaleForSpeed } from '@app/definition/move-speed.type';
 import { ChessOpponentService } from '@app/page/match/service/chess-opponent.service';
 import { buildInitialState, rewindToPlayerTurn } from '@app/page/match/store/match-state';
+import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
-
-/** Time the machine appears to think before it reveals its move. */
-const THINK_DELAY = 350;
-/** How long the chosen piece stays lit before it slides to its destination. */
-const ANNOUNCE_DELAY = 450;
 
 @Injectable()
 export class MatchStore
@@ -31,6 +28,8 @@ export class MatchStore
 	implements BoardPresenter
 {
 	private readonly opponent = inject(ChessOpponentService);
+
+	private readonly speed = inject(BoardPreferenceService).moveSpeed;
 
 	private readonly scheduled = new ScheduledAction();
 
@@ -235,9 +234,12 @@ export class MatchStore
 		}
 
 		patchState(this, { isOpponentThinking: true });
-		this.scheduled.run(() => {
-			this.announceOpponentMove();
-		}, THINK_DELAY);
+		this.scheduled.run(
+			() => {
+				this.announceOpponentMove();
+			},
+			scaleForSpeed(THINK_DELAY, this.speed()),
+		);
 	}
 
 	/**
@@ -257,9 +259,12 @@ export class MatchStore
 			return;
 		}
 
-		this.scheduled.run(() => {
-			patchState(this, { announced: undefined });
-			this.playNotation(notation);
-		}, ANNOUNCE_DELAY);
+		this.scheduled.run(
+			() => {
+				patchState(this, { announced: undefined });
+				this.playNotation(notation);
+			},
+			scaleForSpeed(ANNOUNCE_DELAY, this.speed()),
+		);
 	}
 }

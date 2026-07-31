@@ -1,0 +1,84 @@
+<div
+	#strip
+	class="strip"
+	[class.waiting]="store.isBusy()"
+	[class.dragging]="undefined !== draggingFrom()"
+	(pointermove)="dragSquare($event)"
+	(pointerup)="dropSquare($event)"
+	(pointercancel)="cancelDrag()"
+>
+	@for (square of squares(); track square.square) {
+		<button
+			type="button"
+			class="square flex-row align-center justify-center"
+			[class.light]="square.isLight"
+			[class.dark]="!square.isLight"
+			[class.selected]="square.isSelected"
+			[class.target]="square.isTarget"
+			[class.capture]="square.isCapture"
+			[class.mistake]="square.isMistake"
+			[class.announced]="square.isAnnounced"
+			[class.lifted]="square.square === draggingFrom()"
+			[attr.aria-label]="label(square)"
+			(pointerdown)="pressSquare(square, $event)"
+			(click)="activate(square, $event)"
+		>
+			@if (square.piece; as piece) {
+				<app-chess-piece [type]="piece.type" [color]="piece.color" [slide]="square.slide" />
+			}
+
+			@if (square.rankLabel; as rank) {
+				<span class="coordinate rank fw-xl" aria-hidden="true">{{ rank }}</span>
+			}
+
+			@if (square.fileLabel; as file) {
+				<span class="coordinate file fw-xl" aria-hidden="true">{{ file }}</span>
+			}
+		</button>
+	}
+
+	@if (ghost(); as dragged) {
+		<app-chess-piece
+			class="ghost"
+			[type]="dragged.piece.type"
+			[color]="dragged.piece.color"
+			[style.left.px]="dragged.x"
+			[style.top.px]="dragged.y"
+			[style.width.px]="dragged.size"
+			[style.height.px]="dragged.size"
+		/>
+	}
+</div>
+
+<p class="fs-sm color-contrast-mid" role="status">{{ hint() }}</p>
+
+<div class="flex-row gap-2 justify-center">
+	<button
+		appThemed
+		icon="backward-fast"
+		iconSquared
+		aria-label="Start the demo over"
+		(click)="reset()"
+		class="px-2"
+	></button>
+
+	<button
+		appThemed
+		icon="backward-step"
+		iconSquared
+		aria-label="Step back one move"
+		[disabled]="store.isBusy() || !store.canStepBackward()"
+		(click)="store.stepBackward()"
+		class="px-2"
+	></button>
+
+	<button
+		appThemed
+		icon="forward-step"
+		iconSquared
+		aria-label="Step forward one move"
+		[disabled]="store.isBusy() || !store.canStepForward()"
+		(click)="store.stepForward()"
+		class="px-2"
+	></button>
+</div>
