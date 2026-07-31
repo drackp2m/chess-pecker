@@ -219,7 +219,7 @@ export class MatchStore
 			selected: undefined,
 			pendingPromotion: undefined,
 			notationError: undefined,
-			transition: nextTransition(this.transition(), move, 'played'),
+			transition: nextTransition(move, 'played'),
 		});
 
 		this.scheduleOpponentMove();

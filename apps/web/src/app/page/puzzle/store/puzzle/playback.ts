@@ -20,13 +20,16 @@ import {
 	PuzzleStoreProps,
 	commitPatch,
 	describeOutcome,
-} from '@app/page/puzzle/store/puzzle-session';
+} from '@app/page/puzzle/store/puzzle/session';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
-/** How long a refuted move is left on the board before it is taken back for you. */
+/**
+ * How long a refuted move is left on the board before it is taken back for you. Like
+ * every other beat of the playback, it is stretched or cut by the chosen move speed.
+ */
 const UNDO_DELAY = 800;
 
 interface PuzzlePlaybackInput {
@@ -129,12 +132,17 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 }
 
 /** Leaves the refuted move up long enough to be seen, then takes it back. */
-function scheduleUndo(store: PlaybackStore, scheduled: ScheduledAction, undo: () => void): void {
-	scheduled.run(() => {
-		if (undefined !== store.mistake()) {
-			undo();
-		}
-	}, UNDO_DELAY);
+function scheduleUndo(context: PlaybackContext, undo: () => void): void {
+	const { store, scheduled, speed } = context;
+
+	scheduled.run(
+		() => {
+			if (undefined !== store.mistake()) {
+				undo();
+			}
+		},
+		scaleForSpeed(UNDO_DELAY, speed()),
+	);
 }
 
 /** Timers outlive the store they were started from, so they are stopped with it. */
@@ -172,7 +180,7 @@ function buildMethods(context: PlaybackContext) {
 		},
 
 		scheduleUndo: (undo: () => void): void => {
-			scheduleUndo(store, scheduled, undo);
+			scheduleUndo(context, undo);
 		},
 	};
 }

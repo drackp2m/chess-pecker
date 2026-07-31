@@ -5,8 +5,8 @@ import { ChessBoardComponent } from '@app/component/chess-board/chess-board.comp
 import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
-import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
-import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
+import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 
 const SAMPLE_CSV =
 	'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor\n' +

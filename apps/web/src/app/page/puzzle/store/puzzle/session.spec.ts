@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ChessMove } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
-import { isSolution, openPuzzle } from '@app/page/puzzle/store/puzzle-session';
+import { isSolution, openPuzzle } from '@app/page/puzzle/store/puzzle/session';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 

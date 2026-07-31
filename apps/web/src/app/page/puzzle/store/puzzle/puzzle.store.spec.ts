@@ -2,10 +2,12 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { BoardTransition } from '@app/definition/board-animation.type';
+import { Square } from '@app/definition/chess.type';
 import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-policy.type';
-import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
-import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
-import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
+import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
+import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
@@ -21,6 +23,8 @@ const ALT_MATE =
 
 /** Long enough for both beats of the replay: the piece lights up, then it moves. */
 const REPLAY_TOTAL = 1500;
+/** One ply of it, so a reveal can be watched a move at a time. */
+const REPLAY_PLY = 800;
 /** Long enough for the refuted move to be taken back on its own. */
 const UNDO_TOTAL = 1000;
 
@@ -28,7 +32,10 @@ const UNDO_TOTAL = 1000;
  * Every settings-backed service is stubbed whole, so the store is tested against a
  * policy rather than against IndexedDB — and so no test needs an `AudioContext`.
  */
-function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
+function configure(
+	policy: Partial<MistakePolicy> = {},
+	speed: MoveSpeed = DEFAULT_MOVE_SPEED,
+): PuzzleStore {
 	TestBed.configureTestingModule({
 		providers: [
 			PuzzleLibraryStore,
@@ -37,7 +44,7 @@ function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
 				provide: MistakePolicyService,
 				useValue: { policy: signal({ ...DEFAULT_MISTAKE_POLICY, ...policy }) },
 			},
-			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
+			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(speed) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 		],
 	});
@@ -45,19 +52,49 @@ function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
 	return TestBed.inject(PuzzleStore);
 }
 
-function createStore(csv: string, policy: Partial<MistakePolicy> = {}): PuzzleStore {
-	const store = configure(policy);
+function createStore(
+	csv: string,
+	policy: Partial<MistakePolicy> = {},
+	speed: MoveSpeed = DEFAULT_MOVE_SPEED,
+): PuzzleStore {
+	const store = configure(policy, speed);
 
 	store.loadCsv(csv);
-	vi.advanceTimersByTime(REPLAY_TOTAL);
+	vi.advanceTimersByTime(REPLAY_TOTAL * 2);
 
 	return store;
 }
 
+function play(store: PuzzleStore, from: Square, to: Square): void {
+	store.selectSquare(from);
+	store.selectSquare(to);
+}
+
 /** The first solving move of `MATE_IN_3` is Rb1+; Rc2 is a legal move that is not it. */
 function miss(store: PuzzleStore): void {
-	store.selectSquare('b2');
-	store.selectSquare('c2');
+	play(store, 'b2', 'c2');
+}
+
+/**
+ * The slides the board would actually run. Signals are glitch-free, so a transition
+ * only ever reaches the DOM if it is the one still standing when the block that set
+ * it returns — which is where this samples, and why a slide overwritten in the same
+ * breath is one the player never sees.
+ */
+function createSlideLog(store: PuzzleStore) {
+	const slides: BoardTransition[] = [];
+
+	return {
+		slides,
+
+		sample(): void {
+			const transition = store.transition();
+
+			if (undefined !== transition && transition.tick !== slides.at(-1)?.tick) {
+				slides.push(transition);
+			}
+		},
+	};
 }
 
 describe('PuzzleStore', () => {
@@ -438,6 +475,142 @@ describe('PuzzleStore', () => {
 		store.stepForward();
 
 		expect(store.transition()).toMatchObject({ from: 'b3', to: 'd1', kind: 'forward' });
+	});
+
+	it('gives every board event a tick of its own, whatever the exercise did before', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+		const log = createSlideLog(store);
+
+		/** One run through every way the board can move, sampled where the DOM settles. */
+		const variations = [
+			(): void => {
+				play(store, 'b2', 'b1');
+			},
+			(): void => {
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			},
+			(): void => {
+				store.stepBackward();
+			},
+			(): void => {
+				store.stepForward();
+			},
+			(): void => {
+				store.toggleFreePlay();
+				play(store, 'a7', 'a6');
+			},
+			(): void => {
+				store.toggleFreePlay();
+			},
+			(): void => {
+				store.restart();
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			},
+			(): void => {
+				miss(store);
+			},
+			(): void => {
+				vi.advanceTimersByTime(UNDO_TOTAL);
+			},
+			(): void => {
+				miss(store);
+			},
+			(): void => {
+				vi.advanceTimersByTime(UNDO_TOTAL);
+			},
+			(): void => {
+				vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			},
+		];
+
+		log.sample();
+
+		for (const variation of variations) {
+			variation();
+			log.sample();
+		}
+
+		const ticks = log.slides.map((slide) => slide.tick);
+
+		// The walk covered the whole policy, so every level of it was exercised.
+		expect(new Set(log.slides.map((slide) => slide.kind))).toEqual(
+			new Set(['played', 'forward', 'backward']),
+		);
+
+		// A tick that came round twice would be taken for a slide that has already
+		// run, and the piece would stand there refusing to move.
+		expect(new Set(ticks).size).toBe(ticks.length);
+		expect(ticks).toEqual([...ticks].sort((left, right) => left - right));
+	});
+
+	it('slides the opening move again when the exercise is reopened after a miss', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+		const opening = store.transition();
+
+		miss(store);
+		vi.advanceTimersByTime(UNDO_TOTAL);
+		store.restart();
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		const reopened = store.transition();
+
+		// The same move onto the same square as before, so only the tick tells the two
+		// slides apart — and the miss in between must not have rewound it.
+		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'played' });
+		expect(reopened?.tick).toBeGreaterThan(opening?.tick ?? 0);
+	});
+
+	it('leaves the take-back on screen when the answer follows it in the same breath', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+
+		miss(store);
+		vi.advanceTimersByTime(UNDO_TOTAL);
+		miss(store);
+
+		const refuted = store.transition();
+
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		// The take-back and the reveal it sets off land together; the reveal rewinds to
+		// the square the line already stood on, so it has nothing to take back over.
+		expect(store.isRevealing()).toBe(true);
+		expect(store.transition()).toMatchObject({ from: 'c2', to: 'b2', kind: 'backward' });
+		expect(store.transition()?.tick).toBeGreaterThan(refuted?.tick ?? 0);
+
+		vi.advanceTimersByTime(REPLAY_PLY);
+
+		// And the answer played out from there arrives under a tick of its own.
+		expect(store.transition()).toMatchObject({ from: 'b2', to: 'b1', kind: 'played' });
+	});
+
+	it('waits on the refuted move for as long as the chosen move speed says', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, {}, 'slow');
+
+		miss(store);
+
+		// The pause is a beat of the playback like any other, so it stretches with it.
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		expect(store.mistake()?.to).toBe('c2');
+
+		vi.advanceTimersByTime(scaleForSpeed(UNDO_TOTAL, 'slow') - UNDO_TOTAL);
+
+		expect(store.mistake()).toBeUndefined();
+		expect(store.cursor()).toBe(1);
+	});
+
+	it('drops the slide when a reveal rewinds the board out from under it', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
+
+		// The refuted move is still up, so revealing has to rewind past it: the piece
+		// is about to be somewhere else entirely, and its slide no longer describes it.
+		expect(store.transition()).toMatchObject({ to: 'c2', kind: 'played' });
+
+		store.revealSolution();
+
+		expect(store.transition()).toBeUndefined();
 	});
 
 	it('steps backward and forward through the played line', () => {

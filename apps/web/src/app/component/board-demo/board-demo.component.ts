@@ -8,8 +8,8 @@ import { BOARD_SIZE, FILES, RANKS, SQUARE_COUNT } from '@app/definition/chess.co
 import { Piece, Square } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { ButtonDirective } from '@app/directive/button.directive';
-import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
-import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
+import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { ChessSquare } from '@app/util/chess/chess-square';
 

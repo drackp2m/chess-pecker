@@ -2,7 +2,7 @@ import { Signal, computed } from '@angular/core';
 import { signalStoreFeature, type, withComputed } from '@ngrx/signals';
 
 import { Puzzle } from '@app/definition/puzzle.type';
-import { PuzzleStoreProps } from '@app/page/puzzle/store/puzzle-session';
+import { PuzzleStoreProps } from '@app/page/puzzle/store/puzzle/session';
 
 interface PuzzleGatingInput {
 	readonly puzzle: Signal<Puzzle | undefined>;
