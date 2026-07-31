@@ -1,0 +1,124 @@
+name: ci
+
+# Gate for everything that reaches main. deploy.yml runs *after* the merge, so
+# without this a red build only shows up once it's already on main; here the
+# checks run against the merge result and can block it (mark lint/web/api as
+# required status checks in the branch protection rules for main).
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: {}
+
+concurrency:
+  group: 'ci-${{ github.event.pull_request.number }}'
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: 'pnpm'
+
+      # Not filtered to the web workspace: ESLint type-checks apps/api through
+      # typescript-eslint's projectService, and without the API's dependencies
+      # its types collapse to `any` and the run drowns in false warnings.
+      - name: Install dependencies
+        run: |
+          set -o pipefail
+          pnpm install --frozen-lockfile 2>&1 | tee /tmp/pnpm-install.log
+
+      - name: Install summary
+        if: always()
+        run: node tools/scripts/install/summary.mjs /tmp/pnpm-install.log
+
+      - name: Run lint
+        run: pnpm run lint
+
+  web:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm --filter @chesspecker/web test
+
+      # The deploy builds with --base-href, which this run can't know; the point
+      # here is only that the app compiles, so main never gets a broken build.
+      - name: Build application
+        run: |
+          set -o pipefail
+          pnpm --filter @chesspecker/web build 2>&1 | tee /tmp/build.log
+
+      - name: Build summary
+        if: always()
+        run: node tools/scripts/build/summary.mjs /tmp/build.log
+
+  api:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.17.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '26'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Unit project only: `test:integration` needs the Postgres from
+      # docker-compose.yml, which would mean a service container and the test
+      # env wiring — not set up here yet.
+      - name: Run tests
+        run: pnpm --filter @chesspecker/api test
+
+      # Same build the Dockerfile runs for Render (nest build + the migrations
+      # tsc pass), so a compile error surfaces in the PR instead of in a
+      # deploy that fails after the merge.
+      - name: Build application
+        run: pnpm --filter @chesspecker/api build

@@ -5,10 +5,9 @@ import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
 import { Puzzle, PuzzleOutcome, PuzzleResult, settleResult } from '@app/definition/puzzle.type';
-import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle-computed';
-import { withPuzzleGating } from '@app/page/puzzle/store/puzzle-gating';
-import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
-import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle-playback';
+import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
+import { withPuzzleGating } from '@app/page/puzzle/store/puzzle/gating';
+import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
 import {
 	anchorFreePlay,
 	buildPuzzleState,
@@ -18,7 +17,8 @@ import {
 	openPuzzle,
 	restoreFreePlayPatch,
 	revealPatch,
-} from '@app/page/puzzle/store/puzzle-session';
+} from '@app/page/puzzle/store/puzzle/session';
+import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 
@@ -102,7 +102,7 @@ export class PuzzleStore
 		}
 
 		this.cancelPlayback();
-		patchState(this, revealPatch(this.lineState(), this.deviation()));
+		patchState(this, (state) => revealPatch(state, this.deviation()));
 		this.playScripted();
 	}
 
@@ -117,7 +117,7 @@ export class PuzzleStore
 			return;
 		}
 
-		patchState(this, restoreFreePlayPatch(anchor));
+		patchState(this, (state) => restoreFreePlayPatch(state, anchor));
 	}
 
 	/**
@@ -240,8 +240,9 @@ export class PuzzleStore
 			selected: undefined,
 			outcome,
 			result: settleResult(this.result(), outcome),
-			transition:
-				undefined === stepped ? undefined : nextTransition(this.transition(), stepped, kind),
+			// Nothing to step over means the cursor stayed put, so whatever the board is
+			// showing still stands and must not be cleared out from under it.
+			...(undefined === stepped ? {} : { transition: nextTransition(stepped, kind) }),
 		});
 
 		if (undefined !== stepped) {

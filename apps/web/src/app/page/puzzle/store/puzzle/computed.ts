@@ -3,7 +3,6 @@ import { signalStoreFeature, type, withComputed } from '@ngrx/signals';
 
 import { ChessMove, ChessPosition, PieceColor, Square } from '@app/definition/chess.type';
 import { Puzzle, PuzzleMove } from '@app/definition/puzzle.type';
-import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import {
 	FreePlayAnchor,
 	PuzzleStoreProps,
@@ -11,7 +10,8 @@ import {
 	findDeviation,
 	isPastDeviation,
 	mistakeAt,
-} from '@app/page/puzzle/store/puzzle-session';
+} from '@app/page/puzzle/store/puzzle/session';
+import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 

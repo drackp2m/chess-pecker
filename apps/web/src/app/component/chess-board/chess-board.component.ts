@@ -5,11 +5,10 @@ import {
 	Point,
 	buildPromotionChoices,
 	indexAtOrder,
-	slideOffset,
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
+import { createBoardSlide } from '@app/component/chess-board/board-slide';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
-import { shouldAnimate } from '@app/definition/board-animation.type';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import {
 	BOARD_SIZE,
@@ -52,8 +51,12 @@ export class ChessBoardComponent {
 
 	readonly promotionChoices = buildPromotionChoices(PROMOTION_PIECES);
 
-	/** Chosen in the settings; decides which transitions get a sliding animation. */
-	readonly animation = this.preference.moveAnimation;
+	/** Settled per move, so changing the setting never replays one already on screen. */
+	private readonly boardSlide = createBoardSlide({
+		transition: this.store.transition,
+		animation: this.preference.moveAnimation,
+		orientation: this.store.orientation,
+	});
 
 	// Read as signals, so changing the preference takes effect on a board already
 	// on screen rather than only on the next one.
@@ -178,25 +181,16 @@ export class ChessBoardComponent {
 			isChecked: square === this.store.checkedSquare(),
 			isMistake: undefined !== mistake && (square === mistake.from || square === mistake.to),
 			isAnnounced: square === announced?.from,
-			slide: this.describeSlide(square, order),
+			slide: this.describeSlide(square),
 			fileLabel: 56 <= order ? FILES[ChessSquare.fileOf(index)] : undefined,
 			rankLabel: 0 === order % 8 ? RANKS[ChessSquare.rowOf(index)] : undefined,
 		};
 	}
 
-	/**
-	 * Slides the square a transition landed on, when the chosen animation level says
-	 * that kind of transition is worth animating.
-	 */
-	private describeSlide(square: Square, order: number): PieceSlide | undefined {
-		const transition = this.store.transition();
+	/** Only the square the move landed on has anything to slide. */
+	private describeSlide(square: Square): PieceSlide | undefined {
+		const pending = this.boardSlide();
 
-		if (square !== transition?.to || !shouldAnimate(transition.kind, this.animation())) {
-			return undefined;
-		}
-
-		const offset = slideOffset(transition.from, transition.to, this.store.orientation());
-
-		return { ...offset, key: transition.tick * SQUARE_COUNT + order };
+		return square === pending?.to ? pending.slide : undefined;
 	}
 }

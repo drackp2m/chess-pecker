@@ -112,8 +112,25 @@ export function anchorFreePlay(state: LineState, deviation: number | undefined):
 	return { positions: state.positions, line: state.line, cursor: state.cursor, deviation };
 }
 
+/** The slice a rewind has to look at to know whether the board is about to jump. */
+type RewindState = Pick<PuzzleStoreProps, 'cursor' | 'transition'>;
+
+/**
+ * The slide a rewind leaves standing. Landing on the cursor the line already stood on
+ * changes nothing on the board, so a slide on its way in is still the truth and has to
+ * be allowed to finish — a take-back most of all, since the answer that plays itself
+ * afterwards rewinds in the very same breath. Anywhere else the position jumps, and a
+ * slide describing the one it left would be a lie.
+ */
+function keptTransition(state: RewindState, cursor: number): BoardTransition | undefined {
+	return cursor === state.cursor ? state.transition : undefined;
+}
+
 /** Puts the line back exactly where free play picked it up. */
-export function restoreFreePlayPatch(anchor: FreePlayAnchor): Partial<PuzzleStoreProps> {
+export function restoreFreePlayPatch(
+	state: RewindState,
+	anchor: FreePlayAnchor,
+): Partial<PuzzleStoreProps> {
 	return {
 		positions: anchor.positions,
 		line: anchor.line,
@@ -122,7 +139,7 @@ export function restoreFreePlayPatch(anchor: FreePlayAnchor): Partial<PuzzleStor
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
-		transition: undefined,
+		transition: keptTransition(state, anchor.cursor),
 	};
 }
 
@@ -131,7 +148,7 @@ export function restoreFreePlayPatch(anchor: FreePlayAnchor): Partial<PuzzleStor
  * strayed, so the solution can be played out from there.
  */
 export function revealPatch(
-	state: LineState,
+	state: LineState & Pick<PuzzleStoreProps, 'transition'>,
 	deviation: number | undefined,
 ): Partial<PuzzleStoreProps> {
 	const cursor = Math.min(state.cursor, deviation ?? state.cursor);
@@ -143,7 +160,7 @@ export function revealPatch(
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
-		transition: undefined,
+		transition: keptTransition(state, cursor),
 		isRevealing: true,
 		isRevealed: true,
 	};
@@ -199,7 +216,7 @@ export function extendLine(state: LineState, move: PuzzleMove, next: ChessPositi
 
 /** State patch for a move that has been accepted into the line. */
 export function commitPatch(
-	state: LineState & Pick<PuzzleStoreProps, 'transition'>,
+	state: LineState,
 	position: ChessPosition,
 	move: ChessMove,
 	isOpponent: boolean,
@@ -208,7 +225,7 @@ export function commitPatch(
 		...extendLine(state, toRecord(position, move, isOpponent), ChessBoard.apply(position, move)),
 		selected: undefined,
 		pendingPromotion: undefined,
-		transition: nextTransition(state.transition, move, 'played'),
+		transition: nextTransition(move, 'played'),
 	};
 }
 

@@ -4,6 +4,7 @@
 	--square-light: color-mix(in oklab, var(--color-primary) 88%, var(--color-accent));
 	--square-dark: color-mix(in oklab, var(--color-accent) 58%, var(--color-contrast));
 	--square-selected: color-mix(in oklab, var(--color-accent) 70%, rgb(255 255 255));
+	--square-last-move: color-mix(in oklab, var(--color-accent) 35%, transparent);
 	--square-mistake: rgb(196 48 38 / 45%);
 	--square-announced: color-mix(in oklab, var(--color-accent) 85%, rgb(255 255 255));
 
@@ -57,11 +58,14 @@
 		opacity: 0.25;
 	}
 
+	// The last move and a refuted attempt are both a translucent wash over the
+	// square, so the piece underneath stays readable. Same treatment, different tint.
+	&.last-move::after,
 	&.mistake::after {
 		content: '';
 		position: absolute;
 		inset: 0;
-		background-color: var(--square-mistake);
+		background-color: var(--square-last-move);
 	}
 
 	&.selected {
@@ -71,6 +75,12 @@
 	&.announced {
 		background-color: var(--square-announced);
 		animation: demo-announce 600ms ease-in-out infinite alternate;
+	}
+
+	// Declared after the shared rule above so a refuted move outranks the last-move
+	// tint on the very squares it also occupies.
+	&.mistake::after {
+		background-color: var(--square-mistake);
 	}
 
 	// A dot marks a quiet destination, a ring marks a capture.

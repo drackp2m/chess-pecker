@@ -1,15 +1,15 @@
-import { Component, ElementRef, computed, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 
 import { BoardDragGesture } from '@app/component/chess-board/board-drag';
-import { Point, slideOffset } from '@app/component/chess-board/board-geometry';
+import { Point } from '@app/component/chess-board/board-geometry';
+import { createBoardSlide } from '@app/component/chess-board/board-slide';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
-import { shouldAnimate } from '@app/definition/board-animation.type';
 import { BOARD_SIZE, FILES, RANKS, SQUARE_COUNT } from '@app/definition/chess.constant';
-import { Piece, Square } from '@app/definition/chess.type';
+import { Piece, PieceColor, Square } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { ButtonDirective } from '@app/directive/button.directive';
-import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
-import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
+import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { ChessSquare } from '@app/util/chess/chess-square';
 
@@ -37,6 +37,7 @@ interface DemoSquare {
 	readonly isSelected: boolean;
 	readonly isTarget: boolean;
 	readonly isCapture: boolean;
+	readonly isLastMove: boolean;
 	readonly isMistake: boolean;
 	readonly isAnnounced: boolean;
 	readonly slide: PieceSlide | undefined;
@@ -61,7 +62,15 @@ export class BoardDemoComponent {
 
 	private readonly preference = inject(BoardPreferenceService);
 
-	readonly animation = this.preference.moveAnimation;
+	/** The strip always reads a1 to h1, so its slides are measured unflipped. */
+	private readonly stripOrientation = signal<PieceColor>('white');
+
+	/** Settled per move, so changing the setting never replays one already on screen. */
+	private readonly boardSlide = createBoardSlide({
+		transition: this.store.transition,
+		animation: this.preference.moveAnimation,
+		orientation: this.stripOrientation,
+	});
 
 	readonly isClickEnabled = computed(() => this.preference.moveInputMethods().includes('click'));
 	readonly isDragEnabled = computed(() => this.preference.moveInputMethods().includes('drag'));
@@ -163,6 +172,7 @@ export class BoardDemoComponent {
 		const index = RANK_START + file;
 		const square = ChessSquare.fromIndex(index);
 		const target = this.store.movesFromSelection().find((move) => square === move.to);
+		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
 
 		return {
@@ -172,9 +182,10 @@ export class BoardDemoComponent {
 			isSelected: square === this.store.selected(),
 			isTarget: undefined !== target,
 			isCapture: undefined !== target?.captured,
+			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),
 			isMistake: undefined !== mistake && (square === mistake.from || square === mistake.to),
 			isAnnounced: square === this.store.announcedMove()?.from,
-			slide: this.describeSlide(square, file),
+			slide: this.describeSlide(square),
 			// The strip is a board's bottom rank, so it carries that rank's edge: every
 			// square names its file, and only the first one names the rank.
 			fileLabel: FILES[ChessSquare.fileOf(index)],
@@ -182,16 +193,11 @@ export class BoardDemoComponent {
 		};
 	}
 
-	private describeSlide(square: Square, file: number): PieceSlide | undefined {
-		const transition = this.store.transition();
+	/** Only the square the move landed on has anything to slide. */
+	private describeSlide(square: Square): PieceSlide | undefined {
+		const pending = this.boardSlide();
 
-		if (square !== transition?.to || !shouldAnimate(transition.kind, this.animation())) {
-			return undefined;
-		}
-
-		const offset = slideOffset(transition.from, transition.to, 'white');
-
-		return { ...offset, key: transition.tick * BOARD_SIZE + file };
+		return square === pending?.to ? pending.slide : undefined;
 	}
 
 	private describe(): string {

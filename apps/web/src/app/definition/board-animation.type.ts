@@ -32,24 +32,33 @@ export interface BoardTransition {
 	/** The square that receives the slide. */
 	readonly to: Square;
 	readonly kind: BoardTransitionKind;
-	/** Increments per transition, so the same slide never runs twice. */
+	/** Identifies this board event, so the same slide never runs twice. */
 	readonly tick: number;
 }
 
-/** Builds the next transition, carrying the tick forward so slides stay unique. */
-export function nextTransition(
-	previous: BoardTransition | undefined,
-	move: ChessMove,
-	kind: BoardTransitionKind,
-): BoardTransition {
+/**
+ * Board events so far, counted here rather than in any store on purpose. A slide is
+ * keyed by its tick, and a piece that is handed the key of a slide it has already run
+ * will not run it again — so a tick may never come round a second time. Every store
+ * clears its transition when the board jumps rather than moves (a restart, a rewind,
+ * a new game), and a count kept alongside it would be cleared with it: the next move
+ * would then be handed tick 1 again, and a piece still standing where an earlier
+ * tick 1 had landed would sit there refusing to slide.
+ */
+let lastTick = 0;
+
+/** Builds the transition for a board event, under a tick nothing else can hold. */
+export function nextTransition(move: ChessMove, kind: BoardTransitionKind): BoardTransition {
 	// A move being taken back travels the other way, so the squares swap.
 	const isReversed = 'backward' === kind;
+
+	lastTick += 1;
 
 	return {
 		from: isReversed ? move.to : move.from,
 		to: isReversed ? move.from : move.to,
 		kind,
-		tick: (previous?.tick ?? 0) + 1,
+		tick: lastTick,
 	};
 }
 
