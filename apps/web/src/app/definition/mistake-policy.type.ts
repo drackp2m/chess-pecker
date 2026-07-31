@@ -1,28 +1,25 @@
 export interface MistakePolicy {
-	readonly undoMistake: boolean;
-	readonly freePlay: boolean;
-	readonly retry: boolean;
-	readonly showSolution: boolean;
+	readonly mistakesBeforeSolution: number;
 }
 
-export type MistakePolicyKey = keyof MistakePolicy;
+export interface MistakeThresholdOption {
+	readonly value: number;
+	readonly label: string;
+}
 
-export const DEFAULT_MISTAKE_POLICY: MistakePolicy = {
-	undoMistake: false,
-	freePlay: true,
-	retry: true,
-	showSolution: true,
-};
+export const MISTAKE_THRESHOLD_OPTIONS: readonly MistakeThresholdOption[] = [
+	{ value: 0, label: 'Never' },
+	{ value: 1, label: 'After one miss' },
+	{ value: 2, label: 'After two misses' },
+	{ value: 3, label: 'After three misses' },
+];
 
-export const MISTAKE_POLICY_LABEL: Record<MistakePolicyKey, string> = {
-	undoMistake: 'Take the wrong move back for me',
-	freePlay: 'Let me play on from the wrong move, both sides by hand',
-	retry: 'Let me keep solving the exercise after a miss',
-	showSolution: 'Offer a button that plays the solution',
-};
+export const DEFAULT_MISTAKE_POLICY: MistakePolicy = { mistakesBeforeSolution: 2 };
 
-function readFlag(value: unknown, fallback: boolean): boolean {
-	return 'boolean' === typeof value ? value : fallback;
+function readThreshold(value: unknown): number {
+	return MISTAKE_THRESHOLD_OPTIONS.some((option) => option.value === value)
+		? (value as number)
+		: DEFAULT_MISTAKE_POLICY.mistakesBeforeSolution;
 }
 
 export function normalizeMistakePolicy(value: unknown): MistakePolicy {
@@ -30,12 +27,7 @@ export function normalizeMistakePolicy(value: unknown): MistakePolicy {
 		return DEFAULT_MISTAKE_POLICY;
 	}
 
-	const stored = value as Partial<Record<MistakePolicyKey, unknown>>;
+	const stored = value as Partial<Record<keyof MistakePolicy, unknown>>;
 
-	return {
-		undoMistake: readFlag(stored.undoMistake, DEFAULT_MISTAKE_POLICY.undoMistake),
-		freePlay: readFlag(stored.freePlay, DEFAULT_MISTAKE_POLICY.freePlay),
-		retry: readFlag(stored.retry, DEFAULT_MISTAKE_POLICY.retry),
-		showSolution: readFlag(stored.showSolution, DEFAULT_MISTAKE_POLICY.showSolution),
-	};
+	return { mistakesBeforeSolution: readThreshold(stored.mistakesBeforeSolution) };
 }

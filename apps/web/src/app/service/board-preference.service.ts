@@ -12,6 +12,7 @@ import {
 } from '@app/definition/board-input.type';
 import { SettingTypeKey } from '@app/definition/model/setting/setting-type.enum';
 import { SettingPayload } from '@app/definition/model/setting/setting-type.type';
+import { DEFAULT_MOVE_SPEED, MoveSpeed, normalizeMoveSpeed } from '@app/definition/move-speed.type';
 import { Setting } from '@app/model/setting.model';
 import { SettingStore } from '@app/store/setting.store';
 
@@ -29,9 +30,11 @@ export class BoardPreferenceService {
 
 	private readonly animation = signal<MoveAnimation>(DEFAULT_MOVE_ANIMATION);
 	private readonly inputMethods = signal<readonly MoveInputMethod[]>(this.defaultInputMethods);
+	private readonly speed = signal<MoveSpeed>(DEFAULT_MOVE_SPEED);
 
 	readonly moveAnimation = this.animation.asReadonly();
 	readonly moveInputMethods = this.inputMethods.asReadonly();
+	readonly moveSpeed = this.speed.asReadonly();
 
 	constructor() {
 		const waitForSetting = effect(() => {
@@ -43,6 +46,7 @@ export class BoardPreferenceService {
 
 			this.animation.set(this.readAnimation(settings));
 			this.inputMethods.set(this.readInputMethods(settings));
+			this.speed.set(normalizeMoveSpeed(this.read('MOVE_SPEED', settings)));
 			waitForSetting.destroy();
 		});
 	}
@@ -50,6 +54,11 @@ export class BoardPreferenceService {
 	updateMoveAnimation(animation: MoveAnimation): void {
 		this.animation.set(animation);
 		this.store('MOVE_ANIMATION', animation);
+	}
+
+	updateMoveSpeed(speed: MoveSpeed): void {
+		this.speed.set(speed);
+		this.store('MOVE_SPEED', speed);
 	}
 
 	updateMoveInputMethods(methods: readonly MoveInputMethod[]): void {
@@ -72,8 +81,12 @@ export class BoardPreferenceService {
 		this.settingStore.update(stored.with({ payload }));
 	}
 
+	private read(type: SettingTypeKey, settings: readonly Setting[]): unknown {
+		return settings.find((setting) => type === setting.type)?.payload;
+	}
+
 	private readAnimation(settings: readonly Setting[]): MoveAnimation {
-		const stored = settings.find((setting) => 'MOVE_ANIMATION' === setting.type)?.payload;
+		const stored = this.read('MOVE_ANIMATION', settings);
 
 		return MOVE_ANIMATIONS.includes(stored as MoveAnimation)
 			? (stored as MoveAnimation)

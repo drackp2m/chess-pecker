@@ -4,6 +4,7 @@ export enum SettingType {
 	LAST_SEEN_VERSION = 'last-seen-version',
 	MOVE_ANIMATION = 'move-animation',
 	MOVE_INPUT = 'move-input',
+	MOVE_SPEED = 'move-speed',
 	MISTAKE_POLICY = 'mistake-policy',
 	SOUND = 'sound',
 }

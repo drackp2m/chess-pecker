@@ -1,0 +1,155 @@
+:host {
+	// The same tones the full board mixes from the palette, so the preview cannot
+	// drift away from what it is previewing.
+	--square-light: color-mix(in oklab, var(--color-primary) 88%, var(--color-accent));
+	--square-dark: color-mix(in oklab, var(--color-accent) 58%, var(--color-contrast));
+	--square-selected: color-mix(in oklab, var(--color-accent) 70%, rgb(255 255 255));
+	--square-mistake: rgb(196 48 38 / 45%);
+	--square-announced: color-mix(in oklab, var(--color-accent) 85%, rgb(255 255 255));
+
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+// Only the strip runs edge to edge, the way the full board does on the pages that
+// show one; the hint and the controls under it stay in the text column.
+.strip {
+	position: relative;
+
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+
+	width: calc(100% + var(--page-padding) * 2);
+	margin-inline: calc(var(--page-padding) * -1);
+
+	box-shadow: 0 2px 12px rgb(0 0 0 / 25%);
+
+	&.waiting {
+		cursor: progress;
+	}
+
+	&.dragging .square {
+		cursor: grabbing;
+	}
+}
+
+.square {
+	// Dragging a piece must not scroll the page under it.
+	touch-action: none;
+	cursor: pointer;
+
+	position: relative;
+
+	aspect-ratio: 1;
+
+	transition: background-color 120ms ease-in-out;
+
+	&.light {
+		background-color: var(--square-light);
+	}
+
+	&.dark {
+		background-color: var(--square-dark);
+	}
+
+	&.lifted app-chess-piece {
+		opacity: 0.25;
+	}
+
+	&.mistake::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-color: var(--square-mistake);
+	}
+
+	&.selected {
+		background-color: var(--square-selected);
+	}
+
+	&.announced {
+		background-color: var(--square-announced);
+		animation: demo-announce 600ms ease-in-out infinite alternate;
+	}
+
+	// A dot marks a quiet destination, a ring marks a capture.
+	&.target::before {
+		content: '';
+
+		position: absolute;
+
+		width: 30%;
+		height: 30%;
+		border-radius: 50%;
+
+		background-color: rgb(0 0 0 / 30%);
+	}
+
+	&.target.capture::before {
+		width: 84%;
+		height: 84%;
+		border: 6px solid rgb(0 0 0 / 30%);
+		background-color: transparent;
+	}
+
+	&:focus-visible {
+		z-index: 1;
+		outline: 2px solid var(--color-contrast);
+		outline-offset: -2px;
+	}
+
+	app-chess-piece {
+		position: relative;
+		z-index: 1;
+	}
+}
+
+// Same treatment as the full board: each coordinate takes the tone of the opposite
+// square, so it always contrasts with the one it sits on.
+.light .coordinate {
+	color: var(--square-dark);
+}
+
+.dark .coordinate {
+	color: var(--square-light);
+}
+
+.coordinate {
+	position: absolute;
+	font-size: clamp(0.5rem, 1.4vw, 0.7rem);
+	line-height: 1;
+
+	&.rank {
+		top: 3%;
+		left: 5%;
+	}
+
+	&.file {
+		right: 5%;
+		bottom: 3%;
+	}
+}
+
+@keyframes demo-announce {
+	from {
+		box-shadow: inset 0 0 0 2px rgb(255 255 255 / 30%);
+	}
+
+	to {
+		box-shadow: inset 0 0 0 5px rgb(255 255 255 / 85%);
+	}
+}
+
+// Follows the pointer while a piece is being dragged.
+.ghost {
+	pointer-events: none;
+	position: fixed;
+	z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.square.announced {
+		animation: none;
+	}
+}

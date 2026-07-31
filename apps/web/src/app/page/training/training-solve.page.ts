@@ -10,7 +10,6 @@ import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store'
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
 import { TrainingRunSlot } from '@app/page/training/store/training-run-state';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { TrainingStore } from '@app/store/training.store';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
 import { SolveTimer } from '@app/util/solve-timer';
@@ -52,11 +51,6 @@ export class TrainingSolvePage implements OnInit {
 			: 'The miss is recorded. Anything from here on is practice and does not change the result.';
 	});
 
-	/** Woodpecker asks for the solution after a miss, and only then. */
-	readonly canReveal = computed(
-		() => 'failed' === this.run.lastResult() && this.board.isSolutionOffered(),
-	);
-
 	readonly label = computed(() => {
 		const round = this.run.round();
 		const position = this.run.current()?.position;
@@ -76,8 +70,6 @@ export class TrainingSolvePage implements OnInit {
 			? 'Cycle'
 			: `Cycle · exercise ${(position + 1).toString()}`;
 	});
-
-	private readonly policy = inject(MistakePolicyService).policy;
 
 	private readonly timer = new SolveTimer();
 
@@ -155,6 +147,10 @@ export class TrainingSolvePage implements OnInit {
 	}
 
 	private describe(): string {
+		if (this.board.isFreePlay()) {
+			return 'Free play — both sides are yours, and none of it counts.';
+		}
+
 		const result = this.run.lastResult();
 
 		if ('failed' === result) {
@@ -189,8 +185,6 @@ export class TrainingSolvePage implements OnInit {
 			return 'Missed. Found it on the retry, which leaves the attempt as it was.';
 		}
 
-		return this.policy().retry
-			? 'Missed. Step back to try it again, or move on.'
-			: 'Missed. Step back to walk the line, then move on.';
+		return 'Missed. It has been taken back — try it again, watch the solution, or move on.';
 	}
 }

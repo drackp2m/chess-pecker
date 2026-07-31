@@ -68,17 +68,15 @@
 				></button>
 			</div>
 
-			@if (canReveal()) {
-				<div class="flex-row justify-center">
-					<button
-						appThemed
-						[disabled]="!board.canRevealSolution()"
-						(click)="board.revealSolution()"
-					>
-						Show solution
-					</button>
-				</div>
-			}
+			<div class="flex-row flex-wrap gap-2 justify-center">
+				<button appThemed [disabled]="!board.canRevealSolution()" (click)="board.revealSolution()">
+					Show solution
+				</button>
+
+				<button appThemed (click)="board.toggleFreePlay()">
+					{{ board.isFreePlay() ? 'Leave free play' : 'Free play' }}
+				</button>
+			</div>
 
 			<div class="flex-col gap-2">
 				<h5>Line</h5>

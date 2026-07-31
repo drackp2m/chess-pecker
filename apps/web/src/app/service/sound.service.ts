@@ -25,6 +25,15 @@ const UNLOCK_EVENTS: readonly string[] = ['pointerdown', 'keydown'];
  * a user gesture; the first click or keypress anywhere in the app resumes it. Moves
  * played before that are dropped silently, which is the intended behaviour — there
  * is no way to make them audible, and queueing them up would fire a burst later.
+ *
+ * The browser suspends it again long after that too — a backgrounded tab, a locked
+ * screen, another app taking audio focus (iOS calls that state `interrupted`) — and
+ * it never comes back on its own. So the listeners stay for the life of the app
+ * rather than unhooking after the first gesture, and a clip that finds the context
+ * asleep once it has been unlocked waits for the resume instead of being dropped.
+ *
+ * Every gesture starts its own attempt rather than joining one already in flight,
+ * because a blocked `resume()` is not guaranteed to settle — see `unlock`.
  */
 @Injectable({
 	providedIn: 'root',
@@ -39,6 +48,9 @@ export class SoundService {
 
 	private readonly context = this.createContext();
 	private readonly buffers = new Map<string, AudioBuffer>();
+
+	private unlocked = false;
+	private resuming: Promise<void> | undefined = undefined;
 
 	/** Index of the variant played last, so the next draw never repeats it. */
 	private lastVariant: number | undefined = undefined;
@@ -56,7 +68,7 @@ export class SoundService {
 		});
 
 		this.preload();
-		this.waitForGesture();
+		this.watchContext();
 	}
 
 	update(isEnabled: boolean): void {
@@ -112,17 +124,80 @@ export class SoundService {
 		const context = this.context;
 		const buffer = this.buffers.get(source);
 
-		// Still suspended means the user has not interacted yet; `start` would be
-		// queued and all of them would fire at once on the first gesture.
-		if (!this.current() || 'running' !== context?.state || undefined === buffer) {
+		if (!this.current() || undefined === context || undefined === buffer) {
 			return;
 		}
 
+		if ('running' === context.state) {
+			this.unlocked = true;
+			this.fire(context, buffer);
+
+			return;
+		}
+
+		// Suspended and never yet unlocked means the user has not interacted at all;
+		// `start` would be queued and all of them would fire at once on the first
+		// gesture. Suspended *after* being unlocked is an interruption to recover from.
+		if (!this.unlocked || 'closed' === context.state) {
+			return;
+		}
+
+		void this.resume().then(() => {
+			if ('running' === context.state && this.current()) {
+				this.fire(context, buffer);
+			}
+		});
+	}
+
+	private fire(context: AudioContext, buffer: AudioBuffer): void {
 		const node = context.createBufferSource();
 
 		node.buffer = buffer;
 		node.connect(context.destination);
 		node.start();
+	}
+
+	/**
+	 * A gesture is the browser's own precondition for playing audio, so it both marks
+	 * the context unlocked and always starts a *fresh* attempt. Firefox leaves
+	 * `resume()` pending — neither resolved nor rejected — for as long as autoplay is
+	 * blocked, so reusing an in-flight promise would mean the very gesture that lifts
+	 * the block never reaches `resume()`, and the context stays suspended for the rest
+	 * of the page's life.
+	 */
+	private unlock(): void {
+		this.unlocked = true;
+
+		this.retry();
+	}
+
+	/**
+	 * Abandons an attempt that may never settle and starts another. Only the two
+	 * triggers that carry new information — a gesture, the tab coming back — do this;
+	 * a clip that merely finds the context asleep still joins the one in flight rather
+	 * than opening its own.
+	 */
+	private retry(): void {
+		this.resuming = undefined;
+
+		void this.resume();
+	}
+
+	private resume(): Promise<void> {
+		const context = this.context;
+
+		if (undefined === context || 'running' === context.state || 'closed' === context.state) {
+			return Promise.resolve();
+		}
+
+		this.resuming ??= context
+			.resume()
+			.catch(() => undefined)
+			.finally(() => {
+				this.resuming = undefined;
+			});
+
+		return this.resuming;
 	}
 
 	/**
@@ -188,23 +263,35 @@ export class SoundService {
 		}
 	}
 
-	private waitForGesture(): void {
-		const context = this.context;
-
-		if (undefined === context) {
+	private watchContext(): void {
+		if (undefined === this.context) {
 			return;
 		}
 
 		const controller = new AbortController();
-
-		const unlock = (): void => {
-			void context.resume();
-			controller.abort();
-		};
+		const options: AddEventListenerOptions = { passive: true, signal: controller.signal };
 
 		for (const event of UNLOCK_EVENTS) {
-			document.addEventListener(event, unlock, { signal: controller.signal });
+			document.addEventListener(
+				event,
+				() => {
+					this.unlock();
+				},
+				options,
+			);
 		}
+
+		// Coming back to the tab is not a gesture, so it cannot lift an autoplay block
+		// by itself; it is only worth a retry once a gesture already has.
+		document.addEventListener(
+			'visibilitychange',
+			() => {
+				if (!document.hidden && this.unlocked) {
+					this.retry();
+				}
+			},
+			options,
+		);
 
 		this.destroyRef.onDestroy(() => {
 			controller.abort();

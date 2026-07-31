@@ -1,6 +1,7 @@
 import { MoveAnimation } from '@app/definition/board-animation.type';
 import { MoveInputMethod } from '@app/definition/board-input.type';
 import { MistakePolicy } from '@app/definition/mistake-policy.type';
+import { MoveSpeed } from '@app/definition/move-speed.type';
 import { Theme } from '@app/definition/service/theme.type';
 
 export interface SettingType {
@@ -9,6 +10,7 @@ export interface SettingType {
 	LAST_SEEN_VERSION: 'LAST_SEEN_VERSION';
 	MOVE_ANIMATION: 'MOVE_ANIMATION';
 	MOVE_INPUT: 'MOVE_INPUT';
+	MOVE_SPEED: 'MOVE_SPEED';
 	MISTAKE_POLICY: 'MISTAKE_POLICY';
 	SOUND: 'SOUND';
 }
@@ -19,6 +21,7 @@ export interface SettingPayload {
 	LAST_SEEN_VERSION: string;
 	MOVE_ANIMATION: MoveAnimation;
 	MOVE_INPUT: readonly MoveInputMethod[];
+	MOVE_SPEED: MoveSpeed;
 	MISTAKE_POLICY: MistakePolicy;
 	SOUND: boolean;
 }

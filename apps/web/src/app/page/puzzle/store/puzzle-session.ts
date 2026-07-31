@@ -40,6 +40,10 @@ export interface PuzzleStoreProps {
 	outcome: PuzzleOutcome;
 	/** The graded verdict, kept once it is settled however the board moves on. */
 	result: PuzzleResult | undefined;
+	/** Where free play started, or `undefined` while it is off. */
+	freePlay: FreePlayAnchor | undefined;
+	/** Wrong moves in this exercise, counted from the moment it was opened. */
+	mistakeCount: number;
 	isReplaying: boolean;
 	/** The rest of the solution is being played out right now. */
 	isRevealing: boolean;
@@ -49,6 +53,11 @@ export interface PuzzleStoreProps {
 
 /** The slice of state that describes the played line. */
 export type LineState = Pick<PuzzleStoreProps, 'positions' | 'line' | 'cursor'>;
+
+/** The line free play began from, plus the deviation it had reached. */
+export interface FreePlayAnchor extends LineState {
+	readonly deviation: number | undefined;
+}
 
 export function buildPuzzleState(): PuzzleStoreProps {
 	return {
@@ -63,6 +72,8 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		pendingPromotion: undefined,
 		outcome: 'idle',
 		result: undefined,
+		freePlay: undefined,
+		mistakeCount: 0,
 		isReplaying: false,
 		isRevealing: false,
 		isRevealed: false,
@@ -89,9 +100,29 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		pendingPromotion: undefined,
 		outcome: 'opening',
 		result: undefined,
+		freePlay: undefined,
+		mistakeCount: 0,
 		isReplaying: true,
 		isRevealing: false,
 		isRevealed: false,
+	};
+}
+
+export function anchorFreePlay(state: LineState, deviation: number | undefined): FreePlayAnchor {
+	return { positions: state.positions, line: state.line, cursor: state.cursor, deviation };
+}
+
+/** Puts the line back exactly where free play picked it up. */
+export function restoreFreePlayPatch(anchor: FreePlayAnchor): Partial<PuzzleStoreProps> {
+	return {
+		positions: anchor.positions,
+		line: anchor.line,
+		cursor: anchor.cursor,
+		freePlay: undefined,
+		announced: undefined,
+		selected: undefined,
+		pendingPromotion: undefined,
+		transition: undefined,
 	};
 }
 
@@ -228,10 +259,13 @@ export function nextSelection(
 
 /**
  * The ply at which the line stopped following the script, or `undefined` while it
- * still does. Everything past it is free play, so rewinding the cursor back to it
- * puts the exercise on the rails again without anything having to be undone.
+ * still does. Everything past it is off the script, so rewinding the cursor back to
+ * it puts the exercise on the rails again without anything having to be undone.
  */
-export function findDeviation(state: LineState, puzzle: Puzzle | undefined): number | undefined {
+export function findDeviation(
+	state: Omit<LineState, 'cursor'>,
+	puzzle: Puzzle | undefined,
+): number | undefined {
 	if (undefined === puzzle) {
 		return undefined;
 	}

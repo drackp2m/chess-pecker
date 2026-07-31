@@ -1,47 +1,26 @@
-import { Signal, computed, inject } from '@angular/core';
+import { Signal, computed } from '@angular/core';
 import { signalStoreFeature, type, withComputed } from '@ngrx/signals';
 
-import { MistakePolicy } from '@app/definition/mistake-policy.type';
-import { Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
+import { Puzzle } from '@app/definition/puzzle.type';
 import { PuzzleStoreProps } from '@app/page/puzzle/store/puzzle-session';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 
 interface PuzzleGatingInput {
 	readonly puzzle: Signal<Puzzle | undefined>;
 	readonly isFreePlay: Signal<boolean>;
+	readonly isOffScript: Signal<boolean>;
 	readonly isPlayerTurn: Signal<boolean>;
 }
 
-/** Being offered the solution and being able to ask for it are two different things. */
-function solutionComputed(
-	policy: Signal<MistakePolicy>,
-	puzzle: Signal<Puzzle | undefined>,
-	isReplaying: Signal<boolean>,
-	outcome: Signal<PuzzleOutcome>,
-) {
-	/** Whether the button is there at all; pressing it is `canRevealSolution`. */
-	const isSolutionOffered = computed(() => policy().showSolution && undefined !== puzzle());
-
-	return {
-		isSolutionOffered,
-
-		canRevealSolution: computed(
-			() => isSolutionOffered() && !isReplaying() && 'idle' !== outcome() && 'solved' !== outcome(),
-		),
-	};
-}
-
 /**
- * What the board still accepts, which after a miss is a matter of preference rather
- * than of chess: the verdict is already settled, so playing on, retrying and seeing
- * the solution are each there only if they were asked for.
+ * What the board still accepts. Nothing here is a preference any more: a miss can
+ * always be tried again, off the script both sides are yours, and the answer is
+ * yours to ask for the moment the exercise has been failed — but not before, and
+ * only once, because seeing it is the reward for having tried.
  */
 export function withPuzzleGating() {
 	return signalStoreFeature(
 		{ state: type<PuzzleStoreProps>(), props: type<PuzzleGatingInput>() },
 		withComputed((store) => {
-			const policy = inject(MistakePolicyService).policy;
-
 			/** The miss is graded, so anything played from here on is only practice. */
 			const isPractice = computed(() => 'failed' === store.result());
 
@@ -50,16 +29,21 @@ export function withPuzzleGating() {
 					return false;
 				}
 
-				return store.isFreePlay()
-					? policy().freePlay
-					: store.isPlayerTurn() && (!isPractice() || policy().retry);
+				return store.isFreePlay() || store.isOffScript() || store.isPlayerTurn();
 			});
 
 			return {
 				isPractice,
 				canPlay,
 
-				...solutionComputed(policy, store.puzzle, store.isReplaying, store.outcome),
+				canRevealSolution: computed(
+					() =>
+						undefined !== store.puzzle() &&
+						isPractice() &&
+						!store.isRevealed() &&
+						!store.isReplaying() &&
+						!store.isFreePlay(),
+				),
 
 				isLocked: computed(() => undefined === store.puzzle() || !canPlay()),
 			};

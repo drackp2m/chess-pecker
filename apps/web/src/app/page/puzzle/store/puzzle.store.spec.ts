@@ -3,8 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-policy.type';
+import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
+import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 
@@ -19,9 +21,11 @@ const ALT_MATE =
 
 /** Long enough for both beats of the replay: the piece lights up, then it moves. */
 const REPLAY_TOTAL = 1500;
+/** Long enough for the refuted move to be taken back on its own. */
+const UNDO_TOTAL = 1000;
 
 /**
- * Both settings-backed services are stubbed whole, so the store is tested against a
+ * Every settings-backed service is stubbed whole, so the store is tested against a
  * policy rather than against IndexedDB — and so no test needs an `AudioContext`.
  */
 function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
@@ -33,6 +37,7 @@ function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
 				provide: MistakePolicyService,
 				useValue: { policy: signal({ ...DEFAULT_MISTAKE_POLICY, ...policy }) },
 			},
+			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 		],
 	});
@@ -47,6 +52,12 @@ function createStore(csv: string, policy: Partial<MistakePolicy> = {}): PuzzleSt
 	vi.advanceTimersByTime(REPLAY_TOTAL);
 
 	return store;
+}
+
+/** The first solving move of `MATE_IN_3` is Rb1+; Rc2 is a legal move that is not it. */
+function miss(store: PuzzleStore): void {
+	store.selectSquare('b2');
+	store.selectSquare('c2');
 }
 
 describe('PuzzleStore', () => {
@@ -149,22 +160,63 @@ describe('PuzzleStore', () => {
 	it('keeps a wrong move on the board and marks it', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
-		store.selectSquare('b2');
-		store.selectSquare('c2');
+		miss(store);
 
 		expect(store.outcome()).toBe('failed');
 		expect(store.mistake()?.to).toBe('c2');
 		expect(store.history()).toHaveLength(2);
 		expect(store.cursor()).toBe(2);
-		expect(store.isFreePlay()).toBe(true);
+		expect(store.mistakeCount()).toBe(1);
+		// The board is off the script, but no free-play session has been opened.
+		expect(store.isOffScript()).toBe(true);
+		expect(store.isFreePlay()).toBe(false);
 		expect(store.progress().solvedMoves).toBe(0);
 	});
 
-	it('lets both sides be played by hand once the script is broken', () => {
+	it('takes the wrong move back on its own and lets it be tried again', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
+		miss(store);
+
+		// It stays up long enough to be seen.
+		expect(store.mistake()?.to).toBe('c2');
+		expect(store.cursor()).toBe(2);
+
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		expect(store.mistake()).toBeUndefined();
+		expect(store.cursor()).toBe(1);
+		expect(store.outcome()).toBe('solving');
+		expect(store.canPlay()).toBe(true);
+
 		store.selectSquare('b2');
-		store.selectSquare('c2');
+		store.selectSquare('b1');
+
+		expect(store.outcome()).toBe('replying');
+		expect(store.history()[1]?.san).toBe('Rb1+');
+	});
+
+	it('settles the verdict on the first try and keeps it through a retry', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
+
+		expect(store.result()).toBe('failed');
+
+		vi.advanceTimersByTime(UNDO_TOTAL);
+		store.selectSquare('b2');
+		store.selectSquare('b1');
+
+		// The board moves on, the recorded verdict does not.
+		expect(store.outcome()).toBe('replying');
+		expect(store.result()).toBe('failed');
+		expect(store.isPractice()).toBe(true);
+	});
+
+	it('plays on from a miss as free play, instead of taking the move back', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
 
 		// The board is now the opponent's to move, and it is the player who moves it.
 		expect(store.isLocked()).toBe(false);
@@ -174,6 +226,7 @@ describe('PuzzleStore', () => {
 		store.selectSquare('a2');
 		store.selectSquare('a3');
 
+		expect(store.isFreePlay()).toBe(true);
 		expect(store.history()).toHaveLength(3);
 		expect(store.history().at(-1)?.isOpponent).toBe(true);
 		expect(store.position().turn).toBe('black');
@@ -184,28 +237,78 @@ describe('PuzzleStore', () => {
 		store.selectSquare('c8');
 
 		expect(store.history()).toHaveLength(3);
+
+		// And the take-back never fires, because the move it was waiting on is buried.
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		expect(store.cursor()).toBe(3);
 	});
 
-	it('returns to solving once the cursor is rewound onto the script', () => {
+	it('leaves the exercise exactly as free play found it', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
+		store.toggleFreePlay();
+
+		expect(store.isFreePlay()).toBe(true);
+
+		// Both sides are playable, and none of it is judged.
 		store.selectSquare('b2');
 		store.selectSquare('c2');
 		store.selectSquare('a2');
 		store.selectSquare('a3');
 
+		expect(store.history()).toHaveLength(3);
+		expect(store.outcome()).toBe('solving');
+		expect(store.result()).toBeUndefined();
+		expect(store.mistakeCount()).toBe(0);
+		expect(store.mistake()).toBeUndefined();
+		expect(store.progress().solvedMoves).toBe(0);
+
+		store.toggleFreePlay();
+
+		expect(store.isFreePlay()).toBe(false);
+		expect(store.line()).toHaveLength(1);
+		expect(store.cursor()).toBe(1);
+		expect(store.outcome()).toBe('solving');
+		expect(store.isPlayerTurn()).toBe(true);
+	});
+
+	it('does not grade a wrong move played in free play', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		store.toggleFreePlay();
+		miss(store);
+
+		expect(store.result()).toBeUndefined();
+		expect(store.outcome()).toBe('solving');
+
+		store.toggleFreePlay();
+
+		// Back on the exercise, untouched, with the miss still to be made.
+		expect(store.result()).toBeUndefined();
+		expect(store.isPlayerTurn()).toBe(true);
+	});
+
+	it('returns to solving once the cursor is rewound onto the script', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
+		store.selectSquare('a2');
+		store.selectSquare('a3');
+
 		expect(store.cursor()).toBe(3);
 
-		store.stepBackward();
+		// Leaving free play gives the refuted position back; the script resumes one
+		// step further back, where the move that broke it has been undone.
+		store.toggleFreePlay();
 
-		// Still past the deviation, so the board stays free.
+		expect(store.cursor()).toBe(2);
 		expect(store.outcome()).toBe('failed');
-		expect(store.isFreePlay()).toBe(true);
 
 		store.stepBackward();
 
 		expect(store.outcome()).toBe('solving');
-		expect(store.isFreePlay()).toBe(false);
+		expect(store.isOffScript()).toBe(false);
 		expect(store.isPlayerTurn()).toBe(true);
 		expect(store.mistake()).toBeUndefined();
 
@@ -218,101 +321,10 @@ describe('PuzzleStore', () => {
 		expect(store.outcome()).toBe('replying');
 	});
 
-	it('takes the mistake back on step-back and lets you retry', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
-
-		store.selectSquare('b2');
-		store.selectSquare('c2');
-
-		expect(store.canStepBackward()).toBe(true);
-
-		store.stepBackward();
-
-		expect(store.mistake()).toBeUndefined();
-		expect(store.outcome()).toBe('solving');
-		expect(store.isPlayerTurn()).toBe(true);
-
-		store.selectSquare('b2');
-		store.selectSquare('b1');
-
-		expect(store.outcome()).toBe('replying');
-		expect(store.history()[1]?.san).toBe('Rb1+');
-	});
-
-	it('settles the verdict on the first try and keeps it through a retry', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
-
-		store.selectSquare('b2');
-		store.selectSquare('c2');
-
-		expect(store.result()).toBe('failed');
-
-		store.stepBackward();
-		store.selectSquare('b2');
-		store.selectSquare('b1');
-
-		// The board moves on, the recorded verdict does not.
-		expect(store.outcome()).toBe('replying');
-		expect(store.result()).toBe('failed');
-		expect(store.isPractice()).toBe(true);
-	});
-
-	it('takes the wrong move back on its own when asked to', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { undoMistake: true });
-
-		store.selectSquare('b2');
-		store.selectSquare('c2');
-
-		// It stays up long enough to be seen.
-		expect(store.mistake()?.to).toBe('c2');
-		expect(store.cursor()).toBe(2);
-
-		vi.advanceTimersByTime(1000);
-
-		expect(store.mistake()).toBeUndefined();
-		expect(store.cursor()).toBe(1);
-		expect(store.outcome()).toBe('solving');
-		expect(store.canPlay()).toBe(true);
-	});
-
-	it('locks the board after a miss when free play is off', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { freePlay: false });
-
-		store.selectSquare('b2');
-		store.selectSquare('c2');
-
-		expect(store.isFreePlay()).toBe(true);
-		expect(store.isLocked()).toBe(true);
-
-		store.selectSquare('a2');
-		store.selectSquare('a3');
-
-		expect(store.history()).toHaveLength(2);
-	});
-
-	it('refuses a second attempt when retrying is off', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { retry: false });
-
-		store.selectSquare('b2');
-		store.selectSquare('c2');
-		store.stepBackward();
-
-		// Back on the script, and still not yours to play.
-		expect(store.outcome()).toBe('solving');
-		expect(store.isLocked()).toBe(true);
-
-		store.selectSquare('b2');
-		store.selectSquare('b1');
-
-		expect(store.selected()).toBeUndefined();
-		expect(store.line()).toHaveLength(2);
-	});
-
 	it('plays the rest of the solution out, without touching the verdict', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
-		store.selectSquare('b2');
-		store.selectSquare('c2');
+		miss(store);
 		store.revealSolution();
 
 		expect(store.isRevealing()).toBe(true);
@@ -328,19 +340,78 @@ describe('PuzzleStore', () => {
 		expect(store.result()).toBe('failed');
 	});
 
-	it('offers the solution only while the setting allows it', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { showSolution: false });
+	it('refuses the solution before the exercise has been failed, and after it was seen', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
-		store.selectSquare('b2');
-		store.selectSquare('c2');
-
-		expect(store.isSolutionOffered()).toBe(false);
 		expect(store.canRevealSolution()).toBe(false);
 
 		store.revealSolution();
 
 		expect(store.isRevealing()).toBe(false);
-		expect(store.history()).toHaveLength(2);
+		expect(store.history()).toHaveLength(1);
+
+		miss(store);
+
+		expect(store.canRevealSolution()).toBe(true);
+
+		store.revealSolution();
+		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+		// Once seen, it is spent: the navigation buttons are what replays it.
+		expect(store.isRevealed()).toBe(true);
+		expect(store.canRevealSolution()).toBe(false);
+	});
+
+	it('plays the solution on its own once the misses reach the threshold', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+
+		miss(store);
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		// One miss short of the threshold: taken back, and nothing else.
+		expect(store.cursor()).toBe(1);
+		expect(store.isRevealing()).toBe(false);
+
+		miss(store);
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		expect(store.mistakeCount()).toBe(2);
+		expect(store.isRevealing()).toBe(true);
+
+		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+		expect(store.history().at(-1)?.san).toBe('Rxf1#');
+		expect(store.outcome()).toBe('solved');
+		expect(store.result()).toBe('failed');
+	});
+
+	it('never plays the solution on its own when the threshold is off', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+
+		for (let attempt = 0; 3 > attempt; attempt += 1) {
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+		}
+
+		expect(store.mistakeCount()).toBe(3);
+		expect(store.isRevealed()).toBe(false);
+		expect(store.cursor()).toBe(1);
+		expect(store.outcome()).toBe('solving');
+	});
+
+	it('counts misses per exercise, resetting them when the next one opens', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`, { mistakesBeforeSolution: 0 });
+
+		miss(store);
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		expect(store.mistakeCount()).toBe(1);
+
+		store.nextPuzzle();
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.mistakeCount()).toBe(0);
+		expect(store.result()).toBeUndefined();
 	});
 
 	it('reports each kind of transition so the policy can judge it', () => {

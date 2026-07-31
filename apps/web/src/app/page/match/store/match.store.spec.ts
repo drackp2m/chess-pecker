@@ -1,13 +1,22 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { MatchStore } from '@app/page/match/store/match.store';
+import { BoardPreferenceService } from '@app/service/board-preference.service';
 
 /** Long enough for both beats: the machine thinks, lights its piece up, then moves. */
 const OPPONENT_DELAY = 1500;
 
+/** The board preference is stubbed whole, so no test reaches IndexedDB for a delay. */
 function createStore(): MatchStore {
-	TestBed.configureTestingModule({ providers: [MatchStore] });
+	TestBed.configureTestingModule({
+		providers: [
+			MatchStore,
+			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
+		],
+	});
 
 	return TestBed.inject(MatchStore);
 }

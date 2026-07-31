@@ -37,10 +37,9 @@ export type PuzzleOutcome =
 	/** The opponent's scripted reply is being played. */
 	| 'replying'
 	/**
-	 * A move left the script. What happens next is the user's to choose: the move can
-	 * be taken back on its own, the position can be played on freely with both sides
-	 * by hand, or the board can be locked until the cursor is rewound onto the
-	 * solution — see `MistakePolicy`.
+	 * A move left the script. It stays up long enough to be seen and is then taken
+	 * back on its own, so the exercise can be tried again; playing on instead of
+	 * waiting switches the board to free play.
 	 */
 	| 'failed'
 	/** The whole line was found. */

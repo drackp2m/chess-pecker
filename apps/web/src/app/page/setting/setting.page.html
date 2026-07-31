@@ -2,6 +2,8 @@
 	<div class="flex-col gap-2">
 		<h4>Appearance</h4>
 
+		<p class="fs-sm color-contrast-mid">The only setting that is not about the board.</p>
+
 		<form [formGroup]="form" class="flex-col gap-1">
 			<input appThemed type="radio" label="System" value="system" formControlName="appearance" />
 			<input appThemed type="radio" label="Light" value="light" formControlName="appearance" />
@@ -9,77 +11,110 @@
 		</form>
 	</div>
 
-	<div class="flex-col gap-2">
-		<h4>Move animation</h4>
+	<div class="flex-col gap-4">
+		<div class="flex-col gap-2">
+			<h4>Board</h4>
 
-		<p class="fs-sm color-contrast-mid">How much of the board's movement slides into place.</p>
+			<p class="fs-sm color-contrast-mid">
+				How the board plays. The strip below is a real exercise — take the black rook — so every
+				setting here can be tried where it is chosen: miss on purpose and it takes your move back,
+				miss it often enough and it plays the answer.
+			</p>
+		</div>
 
-		<form [formGroup]="form" class="flex-col gap-1">
-			@for (animation of moveAnimations; track animation) {
+		<app-board-demo />
+
+		<div class="flex-col gap-2">
+			<h5>Move speed</h5>
+
+			<p class="fs-sm color-contrast-mid">
+				The pace of everything the board plays by itself: the pause before a piece lights up, how
+				long it stays lit, and how fast it then travels.
+			</p>
+
+			<form [formGroup]="form" class="flex-col gap-1">
+				@for (speed of moveSpeeds; track speed) {
+					<input
+						appThemed
+						type="radio"
+						[label]="speedLabel[speed]"
+						[value]="speed"
+						formControlName="moveSpeed"
+					/>
+				}
+			</form>
+		</div>
+
+		<div class="flex-col gap-2">
+			<h5>Move animation</h5>
+
+			<p class="fs-sm color-contrast-mid">How much of the board's movement slides into place.</p>
+
+			<form [formGroup]="form" class="flex-col gap-1">
+				@for (animation of moveAnimations; track animation) {
+					<input
+						appThemed
+						type="radio"
+						[label]="animationLabel[animation]"
+						[value]="animation"
+						formControlName="moveAnimation"
+					/>
+				}
+			</form>
+		</div>
+
+		<div class="flex-col gap-2">
+			<h5>Move input</h5>
+
+			<p class="fs-sm color-contrast-mid">
+				How you enter a move. Turning both off keeps clicking, so the board stays playable.
+			</p>
+
+			<form [formGroup]="form.controls.moveInput" class="flex-col gap-1">
+				<input appThemed type="checkbox" [label]="inputLabel.click" formControlName="click" />
+
+				<input appThemed type="checkbox" [label]="inputLabel.drag" formControlName="drag" />
+			</form>
+		</div>
+
+		<div class="flex-col gap-2">
+			<h5>Sound</h5>
+
+			<p class="fs-sm color-contrast-mid">
+				A piece landing picks a sound at random, never the one before it. Captures, check and mate
+				have their own. Stepping back through a line plays them reversed.
+			</p>
+
+			<form [formGroup]="form" class="flex-col gap-1">
 				<input
 					appThemed
-					type="radio"
-					[label]="animationLabel[animation]"
-					[value]="animation"
-					formControlName="moveAnimation"
+					type="checkbox"
+					label="Play a sound on every move"
+					formControlName="sound"
 				/>
-			}
-		</form>
-	</div>
+			</form>
+		</div>
 
-	<div class="flex-col gap-2">
-		<h4>Move input</h4>
+		<div class="flex-col gap-2">
+			<h5>Play the answer after a miss</h5>
 
-		<p class="fs-sm color-contrast-mid">
-			How you enter a move. Turning both off keeps clicking, so the board stays playable.
-		</p>
+			<p class="fs-sm color-contrast-mid">
+				A wrong move is always taken back and the exercise can always be tried again. This is how
+				many misses it takes before the board plays the solution out for you, once per exercise.
+			</p>
 
-		<form [formGroup]="form" class="flex-col gap-1">
-			<input appThemed type="checkbox" [label]="inputLabel.click" formControlName="clickToMove" />
-
-			<input appThemed type="checkbox" [label]="inputLabel.drag" formControlName="dragToMove" />
-		</form>
-	</div>
-
-	<div class="flex-col gap-2">
-		<h4>Sound</h4>
-
-		<p class="fs-sm color-contrast-mid">
-			A piece landing picks a sound at random, never the one before it. Captures, check and mate
-			have their own. Stepping back through a line plays them reversed.
-		</p>
-
-		<form [formGroup]="form" class="flex-col gap-1">
-			<input appThemed type="checkbox" label="Play a sound on every move" formControlName="sound" />
-		</form>
-	</div>
-
-	<div class="flex-col gap-2">
-		<h4>When you miss</h4>
-
-		<p class="fs-sm color-contrast-mid">
-			A miss is graded on the first try, so these only change what the board lets you do next.
-		</p>
-
-		<form [formGroup]="form.controls.mistake" class="flex-col gap-1">
-			<input
-				appThemed
-				type="checkbox"
-				[label]="mistakeLabel.undoMistake"
-				formControlName="undoMistake"
-			/>
-
-			<input appThemed type="checkbox" [label]="mistakeLabel.freePlay" formControlName="freePlay" />
-
-			<input appThemed type="checkbox" [label]="mistakeLabel.retry" formControlName="retry" />
-
-			<input
-				appThemed
-				type="checkbox"
-				[label]="mistakeLabel.showSolution"
-				formControlName="showSolution"
-			/>
-		</form>
+			<form [formGroup]="form.controls.mistake" class="flex-col gap-1">
+				@for (option of mistakeOptions; track option.value) {
+					<input
+						appThemed
+						type="radio"
+						[label]="option.label"
+						[value]="option.value"
+						formControlName="mistakesBeforeSolution"
+					/>
+				}
+			</form>
+		</div>
 	</div>
 
 	<p class="flex-row flex-grow justify-center align-end mono fs-sm">version {{ VERSION }}</p>

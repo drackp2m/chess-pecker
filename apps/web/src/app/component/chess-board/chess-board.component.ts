@@ -1,17 +1,23 @@
-import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, viewChild } from '@angular/core';
 
+import { BoardDragGesture } from '@app/component/chess-board/board-drag';
 import {
+	Point,
 	buildPromotionChoices,
-	hasPassedThreshold,
 	indexAtOrder,
-	resolveRelease,
 	slideOffset,
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { shouldAnimate } from '@app/definition/board-animation.type';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
-import { FILES, PROMOTION_PIECES, RANKS, SQUARE_COUNT } from '@app/definition/chess.constant';
+import {
+	BOARD_SIZE,
+	FILES,
+	PROMOTION_PIECES,
+	RANKS,
+	SQUARE_COUNT,
+} from '@app/definition/chess.constant';
 import { Piece, PromotionPieceType, Square } from '@app/definition/chess.type';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { ChessSquare } from '@app/util/chess/chess-square';
@@ -31,13 +37,6 @@ interface BoardSquare {
 	readonly slide: PieceSlide | undefined;
 	readonly fileLabel: string | undefined;
 	readonly rankLabel: string | undefined;
-}
-
-interface DragGhost {
-	readonly piece: Piece;
-	readonly x: number;
-	readonly y: number;
-	readonly size: number;
 }
 
 @Component({
@@ -61,9 +60,21 @@ export class ChessBoardComponent {
 	readonly isClickEnabled = computed(() => this.preference.moveInputMethods().includes('click'));
 	readonly isDragEnabled = computed(() => this.preference.moveInputMethods().includes('drag'));
 
+	private readonly gesture = new BoardDragGesture({
+		squareAt: (point) => this.squareAt(point),
+		pieceAt: (square) => this.store.position().board[ChessSquare.toIndex(square)],
+		squareSize: () => this.board().nativeElement.getBoundingClientRect().width / BOARD_SIZE,
+		isClickEnabled: () => this.isClickEnabled(),
+		pick: (square) => {
+			if (square !== this.store.selected()) {
+				this.store.selectSquare(square);
+			}
+		},
+	});
+
 	/** Square the pointer picked up, once the press has grown into a real drag. */
-	readonly draggingFrom = signal<Square | undefined>(undefined);
-	readonly ghost = signal<DragGhost | undefined>(undefined);
+	readonly draggingFrom = this.gesture.draggingFrom;
+	readonly ghost = this.gesture.ghost;
 
 	/** The 64 squares already laid out in reading order for the current orientation. */
 	readonly squares = computed<BoardSquare[]>(() => {
@@ -77,11 +88,6 @@ export class ChessBoardComponent {
 	readonly promotionColor = computed(() => this.store.position().turn);
 
 	private readonly board = viewChild.required<ElementRef<HTMLElement>>('board');
-
-	private pressedFrom: Square | undefined;
-	private pressedAt: { x: number; y: number } | undefined;
-	private hasDragged = false;
-	private canDrag = false;
 
 	/**
 	 * Keyboard activation only. Pointer taps are resolved in `dropSquare`, because a
@@ -98,60 +104,22 @@ export class ChessBoardComponent {
 	}
 
 	pressSquare(square: BoardSquare, event: PointerEvent): void {
-		this.hasDragged = false;
-		this.pressedFrom = square.square;
-		this.pressedAt = { x: event.clientX, y: event.clientY };
-		this.canDrag = this.isDragEnabled() && undefined !== square.piece;
+		const isDraggable = this.isDragEnabled() && undefined !== square.piece;
 
-		if (this.canDrag) {
+		this.gesture.press(square.square, isDraggable, { x: event.clientX, y: event.clientY });
+
+		if (isDraggable) {
 			this.capturePointer(event.pointerId);
 		}
 	}
 
 	dragSquare(event: PointerEvent): void {
-		const from = this.pressedFrom;
-		const origin = this.pressedAt;
-
-		if (!this.canDrag || undefined === from || undefined === origin) {
-			return;
-		}
-
-		const point = { x: event.clientX, y: event.clientY };
-
-		if (!this.hasDragged && !hasPassedThreshold(origin, point)) {
-			return;
-		}
-
-		// The first move past the threshold picks the piece up and reveals its targets.
-		if (!this.hasDragged) {
-			this.hasDragged = true;
-			this.draggingFrom.set(from);
-
-			if (from !== this.store.selected()) {
-				this.store.selectSquare(from);
-			}
-		}
-
-		this.ghost.set(this.buildGhost(from, point));
+		this.gesture.move({ x: event.clientX, y: event.clientY });
 	}
 
 	/** Resolves both gestures: a drop lands the piece, a tap acts as a click. */
 	dropSquare(event: PointerEvent): void {
-		const from = this.pressedFrom;
-		const wasDrag = this.hasDragged;
-
-		this.cancelDrag();
-
-		const target = resolveRelease({
-			from,
-			released: squareAtPoint(
-				this.board().nativeElement.getBoundingClientRect(),
-				{ x: event.clientX, y: event.clientY },
-				this.store.orientation(),
-			),
-			wasDrag,
-			isClickEnabled: this.isClickEnabled(),
-		});
+		const target = this.gesture.release({ x: event.clientX, y: event.clientY });
 
 		if (undefined !== target) {
 			this.store.selectSquare(target);
@@ -159,12 +127,7 @@ export class ChessBoardComponent {
 	}
 
 	cancelDrag(): void {
-		this.pressedFrom = undefined;
-		this.pressedAt = undefined;
-		this.hasDragged = false;
-		this.canDrag = false;
-		this.draggingFrom.set(undefined);
-		this.ghost.set(undefined);
+		this.gesture.cancel();
 	}
 
 	/** Spoken description of a square, so the board is usable without sight of it. */
@@ -189,16 +152,12 @@ export class ChessBoardComponent {
 		}
 	}
 
-	private buildGhost(from: Square, point: { x: number; y: number }): DragGhost | undefined {
-		const piece = this.store.position().board[ChessSquare.toIndex(from)];
-
-		if (undefined === piece) {
-			return undefined;
-		}
-
-		const size = this.board().nativeElement.getBoundingClientRect().width / 8;
-
-		return { piece, x: point.x - size / 2, y: point.y - size / 2, size };
+	private squareAt(point: Point): Square | undefined {
+		return squareAtPoint(
+			this.board().nativeElement.getBoundingClientRect(),
+			point,
+			this.store.orientation(),
+		);
 	}
 
 	private describeSquare(index: number, order: number): BoardSquare {

@@ -9,20 +9,23 @@ import {
 } from '@ngrx/signals';
 
 import { ChessMove, ChessPosition } from '@app/definition/chess.type';
+import {
+	ANNOUNCE_DELAY,
+	MoveSpeed,
+	REPLAY_DELAY,
+	scaleForSpeed,
+} from '@app/definition/move-speed.type';
 import { Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
 import {
 	PuzzleStoreProps,
 	commitPatch,
 	describeOutcome,
 } from '@app/page/puzzle/store/puzzle-session';
+import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
-/** Pause before the piece lights up. */
-const REPLAY_DELAY = 300;
-/** How long it stays lit before it slides to its destination. */
-const ANNOUNCE_DELAY = 450;
 /** How long a refuted move is left on the board before it is taken back for you. */
 const UNDO_DELAY = 800;
 
@@ -37,11 +40,19 @@ type PlaybackStore = StateSignals<PuzzleStoreProps> &
 	WritableStateSource<PuzzleStoreProps> &
 	PuzzlePlaybackInput;
 
+interface PlaybackContext {
+	readonly store: PlaybackStore;
+	readonly sound: SoundService;
+	readonly scheduled: ScheduledAction;
+	readonly speed: Signal<MoveSpeed>;
+}
+
 function outcomeAt(store: PlaybackStore, cursor: number): PuzzleOutcome {
 	const puzzle = store.puzzle();
 
-	// A replay in flight owns the outcome until it lands.
-	return undefined === puzzle || store.isReplaying()
+	// A replay in flight owns the outcome until it lands, and free play owns it for
+	// as long as it is on.
+	return undefined === puzzle || store.isReplaying() || undefined !== store.freePlay()
 		? store.outcome()
 		: describeOutcome(store.positions(), puzzle, store.deviation(), cursor);
 }
@@ -64,20 +75,28 @@ function commit(
  * Plays the scripted ply at the cursor in two beats: the piece lights up on
  * its own square first, so it can be seen before it slides across the board.
  */
-function playScripted(store: PlaybackStore, sound: SoundService, scheduled: ScheduledAction): void {
+function playScripted(context: PlaybackContext): void {
+	const { store, scheduled, speed } = context;
+
 	scheduled.cancel();
 	patchState(store, { isReplaying: true });
 
-	scheduled.run(() => {
-		const expected = store.puzzle()?.moves[store.cursor()];
-		const move =
-			undefined === expected ? undefined : ChessNotation.parse(store.position(), expected);
+	scheduled.run(
+		() => {
+			const expected = store.puzzle()?.moves[store.cursor()];
+			const move =
+				undefined === expected ? undefined : ChessNotation.parse(store.position(), expected);
 
-		patchState(store, { announced: move });
-		scheduled.run(() => {
-			land(store, sound, scheduled, move);
-		}, ANNOUNCE_DELAY);
-	}, REPLAY_DELAY);
+			patchState(store, { announced: move });
+			scheduled.run(
+				() => {
+					land(context, move);
+				},
+				scaleForSpeed(ANNOUNCE_DELAY, speed()),
+			);
+		},
+		scaleForSpeed(REPLAY_DELAY, speed()),
+	);
 }
 
 /**
@@ -86,12 +105,9 @@ function playScripted(store: PlaybackStore, sound: SoundService, scheduled: Sche
  * mate cuts the script short, and from a finished position there is nothing
  * left to parse.
  */
-function land(
-	store: PlaybackStore,
-	sound: SoundService,
-	scheduled: ScheduledAction,
-	move: ChessMove | undefined,
-): void {
+function land(context: PlaybackContext, move: ChessMove | undefined): void {
+	const { store, sound } = context;
+
 	patchState(store, { announced: undefined });
 
 	if (undefined !== move) {
@@ -101,7 +117,7 @@ function land(
 	const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
 
 	if (store.isRevealing() && undefined !== move && isScriptLeft) {
-		playScripted(store, sound, scheduled);
+		playScripted(context);
 
 		return;
 	}
@@ -121,6 +137,46 @@ function scheduleUndo(store: PlaybackStore, scheduled: ScheduledAction, undo: ()
 	}, UNDO_DELAY);
 }
 
+/** Timers outlive the store they were started from, so they are stopped with it. */
+function createContext(store: PlaybackStore): PlaybackContext {
+	const scheduled = new ScheduledAction();
+
+	inject(DestroyRef).onDestroy(() => {
+		scheduled.cancel();
+	});
+
+	return {
+		store,
+		scheduled,
+		sound: inject(SoundService),
+		speed: inject(BoardPreferenceService).moveSpeed,
+	};
+}
+
+function buildMethods(context: PlaybackContext) {
+	const { store, sound, scheduled } = context;
+
+	return {
+		outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
+
+		commit: (move: ChessMove, isOpponent: boolean): void => {
+			commit(store, sound, move, isOpponent);
+		},
+
+		playScripted: (): void => {
+			playScripted(context);
+		},
+
+		cancelPlayback: (): void => {
+			scheduled.cancel();
+		},
+
+		scheduleUndo: (undo: () => void): void => {
+			scheduleUndo(store, scheduled, undo);
+		},
+	};
+}
+
 /**
  * Everything the board plays by itself, on a timer: the opponent's scripted replies,
  * the solution when it is asked for, and the take-back of a refuted move. The store
@@ -129,33 +185,6 @@ function scheduleUndo(store: PlaybackStore, scheduled: ScheduledAction, undo: ()
 export function withPuzzlePlayback() {
 	return signalStoreFeature(
 		{ state: type<PuzzleStoreProps>(), props: type<PuzzlePlaybackInput>() },
-		withMethods((store) => {
-			const scheduled = new ScheduledAction();
-			const sound = inject(SoundService);
-
-			inject(DestroyRef).onDestroy(() => {
-				scheduled.cancel();
-			});
-
-			return {
-				outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
-
-				commit: (move: ChessMove, isOpponent: boolean): void => {
-					commit(store, sound, move, isOpponent);
-				},
-
-				playScripted: (): void => {
-					playScripted(store, sound, scheduled);
-				},
-
-				cancelPlayback(): void {
-					scheduled.cancel();
-				},
-
-				scheduleUndo(undo: () => void): void {
-					scheduleUndo(store, scheduled, undo);
-				},
-			};
-		}),
+		withMethods((store) => buildMethods(createContext(store))),
 	);
 }
