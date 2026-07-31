@@ -6,6 +6,7 @@ import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-p
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library.store';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle.store';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
+import { SoundService } from '@app/service/sound.service';
 
 const HEADER = 'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor';
 const MATE_IN_3 =
@@ -19,7 +20,10 @@ const ALT_MATE =
 /** Long enough for both beats of the replay: the piece lights up, then it moves. */
 const REPLAY_TOTAL = 1500;
 
-/** Stubbed whole, so the store is tested against a policy and not against IndexedDB. */
+/**
+ * Both settings-backed services are stubbed whole, so the store is tested against a
+ * policy rather than against IndexedDB — and so no test needs an `AudioContext`.
+ */
 function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
 	TestBed.configureTestingModule({
 		providers: [
@@ -29,6 +33,7 @@ function configure(policy: Partial<MistakePolicy> = {}): PuzzleStore {
 				provide: MistakePolicyService,
 				useValue: { policy: signal({ ...DEFAULT_MISTAKE_POLICY, ...policy }) },
 			},
+			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 		],
 	});
 

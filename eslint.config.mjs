@@ -205,6 +205,10 @@ export default typescriptEslint.config(
 			'sonarjs/todo-tag': 'off',
 			'sonarjs/fixme-tag': 'off',
 			'sonarjs/deprecation': 'off',
+			// Flags every `Math.random`. Nothing here draws for security — the only
+			// callers pick which of a handful of interchangeable assets to use — and a
+			// CSPRNG would be cargo-culting. Revisit if anything ever generates a token.
+			'sonarjs/pseudo-random': 'off',
 			'no-unused-private-class-members': 'warn',
 		},
 	},

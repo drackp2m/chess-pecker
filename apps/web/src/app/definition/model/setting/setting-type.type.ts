@@ -10,6 +10,7 @@ export interface SettingType {
 	MOVE_ANIMATION: 'MOVE_ANIMATION';
 	MOVE_INPUT: 'MOVE_INPUT';
 	MISTAKE_POLICY: 'MISTAKE_POLICY';
+	SOUND: 'SOUND';
 }
 
 export interface SettingPayload {
@@ -19,4 +20,5 @@ export interface SettingPayload {
 	MOVE_ANIMATION: MoveAnimation;
 	MOVE_INPUT: readonly MoveInputMethod[];
 	MISTAKE_POLICY: MistakePolicy;
+	SOUND: boolean;
 }
