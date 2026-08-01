@@ -1,3 +1,17 @@
+# v1.6.2 (2026-08-01)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- push the release commit with a token the ruleset lets through ([ceea04d](https://github.com/drackp2m/chess-pecker/commit/ceea04de660068385750d5c484846b8645190456)) by Marc Jovaní González
+
+### 📚 Documentation
+
+- forbid agent co-author trailers in commits ([5c6cc7c](https://github.com/drackp2m/chess-pecker/commit/5c6cc7c598bb7e2293f037009dc0ca00841674f0)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.6.1...v1.6.2
+
 # v1.6.1 (2026-08-01)
 
 ## What's Changed
