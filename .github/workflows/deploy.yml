@@ -108,10 +108,16 @@ jobs:
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           gpgconf --kill gpg-agent
 
+      # Not GITHUB_TOKEN: @semantic-release/git pushes the release commit
+      # straight to main, and the ruleset there requires a pull request. Bypass
+      # actors can be roles, teams or GitHub Apps — never Actions itself — so
+      # the push goes as romantic-release-bot, a collaborator whose role is on
+      # the ruleset's bypass list. The commit is signed with its GPG key either
+      # way; only the pusher changes.
       - name: Run semantic-release
         env:
           HUSKY: 0
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.SEMANTIC_RELEASE_TOKEN }}
           GIT_AUTHOR_NAME: 'romantic-release-bot'
           GIT_AUTHOR_EMAIL: '187212958+romantic-release-bot@users.noreply.github.com'
           GIT_COMMITTER_NAME: 'romantic-release-bot'
