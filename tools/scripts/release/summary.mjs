@@ -23,7 +23,7 @@ function parseReleaseLog(log) {
 
 function buildSummary(metrics) {
 	const header = [
-		'# Semantic Release Report',
+		'## Semantic Release Report',
 		'',
 		`_semantic-release ${metrics.version ?? 'unknown'}_`,
 		'',
@@ -42,13 +42,15 @@ function buildSummary(metrics) {
 		rows.push(
 			`- **Decision:** 🎉 ${metrics.bump ?? 'new'} release · new version v${metrics.nextVersion}`,
 		);
-
-		return [...header, '## Summary', '', ...rows, '', `> ✅ Released v${metrics.nextVersion}.`, ''];
+	} else {
+		rows.push('- **Decision:** ⏭️ No release · no relevant changes');
 	}
 
-	rows.push('- **Decision:** ⏭️ No release · no relevant changes');
+	const verdict = metrics.released
+		? `> ✅ Released v${metrics.nextVersion}.`
+		: '> ℹ️ No new version published.';
 
-	return [...header, '## Summary', '', ...rows, '', '> ℹ️ No new version published.', ''];
+	return [...header, '### Summary', '', ...rows, '', verdict, ''];
 }
 
 function main() {

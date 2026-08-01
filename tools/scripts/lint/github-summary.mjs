@@ -38,11 +38,11 @@ function verdictOf({ errors, warnings, maxWarnings }) {
 
 export function writeLintSummary({ rows, errors, warnings, maxWarnings, details }) {
 	const lines = [
-		'# Custom Lint Report',
+		'## Custom Lint Report',
 		'',
 		`_${details}_`,
 		'',
-		'## Summary',
+		'### Summary',
 		'',
 		...rows.map((row) => `- **${row.name}:** ${statusOf(row)}`),
 		'',
