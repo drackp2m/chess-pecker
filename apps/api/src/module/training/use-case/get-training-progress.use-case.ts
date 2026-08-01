@@ -2,9 +2,14 @@ import { Injectable } from '@nestjs/common';
 
 import { CalibrationRoundOutcome } from '../definition/calibration-round-outcome.enum';
 import { TrainingPolicy } from '../definition/training-policy';
-import { CycleProgress, TrainingProgress } from '../definition/training-progress.interface';
+import {
+	CalibrationRoundProgress,
+	CycleProgress,
+	TrainingProgress,
+} from '../definition/training-progress.interface';
 import { PuzzleAttempt } from '../puzzle-attempt.entity';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
+import { TrainingCalibrationPuzzleRepository } from '../training-calibration-puzzle.repository';
 import { TrainingCalibrationRoundRepository } from '../training-calibration-round.repository';
 import { TrainingCycleItemRepository } from '../training-cycle-item.repository';
 import { TrainingCycle } from '../training-cycle.entity';
@@ -21,6 +26,7 @@ export class GetTrainingProgressUseCase {
 		private readonly trainingPuzzleRepository: TrainingPuzzleRepository,
 		private readonly trainingGoalRepository: TrainingGoalRepository,
 		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
+		private readonly calibrationPuzzleRepository: TrainingCalibrationPuzzleRepository,
 		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
 	) {}
 
@@ -119,20 +125,43 @@ export class GetTrainingProgressUseCase {
 
 	/** El ELO con el que se cerró la calibración, y lo que costó llegar hasta él. */
 	private async resolveCalibration(training: Training): Promise<TrainingProgress['calibration']> {
-		const rounds = await this.calibrationRoundRepository.getManyByTraining(training.uuid);
+		const rounds = await this.resolveCalibrationRounds(training);
 		const accepted = rounds.find((round) => CalibrationRoundOutcome.Accept === round.outcome);
-
-		const attempts =
-			undefined === accepted
-				? []
-				: await this.puzzleAttemptRepository.getManyByCalibrationRound(accepted.uuid);
 
 		return {
 			rating: accepted?.rating ?? null,
-			averageDurationMs:
-				0 === attempts.length ? null : Math.round(sumDuration(attempts) / attempts.length),
-			rounds: rounds.length,
+			averageDurationMs: accepted?.averageDurationMs ?? null,
+			rounds,
 		};
+	}
+
+	/**
+	 * Ronda a ronda, que es como se lee una calibración: dónde probó, cuánto se acertó allí y
+	 * hacia dónde mandó eso a la siguiente.
+	 */
+	private async resolveCalibrationRounds(training: Training): Promise<CalibrationRoundProgress[]> {
+		const rounds = await this.calibrationRoundRepository.getManyByTraining(training.uuid);
+		const progress: CalibrationRoundProgress[] = [];
+
+		for (const round of rounds) {
+			const attempts = await this.puzzleAttemptRepository.getManyByCalibrationRound(round.uuid);
+			const total = await this.calibrationPuzzleRepository.countByRound(round.uuid);
+
+			progress.push({
+				uuid: round.uuid,
+				index: round.index,
+				kind: round.kind,
+				rating: round.rating,
+				outcome: round.outcome,
+				attempted: attempts.length,
+				total,
+				solved: attempts.filter((attempt) => attempt.solved).length,
+				averageDurationMs:
+					0 === attempts.length ? 0 : Math.round(sumDuration(attempts) / attempts.length),
+			});
+		}
+
+		return progress;
 	}
 
 	/**

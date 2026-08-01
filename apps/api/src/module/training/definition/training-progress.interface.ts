@@ -1,3 +1,6 @@
+import { CalibrationRoundKind } from './calibration-round-kind.enum';
+import { CalibrationRoundOutcome } from './calibration-round-outcome.enum';
+
 export interface CycleProgress {
 	uuid: string;
 	index: number;
@@ -17,11 +20,26 @@ export interface CycleProgress {
 	lastAttemptAt: Date | null;
 }
 
+export interface CalibrationRoundProgress {
+	uuid: string;
+	index: number;
+	kind: CalibrationRoundKind;
+	rating: number;
+	/** Qué dijo la ronda: subir, bajar, aceptar la franja, o `pending` si sigue abierta. */
+	outcome: CalibrationRoundOutcome;
+	/** Cuántos de los que repartió llevan intento, y cuántos de ésos se acertaron. */
+	attempted: number;
+	total: number;
+	solved: number;
+	averageDurationMs: number;
+}
+
 export interface CalibrationProgress {
 	/** La centena aceptada, o null si la calibración sigue abierta. */
 	rating: number | null;
 	averageDurationMs: number | null;
-	rounds: number;
+	/** Una entrada por ronda, en el orden en que se jugaron. */
+	rounds: CalibrationRoundProgress[];
 }
 
 export interface TrainingProgress {

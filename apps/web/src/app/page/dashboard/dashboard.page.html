@@ -40,6 +40,47 @@
 		<div class="flex-col gap-2">
 			<h4>Your program</h4>
 
+			@if (summary(); as program) {
+				<p class="fs-sm color-contrast-mid">
+					{{ program.solved }} of {{ program.total }} exercises solved across the whole program ·
+					{{ program.percentage }}
+					@if (program.rating; as rating) {
+						· level {{ rating }}
+					}
+				</p>
+
+				@if (program.current; as current) {
+					<p class="fs-sm color-contrast-mid">
+						{{ current.solved }} of {{ current.total }} solved on {{ current.label }} ·
+						{{ current.percentage }}
+					</p>
+				}
+
+				<table class="summary fs-sm">
+					<thead>
+						<tr>
+							<th scope="col">Stage</th>
+
+							<th scope="col">Solved</th>
+
+							<th scope="col">Result</th>
+						</tr>
+					</thead>
+
+					<tbody>
+						@for (row of program.rows; track row.key) {
+							<tr>
+								<th scope="row">{{ row.stage }}</th>
+
+								<td class="mono">{{ row.solved }}</td>
+
+								<td>{{ row.result }}</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+
 			<button appThemed color="accent" [disabled]="training.isLoading()" (click)="openProgram()">
 				{{ programLabel() }}
 			</button>
