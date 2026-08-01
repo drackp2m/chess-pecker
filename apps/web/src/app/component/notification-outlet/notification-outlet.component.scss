@@ -4,7 +4,7 @@
 	position: fixed;
 	z-index: 20;
 	right: 0;
-	bottom: var(--safe-offset-bottom);
+	bottom: calc(var(--nav-height) + var(--spacing-2));
 	left: 0;
 
 	.wrapper {

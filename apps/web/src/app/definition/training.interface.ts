@@ -121,10 +121,22 @@ export interface CycleProgress {
 	readonly lastAttemptAt: string | null;
 }
 
+export interface CalibrationRoundProgress {
+	readonly uuid: string;
+	readonly index: number;
+	readonly kind: CalibrationRoundKind;
+	readonly rating: number;
+	readonly outcome: CalibrationRoundOutcome;
+	readonly attempted: number;
+	readonly total: number;
+	readonly solved: number;
+	readonly averageDurationMs: number;
+}
+
 export interface CalibrationProgress {
 	readonly rating: number | null;
 	readonly averageDurationMs: number | null;
-	readonly rounds: number;
+	readonly rounds: readonly CalibrationRoundProgress[];
 }
 
 export interface TrainingProgress {

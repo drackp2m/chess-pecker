@@ -20,7 +20,7 @@
 
 			@if (store.progress(); as progress) {
 				<p class="fs-sm color-contrast-mid">
-					Calibration rounds: {{ progress.calibration.rounds }} · rating
+					Calibration rounds: {{ progress.calibration.rounds.length }} · rating
 					{{ progress.calibration.rating ?? '—' }} · average
 					{{ formatDuration(progress.calibration.averageDurationMs) }}
 				</p>

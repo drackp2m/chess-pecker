@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
+import { toProgramSummary } from '@app/page/dashboard/program-summary';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
 
@@ -14,6 +15,8 @@ import { TrainingStore } from '@app/store/training.store';
 export class DashboardPage {
 	readonly session = inject(SessionStore);
 	readonly training = inject(TrainingStore);
+
+	readonly summary = computed(() => toProgramSummary(this.training.progress()));
 
 	/** What the one button on the program does, so the state is read before it is opened. */
 	readonly programLabel = computed(() => {
