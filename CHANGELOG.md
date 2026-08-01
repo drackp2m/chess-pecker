@@ -1,3 +1,21 @@
+# v1.6.1 (2026-08-01)
+
+## What's Changed
+
+### 🧪 Tests
+
+- verify consistency in the animation of the pieces ([5bebe07](https://github.com/drackp2m/chess-pecker/commit/5bebe073199173ef47e9060b123765927b4b552a)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- change movement animation option or flip board not play last move animation ([acd961a](https://github.com/drackp2m/chess-pecker/commit/acd961aac278923d0d09e62b6e653d80c2c80ce1)) by Marc Jovaní González
+
+### 💻 Continuous Integration
+
+- gate main with pull request checks ([b94c983](https://github.com/drackp2m/chess-pecker/commit/b94c98383282927bcc93e83a230ff5ffdea3acde)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.6.0...v1.6.1
+
 # v1.6.0 (2026-07-31)
 
 ## What's Changed
