@@ -66,7 +66,7 @@ CI (`.github/workflows/deploy.yml`) runs lint+test on every push to `main`, then
 ## Imports
 
 Use the path aliases defined in `apps/web/tsconfig.json` — relative `./` and `../` imports are blocked by an ESLint rule (`no-restricted-imports`):
-`@app/component`, `@app/definition`, `@app/directive`, `@app/guard`, `@app/layout`, `@app/model`, `@app/page`, `@app/pipe`, `@app/repository`, `@app/service`, `@app/store`, `@app/strategy`, `@app/use-case`, `@app/util`, `@app/package`.
+`@app/component`, `@app/definition`, `@app/directive`, `@app/guard`, `@app/interceptor`, `@app/layout`, `@app/model`, `@app/page`, `@app/pipe`, `@app/repository`, `@app/service`, `@app/store`, `@app/strategy`, `@app/use-case`, `@app/util`, `@app/package`.
 
 The root-level singletons have their own exact aliases (no `/*`): `@app/app.config`, `@app/app.routes`, `@app/app.component` — used e.g. from `apps/web/src/main.ts`.
 
