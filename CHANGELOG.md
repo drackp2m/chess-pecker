@@ -1,3 +1,14 @@
+# v1.8.0 (2026-08-01)
+
+## What's Changed
+
+### ✨ Features
+
+- menu on bottom ([8487942](https://github.com/drackp2m/chess-pecker/commit/8487942cf940b48e2b8e6a430af6796afd244fc4)) by Marc Jovaní González
+- reorganize sections, show summary of your program in home page ([d3de680](https://github.com/drackp2m/chess-pecker/commit/d3de680da4dd7f3fe0818af1ec119bf2809f7869)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.7.0...v1.8.0
+
 # v1.7.0 (2026-08-01)
 
 ## What's Changed
