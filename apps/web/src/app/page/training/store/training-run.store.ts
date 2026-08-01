@@ -2,7 +2,12 @@ import { HttpStatusCode } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
-import { ApiPuzzle, CalibrationRound, Training } from '@app/definition/training.interface';
+import {
+	ApiPuzzle,
+	CalibrationRound,
+	CalibrationRoundPuzzles,
+	Training,
+} from '@app/definition/training.interface';
 import {
 	TrainingRunResult,
 	TrainingRunSlot,
@@ -38,6 +43,14 @@ export class TrainingRunStore extends signalStore(
 ) {
 	readonly isBusy = computed(() => this.isLoading() || this.isSubmitting());
 	readonly hasNext = computed(() => null !== this.pending());
+
+	/** The round closed without settling the level, so the calibration goes on in another one. */
+	readonly hasNextRound = computed(
+		() => 'raise' === this.roundOutcome() || 'lower' === this.roundOutcome(),
+	);
+
+	/** The round that accepted its band is the last one: the training moves on to planning. */
+	readonly isCalibrated = computed(() => 'accept' === this.roundOutcome());
 
 	private readonly runRepository = inject(TrainingRunRepository);
 
@@ -83,6 +96,29 @@ export class TrainingRunStore extends signalStore(
 		}
 	}
 
+	/**
+	 * Opens the round the closed one asked for, without leaving the board: a scan is a
+	 * single exercise, so going back to the training page between rounds is most of the
+	 * calibration.
+	 */
+	async openNextRound(): Promise<void> {
+		const uuid = this.trainingUuid();
+
+		if (null === uuid || !this.hasNextRound()) {
+			return;
+		}
+
+		patchState(this, { ...initialState, trainingUuid: uuid, isLoading: true });
+
+		try {
+			await this.beginCalibration(uuid);
+
+			patchState(this, { isLoading: false, isDone: null === this.current() });
+		} catch (error) {
+			this.fail(error, 'The next round could not be opened.');
+		}
+	}
+
 	/** Moves on to the exercise fetched while the graded one was still on screen. */
 	advance(): void {
 		const pending = this.pending();
@@ -115,17 +151,21 @@ export class TrainingRunStore extends signalStore(
 
 		const { round, puzzles } = await this.runRepository.createRound(uuid);
 
-		this.openRound(round, puzzles);
+		this.openRound(round, { total: puzzles.length, attempted: 0, puzzles });
 	}
 
-	private openRound(round: CalibrationRound, puzzles: readonly ApiPuzzle[]): void {
-		const [first, ...rest] = puzzles;
+	/**
+	 * A round resumed halfway is opened on the exercise it was left at, not on the first
+	 * one it still has: what is left says nothing about how far in it is.
+	 */
+	private openRound(round: CalibrationRound, dealt: CalibrationRoundPuzzles): void {
+		const [first, ...rest] = dealt.puzzles;
 
 		patchState(this, {
 			mode: 'calibration',
 			round,
-			roundPosition: undefined === first ? null : 1,
-			roundTotal: puzzles.length,
+			roundPosition: undefined === first ? null : dealt.attempted + 1,
+			roundTotal: dealt.total,
 			current: undefined === first ? null : toSlot(first),
 			queue: rest,
 			notice: undefined === first ? 'The catalog has no exercises in that rating band.' : null,
@@ -153,7 +193,7 @@ export class TrainingRunStore extends signalStore(
 		});
 
 		if ('pending' !== outcome) {
-			patchState(this, { queue: [], notice: describeOutcome(outcome) });
+			patchState(this, { queue: [], roundOutcome: outcome, notice: describeOutcome(outcome) });
 
 			return true;
 		}

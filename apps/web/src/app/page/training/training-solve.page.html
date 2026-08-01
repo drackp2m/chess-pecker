@@ -93,6 +93,10 @@
 			<button appThemed color="accent" [disabled]="run.isBusy()" (click)="next()">
 				Next exercise
 			</button>
+		} @else if (run.hasNextRound()) {
+			<button appThemed color="accent" [disabled]="run.isBusy()" (click)="nextRound()">
+				Next round
+			</button>
 		}
 	</div>
 </section>

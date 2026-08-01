@@ -5,6 +5,7 @@ import { Puzzle } from '../puzzle/puzzle.entity';
 import { User } from '../user/user.entity';
 
 import { CalibrationRoundOutcome } from './definition/calibration-round-outcome.enum';
+import { CalibrationRoundPuzzles } from './definition/calibration-round-puzzles.interface';
 import { SubmitCalibrationAttemptRequestDto } from './dto/request/submit-calibration-attempt-request.dto';
 import { PuzzleAttempt } from './puzzle-attempt.entity';
 import { TrainingCalibrationRound } from './training-calibration-round.entity';
@@ -48,12 +49,13 @@ export class TrainingCalibrationController {
 		return this.createCalibrationRoundUseCase.execute(training);
 	}
 
+	/** Los que faltan por intentar de una ronda abierta, con el tamaño del reparto entero. */
 	@Get('round/:roundUuid/puzzle')
 	async listRoundPuzzles(
 		@CurrentUser() user: User,
 		@Param('uuid') uuid: string,
 		@Param('roundUuid') roundUuid: string,
-	): Promise<Puzzle[]> {
+	): Promise<CalibrationRoundPuzzles> {
 		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);
 
 		return this.getCalibrationRoundPuzzlesUseCase.execute(training, roundUuid);

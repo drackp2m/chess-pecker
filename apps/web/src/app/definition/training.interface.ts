@@ -44,6 +44,16 @@ export interface CalibrationRoundStart {
 	readonly puzzles: readonly ApiPuzzle[];
 }
 
+/**
+ * Una ronda a medias: lo que queda por intentar no basta para situarse en ella, así que
+ * el reparto entero viaja aparte y es lo que cuenta el indicador.
+ */
+export interface CalibrationRoundPuzzles {
+	readonly total: number;
+	readonly attempted: number;
+	readonly puzzles: readonly ApiPuzzle[];
+}
+
 export interface PuzzleAttempt {
 	readonly uuid: string;
 	readonly durationMs: number;
