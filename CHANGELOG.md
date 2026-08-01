@@ -1,3 +1,21 @@
+# v1.7.0 (2026-08-01)
+
+## What's Changed
+
+### ✨ Features
+
+- auth interceptor ([245c4af](https://github.com/drackp2m/chess-pecker/commit/245c4af204b0864aa319fad12bcbef090274b57d)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- remove unnecessary ([6ddd830](https://github.com/drackp2m/chess-pecker/commit/6ddd83040f6b38cefc796423372835913ea78092)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- calibration puzzles now return all, including solveds ([79769a1](https://github.com/drackp2m/chess-pecker/commit/79769a146b082c0b6fcdd8373c69121c4abcf1fa)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.6.3...v1.7.0
+
 # v1.6.3 (2026-08-01)
 
 ## What's Changed
