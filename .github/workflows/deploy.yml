@@ -15,65 +15,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # No separate install job seeding the pnpm store cache for the rest: jobs don't
-  # share a filesystem, so each one reinstalls anyway and it only added a whole
-  # runner (checkout + setup + install) ahead of lint and test. They now start at
-  # once, and the store cache comes from previous runs of this same key.
-  lint:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 11.17.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '26'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: |
-          set -o pipefail
-          pnpm install --frozen-lockfile 2>&1 | tee /tmp/pnpm-install.log
-
-      - name: Install summary
-        if: always()
-        run: node tools/scripts/install/summary.mjs /tmp/pnpm-install.log
-
-      - name: Run lint
-        run: pnpm run lint
-
-  test:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v6
-        with:
-          version: 11.17.0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '26'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run tests
-        run: pnpm --filter @chesspecker/web test
-
+  # No lint or test here: ci.yml already ran them against the merge result, and
+  # the ruleset on main only lets a pull request through, so anything landing
+  # here is code those checks passed. Repeating them would just delay the
+  # release by two runners' worth of checkout + install.
   release:
     runs-on: ubuntu-24.04
-    needs: [lint, test]
     permissions:
       contents: write
       issues: write
