@@ -1,0 +1,20 @@
+.nav {
+	flex-shrink: 0;
+	height: var(--nav-height);
+	padding-bottom: var(--safe-offset-bottom);
+	border-top: solid 1.5px var(--color-primary);
+
+	.app-button.icon {
+		padding: var(--spacing-2);
+	}
+
+	[appRouterLink] {
+		--foreground: var(--color-primary-mid);
+		--foreground-hover: var(--color-primary-mid-hover);
+
+		&.active {
+			--foreground: var(--color-primary);
+			--foreground-hover: var(--color-primary-hover);
+		}
+	}
+}

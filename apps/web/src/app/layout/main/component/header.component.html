@@ -6,20 +6,9 @@
 		<h3>{{ title() }}</h3>
 	</button>
 
-	<div class="flex-row gap-2 align-center">
-		@if (session.isAuthenticated()) {
-			<button
-				appThemed
-				appRouterLink="/training"
-				icon="timer"
-				aria-label="Training"
-				[routerLinkActiveOptions]="{ exact: false }"
-			></button>
-
-			<button appThemed appRouterLink="/friends" icon="user-plus" aria-label="Friends"></button>
-		}
-
-		<button appThemed appRouterLink="/match" icon="dice"></button>
-		<button appThemed appRouterLink="/settings" icon="gear"></button>
-	</div>
+	@if (session.isAuthenticated()) {
+		<span class="fs-md">{{ session.username() }}</span>
+	} @else if (session.isAnonymous()) {
+		<button appRouterLink="/login" class="log-in fs-md color-primary">Log in</button>
+	}
 </section>
