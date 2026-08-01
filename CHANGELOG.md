@@ -1,3 +1,18 @@
+# v1.6.3 (2026-08-01)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- shrink summary headings and fix the reported Angular version ([0cfab48](https://github.com/drackp2m/chess-pecker/commit/0cfab48b33db2b98d033fe0c668a1bfd869215c9)) by Marc Jovaní González
+
+### 💻 Continuous Integration
+
+- push the release commit as the PAT owner and annotate api type errors ([685b9ca](https://github.com/drackp2m/chess-pecker/commit/685b9ca7a290ac9610e5884719dae61b20c231c4)) by Marc Jovaní González
+- report test summaries and typecheck the api project ([87442ae](https://github.com/drackp2m/chess-pecker/commit/87442ae59dab2eb24e0b8f085981fa6eaa3f3546)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.6.2...v1.6.3
+
 # v1.6.2 (2026-08-01)
 
 ## What's Changed
