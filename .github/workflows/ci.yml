@@ -76,7 +76,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm --filter @chesspecker/web test
+        run: |
+          set -o pipefail
+          pnpm --filter @chesspecker/web test 2>&1 | tee /tmp/test.log
+
+      - name: Test summary
+        if: always()
+        run: node tools/scripts/test/summary.mjs /tmp/test.log web
 
       # The deploy builds with --base-href, which this run can't know; the point
       # here is only that the app compiles, so main never gets a broken build.
@@ -111,11 +117,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Not covered by the build below: tsconfig.build.json excludes specs and
+      # test helpers, and vitest transpiles without checking types, so a type
+      # error inside a spec reaches main unnoticed otherwise.
+      - name: Run typecheck
+        run: pnpm --filter @chesspecker/api typecheck
+
       # Unit project only: `test:integration` needs the Postgres from
       # docker-compose.yml, which would mean a service container and the test
       # env wiring — not set up here yet.
       - name: Run tests
-        run: pnpm --filter @chesspecker/api test
+        run: |
+          set -o pipefail
+          pnpm --filter @chesspecker/api test 2>&1 | tee /tmp/test.log
+
+      - name: Test summary
+        if: always()
+        run: node tools/scripts/test/summary.mjs /tmp/test.log api
 
       # Same build the Dockerfile runs for Render (nest build + the migrations
       # tsc pass), so a compile error surfaces in the PR instead of in a
