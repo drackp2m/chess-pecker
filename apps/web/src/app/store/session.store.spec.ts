@@ -62,26 +62,39 @@ describe('SessionStore', () => {
 		expect(store.username()).toBe('pecker');
 	});
 
-	it('refreshes once and asks again when the access cookie has expired', async () => {
-		let asked = 0;
+	// Renewing the access cookie lives in `authInterceptor` now, and it fires one refresh
+	// per request that failed. Rotating tokens make the second one close the session, so
+	// what the store owes it is a single round trip shared by everything that raced.
+	it('shares one refresh between everything that failed at the same instant', async () => {
 		const refreshSession = vi.fn(() => Promise.resolve());
-		const getCurrentUser = vi.fn(() => {
-			asked += 1;
+		const store = await createStore(createRepository({ refreshSession }));
 
-			if (1 === asked) {
-				throw new HttpErrorResponse({ status: 401, error: { message: { jwt: 'invalid' } } });
-			}
-
-			return Promise.resolve(authUser);
-		});
-
-		const store = await createStore(createRepository({ refreshSession, getCurrentUser }));
+		await Promise.all([store.refresh(), store.refresh(), store.refresh()]);
 
 		expect(refreshSession).toHaveBeenCalledTimes(1);
-		expect(store.isAuthenticated()).toBe(true);
 	});
 
-	it('falls back to anonymous when the refresh is rejected too', async () => {
+	it('renews again once the shared refresh has settled', async () => {
+		const refreshSession = vi.fn(() => Promise.resolve());
+		const store = await createStore(createRepository({ refreshSession }));
+
+		await store.refresh();
+		await store.refresh();
+
+		expect(refreshSession).toHaveBeenCalledTimes(2);
+	});
+
+	it('drops the session when the API refuses to renew it', async () => {
+		const store = await createStore(createRepository());
+
+		await store.logIn(credentials);
+		store.expire();
+
+		expect(store.isAnonymous()).toBe(true);
+		expect(store.username()).toBeNull();
+	});
+
+	it('falls back to anonymous when there is no session to restore', async () => {
 		const store = await createStore(
 			createRepository({
 				getCurrentUser: vi.fn(rejectsWith(401, { message: { jwt: 'invalid' } })),

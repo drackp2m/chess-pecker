@@ -24,15 +24,11 @@ export class FriendshipRepository {
 	 * `removeByUser()` — because the uuid of the row never reaches the client.
 	 */
 	async listFriends(): Promise<FriendUser[]> {
-		return firstValueFrom(
-			this.httpClient.get<FriendUser[]>(this.baseUrl, { withCredentials: true }),
-		);
+		return firstValueFrom(this.httpClient.get<FriendUser[]>(this.baseUrl));
 	}
 
 	async listRequests(): Promise<FriendRequests> {
-		return firstValueFrom(
-			this.httpClient.get<FriendRequests>(`${this.baseUrl}/request`, { withCredentials: true }),
-		);
+		return firstValueFrom(this.httpClient.get<FriendRequests>(`${this.baseUrl}/request`));
 	}
 
 	/**
@@ -41,39 +37,21 @@ export class FriendshipRepository {
 	 */
 	async sendRequest(username: string): Promise<Friendship> {
 		return firstValueFrom(
-			this.httpClient.post<Friendship>(
-				`${this.baseUrl}/request`,
-				{ username },
-				{ withCredentials: true },
-			),
+			this.httpClient.post<Friendship>(`${this.baseUrl}/request`, { username }),
 		);
 	}
 
 	async accept(uuid: string): Promise<Friendship> {
-		return firstValueFrom(
-			this.httpClient.patch<Friendship>(
-				`${this.baseUrl}/${uuid}/accept`,
-				{},
-				{ withCredentials: true },
-			),
-		);
+		return firstValueFrom(this.httpClient.patch<Friendship>(`${this.baseUrl}/${uuid}/accept`, {}));
 	}
 
 	async decline(uuid: string): Promise<Friendship> {
-		return firstValueFrom(
-			this.httpClient.patch<Friendship>(
-				`${this.baseUrl}/${uuid}/decline`,
-				{},
-				{ withCredentials: true },
-			),
-		);
+		return firstValueFrom(this.httpClient.patch<Friendship>(`${this.baseUrl}/${uuid}/decline`, {}));
 	}
 
 	/** Cancels a request that has not been answered yet, by the uuid of the request. */
 	async remove(uuid: string): Promise<void> {
-		await firstValueFrom(
-			this.httpClient.delete(`${this.baseUrl}/${uuid}`, { withCredentials: true }),
-		);
+		await firstValueFrom(this.httpClient.delete(`${this.baseUrl}/${uuid}`));
 	}
 
 	/**
@@ -82,26 +60,18 @@ export class FriendshipRepository {
 	 * exists between two people, so there is nothing to disambiguate.
 	 */
 	async removeByUser(userUuid: string): Promise<void> {
-		await firstValueFrom(
-			this.httpClient.delete(`${this.baseUrl}/user/${userUuid}`, { withCredentials: true }),
-		);
+		await firstValueFrom(this.httpClient.delete(`${this.baseUrl}/user/${userUuid}`));
 	}
 
 	async listBlocked(): Promise<UserBlock[]> {
-		return firstValueFrom(
-			this.httpClient.get<UserBlock[]>(this.blockUrl, { withCredentials: true }),
-		);
+		return firstValueFrom(this.httpClient.get<UserBlock[]>(this.blockUrl));
 	}
 
 	async block(username: string): Promise<UserBlock> {
-		return firstValueFrom(
-			this.httpClient.post<UserBlock>(this.blockUrl, { username }, { withCredentials: true }),
-		);
+		return firstValueFrom(this.httpClient.post<UserBlock>(this.blockUrl, { username }));
 	}
 
 	async unblock(uuid: string): Promise<void> {
-		await firstValueFrom(
-			this.httpClient.delete(`${this.blockUrl}/${uuid}`, { withCredentials: true }),
-		);
+		await firstValueFrom(this.httpClient.delete(`${this.blockUrl}/${uuid}`));
 	}
 }

@@ -57,7 +57,7 @@ describe('GetCalibrationRoundPuzzlesUseCase', () => {
 			expect(calibrationPuzzleRepository.getManyByRound).toHaveBeenCalledTimes(0);
 		});
 
-		it('return the dealt puzzles that have no attempt yet, in dealt order', async () => {
+		it('return the dealt puzzles that have no attempt yet, in dealt order, with the round size', async () => {
 			calibrationRoundRepository.getOne.mockResolvedValueOnce(
 				new TrainingCalibrationRound({
 					training,
@@ -78,7 +78,12 @@ describe('GetCalibrationRoundPuzzlesUseCase', () => {
 
 			const result = await useCase.execute(training, 'round-uuid');
 
-			expect(result.map((puzzle) => puzzle.uuid)).toStrictEqual(['second-uuid', 'third-uuid']);
+			expect(result.puzzles.map((puzzle) => puzzle.uuid)).toStrictEqual([
+				'second-uuid',
+				'third-uuid',
+			]);
+			expect(result.total).toBe(3);
+			expect(result.attempted).toBe(1);
 		});
 
 		it('return an empty list when every dealt puzzle has been answered', async () => {
@@ -100,7 +105,7 @@ describe('GetCalibrationRoundPuzzlesUseCase', () => {
 
 			const result = await useCase.execute(training, 'round-uuid');
 
-			expect(result).toStrictEqual([]);
+			expect(result).toStrictEqual({ total: 1, attempted: 1, puzzles: [] });
 		});
 	});
 });

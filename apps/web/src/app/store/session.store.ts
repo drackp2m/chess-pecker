@@ -30,12 +30,17 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	readonly username = computed(() => this.user()?.username ?? null);
 
 	private readonly authRepository = inject(AuthRepository);
+	private refreshing: Promise<void> | null = null;
 
 	// Called once from the app initializer (see app.config.ts) rather than from a
-	// constructor, so nothing that injects the store kicks off an HTTP request.
+	// constructor, so nothing that injects the store kicks off an HTTP request. A 401 is
+	// not the end of it either: `authInterceptor` renews the session and repeats the call
+	// before anything reaches this `catch`, which therefore does mean "there is no session".
 	async restore(): Promise<void> {
 		try {
-			patchState(this, { status: 'authenticated', user: await this.loadCurrentUser() });
+			const user = await this.authRepository.getCurrentUser();
+
+			patchState(this, { status: 'authenticated', user });
 		} catch {
 			patchState(this, { status: 'anonymous', user: null });
 		}
@@ -103,6 +108,28 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		return true;
 	}
 
+	/**
+	 * Renewing is shared on purpose. The API rotates the refresh cookie, so two calls racing
+	 * each other would spend the same token twice and the loser would close the session the
+	 * winner had just renewed. Everything that fails at the same instant waits on the same
+	 * round trip — `authInterceptor` is the only caller, and it has no way to coordinate.
+	 */
+	async refresh(): Promise<void> {
+		this.refreshing ??= this.renewSession();
+
+		return this.refreshing;
+	}
+
+	/** The renewal in flight, if there is one, so a request that starts mid-refresh can wait. */
+	pendingRefresh(): Promise<void> | null {
+		return this.refreshing;
+	}
+
+	/** The API refused to renew: only the cookies decide, so the store follows them. */
+	expire(): void {
+		patchState(this, { status: 'anonymous', user: null });
+	}
+
 	clearError(): void {
 		patchState(this, { error: null });
 	}
@@ -119,23 +146,11 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		return HttpError.toMessage(error, 'Could not log in. Try again.');
 	}
 
-	/**
-	 * The access cookie expires long before the refresh one, so a reload after a while
-	 * finds a session that is still valid but cannot be read yet. Only that case is worth
-	 * a second round trip: the refresh cookie is scoped to `/auth/refresh-session`, so
-	 * `/auth/me` cannot renew itself and answers 401 until it is asked again.
-	 */
-	private async loadCurrentUser(): Promise<AuthUser> {
+	private async renewSession(): Promise<void> {
 		try {
-			return await this.authRepository.getCurrentUser();
-		} catch (error) {
-			if (!HttpError.hasStatus(error, HttpStatusCode.Unauthorized)) {
-				throw error;
-			}
-
 			await this.authRepository.refreshSession();
-
-			return this.authRepository.getCurrentUser();
+		} finally {
+			this.refreshing = null;
 		}
 	}
 }

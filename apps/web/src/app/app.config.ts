@@ -1,9 +1,10 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
 import { TitleStrategy, provideRouter, withHashLocation, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { APP_ROUTES } from '@app/app.routes';
+import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SettingRepository } from '@app/repository/setting.repository';
 import { ThemeService } from '@app/service/theme.service';
 import { UpdateService } from '@app/service/update.service';
@@ -13,7 +14,7 @@ import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.str
 export const appConfig: ApplicationConfig = {
 	providers: [
 		SettingRepository,
-		provideHttpClient(),
+		provideHttpClient(withInterceptors([authInterceptor])),
 		provideAppInitializer(() => {
 			const _themeService = inject(ThemeService);
 			const _updateService = inject(UpdateService);

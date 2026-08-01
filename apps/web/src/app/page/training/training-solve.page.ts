@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit, computed, effect, inject } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
 import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
@@ -71,6 +72,7 @@ export class TrainingSolvePage implements OnInit {
 			: `Cycle · exercise ${(position + 1).toString()}`;
 	});
 
+	private readonly router = inject(Router);
 	private readonly timer = new SolveTimer();
 
 	/** The exercise the board is showing, kept in step with the run's `current`. */
@@ -84,6 +86,14 @@ export class TrainingSolvePage implements OnInit {
 
 		effect(() => {
 			this.gradeIfSettled(this.board.result());
+		});
+
+		// The calibration is over the moment a band is accepted, and what it was for is the
+		// set and the pace, which are asked for back on the training page.
+		effect(() => {
+			if (this.run.isCalibrated()) {
+				void this.router.navigate(['/training']);
+			}
 		});
 	}
 
@@ -103,6 +113,10 @@ export class TrainingSolvePage implements OnInit {
 
 	next(): void {
 		this.run.advance();
+	}
+
+	nextRound(): void {
+		void this.run.openNextRound();
 	}
 
 	private async begin(): Promise<void> {

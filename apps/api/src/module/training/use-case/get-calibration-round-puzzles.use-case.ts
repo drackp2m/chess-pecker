@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
-import { Puzzle } from '../../puzzle/puzzle.entity';
+import { CalibrationRoundPuzzles } from '../definition/calibration-round-puzzles.interface';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
 import { TrainingCalibrationPuzzleRepository } from '../training-calibration-puzzle.repository';
 import { TrainingCalibrationRoundRepository } from '../training-calibration-round.repository';
@@ -15,7 +15,11 @@ export class GetCalibrationRoundPuzzlesUseCase {
 		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
 	) {}
 
-	async execute(training: Training, roundUuid: string): Promise<Puzzle[]> {
+	/**
+	 * Reanudar una ronda a medias es lo que hace un F5, y lo que quedaba por intentar no
+	 * dice por sí solo por dónde iba: de ahí que el reparto entero viaje con la respuesta.
+	 */
+	async execute(training: Training, roundUuid: string): Promise<CalibrationRoundPuzzles> {
 		const round = await this.calibrationRoundRepository.getOne({ uuid: roundUuid });
 
 		if (round.training.uuid !== training.uuid) {
@@ -25,10 +29,12 @@ export class GetCalibrationRoundPuzzlesUseCase {
 		const dealt = await this.calibrationPuzzleRepository.getManyByRound(round.uuid);
 		const attempts = await this.puzzleAttemptRepository.getManyByCalibrationRound(round.uuid);
 
-		const attempted = new Set(attempts.map((attempt) => attempt.puzzle.uuid));
+		const attemptedUuids = new Set(attempts.map((attempt) => attempt.puzzle.uuid));
 
-		return dealt
-			.filter((calibrationPuzzle) => !attempted.has(calibrationPuzzle.puzzle.uuid))
+		const puzzles = dealt
+			.filter((calibrationPuzzle) => !attemptedUuids.has(calibrationPuzzle.puzzle.uuid))
 			.map((calibrationPuzzle) => calibrationPuzzle.puzzle);
+
+		return { total: dealt.length, attempted: dealt.length - puzzles.length, puzzles };
 	}
 }

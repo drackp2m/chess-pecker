@@ -6,34 +6,59 @@
 -->
 <section class="flex-col gap-6">
 	<div class="flex-col gap-2">
-		<h4>Practice</h4>
+		<h4>Your account</h4>
 
-		<div class="flex-col gap-2">
-			<button appThemed color="accent" appRouterLink="/puzzles/sample">
-				Try the sample exercise
-			</button>
+		@if (session.isAuthenticated()) {
+			<p class="fs-sm color-contrast-mid">
+				@if (session.username(); as username) {
+					Logged in as {{ username }}.
+				} @else {
+					Your session is open.
+				}
+			</p>
 
-			<button appThemed color="primary-mid" appRouterLink="/puzzles">
-				Load your own exercises
-			</button>
+			<button appThemed [disabled]="session.isSubmitting()" (click)="logOut()">Log out</button>
 
-			<button appThemed appRouterLink="/match">New match against the machine</button>
-		</div>
+			@if (session.error(); as message) {
+				<p class="error fs-sm" role="alert">{{ message }}</p>
+			}
+		} @else {
+			<p class="fs-sm color-contrast-mid">
+				An account opens a session against the Chess Pecker API. Carrying your sets and cycle times
+				between devices is what it is for, but nothing is stored server-side yet.
+			</p>
+
+			<div class="flex-col gap-2">
+				<button appThemed color="primary-mid" appRouterLink="/login">Log in</button>
+
+				<button appThemed appRouterLink="/register">Create an account</button>
+			</div>
+		}
 	</div>
 
 	@if (session.isAuthenticated()) {
 		<div class="flex-col gap-2">
 			<h4>Your program</h4>
 
-			<div class="flex-col gap-2">
-				<button appThemed color="accent" appRouterLink="/training">
-					Calibrate and run the cycles
-				</button>
-
-				<button appThemed appRouterLink="/friends">Friends</button>
-			</div>
+			<button appThemed color="accent" [disabled]="training.isLoading()" (click)="openProgram()">
+				{{ programLabel() }}
+			</button>
 		</div>
 	}
+
+	<div class="flex-col gap-2">
+		<h4>Practice</h4>
+
+		<div class="flex-col gap-2">
+			<button appThemed color="accent" appRouterLink="/puzzles">Load your own exercises</button>
+
+			<button appThemed color="primary-mid" appRouterLink="/puzzles/sample">
+				Try the sample exercise
+			</button>
+
+			<button appThemed appRouterLink="/match">New match against the machine</button>
+		</div>
+	</div>
 
 	<div class="flex-col gap-2">
 		<h4>The Woodpecker Method</h4>
@@ -72,36 +97,5 @@
 			The whole program is meant to fit in weeks, not months — the effect comes from keeping the
 			passes close together.
 		</p>
-	</div>
-
-	<div class="flex-col gap-2">
-		<h4>Your account</h4>
-
-		@if (session.isAuthenticated()) {
-			<p class="fs-sm color-contrast-mid">
-				@if (session.username(); as username) {
-					Logged in as {{ username }}.
-				} @else {
-					Your session is open.
-				}
-			</p>
-
-			<button appThemed [disabled]="session.isSubmitting()" (click)="logOut()">Log out</button>
-
-			@if (session.error(); as message) {
-				<p class="error fs-sm" role="alert">{{ message }}</p>
-			}
-		} @else {
-			<p class="fs-sm color-contrast-mid">
-				An account opens a session against the Chess Pecker API. Carrying your sets and cycle times
-				between devices is what it is for, but nothing is stored server-side yet.
-			</p>
-
-			<div class="flex-col gap-2">
-				<button appThemed color="primary-mid" appRouterLink="/login">Log in</button>
-
-				<button appThemed appRouterLink="/register">Create an account</button>
-			</div>
-		}
 	</div>
 </section>

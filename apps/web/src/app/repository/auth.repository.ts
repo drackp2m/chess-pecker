@@ -13,33 +13,23 @@ export class AuthRepository {
 	private readonly baseUrl = `${API_BASE_URL}/auth`;
 
 	async register(request: RegisterRequest): Promise<AuthUser> {
-		return firstValueFrom(
-			this.httpClient.post<AuthUser>(`${this.baseUrl}/register`, request, {
-				withCredentials: true,
-			}),
-		);
+		return firstValueFrom(this.httpClient.post<AuthUser>(`${this.baseUrl}/register`, request));
 	}
 
 	async logIn(request: LoginRequest): Promise<void> {
-		await firstValueFrom(
-			this.httpClient.post(`${this.baseUrl}/login`, request, { withCredentials: true }),
-		);
+		await firstValueFrom(this.httpClient.post(`${this.baseUrl}/login`, request));
 	}
 
 	async logOut(): Promise<void> {
-		await firstValueFrom(this.httpClient.get(`${this.baseUrl}/logout`, { withCredentials: true }));
+		await firstValueFrom(this.httpClient.get(`${this.baseUrl}/logout`));
 	}
 
 	async refreshSession(): Promise<void> {
-		await firstValueFrom(
-			this.httpClient.get(`${this.baseUrl}/refresh-session`, { withCredentials: true }),
-		);
+		await firstValueFrom(this.httpClient.get(`${this.baseUrl}/refresh-session`));
 	}
 
 	/** Who the session cookies belong to. Answers 401 when there is no session. */
 	async getCurrentUser(): Promise<AuthUser> {
-		return firstValueFrom(
-			this.httpClient.get<AuthUser>(`${this.baseUrl}/me`, { withCredentials: true }),
-		);
+		return firstValueFrom(this.httpClient.get<AuthUser>(`${this.baseUrl}/me`));
 	}
 }
