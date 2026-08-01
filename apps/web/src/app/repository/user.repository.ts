@@ -20,8 +20,6 @@ export class UserRepository {
 	async search(username: string): Promise<UserSummary[]> {
 		const params = new HttpParams().set('username', username);
 
-		return firstValueFrom(
-			this.httpClient.get<UserSummary[]>(this.baseUrl, { params, withCredentials: true }),
-		);
+		return firstValueFrom(this.httpClient.get<UserSummary[]>(this.baseUrl, { params }));
 	}
 }
