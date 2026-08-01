@@ -84,7 +84,7 @@ function cacheLine(progress) {
 
 function buildSummary(metrics) {
 	const header = [
-		'# pnpm Install Report',
+		'## pnpm Install Report',
 		'',
 		`_pnpm ${metrics.pnpmVersion ?? 'unknown'} · Node ${process.versions.node}_`,
 		'',
@@ -116,7 +116,7 @@ function buildSummary(metrics) {
 		`- **Duration:** ⏱️ ${metrics.seconds}s`,
 	);
 
-	return [...header, '## Summary', '', ...rows, '', '> ✅ Frozen install completed.', ''];
+	return [...header, '### Summary', '', ...rows, '', '> ✅ Frozen install completed.', ''];
 }
 
 function main() {

@@ -3,9 +3,12 @@ import { readFileSync } from 'node:fs';
 
 import { inStepSummary, writeStepSummary } from '../util/github-summary.mjs';
 
+// The workspace root declares no dependencies of its own, so the version lives
+// in the web project's manifest — reading the root one only ever yielded
+// 'unknown'.
 function angularVersion() {
 	try {
-		const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+		const pkg = JSON.parse(readFileSync('apps/web/package.json', 'utf8'));
 
 		return pkg.dependencies?.['@angular/core'] ?? 'unknown';
 	} catch {
@@ -31,7 +34,7 @@ function parseBuildLog(log) {
 }
 
 function buildSummary(metrics) {
-	const header = ['# Build Report', '', `_Angular ${angularVersion()}_`, ''];
+	const header = ['## Build Report', '', `_Angular ${angularVersion()}_`, ''];
 
 	if (!metrics.completed) {
 		return [...header, '> ❌ Build did not complete — check the step log.', ''];
@@ -54,7 +57,7 @@ function buildSummary(metrics) {
 			? '> ✅ Build completed.'
 			: '> ⚠️ Build completed with budget warnings.';
 
-	return [...header, '## Summary', '', ...rows, '', verdict, ''];
+	return [...header, '### Summary', '', ...rows, '', verdict, ''];
 }
 
 function main() {
