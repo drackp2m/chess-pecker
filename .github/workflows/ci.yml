@@ -1,9 +1,5 @@
 name: ci
 
-# Gate for everything that reaches main. deploy.yml runs *after* the merge, so
-# without this a red build only shows up once it's already on main; here the
-# checks run against the merge result and can block it (mark lint/web/api as
-# required status checks in the branch protection rules for main).
 on:
   pull_request:
     branches:
@@ -38,9 +34,6 @@ jobs:
           node-version: '26'
           cache: 'pnpm'
 
-      # Not filtered to the web workspace: ESLint type-checks apps/api through
-      # typescript-eslint's projectService, and without the API's dependencies
-      # its types collapse to `any` and the run drowns in false warnings.
       - name: Install dependencies
         run: |
           set -o pipefail
@@ -78,8 +71,6 @@ jobs:
       - name: Run tests
         run: pnpm --filter @chesspecker/web test
 
-      # The deploy builds with --base-href, which this run can't know; the point
-      # here is only that the app compiles, so main never gets a broken build.
       - name: Build application
         run: |
           set -o pipefail
@@ -111,20 +102,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Not covered by the build below: tsconfig.build.json excludes specs and
-      # test helpers, and vitest transpiles without checking types, so a type
-      # error inside a spec reaches main unnoticed otherwise.
-      - name: Run typecheck
-        run: pnpm --filter @chesspecker/api typecheck
+      - name: Register tsc problem matcher
+        run: echo "::add-matcher::.github/matchers/tsc.json"
 
-      # Unit project only: `test:integration` needs the Postgres from
-      # docker-compose.yml, which would mean a service container and the test
-      # env wiring — not set up here yet.
+      - name: Run typecheck
+        run: pnpm exec tsc --noEmit -p apps/api/tsconfig.json
+
       - name: Run tests
         run: pnpm --filter @chesspecker/api test
 
-      # Same build the Dockerfile runs for Render (nest build + the migrations
-      # tsc pass), so a compile error surfaces in the PR instead of in a
-      # deploy that fails after the merge.
       - name: Build application
         run: pnpm --filter @chesspecker/api build

@@ -15,10 +15,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  # No lint or test here: ci.yml already ran them against the merge result, and
-  # the ruleset on main only lets a pull request through, so anything landing
-  # here is code those checks passed. Repeating them would just delay the
-  # release by two runners' worth of checkout + install.
   release:
     runs-on: ubuntu-24.04
     permissions:
@@ -28,6 +24,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          persist-credentials: false
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
@@ -55,12 +53,6 @@ jobs:
           echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
           gpgconf --kill gpg-agent
 
-      # Not GITHUB_TOKEN: @semantic-release/git pushes the release commit
-      # straight to main, and the ruleset there requires a pull request. Bypass
-      # actors can be roles, teams or GitHub Apps — never Actions itself — so
-      # the push goes as romantic-release-bot, a collaborator whose role is on
-      # the ruleset's bypass list. The commit is signed with its GPG key either
-      # way; only the pusher changes.
       - name: Run semantic-release
         env:
           HUSKY: 0
