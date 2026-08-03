@@ -76,13 +76,9 @@ export class SoundService {
 
 		const stored = this.stored(this.settingStore.settingEntities());
 
-		if (undefined === stored) {
-			this.settingStore.add(new Setting({ type: 'SOUND', payload: isEnabled }));
-
-			return;
-		}
-
-		this.settingStore.update(stored.with({ payload: isEnabled }));
+		this.settingStore.save(
+			stored?.with({ payload: isEnabled }) ?? new Setting({ type: 'SOUND', payload: isEnabled }),
+		);
 	}
 
 	/**

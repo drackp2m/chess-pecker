@@ -56,7 +56,7 @@ export class UpdateService {
 			.find((setting) => 'LAST_SEEN_VERSION' === setting.type);
 
 		if (undefined === setting) {
-			this.settingStore.add(new Setting({ type: 'LAST_SEEN_VERSION', payload: version }));
+			this.settingStore.save(new Setting({ type: 'LAST_SEEN_VERSION', payload: version }));
 
 			return;
 		}
@@ -65,7 +65,7 @@ export class UpdateService {
 			return;
 		}
 
-		this.settingStore.update(setting.with({ payload: version }));
+		this.settingStore.save(setting.with({ payload: version }));
 		this.notificationService.notify(`App updated to v${version}`);
 	}
 

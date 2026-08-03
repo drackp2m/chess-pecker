@@ -24,12 +24,9 @@ export class RegisterUseCase {
 			],
 		});
 
-		// Indexing is checked through `length` because this package still has
-		// `noUncheckedIndexedAccess` disabled, so `userExists[0]` is typed as a
-		// `User` even when the array is empty.
-		if (0 < userExists.length) {
-			const existingUser = userExists[0];
+		const existingUser = userExists.at(0);
 
+		if (undefined !== existingUser) {
 			const field = existingUser.username === registerRequest.username ? 'username' : 'email';
 
 			throw new PreconditionFailedException('already exists', field);

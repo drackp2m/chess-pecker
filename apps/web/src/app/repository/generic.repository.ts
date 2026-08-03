@@ -14,7 +14,7 @@ import { Repository } from '@app/util/repository';
 
 export type RepositoryTransaction<
 	T extends DBSchema,
-	M extends 'readonly' | 'readwrite',
+	M extends IDBTransactionMode,
 > = IDBPTransaction<T, StoreNames<T>[], M>;
 
 /**
@@ -171,9 +171,25 @@ export class GenericRepository<T extends DBSchema> {
 			return opened;
 		}
 
-		const connection = openDB<T>(this.dbName, Repository.getLatestVersion(), {
+		const connection = this.open().catch((error: unknown) => {
+			// A failed open is not cached: a later attempt may well succeed, and leaving
+			// a rejected promise in the field would fail every future call with it.
+			this.database = undefined;
+
+			throw new Error(`Could not open the \`${this.dbName}\` database`, { cause: error });
+		});
+
+		this.database = connection;
+
+		return connection;
+	}
+
+	private async open(): Promise<IDBPDatabase<T>> {
+		let migrations: Promise<void> | undefined;
+
+		const opening = openDB<T>(this.dbName, Repository.getLatestVersion(), {
 			upgrade: (database, oldVersion, newVersion, transaction) => {
-				Repository.applyMigrations(database, oldVersion, newVersion, transaction);
+				migrations = this.migrate(database, oldVersion, newVersion, transaction);
 			},
 
 			// Another tab still holds an older version open, so the upgrade cannot run.
@@ -194,21 +210,32 @@ export class GenericRepository<T extends DBSchema> {
 			terminated: () => {
 				this.database = undefined;
 			},
-		}).catch((error: unknown) => {
-			// A failed open is not cached: a later attempt may well succeed, and leaving
-			// a rejected promise in the field would fail every future call with it.
-			this.database = undefined;
-
-			throw new Error(`Could not open the \`${this.dbName}\` database`, { cause: error });
 		});
 
-		this.database = connection;
+		try {
+			return await opening;
+		} finally {
+			await migrations;
+		}
+	}
 
-		return connection;
+	private async migrate(
+		database: IDBPDatabase<T>,
+		oldVersion: number,
+		newVersion: number | null,
+		transaction: RepositoryTransaction<T, 'versionchange'>,
+	): Promise<void> {
+		try {
+			await Repository.applyMigrations(database, oldVersion, newVersion, transaction);
+		} catch (error) {
+			this.abort(transaction);
+
+			throw error;
+		}
 	}
 
 	/** Aborting a transaction that already settled throws; that case is not an error. */
-	private abort(transaction: RepositoryTransaction<T, 'readonly' | 'readwrite'>): void {
+	private abort<M extends IDBTransactionMode>(transaction: RepositoryTransaction<T, M>): void {
 		try {
 			transaction.abort();
 		} catch {

@@ -12,7 +12,7 @@ export const IsUniqueUserProp =
 			validator: IsUniqueUserPropRule,
 			target: object.constructor,
 			propertyName,
-			options,
+			...(undefined !== options ? { options } : {}),
 			constraints: [prop],
 		});
 	};

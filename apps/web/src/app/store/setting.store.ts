@@ -1,28 +1,24 @@
 import { Injectable, inject } from '@angular/core';
 import { patchState, signalStore, type, withState } from '@ngrx/signals';
-import {
-	addEntity,
-	entityConfig,
-	setAllEntities,
-	setEntity,
-	withEntities,
-} from '@ngrx/signals/entities';
+import { entityConfig, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 
 import { Setting } from '@app/model/setting.model';
 import { SettingRepository } from '@app/repository/setting.repository';
 
 interface SettingStoreProps {
 	isLoading: boolean;
+	error: string | null;
 }
 
 const initialState: SettingStoreProps = {
 	isLoading: false,
+	error: null,
 };
 
 const settingConfig = entityConfig({
 	entity: type<Setting>(),
 	collection: 'setting',
-	selectId: (setting) => setting.uuid,
+	selectId: (setting) => setting.type,
 });
 
 @Injectable({
@@ -41,32 +37,26 @@ export class SettingStore extends signalStore(
 		this.fetchData();
 	}
 
-	// FixMe => neither writer handles rejection. `insert` failing leaves the store
-	// showing a value that was never persisted, and `void ... .then()` with no
-	// `.catch()` surfaces as an unhandled rejection.
-	//
-	// FixMe => read-modify-write race: `add()` is chosen by reading `settingEntities()`
-	// before the previous insert resolved, so two quick changes to the same setting
-	// create two rows with different uuids and the same `type`. The `type` index is
-	// `unique: true`, so the second `put` aborts the transaction. Making `type` the
-	// key path (one row per setting, no uuid) removes the race entirely.
-	add(item: Setting): void {
-		void this.settingRepository.insert('setting', item).then((item) => {
-			patchState(this, addEntity(item, settingConfig));
-		});
-	}
-
 	/**
-	 * Replaces the stored entity outright. Deliberately not `updateEntity`: that one
-	 * merges into a fresh object literal (`{ ...entity, ...changes }`), which drops the
-	 * `Setting` prototype and leaves `settingEntities()` typed as `Setting[]` while
-	 * holding plain data with no `.with()` on it. `setEntity` keeps the instance, and
-	 * callers always pass a whole `Setting` here anyway, so there is nothing to merge.
+	 * Writes the setting and replaces the stored entity outright — `type` is the key on
+	 * both sides, so this is an upsert and creating a setting is the same call as
+	 * changing it. Deliberately not `updateEntity`: that one merges into a fresh object
+	 * literal (`{ ...entity, ...changes }`), which drops the `Setting` prototype and
+	 * leaves `settingEntities()` typed as `Setting[]` while holding plain data with no
+	 * `.with()` on it. `setEntity` keeps the instance, and callers always pass a whole
+	 * `Setting` here anyway, so there is nothing to merge.
 	 */
-	update(item: Setting): void {
-		void this.settingRepository.insert('setting', item).then((item) => {
-			patchState(this, setEntity(item, settingConfig));
-		});
+	save(item: Setting): void {
+		void this.settingRepository
+			.insert('setting', item)
+			.then((saved) => {
+				patchState(this, setEntity(saved, settingConfig), { error: null });
+			})
+			.catch((error: unknown) => {
+				console.error(`Could not save the \`${item.type}\` setting`, error);
+
+				patchState(this, { error: 'The setting could not be saved.' });
+			});
 	}
 
 	// FixMe => a rejected `findAll` (blocked upgrade, private-browsing quota, corrupt

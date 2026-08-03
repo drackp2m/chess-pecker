@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 
-const DEFAULT_API_URL = 'https://chesspecker-api.onrender.com/api';
+const DEFAULT_API_URL = 'https://api.chess.drackp2m.dev/api';
 const DEFAULT_CSV_PATH = 'ideas/puzzles/selected_puzzles.csv';
 const BATCH_SIZE = 2000;
 

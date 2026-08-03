@@ -1,6 +1,7 @@
 import { FilterQuery } from '@mikro-orm/core';
 
 import { CustomRepository } from '../../shared/util/custom-entity.repository';
+import { shuffle } from '../../shared/util/shuffle.util';
 
 import { Puzzle } from './puzzle.entity';
 
@@ -48,15 +49,3 @@ export class PuzzleRepository extends CustomRepository<Puzzle> {
 		return shuffle(puzzles);
 	}
 }
-
-const shuffle = (puzzles: Puzzle[]): Puzzle[] => {
-	const shuffled = [...puzzles];
-
-	for (let index = shuffled.length - 1; 0 < index; index--) {
-		const target = Math.floor(Math.random() * (index + 1));
-
-		[shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]];
-	}
-
-	return shuffled;
-};

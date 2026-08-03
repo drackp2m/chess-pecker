@@ -10,14 +10,14 @@ export class ConfigurationService {
 	constructor(private readonly configService: ConfigService) {}
 
 	get database(): DatabaseConfig {
-		return this.configService.get<DatabaseConfig>('database', { infer: true });
+		return this.configService.getOrThrow<DatabaseConfig>('database');
 	}
 
 	get api(): ApiConfig {
-		return this.configService.get<ApiConfig>('api', { infer: true });
+		return this.configService.getOrThrow<ApiConfig>('api');
 	}
 
 	get jwt(): JwtConfig {
-		return this.configService.get<JwtConfig>('jwt', { infer: true });
+		return this.configService.getOrThrow<JwtConfig>('jwt');
 	}
 }

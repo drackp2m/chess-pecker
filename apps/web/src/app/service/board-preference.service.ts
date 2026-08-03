@@ -72,13 +72,7 @@ export class BoardPreferenceService {
 	private store<K extends SettingTypeKey>(type: K, payload: SettingPayload[K]): void {
 		const stored = this.settingStore.settingEntities().find((setting) => type === setting.type);
 
-		if (undefined === stored) {
-			this.settingStore.add(new Setting({ type, payload }));
-
-			return;
-		}
-
-		this.settingStore.update(stored.with({ payload }));
+		this.settingStore.save(stored?.with({ payload }) ?? new Setting({ type, payload }));
 	}
 
 	private read(type: SettingTypeKey, settings: readonly Setting[]): unknown {

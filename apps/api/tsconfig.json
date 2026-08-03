@@ -32,18 +32,7 @@
 		"sourceMap": true,
 		"removeComments": true,
 		"incremental": true,
-		"tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
-
-		// TODO: delete every flag below and inherit the full strictness baseline
-		// from tsconfig.base.json. They are the boilerplate this app arrived with,
-		// not a decision — the repo standard (AGENTS.md) is the base file. Remove
-		// them one at a time and fix the fallout, together with the matching TODO
-		// block in the root eslint.config.mjs.
-		"noImplicitAny": false,
-		"strictBindCallApply": false,
-		"noUncheckedIndexedAccess": false,
-		"exactOptionalPropertyTypes": false,
-		"noPropertyAccessFromIndexSignature": false
+		"tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
 	},
 	"include": ["src/**/*"],
 	"exclude": ["dist"]

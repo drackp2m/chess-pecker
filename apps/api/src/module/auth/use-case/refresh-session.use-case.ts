@@ -22,7 +22,8 @@ export class RefreshSessionUseCase {
 
 	execute(): void {
 		try {
-			const currentRefreshToken = this.request.signedCookies[JwtCookie.refresh];
+			const signedCookies = this.request.signedCookies as Record<string, string | undefined>;
+			const currentRefreshToken = signedCookies[JwtCookie.refresh] ?? '';
 
 			const refreshTokenPayload = this.checkJwtToken.execute(currentRefreshToken, 'refresh');
 

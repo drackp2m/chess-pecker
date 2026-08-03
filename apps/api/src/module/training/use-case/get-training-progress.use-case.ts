@@ -100,6 +100,10 @@ export class GetTrainingProgressUseCase {
 		const factors = TrainingPolicy.cycleTargetFactors;
 		const factor = factors[Math.min(index - 2, factors.length - 1)];
 
+		if (undefined === factor) {
+			return null;
+		}
+
 		return Math.round(firstCycleDurationMs * factor);
 	}
 

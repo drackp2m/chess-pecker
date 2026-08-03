@@ -27,8 +27,10 @@ export class SetTrainingGoalUseCase {
 		const goal = this.applySyncTimestampsUseCase.execute(
 			new TrainingGoal({
 				training,
-				puzzlesPerDay: goalRequest.puzzlesPerDay,
-				endDate: goalRequest.endDate,
+				...(undefined !== goalRequest.puzzlesPerDay
+					? { puzzlesPerDay: goalRequest.puzzlesPerDay }
+					: {}),
+				...(undefined !== goalRequest.endDate ? { endDate: goalRequest.endDate } : {}),
 			}),
 			goalRequest,
 		);
