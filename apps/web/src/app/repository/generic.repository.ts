@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import {
 	DBSchema,
 	IDBPDatabase,
@@ -29,6 +30,9 @@ export type RepositoryTransaction<
  */
 export class GenericRepository<T extends DBSchema> {
 	private readonly dbName = 'chess-pecker';
+	private readonly blockedUpgrade = signal(false);
+
+	readonly isUpgradeBlocked = this.blockedUpgrade.asReadonly();
 
 	/** Opened on first use and reopened if the browser drops the connection. */
 	private database: Promise<IDBPDatabase<T>> | undefined;
@@ -194,6 +198,8 @@ export class GenericRepository<T extends DBSchema> {
 
 			// Another tab still holds an older version open, so the upgrade cannot run.
 			blocked: (currentVersion, blockedVersion) => {
+				this.blockedUpgrade.set(true);
+
 				console.warn(
 					`IndexedDB upgrade from ${currentVersion.toString()} to ${String(blockedVersion)} is blocked by another tab.`,
 				);
@@ -215,6 +221,8 @@ export class GenericRepository<T extends DBSchema> {
 		try {
 			return await opening;
 		} finally {
+			this.blockedUpgrade.set(false);
+
 			await migrations;
 		}
 	}

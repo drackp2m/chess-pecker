@@ -1,9 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, effect, inject } from '@angular/core';
 import { patchState, signalStore, type, withState } from '@ngrx/signals';
 import { entityConfig, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 
 import { Setting } from '@app/model/setting.model';
 import { SettingRepository } from '@app/repository/setting.repository';
+import { NotificationService } from '@app/service/notification.service';
 
 interface SettingStoreProps {
 	isLoading: boolean;
@@ -14,6 +15,11 @@ const initialState: SettingStoreProps = {
 	isLoading: false,
 	error: null,
 };
+
+const LOAD_ERROR_MESSAGE = 'Your settings could not be loaded, so the defaults are in use.';
+const SAVE_ERROR_MESSAGE = 'The setting could not be saved.';
+const BLOCKED_UPGRADE_MESSAGE =
+	'Close the other tabs of this app to finish updating its local database.';
 
 const settingConfig = entityConfig({
 	entity: type<Setting>(),
@@ -30,10 +36,12 @@ export class SettingStore extends signalStore(
 	withEntities(settingConfig),
 ) {
 	private readonly settingRepository = inject(SettingRepository);
+	private readonly notificationService = inject(NotificationService);
 
 	constructor() {
 		super();
 
+		this.watchBlockedUpgrade();
 		this.fetchData();
 	}
 
@@ -55,20 +63,47 @@ export class SettingStore extends signalStore(
 			.catch((error: unknown) => {
 				console.error(`Could not save the \`${item.type}\` setting`, error);
 
-				patchState(this, { error: 'The setting could not be saved.' });
+				this.notificationService.notify(SAVE_ERROR_MESSAGE);
+				patchState(this, { error: SAVE_ERROR_MESSAGE });
 			});
 	}
 
-	// FixMe => a rejected `findAll` (blocked upgrade, private-browsing quota, corrupt
-	// database) leaves `isLoading` true forever. Every consumer gates on it with an
-	// `effect` that returns early while loading, so the theme, the board preferences
-	// and the update check all stay silently unapplied with no error shown.
+	private watchBlockedUpgrade(): void {
+		let notificationUuid: string | null = null;
+
+		effect(() => {
+			if (this.settingRepository.isUpgradeBlocked()) {
+				notificationUuid ??= this.notificationService.notify(BLOCKED_UPGRADE_MESSAGE, {
+					timeout: null,
+				});
+
+				return;
+			}
+
+			if (null !== notificationUuid) {
+				this.notificationService.dismiss(notificationUuid);
+
+				notificationUuid = null;
+			}
+		});
+	}
+
 	private fetchData(): void {
 		patchState(this, { isLoading: true });
 
-		void this.settingRepository.findAll('setting').then((items) => {
-			patchState(this, setAllEntities(items, settingConfig));
-			patchState(this, { isLoading: false });
-		});
+		void this.settingRepository
+			.findAll('setting')
+			.then((items) => {
+				patchState(this, setAllEntities(items, settingConfig));
+			})
+			.catch((error: unknown) => {
+				console.error('Could not load the stored settings', error);
+
+				this.notificationService.notify(LOAD_ERROR_MESSAGE);
+				patchState(this, { error: LOAD_ERROR_MESSAGE });
+			})
+			.finally(() => {
+				patchState(this, { isLoading: false });
+			});
 	}
 }
