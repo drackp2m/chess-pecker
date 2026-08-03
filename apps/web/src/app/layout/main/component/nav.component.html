@@ -1,40 +1,42 @@
-<nav
-	class="nav force-light px-4 surface-contrast color-primary flex-row align-center justify-center gap-6"
->
-	<button appThemed appRouterLink="/" icon="house" [iconSize]="28" aria-label="Home"></button>
+<nav class="nav force-light flex-row" aria-label="Main">
+	<span class="glass" aria-hidden="true"></span>
+	<span class="indicator" aria-hidden="true"></span>
 
 	<button
-		appThemed
+		class="item"
+		style="--icon: url('/svg/icon/house-solid.svg')"
+		appRouterLink="/"
+		aria-label="Home"
+	></button>
+
+	<button
+		class="item"
+		style="--icon: url('/svg/icon/dice-solid.svg')"
 		appRouterLink="/match"
-		icon="dice"
-		[iconSize]="28"
 		aria-label="Play"
 		[routerLinkActiveOptions]="{ exact: false }"
 	></button>
 
 	<button
-		appThemed
+		class="item"
+		style="--icon: url('/svg/icon/timer-solid.svg')"
 		appRouterLink="/training"
-		icon="timer"
-		[iconSize]="28"
 		aria-label="Training"
 		[routerLinkActiveOptions]="{ exact: false }"
 	></button>
 
 	<button
-		appThemed
+		class="item"
+		style="--icon: url('/svg/icon/user-plus-solid.svg')"
 		appRouterLink="/friends"
-		icon="user-plus"
-		[iconSize]="28"
 		aria-label="Friends"
 		[routerLinkActiveOptions]="{ exact: false }"
 	></button>
 
 	<button
-		appThemed
+		class="item"
+		style="--icon: url('/svg/icon/gear-solid.svg')"
 		appRouterLink="/settings"
-		icon="gear"
-		[iconSize]="28"
 		aria-label="Settings"
 		[routerLinkActiveOptions]="{ exact: false }"
 	></button>

@@ -1,20 +1,118 @@
+// Kept in sync with the number of items in the template: the indicator slides in
+// steps of one cell, so it needs to know how many cells split the bar.
+$items: 5;
+
 .nav {
+	--items: #{$items};
+	--icon-size: 28px;
+	--indicator-size: 40px;
+	--glass-opacity: 20%;
+
+	position: relative;
 	flex-shrink: 0;
 	height: var(--nav-height);
-	padding-bottom: var(--safe-offset-bottom);
-	border-top: solid 1.5px var(--color-primary);
 
-	.app-button.icon {
-		padding: var(--spacing-2);
+	// The three layers of the cut-out effect, from bottom to top: the blurred page,
+	// the accent square, and the bar itself with the icons punched out of it.
+	.glass,
+	.indicator {
+		pointer-events: none;
+		position: absolute;
+		inset-block: 0 var(--safe-offset-bottom);
 	}
 
-	[appRouterLink] {
-		--foreground: var(--color-primary-mid);
-		--foreground-hover: var(--color-primary-mid-hover);
+	.glass {
+		inset-inline: 0;
 
-		&.active {
-			--foreground: var(--color-primary);
-			--foreground-hover: var(--color-primary-hover);
+		// The tint sits on top of its own blurred backdrop, so the page keeps showing
+		// through the holes but never at full contrast: black or accent backgrounds
+		// stop fighting with the bar. Locked to the dark palette because the bar is
+		// always dark, whatever the theme is.
+		background-color: rgb(from var(--color-contrast-mid-dark) r g b / var(--glass-opacity));
+		backdrop-filter: blur(12px);
+	}
+
+	.indicator {
+		left: 0;
+
+		// Percentages resolve against the element itself, which is exactly one cell
+		// wide, so every step lands on the matching item.
+		transform: translateX(calc(var(--index, 0) * 100%));
+
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		width: calc(100% / var(--items));
+
+		opacity: 1;
+
+		transition:
+			transform var(--transition-duration) var(--transition-easing),
+			opacity var(--transition-duration) var(--transition-easing);
+
+		&::before {
+			content: '';
+
+			aspect-ratio: 1;
+			width: var(--indicator-size);
+			border-radius: var(--border-radius-2);
+
+			background-color: var(--color-accent);
+		}
+	}
+
+	.item {
+		// Positioned like the two layers below it so that plain document order decides
+		// what covers what: glass, then indicator, then the bar with its holes.
+		position: relative;
+
+		flex: 1;
+
+		height: 100%;
+		padding-bottom: var(--safe-offset-bottom);
+		border-top: solid 1.5px var(--color-primary);
+
+		background-color: var(--color-contrast);
+
+		// The bar covers its whole cell except the icon: `exclude` keeps only what the
+		// full-size rectangle and the icon do not share, leaving the icon as a hole.
+		mask-image: var(--icon), linear-gradient(rgb(0 0 0) 0 0);
+		mask-repeat: no-repeat;
+		mask-position: center;
+		mask-clip: border-box;
+
+		// The icon is centred on the visible band only, ignoring the safe-area padding,
+		// while the rectangle still spans the whole bar.
+		mask-origin: content-box, border-box;
+		mask-size:
+			auto var(--icon-size),
+			auto;
+		mask-composite: exclude;
+
+		transition: background-color var(--transition-duration) var(--transition-easing);
+
+		// `flex: 1` lands on fractional widths, and the rounding leaves a hairline of
+		// glass between one cell and the next. Overlapping them by a pixel closes the
+		// seam: both sides paint the same opaque colour, so the overlap is invisible.
+		&:not(:last-child) {
+			margin-right: -1px;
+		}
+
+		&:hover,
+		&:focus-visible {
+			background-color: var(--color-contrast-hover);
+		}
+	}
+
+	// The indicator has no home while no item matches the current route.
+	&:not(:has(.item.active)) .indicator {
+		opacity: 0;
+	}
+
+	@for $index from 1 through $items {
+		&:has(.item:nth-of-type(#{$index}).active) .indicator {
+			--index: #{$index - 1};
 		}
 	}
 }
