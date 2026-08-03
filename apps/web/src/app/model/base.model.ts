@@ -7,10 +7,6 @@
 // since JSON has no prototypes. Worth deciding before the model layer grows: keep
 // classes and treat those rules as invariants worth a test, or move to plain readonly
 // data with free functions, where the question cannot be asked.
-//
-// ToDo => `'with'` in this list never matches: it is a prototype method, so
-// `Object.keys(this)` cannot return it. `'computed'` is not an own key either.
-const OMITTED_KEYS = ['computed', 'with'];
 
 export abstract class BaseModel<T extends object, C = unknown> {
 	readonly uuid: string;
@@ -23,9 +19,7 @@ export abstract class BaseModel<T extends object, C = unknown> {
 
 	toObject(): T {
 		return Object.keys(this).reduce<Record<string, unknown>>((acc, key) => {
-			if (!OMITTED_KEYS.includes(key)) {
-				acc[key] = this[key as keyof this];
-			}
+			acc[key] = this[key as keyof this];
 
 			return acc;
 		}, {}) as T;
