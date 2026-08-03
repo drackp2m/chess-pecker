@@ -7,7 +7,7 @@ Guidance for any coding agent working in this repository.
 pnpm workspace monorepo (`pnpm-workspace.yaml` → `apps/*`, `libs/*`):
 
 - `apps/web` (`@chesspecker/web`) — the Angular app, everything that used to live at the root.
-- `apps/api` (`@chesspecker/api`) — a NestJS API imported from another project, **not yet integrated**: it imports five packages that are not installed (`@nestjs/graphql`, `graphql`, `graphql-subscriptions`, `graphql-ws`, `@playsetonline/api-definitions`) and ten relative imports point at files left behind in the project it came from, so it does not compile yet. It _is_ covered by the root ESLint, Prettier and TypeScript config; the debt is tracked by the TODO blocks in `eslint.config.mjs` (rules) and `apps/api/tsconfig.json` (strictness flags).
+- `apps/api` (`@chesspecker/api`) — a NestJS API imported from another project, now fully integrated: it compiles, serves the training flow the web app runs on, and no longer imports any of the five missing packages (`@nestjs/graphql`, `graphql`, `graphql-subscriptions`, `graphql-ws`, `@playsetonline/api-definitions`) nor the ten orphan relative imports it arrived with. The debt the integration left behind is settled too: it holds no relaxed rule of its own any more — the same `tsconfig.base.json` strictness and the same ESLint config as the rest of the repo.
 
 The root package holds no runtime dependency — only the repo-wide toolchain (ESLint + its plugins, Stylelint, Prettier, husky, commitlint/commitizen, semantic-release) and scripts that delegate into a workspace package with `pnpm --filter`. semantic-release keeps versioning the **root** `package.json`; `@app/package` resolves there, so the version the app displays stays the released one.
 
@@ -37,6 +37,7 @@ Root:
 - `pnpm lint` — ESLint → Stylelint → Prettier, in that order
 - `pnpm lint:fix` — same three tools in `--fix`/`--write` mode, plus per-file correction counts
 - `pnpm update:deps`, `pnpm git:sync`, `pnpm pnpm:match` — see below
+- `pnpm import:puzzles` (`tools/scripts/import-puzzles.mjs`) — interactive: prompts for credentials, logs in through `/auth/login` and POSTs `ideas/puzzles/selected_puzzles.csv` to `/puzzle/import` in batches of 2000. **It defaults to the deployed API** (`api.chess.drackp2m.dev`), not localhost, so check the URL it offers before accepting it
 
 `pnpm --filter @chesspecker/web …`:
 
@@ -61,18 +62,20 @@ Both lint scripts go through `tools/scripts/lint/lint.mjs`, a wrapper that runs 
 
 `.prettierignore`'s root-anchored `/dir` entries double as the prune list for the repo walk in `walk-files.mjs`, so every new workspace package needs its `node_modules`/`dist` listed there or the whole-repo Prettier pass crawls them.
 
-CI (`.github/workflows/deploy.yml`) runs lint+test on every push to `main`, then semantic-release, then build+deploy. `HUSKY=0` is set during the release commit to skip local hooks. The `test` job runs `pnpm --filter @chesspecker/web test` only, and Husky's `pre-commit` also covers web alone (`typecheck` + `test`) — **nothing runs the API suite automatically yet**. Adding it needs an env file in the job first: seven specs reach `shared/module/config/register/*`, which call `validate(process.env)` at import time and throw on a missing variable, and CI has no `.env`.
+CI is split in two. `.github/workflows/ci.yml` runs on **pull requests to `main`** with three parallel jobs: `lint` (`pnpm run lint` over the whole repo), `web` (Vitest + production build) and `api` (`tsc --noEmit -p apps/api/tsconfig.json`, Vitest unit project, `nest build`). `.github/workflows/deploy.yml` runs on **push to `main`** and does no checking at all — semantic-release, then build, then deploy to Pages; `HUSKY=0` is set during the release commit to skip local hooks.
+
+So the API's typecheck and unit suite are enforced on every PR, and Husky's `pre-commit` goes further than CI: `pnpm:match`, `lint-staged`, then API `typecheck` + `test` + **`test:integration`**, then web `typecheck` + `test`. The integration suite is the one thing CI does not run — it needs a live Postgres, which would mean a service container in the job.
 
 ## Imports
 
 Use the path aliases defined in `apps/web/tsconfig.json` — relative `./` and `../` imports are blocked by an ESLint rule (`no-restricted-imports`):
-`@app/component`, `@app/definition`, `@app/directive`, `@app/guard`, `@app/interceptor`, `@app/layout`, `@app/model`, `@app/page`, `@app/pipe`, `@app/repository`, `@app/service`, `@app/store`, `@app/strategy`, `@app/use-case`, `@app/util`, `@app/package`.
+`@app/component`, `@app/definition`, `@app/directive`, `@app/guard`, `@app/interceptor`, `@app/layout`, `@app/model`, `@app/page`, `@app/pipe`, `@app/repository`, `@app/service`, `@app/store`, `@app/strategy`, `@app/testing`, `@app/use-case`, `@app/util`, plus `@app/package` and `@app/tools/*`, which reach outside the package into the repo root.
 
 The root-level singletons have their own exact aliases (no `/*`): `@app/app.config`, `@app/app.routes`, `@app/app.component` — used e.g. from `apps/web/src/main.ts`.
 
 ## Architecture
 
-`apps/web/src/app/` follows a clean-architecture-flavored split: `repository/` (data access), `use-case/` (business logic), `store/` (`@ngrx/signals` state), `service/`, `directive/`, `component/`, `layout/`, `page/`, `pipe/`, `model/`, `definition/`, `util/`, `strategy/`.
+`apps/web/src/app/` follows a clean-architecture-flavored split: `repository/` (data access), `use-case/` (business logic), `store/` (`@ngrx/signals` state), `service/`, `directive/`, `component/`, `layout/`, `page/`, `pipe/`, `model/`, `definition/`, `util/`, `strategy/`, `guard/`, `interceptor/`, `testing/`.
 
 ## Database
 
@@ -84,14 +87,14 @@ Migrations are generated artifacts, so no linter touches them: `/apps/api/migrat
 
 ## Code style
 
-TypeScript is strict beyond Angular CLI defaults. The baseline lives in the root `tsconfig.base.json`, which every package extends: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature`, `noFallthroughCasesInSwitch`. `apps/web` adds Angular's `strictTemplates`, `strictInjectionParameters`, `strictInputAccessModifiers`, `strictStandalone`; `apps/api` still relaxes five of the base flags under a TODO. A package that cannot meet the baseline relaxes the specific flag with a TODO — never by dropping the `extends`.
+TypeScript is strict beyond Angular CLI defaults. The baseline lives in the root `tsconfig.base.json`, which every package extends: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature`, `noFallthroughCasesInSwitch`. `apps/web` adds Angular's `strictTemplates`, `strictInjectionParameters`, `strictInputAccessModifiers`, `strictStandalone`; `apps/api` adds nothing and relaxes nothing — it inherits the baseline whole. A package that cannot meet the baseline relaxes the specific flag with a TODO — never by dropping the `extends`.
 
 - **TypeScript 6 no longer auto-includes every `@types/*` package**, so each tsconfig must declare `types` explicitly or globals like `expect`/`it` go missing. `apps/web` splits it across `tsconfig.app.json` (`[]`) and `tsconfig.spec.json` (`["vitest/globals"]`); `apps/api` across `tsconfig.json` (`["node", "vitest/globals"]`) and `tsconfig.build.json` (`["node"]`, which also excludes `src/shared/test/**` so the integration helpers stay out of `dist`). A new package that skips this compiles until the first test file.
 - Component selector prefix is `app`; directives are camelCase, components are kebab-case.
 - Component class names must end in `Layout`, `Page`, `Modal`, or `Component`.
-- Keep files under 250 lines and functions under 75 lines. Both rules are `warn`, but `pnpm lint` runs with `--max-warnings 0`, so a warning fails the lint run, the `pre-commit` hook and CI exactly like an error. Both count with `skipComments: true`, so comments are free.
+- Keep files under 400 lines and functions under 30 lines. Both rules are `warn`, but `pnpm lint` runs with `--max-warnings 0`, so a warning fails the lint run, the `pre-commit` hook and CI exactly like an error. Both count with `skipBlankLines` and `skipComments`, so blank lines and comments are free, and neither applies to `*.spec.ts` / `*.test.ts`.
 - Prettier: printWidth 100, single quotes, trailing commas everywhere, Angular parser for `*.html`.
-- SCSS: `stylelint-config-standard-scss` + `stylelint-config-clean-order`; short hex colors, no named colors.
+- SCSS: `stylelint-config-standard-scss` + `stylelint-config-clean-order`. Colours are **not** written literally: `color-no-hex` and `color-named` are both on, so they come from variables. `@import` is banned outright (severity `error` — use `@use`/`@forward`), and a local plugin (`tools/stylelint-plugins/angular`) enforces `angular-custom/ng-deep-requires-host`, so a `::ng-deep` has to be scoped under `:host`.
 - **Do NOT add comments (or docstrings/JSDoc) to the code you generate.** No exceptions unless the user explicitly asks for a comment.
 
 ## Communication
@@ -116,5 +119,5 @@ Work is committed directly to `dev`; `main` is only updated via PR from `dev` (s
 - `API_BASE_URL` (`definition/api.constant.ts`) is what the repository actually calls: in a debug build it rewrites `API_URL`'s hostname to the one the page is served from, keeping the scheme, port and prefix. Serving the app on `MarcBook-Air.local` (which `start:safari` does, and Safari needs) while the API stayed on `localhost` would make the two cross-site, and Safari drops the session cookie as third-party — the login returns 204 and no session ever sticks. Both hosts are on the mkcert certificate, so the API answers on either. The `.env` side has to follow: `API_CORS_ALLOWED_DOMAINS` needs the origin actually used, and `API_COOKIE_DOMAIN` has to match the host serving the API or the browser rejects the cookie.
 - The session cookies are `httpOnly`, so the web app cannot read them: `SessionStore` probes `GET /auth/refresh-session` on startup and treats a 401 as "logged out".
 - CORS (`main.ts`) accepts **any** origin outside `production`: the app is browsed from `localhost`, from `MarcBook-Air.local` and from whatever LAN IP the Mac has that day, and a static `API_CORS_ALLOWED_DOMAINS` turns every one of those into a silent `WARN Origin … not allowed by CORS policy` with no clue on the browser side. The allowlist is still what production uses. Note the certificate only carries `DNS:MarcBook-Air.local, DNS:localhost` — browsing by IP needs it reissued with that IP as a SAN.
-- Husky's `pre-commit` hook runs, in order: `pnpm:match`, `lint-staged` (which auto-fixes ESLint/Prettier/Stylelint per staged file — most style issues never need manual fixing), `pnpm typecheck`, and the test suite.
+- Husky's `pre-commit` hook runs, in order: `pnpm:match`, `lint-staged` (which auto-fixes ESLint/Prettier/Stylelint per staged file — most style issues never need manual fixing), then API `typecheck` + `test` + `test:integration`, then web `typecheck` + `test`. The integration step needs the `chesspecker-db` container up, so committing with it down fails the hook.
 - `pnpm update:deps` (`tools/scripts/update-deps.sh`) is the only supported way to bump dependencies: packages carrying `ng-update` migrations (Angular, `@ngrx/signals`) go through a single `ng update` call inside `apps/web` so their schematics run, and only then does `pnpm -r up --latest` handle the rest. It refuses to run on a dirty tree. `angular-eslint` is the exception — it lives at the root because the shared `eslint.config.mjs` imports it, so pnpm bumps it and its migrations must be applied by hand on a major.

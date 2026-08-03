@@ -57,14 +57,15 @@ describe('RegisterUseCase', () => {
 		});
 
 		it('throw PreconditionFailedException when UserService.getMany return user with same email', async () => {
-			const fakeUser = UserFaker.makeOne();
+			const email = 'drackp2m@example.com';
+			const fakeUser = UserFaker.makeOne({ email });
 
 			userRepository.getMany.mockResolvedValueOnce([fakeUser]);
 
 			const registerRequest: RegisterRequestDto = {
 				username: 'drackp2m',
 				password: 'password',
-				email: fakeUser.email,
+				email,
 			};
 
 			const user = useCase.execute(registerRequest);

@@ -1,8 +1,10 @@
 <!--
-	ToDo => this is where the Woodpecker numbers belong: current set and cycle, time
-	for the last cycle against the ones before it, worst-performing exercises, and
-	later the friends' comparison. Nothing of that is stored yet, so the section is
-	not sketched here either.
+	ToDo => "Your program" covers the counts (solved per stage, current stage, level),
+	which is what the API already aggregates. What the method is actually scored on is
+	still missing: the time of the last cycle against the ones before it, the
+	worst-performing exercises, and later the friends' comparison. The first two need
+	per-attempt durations kept per cycle, which is what the local draft attempt row is
+	for; the third needs friendships replicated locally.
 -->
 <section class="flex-col gap-6">
 	<div class="flex-col gap-2">
@@ -24,8 +26,8 @@
 			}
 		} @else {
 			<p class="fs-sm color-contrast-mid">
-				An account opens a session against the Chess Pecker API. Carrying your sets and cycle times
-				between devices is what it is for, but nothing is stored server-side yet.
+				An account opens a session against the Chess Pecker API. Your program, its cycles and every
+				exercise you solve are stored there, so they carry between devices.
 			</p>
 
 			<div class="flex-col gap-2">

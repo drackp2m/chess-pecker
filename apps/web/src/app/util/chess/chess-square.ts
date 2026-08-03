@@ -6,17 +6,29 @@ import { ChessFile, ChessRank, PieceColor, Square } from '@app/definition/chess.
  * Index 0 is `a8`, index 63 is `h1`, so a row walks the board downwards.
  */
 export abstract class ChessSquare {
-	// FixMe => both `indexOf` calls can return -1 and neither is checked, so an
-	// off-board string produces a plausible index instead of an error: `"z3"` gives
-	// `5 * 8 + -1 = 39`, which is `h4`. The `Square` type makes that unreachable from
-	// typed code, but `ChessFen.parse` casts the raw en-passant field of a
-	// user-supplied FEN straight to `Square`, and that is exactly how an untrusted
-	// string gets here. Its sibling `fromIndex` already throws a `RangeError`.
+	/**
+	 * Throws a `RangeError` on an off-board string, the way `fromIndex` does on an
+	 * off-board index. Unreachable from typed code, but a `Square` parsed out of a
+	 * user-supplied FEN is only as trustworthy as whoever cast it.
+	 */
 	static toIndex(square: Square): number {
 		const file = FILES.indexOf(square.charAt(0) as ChessFile);
 		const row = RANKS.indexOf(square.charAt(1) as ChessRank);
 
+		if (0 > file || 0 > row) {
+			throw new RangeError(`Square off the board: ${square}`);
+		}
+
 		return row * BOARD_SIZE + file;
+	}
+
+	/** Narrows an untrusted string: the gate every parsed square has to pass. */
+	static isSquare(value: string): value is Square {
+		return (
+			2 === value.length &&
+			FILES.includes(value.charAt(0) as ChessFile) &&
+			RANKS.includes(value.charAt(1) as ChessRank)
+		);
 	}
 
 	static fromIndex(index: number): Square {

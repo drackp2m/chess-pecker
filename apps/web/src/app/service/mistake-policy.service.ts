@@ -36,13 +36,9 @@ export class MistakePolicyService {
 
 		const stored = this.stored(this.settingStore.settingEntities());
 
-		if (undefined === stored) {
-			this.settingStore.add(new Setting({ type: 'MISTAKE_POLICY', payload: policy }));
-
-			return;
-		}
-
-		this.settingStore.update(stored.with({ payload: policy }));
+		this.settingStore.save(
+			stored?.with({ payload: policy }) ?? new Setting({ type: 'MISTAKE_POLICY', payload: policy }),
+		);
 	}
 
 	private stored(settings: readonly Setting[]): Setting | undefined {

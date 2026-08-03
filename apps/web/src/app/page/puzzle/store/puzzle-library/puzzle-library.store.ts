@@ -47,10 +47,7 @@ export class PuzzleLibraryStore extends signalStore(
 		const { puzzles, skipped } = PuzzleCsv.parse(text);
 
 		if (0 === puzzles.length) {
-			patchState(this, {
-				importError: 'No readable exercises in that CSV.',
-				importNotice: undefined,
-			});
+			this.failImport('No readable exercises in that CSV.');
 
 			return false;
 		}
@@ -62,6 +59,14 @@ export class PuzzleLibraryStore extends signalStore(
 		});
 
 		return true;
+	}
+
+	/**
+	 * Reports an import that never got as far as CSV text — an unreadable file, say —
+	 * through the same channel the caller already watches.
+	 */
+	failImport(message: string): void {
+		patchState(this, { importError: message, importNotice: undefined });
 	}
 
 	/** Source-agnostic entry point: feed it rows from a database just as well. */

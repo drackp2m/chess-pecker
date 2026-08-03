@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChessMove, ChessPosition } from '@app/definition/chess.type';
+import { ChessMove, ChessPosition, Square } from '@app/definition/chess.type';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessNotation } from '@app/util/chess/chess-notation';
+import { ChessSquare } from '@app/util/chess/chess-square';
 
 /** Counts every leaf node of the move tree: the standard move-generation benchmark. */
 function perft(position: ChessPosition, depth: number): number {
@@ -36,6 +37,22 @@ function play(position: ChessPosition, notations: readonly string[]): ChessPosit
 		(current, notation) => ChessBoard.apply(current, requireMove(current, notation)),
 		position,
 	);
+}
+
+/** Replays a line the way the match store does: keeping every position behind it. */
+function replay(notations: readonly string[]): {
+	position: ChessPosition;
+	history: ChessPosition[];
+} {
+	const history: ChessPosition[] = [];
+	let position = ChessFen.initial();
+
+	for (const notation of notations) {
+		history.push(position);
+		position = ChessBoard.apply(position, requireMove(position, notation));
+	}
+
+	return { position, history };
 }
 
 describe('chess move generation (perft)', () => {
@@ -94,9 +111,106 @@ describe('FEN', () => {
 		expect(ChessFen.serialize(ChessFen.parse(fen))).toBe(fen);
 	});
 
+	it('writes an en passant target it does not key on', () => {
+		const pushed = play(ChessFen.initial(), ['e4']);
+		const noTarget = ChessFen.parse('rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1');
+
+		// The field is part of the FEN either way, but no black pawn can answer it.
+		expect(ChessFen.serialize(pushed)).toContain(' e3 ');
+		expect(ChessFen.positionKey(pushed)).toBe(ChessFen.positionKey(noTarget));
+	});
+
+	it('keys on an en passant target a pawn can answer', () => {
+		const pushed = play(ChessFen.initial(), ['e4', 'c5', 'e5', 'd5']);
+
+		expect(ChessFen.positionKey(pushed)).toContain(' d6');
+	});
+
+	it.each([
+		// The d4 pawn is pinned down the d-file by the rook, so `dxe3` is not a move.
+		['a pawn pinned against its king', '3k4/8/8/8/3pP3/8/8/3R3K b - e3 0 1'],
+		// `dxe6` empties d5 *and* e5 at once, which opens the rank onto the white king.
+		// No pawn is pinned here: it is the capture that is illegal, not the piece.
+		['a capture that clears the rank onto its own king', '7k/8/8/K2Pp2r/8/8/8/8 w - e6 0 1'],
+	])('does not key on an en passant target answered only by %s', (_case, fen) => {
+		const position = ChessFen.parse(fen);
+		const noTarget = ChessFen.parse(fen.replace(/ (e3|e6) /, ' - '));
+
+		expect(ChessFen.positionKey(position)).toBe(ChessFen.positionKey(noTarget));
+	});
+
 	it('rejects a position without both kings', () => {
 		expect(ChessFen.isValid('8/8/8/8/8/8/8/K7 w - - 0 1')).toBe(false);
 		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - - 0 1')).toBe(true);
+	});
+
+	it('rejects a placement that does not describe sixty-four squares', () => {
+		expect(ChessFen.isValid('8/8/8/8/KQkq w - - 0 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6kq w - - 0 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K5k w - - 0 1')).toBe(false);
+	});
+
+	it('rejects an en passant field that is not a square on the board', () => {
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - z3 0 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - e3 0 1')).toBe(true);
+	});
+
+	it('rejects a move counter that is not a number', () => {
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - - x 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - - 0 x')).toBe(false);
+	});
+});
+
+describe('draws', () => {
+	it.each([
+		['bare kings', '4k3/8/8/8/8/8/8/4K3 w - - 0 1'],
+		['a lone knight', '4k3/8/8/8/8/8/8/4KN2 w - - 0 1'],
+		['bishops of both sides on dark squares', '4kb2/8/8/8/8/8/8/2B1K3 w - - 0 1'],
+		['two bishops of one side on dark squares', '4k3/8/8/8/8/8/8/B1B1K3 w - - 0 1'],
+	])('calls a position with %s dead', (_case, fen) => {
+		expect(ChessMoveGenerator.status(ChessFen.parse(fen), [])).toBe('draw');
+	});
+
+	it.each([
+		['bishops on opposite colours', '4k1b1/8/8/8/8/8/8/2B1K3 w - - 0 1'],
+		['two knights, which can mate with help', '4k3/8/8/8/8/8/8/1N2KN2 w - - 0 1'],
+	])('keeps playing with %s', (_case, fen) => {
+		expect(ChessMoveGenerator.status(ChessFen.parse(fen), [])).toBe('playing');
+	});
+
+	/**
+	 * `e4` records an en passant target that no black pawn can answer, so it changes
+	 * none of the moves available and the position it leaves is, by the rule, the same
+	 * one the knight shuffle keeps coming back to. The double push is also the last
+	 * irreversible move of the line, which is what lets that position repeat at all.
+	 */
+	it('counts a position whose en passant target nobody could have used', () => {
+		const line = ['e4', 'Nf6', 'Nf3', 'Ng8', 'Ng1', 'Nf6', 'Nf3', 'Ng8', 'Ng1'];
+		const third = replay(line);
+
+		expect(ChessMoveGenerator.status(third.position, third.history)).toBe('draw');
+	});
+
+	it('draws only on the third occurrence of a position', () => {
+		const shuffle = ['Nf3', 'Nf6', 'Ng1', 'Ng8', 'Nf3', 'Nf6', 'Ng1', 'Ng8'];
+		const second = replay(shuffle.slice(0, 4));
+		const third = replay(shuffle);
+
+		// The starting position is back on the board — counters aside, which is the
+		// point of comparing keys — but it has only been here twice.
+		expect(ChessFen.positionKey(second.position)).toBe(ChessFen.positionKey(ChessFen.initial()));
+		expect(second.position.halfmoveClock).toBe(4);
+		expect(ChessMoveGenerator.status(second.position, second.history)).toBe('playing');
+
+		expect(ChessMoveGenerator.status(third.position, third.history)).toBe('draw');
+	});
+});
+
+describe('squares', () => {
+	it('refuses to index a square off the board', () => {
+		expect(() => ChessSquare.toIndex('z3' as Square)).toThrow(RangeError);
+		expect(() => ChessSquare.toIndex('a9' as Square)).toThrow(RangeError);
+		expect(ChessSquare.toIndex('h4')).toBe(39);
 	});
 });
 
@@ -144,10 +258,10 @@ describe('algebraic notation', () => {
 	});
 
 	it('reports checkmate and stalemate as terminal states', () => {
-		expect(ChessMoveGenerator.status(ChessFen.parse('7k/5QK1/8/8/8/8/8/8 b - - 0 1'))).toBe(
+		expect(ChessMoveGenerator.status(ChessFen.parse('7k/5QK1/8/8/8/8/8/8 b - - 0 1'), [])).toBe(
 			'checkmate',
 		);
-		expect(ChessMoveGenerator.status(ChessFen.parse('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1'))).toBe(
+		expect(ChessMoveGenerator.status(ChessFen.parse('7k/5Q2/6K1/8/8/8/8/8 b - - 0 1'), [])).toBe(
 			'stalemate',
 		);
 	});

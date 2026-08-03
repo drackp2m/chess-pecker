@@ -119,6 +119,10 @@ export class TrainingRunStore extends signalStore(
 		}
 	}
 
+	reset(): void {
+		patchState(this, initialState);
+	}
+
 	/** Moves on to the exercise fetched while the graded one was still on screen. */
 	advance(): void {
 		const pending = this.pending();

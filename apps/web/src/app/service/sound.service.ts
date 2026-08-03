@@ -76,13 +76,9 @@ export class SoundService {
 
 		const stored = this.stored(this.settingStore.settingEntities());
 
-		if (undefined === stored) {
-			this.settingStore.add(new Setting({ type: 'SOUND', payload: isEnabled }));
-
-			return;
-		}
-
-		this.settingStore.update(stored.with({ payload: isEnabled }));
+		this.settingStore.save(
+			stored?.with({ payload: isEnabled }) ?? new Setting({ type: 'SOUND', payload: isEnabled }),
+		);
 	}
 
 	/**
@@ -108,7 +104,7 @@ export class SoundService {
 
 	/** Mate outranks check, which outranks a capture; a plain move is what is left. */
 	private static describe(position: ChessPosition, move: ChessMove): MoveSound {
-		if ('checkmate' === ChessMoveGenerator.status(position)) {
+		if ('checkmate' === ChessMoveGenerator.status(position, [])) {
 			return 'checkmate';
 		}
 

@@ -19,8 +19,9 @@ export class CreateJwtAccessTokenUseCase {
 			{
 				subject: userUuid,
 				audience: `${this.configurationService.jwt.audience}-access-token`,
-				expiresIn: this.configurationService.jwt
-					.accessTokenExpiresIn as JwtSignOptions['expiresIn'],
+				expiresIn: this.configurationService.jwt.accessTokenExpiresIn as NonNullable<
+					JwtSignOptions['expiresIn']
+				>,
 				notBefore: 0,
 			},
 		);

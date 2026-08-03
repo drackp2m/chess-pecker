@@ -269,22 +269,6 @@ export default typescriptEslint.config(
 				...globals.jest,
 			},
 		},
-		rules: {
-			// ToDo => remove this whole `rules` block once the API is fully integrated.
-			// Five packages it imports are not installed (@nestjs/graphql, graphql,
-			// graphql-subscriptions, graphql-ws, @playsetonline/api-definitions) and ten
-			// relative imports point at files that were left behind in the project it
-			// came from, so those modules resolve to `any` and every type-aware rule
-			// below fires on code that is not actually unsafe. Re-enable them — one by
-			// one — as the missing dependencies and files land, together with the
-			// matching TODO in apps/api/tsconfig.json.
-			'@typescript-eslint/no-explicit-any': 'off',
-			'@typescript-eslint/no-unsafe-argument': 'off',
-			'@typescript-eslint/no-unsafe-assignment': 'off',
-			'@typescript-eslint/no-unsafe-call': 'off',
-			'@typescript-eslint/no-unsafe-member-access': 'off',
-			'@typescript-eslint/no-unsafe-return': 'off',
-		},
 	},
 
 	// ── JavaScript ─────────────────────────────────────────────────────────────

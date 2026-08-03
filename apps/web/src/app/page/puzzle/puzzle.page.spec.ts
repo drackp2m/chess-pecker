@@ -1,26 +1,49 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
+import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
+import { DEFAULT_MISTAKE_POLICY } from '@app/definition/mistake-policy.type';
+import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { PuzzlePage } from '@app/page/puzzle/puzzle.page';
-import { SettingRepository } from '@app/repository/setting.repository';
+import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { MistakePolicyService } from '@app/service/mistake-policy.service';
+import { SoundService } from '@app/service/sound.service';
 
-/** The board reads stored preferences; nothing here depends on what they hold. */
-const settingRepository = {
-	findAll: () => Promise.resolve([]),
-	insert: (_store: string, item: unknown) => Promise.resolve(item),
-};
-
+/**
+ * Every settings-backed service is stubbed whole, the same way `puzzle.store.spec` does
+ * it: the page is tested against fixed preferences rather than against whatever the
+ * setting store would end up loading, and nothing below them is instantiated.
+ */
 function createPage(data: Record<string, unknown>): PuzzlePage {
 	TestBed.configureTestingModule({
 		imports: [PuzzlePage],
 		providers: [
 			{ provide: ActivatedRoute, useValue: { snapshot: { data } } },
-			{ provide: SettingRepository, useValue: settingRepository },
+			{ provide: MistakePolicyService, useValue: { policy: signal(DEFAULT_MISTAKE_POLICY) } },
+			{
+				provide: BoardPreferenceService,
+				useValue: {
+					moveSpeed: signal(DEFAULT_MOVE_SPEED),
+					moveAnimation: signal(DEFAULT_MOVE_ANIMATION),
+					moveInputMethods: signal(MOVE_INPUT_METHODS_ALL),
+				},
+			},
+			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 		],
 	});
 
 	return TestBed.createComponent(PuzzlePage).componentInstance;
+}
+
+/** A file picker `change` event, with a file that reads however the test wants. */
+function createFileEvent(name: string, read: () => Promise<string>): Event {
+	const file = { name, text: read } as unknown as File;
+	const input = { files: [file], value: `C:\\fakepath\\${name}` } as unknown as HTMLInputElement;
+
+	return { target: input } as unknown as Event;
 }
 
 describe('PuzzlePage', () => {
@@ -59,5 +82,33 @@ describe('PuzzlePage', () => {
 		page.store.selectSquare('b1');
 
 		expect(page.store.history()[1]?.san).toBe('Rb1+');
+	});
+
+	it('reports an unreadable file instead of dying on the rejection', async () => {
+		const page = createPage({});
+		const event = createFileEvent('set.csv', () => Promise.reject(new Error('unreadable')));
+
+		await page.loadFile(event);
+
+		expect(page.store.library.importError()).toBe('Could not read set.csv.');
+		expect(page.store.library.puzzles()).toHaveLength(0);
+		// Cleared even on failure, so picking the same file again still fires `change`.
+		expect((event.target as HTMLInputElement).value).toBe('');
+	});
+
+	it('imports a readable file and clears the picker', async () => {
+		const page = createPage({ sample: true });
+		const sample = page.store.puzzle();
+		const event = createFileEvent('set.csv', () =>
+			Promise.resolve(
+				`PuzzleId,FEN,Moves,Rating\nZZZZZ,${sample?.fen ?? ''},${sample?.moves.join(' ') ?? ''},600`,
+			),
+		);
+
+		await page.loadFile(event);
+
+		expect(page.store.library.importError()).toBeUndefined();
+		expect(page.store.puzzle()?.id).toBe('ZZZZZ');
+		expect((event.target as HTMLInputElement).value).toBe('');
 	});
 });

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
+import { shuffle } from '../../../shared/util/shuffle.util';
 import { TrainingCycleStatus } from '../definition/training-cycle-status.enum';
 import { TrainingPolicy } from '../definition/training-policy';
 import { TrainingStatus } from '../definition/training-status.enum';
@@ -102,15 +103,3 @@ export class StartNextCycleUseCase {
 		return cycles;
 	}
 }
-
-const shuffle = <T>(items: T[]): T[] => {
-	const shuffled = [...items];
-
-	for (let index = shuffled.length - 1; 0 < index; index--) {
-		const target = Math.floor(Math.random() * (index + 1));
-
-		[shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]];
-	}
-
-	return shuffled;
-};

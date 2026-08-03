@@ -27,7 +27,7 @@ export default (): MikroOrmModuleSyncOptions => ({
 		// folder only holds .ts sources. `tsconfig.migrations.json` compiles them
 		// to dist/migrations so `mikro-orm migration:up` has somewhere to look
 		// once ts-node isn't installed (production `pnpm install --prod` deps).
-		path: 'production' === process.env.NODE_ENV ? 'dist/migrations' : 'migrations',
+		path: 'production' === process.env['NODE_ENV'] ? 'dist/migrations' : 'migrations',
 		pathTs: 'migrations',
 		silent: true,
 	},

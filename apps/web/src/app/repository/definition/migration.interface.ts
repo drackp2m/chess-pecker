@@ -8,5 +8,5 @@ export interface Migration<T> {
 		oldVersion: number;
 		newVersion: number | null;
 		transaction: IDBPTransaction<T, StoreNames<T>[], 'versionchange'>;
-	}) => void;
+	}) => void | Promise<void>;
 }

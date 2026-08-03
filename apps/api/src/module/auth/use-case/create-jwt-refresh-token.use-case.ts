@@ -19,10 +19,12 @@ export class CreateJwtRefreshTokenUseCase {
 			{
 				subject: userUuid,
 				audience: `${this.configurationService.jwt.audience}-refresh-token`,
-				expiresIn: this.configurationService.jwt
-					.refreshTokenExpiresIn as JwtSignOptions['expiresIn'],
-				notBefore: this.configurationService.jwt
-					.accessTokenExpiresIn as JwtSignOptions['notBefore'],
+				expiresIn: this.configurationService.jwt.refreshTokenExpiresIn as NonNullable<
+					JwtSignOptions['expiresIn']
+				>,
+				notBefore: this.configurationService.jwt.accessTokenExpiresIn as NonNullable<
+					JwtSignOptions['notBefore']
+				>,
 			},
 		);
 	}

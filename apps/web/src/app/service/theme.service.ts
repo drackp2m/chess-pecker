@@ -54,16 +54,13 @@ export class ThemeService implements OnDestroy {
 		this.applyActiveTheme();
 
 		if (saveSetting) {
-			const newSetting = this.settingStore
+			const stored = this.settingStore
 				.settingEntities()
-				.find((setting) => 'THEME' === setting.type)
-				?.with({ payload: theme });
+				.find((setting) => 'THEME' === setting.type);
 
-			if (undefined !== newSetting) {
-				this.settingStore.update(newSetting);
-			} else {
-				this.settingStore.add(new Setting({ type: 'THEME', payload: theme }));
-			}
+			this.settingStore.save(
+				stored?.with({ payload: theme }) ?? new Setting({ type: 'THEME', payload: theme }),
+			);
 		}
 	}
 

@@ -6,7 +6,14 @@ import {
 	Piece,
 	Square,
 } from '@app/definition/chess.type';
+import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessSquare } from '@app/util/chess/chess-square';
+
+/** A piece together with the square it stands on. */
+interface PlacedPiece {
+	readonly piece: Piece;
+	readonly index: number;
+}
 
 /** Applies moves to a position. Every result is a brand new immutable snapshot. */
 export abstract class ChessBoard {
@@ -45,23 +52,61 @@ export abstract class ChessBoard {
 		return position.board[ChessSquare.toIndex(square)];
 	}
 
-	/** King versus king (plus at most one minor piece) can never be mated. */
-	// ToDo => misses king+bishop vs king+bishop on same-coloured squares, the one
-	// four-piece case that is also dead. Only affects the free-play match, and the
-	// match has no threefold-repetition check either — `positionHistory` already holds
-	// what that would need.
+	/**
+	 * Positions no sequence of legal moves can ever mate from: bare kings, a king with
+	 * a single minor piece, and any number of bishops as long as they all travel
+	 * squares of one colour — half the board is then unreachable for every one of them,
+	 * so the four-piece K+B vs K+B draw falls out of the same rule.
+	 *
+	 * Two knights are deliberately not here: mate is unreachable by force but not
+	 * impossible, so the rule does not call it dead.
+	 */
 	static hasInsufficientMaterial(position: ChessPosition): boolean {
-		const pieces = position.board.filter((piece): piece is Piece => undefined !== piece);
+		const rest = this.placed(position).filter(({ piece }) => 'king' !== piece.type);
 
-		if (2 === pieces.length) {
-			return true;
+		if (1 >= rest.length) {
+			return rest.every(({ piece }) => 'bishop' === piece.type || 'knight' === piece.type);
 		}
 
-		if (3 !== pieces.length) {
+		return this.areBishopsOnOneColor(rest);
+	}
+
+	/**
+	 * Three occurrences of the same position, as `ChessFen.positionKey` defines it —
+	 * an en passant target nobody can use does not make a position a different one.
+	 * `history` holds the positions the game passed through *before* the current one,
+	 * so two matches in it make this one the third.
+	 */
+	static isThreefoldRepetition(
+		position: ChessPosition,
+		history: readonly ChessPosition[],
+	): boolean {
+		const key = ChessFen.positionKey(position);
+
+		return 2 <= history.filter((past) => ChessFen.positionKey(past) === key).length;
+	}
+
+	/** The occupied squares, keeping the index each piece sits on. */
+	private static placed(position: ChessPosition): PlacedPiece[] {
+		const placed: PlacedPiece[] = [];
+
+		position.board.forEach((piece, index) => {
+			if (undefined !== piece) {
+				placed.push({ piece, index });
+			}
+		});
+
+		return placed;
+	}
+
+	private static areBishopsOnOneColor(pieces: readonly PlacedPiece[]): boolean {
+		if (!pieces.every(({ piece }) => 'bishop' === piece.type)) {
 			return false;
 		}
 
-		return pieces.some((piece) => 'knight' === piece.type || 'bishop' === piece.type);
+		const colors = new Set(pieces.map(({ index }) => ChessSquare.isLight(index)));
+
+		return 1 === colors.size;
 	}
 
 	private static moveCastlingRook(

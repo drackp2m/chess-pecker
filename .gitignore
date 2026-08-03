@@ -65,3 +65,6 @@ apps/api/migrations/.snapshot-*_test.json
 .cert/
 
 /ideas
+
+# Chess piece SVGs (not distributed with the repo)
+apps/web/public/svg/chess/

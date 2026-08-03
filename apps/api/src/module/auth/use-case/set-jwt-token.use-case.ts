@@ -35,7 +35,7 @@ export class SetJwtTokenUseCase {
 				...('' === cookieDomain ? {} : { domain: cookieDomain }),
 				path,
 				// `maxAge` from config is a human string like "1d"; `ms()` turns it into milliseconds.
-				maxAge: ms(maxAge),
+				maxAge: ms(maxAge as ms.StringValue),
 			});
 		}
 	}

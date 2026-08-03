@@ -1,15 +1,37 @@
 import { Routes } from '@angular/router';
 
+import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
+import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
+import { TrainingRunStore } from '@app/page/training/store/training-run.store';
+import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
+
 export default [
 	{
 		path: '',
-		title: 'Training',
-		loadComponent: () => import('./training.page').then(({ TrainingPage }) => TrainingPage),
-	},
-	{
-		path: 'solve',
-		title: 'Solving',
-		loadComponent: () =>
-			import('./training-solve.page').then(({ TrainingSolvePage }) => TrainingSolvePage),
+		// Provided by the section, not by the page on purpose: the route's injector lives
+		// as long as the route stays activated, so going back to the training page and
+		// returning keeps the exercise, its board and its clock. Pushing any of these down
+		// into `TrainingSolvePage` drops the attempt again.
+		providers: [
+			PuzzleLibraryStore,
+			PuzzleStore,
+			TrainingRunStore,
+			TrainingSolveSession,
+			{ provide: BOARD_PRESENTER, useExisting: PuzzleStore },
+		],
+		children: [
+			{
+				path: '',
+				title: 'Training',
+				loadComponent: () => import('./training.page').then(({ TrainingPage }) => TrainingPage),
+			},
+			{
+				path: 'solve',
+				title: 'Solving',
+				loadComponent: () =>
+					import('./training-solve.page').then(({ TrainingSolvePage }) => TrainingSolvePage),
+			},
+		],
 	},
 ] satisfies Routes;
