@@ -1,3 +1,25 @@
+# v1.8.1 (2026-08-03)
+
+## What's Changed
+
+### 🧪 Tests
+
+- restore current puzzle when switch to another app page ([1fbe19f](https://github.com/drackp2m/chess-pecker/commit/1fbe19f9de79fd1968f7b07824cd10a2d897faed)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- indexedDB migration, migrate settings to v2 ([4f1f4ce](https://github.com/drackp2m/chess-pecker/commit/4f1f4cecfb8b1d5567e7145acfa93e5402b60524)) by Marc Jovaní González
+- remove orphan code from previous project ([5b06b15](https://github.com/drackp2m/chess-pecker/commit/5b06b154dd2af43d9642cb1b0eb9361ca6c7757a)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- improve fen engine to check draw play ([80dc2b8](https://github.com/drackp2m/chess-pecker/commit/80dc2b84a6b369437fb57fc488003c74ca7a0fd5)) by Marc Jovaní González
+- improve load FEN checks, solve error when load invalid CSV file ([dc51886](https://github.com/drackp2m/chess-pecker/commit/dc51886be215c5546c6fdebb09dd8c15ad84eee6)) by Marc Jovaní González
+- prevent lost puzzle when navigate through the app ([9ccaa1d](https://github.com/drackp2m/chess-pecker/commit/9ccaa1d1f4b008729611cfd29002d7423fed93f8)) by Marc Jovaní González
+- strict API, indexedDB migrations, fix settings db on idb ([61f9bb4](https://github.com/drackp2m/chess-pecker/commit/61f9bb4cb1874b5861bd05c6f1179cf43ead146e)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.8.0...v1.8.1
+
 # v1.8.0 (2026-08-01)
 
 ## What's Changed
