@@ -1,8 +1,8 @@
-import {
+import type {
 	CalibrationRoundProgress,
 	CycleProgress,
 	TrainingProgress,
-} from '@app/definition/training.interface';
+} from '@chesspecker/api-definitions';
 
 export interface ProgramSummaryRow {
 	readonly key: string;

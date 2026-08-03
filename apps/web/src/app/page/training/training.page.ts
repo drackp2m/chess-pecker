@@ -1,7 +1,7 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import type { CycleProgress, TrainingStatus } from '@chesspecker/api-definitions';
 
-import { CycleProgress, TrainingStatus } from '@app/definition/training.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';

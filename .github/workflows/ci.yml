@@ -43,6 +43,9 @@ jobs:
         if: always()
         run: node tools/scripts/install/summary.mjs /tmp/pnpm-install.log
 
+      - name: Typecheck shared definitions
+        run: pnpm --filter @chesspecker/api-definitions typecheck
+
       - name: Run lint
         run: pnpm run lint
 

@@ -1,8 +1,8 @@
-import {
+import type {
 	ApiPuzzle,
 	CalibrationRound,
 	CalibrationRoundOutcome,
-} from '@app/definition/training.interface';
+} from '@chesspecker/api-definitions';
 
 export type TrainingRunMode = 'calibration' | 'cycle';
 export type TrainingRunResult = 'solved' | 'failed';

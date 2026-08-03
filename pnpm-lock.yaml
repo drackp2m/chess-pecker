@@ -89,6 +89,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@chesspecker/api-definitions':
+        specifier: workspace:*
+        version: link:../../libs/api-definitions
       '@mikro-orm/cli':
         specifier: ^6.6.7
         version: 6.6.16(pg@8.20.0)(supports-color@10.2.2)
@@ -237,6 +240,9 @@ importers:
       '@angular/service-worker':
         specifier: 22.0.6
         version: 22.0.6(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@chesspecker/api-definitions':
+        specifier: workspace:*
+        version: link:../../libs/api-definitions
       '@ngrx/signals':
         specifier: 21.1.1
         version: 21.1.1(@angular/core@22.0.6(@angular/compiler@22.0.6)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -280,6 +286,12 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@25.9.3)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@1.8.0))(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(sass@1.99.0)(terser@5.49.0)(yaml@2.9.0))
+
+  libs/api-definitions:
+    devDependencies:
+      typescript:
+        specifier: 6.0.3
+        version: 6.0.3
 
 packages:
 

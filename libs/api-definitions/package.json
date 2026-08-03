@@ -1,0 +1,22 @@
+{
+	"name": "@chesspecker/api-definitions",
+	"version": "0.0.0",
+	"description": "Shapes that cross the HTTP boundary between the web app and the API.",
+	"author": "Marc Jovaní González",
+	"private": true,
+	"types": "./src/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.d.ts"
+		}
+	},
+	"files": [
+		"src"
+	],
+	"scripts": {
+		"typecheck": "tsc --noEmit -p tsconfig.json"
+	},
+	"devDependencies": {
+		"typescript": "6.0.3"
+	}
+}

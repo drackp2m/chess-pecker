@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import type { FriendUser } from '@chesspecker/api-definitions';
 
-import { FriendUser } from '@app/definition/friendship.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { FriendStore } from '@app/store/friend.store';

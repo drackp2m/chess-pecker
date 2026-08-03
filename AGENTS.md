@@ -7,6 +7,7 @@ Guidance for any coding agent working in this repository.
 pnpm workspace monorepo (`pnpm-workspace.yaml` → `apps/*`, `libs/*`):
 
 - `apps/web` (`@chesspecker/web`) — the Angular app, everything that used to live at the root.
+- `libs/api-definitions` (`@chesspecker/api-definitions`) — the shapes that cross the HTTP boundary: requests, responses, the state unions, and the route table the web SDK is typed against. **It ships no JavaScript.** Every file is a `.d.ts`, so both apps consume the sources directly with no build step, `apps/api` can import it without tripping the `rootDir` of its own `tsconfig`, and there is nowhere for behaviour to creep in. That has one rule attached: **always `import type` from it** — a plain import would survive per-file transpilation and fail at runtime looking for a module that does not exist. Its own `tsconfig.json` compiles it with `skipLibCheck` off (both apps turn it on, which would otherwise hide a broken reference inside it as a silent `any`); the `lint` job runs that typecheck.
 - `apps/api` (`@chesspecker/api`) — a NestJS API imported from another project, now fully integrated: it compiles, serves the training flow the web app runs on, and no longer imports any of the five missing packages (`@nestjs/graphql`, `graphql`, `graphql-subscriptions`, `graphql-ws`, `@playsetonline/api-definitions`) nor the ten orphan relative imports it arrived with. The debt the integration left behind is settled too: it holds no relaxed rule of its own any more — the same `tsconfig.base.json` strictness and the same ESLint config as the rest of the repo.
 
 The root package holds no runtime dependency — only the repo-wide toolchain (ESLint + its plugins, Stylelint, Prettier, husky, commitlint/commitizen, semantic-release) and scripts that delegate into a workspace package with `pnpm --filter`. semantic-release keeps versioning the **root** `package.json`; `@app/package` resolves there, so the version the app displays stays the released one.
@@ -73,11 +74,15 @@ Every job writes to the run's step summary through one of the `tools/scripts/*/s
 ## Imports
 
 Use the path aliases defined in `apps/web/tsconfig.json` — relative `./` and `../` imports are blocked by an ESLint rule (`no-restricted-imports`):
+Anything shared with the API comes from the `@chesspecker/api-definitions` package instead, always as `import type`.
+
 `@app/component`, `@app/definition`, `@app/directive`, `@app/guard`, `@app/interceptor`, `@app/layout`, `@app/model`, `@app/page`, `@app/pipe`, `@app/repository`, `@app/service`, `@app/store`, `@app/strategy`, `@app/testing`, `@app/use-case`, `@app/util`, plus `@app/package` and `@app/tools/*`, which reach outside the package into the repo root.
 
 The root-level singletons have their own exact aliases (no `/*`): `@app/app.config`, `@app/app.routes`, `@app/app.component` — used e.g. from `apps/web/src/main.ts`.
 
 ## Architecture
+
+The web app never calls `HttpClient` directly: `ApiSdkService` (`service/api-sdk.service.ts`) owns every request, and the repositories call it. A call is `apiSdk.<VERB>.<module>(route, options)`, with three named holes — `path` fills the `:params` of the route, `params` is the body on writes and the query string on reads, `query` is always the query string — each required only when that route declares it. The verb also fixes two defaults: it decides where `params` lands, and whether the request is cancelled when the router navigates away (reads yes, writes no, `cancellable` overrides either way). A cancelled request rejects with `ApiCancelledError`, which the stores treat as "nothing happened" rather than as a failure; the three session calls opt out entirely, because the router's first navigation would otherwise cut off the boot-time session probe. Writes in flight are counted on the SDK and painted by `SaveIndicatorComponent`.
 
 `apps/web/src/app/` follows a clean-architecture-flavored split: `repository/` (data access), `use-case/` (business logic), `store/` (`@ngrx/signals` state), `service/`, `directive/`, `component/`, `layout/`, `page/`, `pipe/`, `model/`, `definition/`, `util/`, `strategy/`, `guard/`, `interceptor/`, `testing/`.
 

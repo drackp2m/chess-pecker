@@ -1,5 +1,6 @@
+import type { ApiPuzzle } from '@chesspecker/api-definitions';
+
 import { Puzzle } from '@app/definition/puzzle.type';
-import { ApiPuzzle } from '@app/definition/training.interface';
 
 const RATING_BUCKET_SIZE = 100;
 

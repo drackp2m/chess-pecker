@@ -1,14 +1,15 @@
 import { Injectable, computed, inject } from '@angular/core';
+import type {
+	SetTrainingGoalRequest,
+	Training,
+	TrainingProgress,
+} from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
-import {
-	Training,
-	TrainingGoalRequest,
-	TrainingProgress,
-} from '@app/definition/training.interface';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
-import { HttpError } from '@app/util/http-error';
+import { ApiCancelledError } from '@app/util/api-cancelled-error';
+import { API_FAILURE, HttpError } from '@app/util/http-error';
 
 const ACTIVE_STATUSES = ['calibrating', 'planning', 'running'] as const;
 
@@ -71,7 +72,9 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 		} catch (error) {
 			patchState(this, {
 				isLoading: false,
-				error: HttpError.toMessage(error, 'Could not load your trainings.'),
+				...(ApiCancelledError.is(error)
+					? {}
+					: { error: HttpError.toMessage(error, 'Could not load your trainings.') }),
 			});
 		}
 	}
@@ -89,7 +92,7 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 		);
 	}
 
-	async setGoal(goal: TrainingGoalRequest): Promise<boolean> {
+	async setGoal(goal: SetTrainingGoalRequest): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.trainingRepository.setGoal(uuid, goal),
 			'The goal could not be saved.',
@@ -145,6 +148,10 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 		try {
 			await action();
 		} catch (error) {
+			if (API_FAILURE.staleTrainingList === HttpError.toFailure(error)) {
+				await this.load();
+			}
+
 			patchState(this, { isSubmitting: false, error: HttpError.toMessage(error, fallback) });
 
 			return false;

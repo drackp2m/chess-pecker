@@ -21,4 +21,5 @@
 /apps/api/dist
 /apps/api/migrations
 /apps/api/node_modules
+/libs/api-definitions/node_modules
 Dockerfile

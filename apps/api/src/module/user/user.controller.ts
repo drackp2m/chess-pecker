@@ -1,8 +1,8 @@
+import type { UserSummary } from '@chesspecker/api-definitions';
 import { Controller, Get, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 
-import { UserSummary } from './definition/user-summary.interface';
 import { SearchUserRequestDto } from './dto/request/search-user-request.dto';
 import { SearchUsersUseCase } from './use-case/search-users.use-case';
 import { User } from './user.entity';

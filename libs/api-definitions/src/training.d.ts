@@ -1,3 +1,6 @@
+import { ApiPuzzle } from './puzzle';
+import { SyncTimestamps } from './sync';
+
 export type TrainingStatus = 'calibrating' | 'planning' | 'running' | 'finished' | 'abandoned';
 
 export type TrainingFinishedReason = 'completed' | 'plateau' | 'max-cycles' | 'cancelled';
@@ -8,19 +11,7 @@ export type CalibrationRoundOutcome = 'pending' | 'raise' | 'lower' | 'accept';
 
 export type TrainingCycleStatus = 'running' | 'finished' | 'abandoned';
 
-/**
- * An exercise as the API serves it. It is not the shape the board reads: there the
- * exercise is keyed by its Lichess id, while every write back to the API goes by
- * `uuid`, so both have to travel together. `PuzzleMapper` does the conversion.
- */
-export interface ApiPuzzle {
-	readonly uuid: string;
-	readonly lichessId: string;
-	readonly fen: string;
-	readonly moves: readonly string[];
-	readonly rating: number;
-	readonly themes: readonly string[];
-}
+export type PuzzleAttemptKind = 'calibration' | 'cycle';
 
 export interface Training {
 	readonly uuid: string;
@@ -83,28 +74,38 @@ export interface CycleAttemptResult {
 	readonly cycleFinished: boolean;
 }
 
-// ToDo => neither request carries `createdAt` / `updatedAt`, so the server stamps both
-// with its own clock. The schema treats them as domain data — when the exercise was
-// first opened and when it was closed — and `SyncTimestampsDto` already accepts them;
-// they are what the progress screen groups by day, and what stops someone who trained
-// for weeks without an account from having their whole history collapse onto the day
-// they registered. The front has to keep them per attempt and send them here.
-export interface SubmitCalibrationAttemptRequest {
-	readonly roundUuid: string;
-	readonly puzzleUuid: string;
-	readonly durationMs: number;
-	readonly solved: boolean;
-}
-
-export interface SubmitCycleAttemptRequest {
-	readonly cycleItemUuid: string;
-	readonly durationMs: number;
-	readonly solved: boolean;
-}
-
-export interface TrainingGoalRequest {
+export interface TrainingGoal {
+	readonly uuid: string;
 	readonly puzzlesPerDay?: number;
 	readonly endDate?: string;
+	readonly createdAt: string;
+	readonly updatedAt: string;
+}
+
+export interface SelectTrainingSetRequest {
+	size?: number;
+}
+
+export interface SelectTrainingSetResult {
+	readonly size: number;
+}
+
+export interface SetTrainingGoalRequest<TDate = string> extends SyncTimestamps<TDate> {
+	puzzlesPerDay?: number;
+	endDate?: TDate;
+}
+
+export interface SubmitCalibrationAttemptRequest<TDate = string> extends SyncTimestamps<TDate> {
+	roundUuid: string;
+	puzzleUuid: string;
+	durationMs: number;
+	solved: boolean;
+}
+
+export interface SubmitCycleAttemptRequest<TDate = string> extends SyncTimestamps<TDate> {
+	cycleItemUuid: string;
+	durationMs: number;
+	solved: boolean;
 }
 
 export interface CycleProgress {

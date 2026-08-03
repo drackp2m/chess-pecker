@@ -1,9 +1,5 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-
-import { API_BASE_URL } from '@app/definition/api.constant';
-import {
+import type {
 	CalibrationAttemptResult,
 	CalibrationRound,
 	CalibrationRoundPuzzles,
@@ -13,7 +9,9 @@ import {
 	SubmitCycleAttemptRequest,
 	TrainingCycle,
 	TrainingCycleItem,
-} from '@app/definition/training.interface';
+} from '@chesspecker/api-definitions';
+
+import { ApiSdkService } from '@app/service/api-sdk.service';
 
 /**
  * Everything that happens while a training is being solved: the calibration rounds and
@@ -23,62 +21,49 @@ import {
 	providedIn: 'root',
 })
 export class TrainingRunRepository {
-	private readonly httpClient = inject(HttpClient);
-	private readonly baseUrl = `${API_BASE_URL}/training`;
+	private readonly apiSdk = inject(ApiSdkService);
 
-	async listRounds(uuid: string): Promise<CalibrationRound[]> {
-		return firstValueFrom(
-			this.httpClient.get<CalibrationRound[]>(`${this.baseUrl}/${uuid}/calibration/round`),
-		);
+	async listRounds(uuid: string): Promise<readonly CalibrationRound[]> {
+		return this.apiSdk.GET.training('/:uuid/calibration/round', { path: { uuid } });
 	}
 
 	/** Opens the next round and hands back its exercises: one to scan, ten to refine. */
 	async createRound(uuid: string): Promise<CalibrationRoundStart> {
-		return firstValueFrom(
-			this.httpClient.post<CalibrationRoundStart>(`${this.baseUrl}/${uuid}/calibration/round`, {}),
-		);
+		return this.apiSdk.POST.training('/:uuid/calibration/round', { path: { uuid } });
 	}
 
 	async listRoundPuzzles(uuid: string, roundUuid: string): Promise<CalibrationRoundPuzzles> {
-		return firstValueFrom(
-			this.httpClient.get<CalibrationRoundPuzzles>(
-				`${this.baseUrl}/${uuid}/calibration/round/${roundUuid}/puzzle`,
-			),
-		);
+		return this.apiSdk.GET.training('/:uuid/calibration/round/:roundUuid/puzzle', {
+			path: { uuid, roundUuid },
+		});
 	}
 
 	async submitCalibrationAttempt(
 		uuid: string,
 		request: SubmitCalibrationAttemptRequest,
 	): Promise<CalibrationAttemptResult> {
-		return firstValueFrom(
-			this.httpClient.post<CalibrationAttemptResult>(
-				`${this.baseUrl}/${uuid}/calibration/attempt`,
-				request,
-			),
-		);
+		return this.apiSdk.POST.training('/:uuid/calibration/attempt', {
+			path: { uuid },
+			params: request,
+		});
 	}
 
-	async listCycles(uuid: string): Promise<TrainingCycle[]> {
-		return firstValueFrom(this.httpClient.get<TrainingCycle[]>(`${this.baseUrl}/${uuid}/cycle`));
+	async listCycles(uuid: string): Promise<readonly TrainingCycle[]> {
+		return this.apiSdk.GET.training('/:uuid/cycle', { path: { uuid } });
 	}
 
 	async startCycle(uuid: string): Promise<TrainingCycle> {
-		return firstValueFrom(this.httpClient.post<TrainingCycle>(`${this.baseUrl}/${uuid}/cycle`, {}));
+		return this.apiSdk.POST.training('/:uuid/cycle', { path: { uuid } });
 	}
 
 	async getNextItem(uuid: string): Promise<TrainingCycleItem> {
-		return firstValueFrom(
-			this.httpClient.get<TrainingCycleItem>(`${this.baseUrl}/${uuid}/cycle/next`),
-		);
+		return this.apiSdk.GET.training('/:uuid/cycle/next', { path: { uuid } });
 	}
 
 	async submitCycleAttempt(
 		uuid: string,
 		request: SubmitCycleAttemptRequest,
 	): Promise<CycleAttemptResult> {
-		return firstValueFrom(
-			this.httpClient.post<CycleAttemptResult>(`${this.baseUrl}/${uuid}/cycle/attempt`, request),
-		);
+		return this.apiSdk.POST.training('/:uuid/cycle/attempt', { path: { uuid }, params: request });
 	}
 }

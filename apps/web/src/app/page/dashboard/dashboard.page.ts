@@ -61,4 +61,8 @@ export class DashboardPage {
 	logOut(): void {
 		void this.session.logOut();
 	}
+
+	retryConnection(): void {
+		void this.session.retry();
+	}
 }

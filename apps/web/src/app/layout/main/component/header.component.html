@@ -6,9 +6,14 @@
 		<h3>{{ title() }}</h3>
 	</button>
 
-	@if (session.isAuthenticated()) {
-		<span class="fs-md">{{ session.username() }}</span>
-	} @else if (session.isAnonymous()) {
-		<button appRouterLink="/login" class="log-in fs-md color-primary">Log in</button>
-	}
+	<span class="session flex-row gap-2 align-center">
+		<app-connection-indicator />
+
+		@if (session.isAuthenticated()) {
+			<app-save-indicator />
+			<span class="fs-md">{{ session.username() }}</span>
+		} @else if (session.isAnonymous()) {
+			<button appRouterLink="/login" class="log-in fs-md color-primary">Log in</button>
+		}
+	</span>
 </section>

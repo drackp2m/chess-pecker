@@ -1,13 +1,13 @@
 import { HttpStatusCode } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
-import { patchState, signalStore, withState } from '@ngrx/signals';
-
-import {
+import type {
 	ApiPuzzle,
 	CalibrationRound,
 	CalibrationRoundPuzzles,
 	Training,
-} from '@app/definition/training.interface';
+} from '@chesspecker/api-definitions';
+import { patchState, signalStore, withState } from '@ngrx/signals';
+
 import {
 	TrainingRunResult,
 	TrainingRunSlot,
@@ -16,7 +16,9 @@ import {
 	toSlot,
 } from '@app/page/training/store/training-run-state';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
+import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
+import { SolveTiming } from '@app/util/solve-timer';
 
 /**
  * Drives one solving run — a calibration round, or a stretch of a cycle — against the
@@ -31,11 +33,6 @@ import { HttpError } from '@app/util/http-error';
 // notes has the shape — the same tables as IndexedDB object stores, draft attempts that
 // grow while the exercise is open, a `synced_at` per row, and an upload ordered
 // training → goal/rounds/puzzles → cycles → items → attempts on registering.
-//
-// ToDo => none of the 412s the API can answer with are told apart from a generic
-// failure, and they mean very different things to the user: "not enough puzzles" is an
-// empty catalog and needs `POST /puzzle/import` run by an admin, "already in progress"
-// means the training list is stale, "goal is required" is a step skipped in the UI.
 @Injectable()
 export class TrainingRunStore extends signalStore(
 	{ protectedState: false },
@@ -74,7 +71,7 @@ export class TrainingRunStore extends signalStore(
 	 * Records how the exercise on screen went. Woodpecker grades on the first try, so
 	 * this runs once per exercise and is never revised.
 	 */
-	async grade(result: TrainingRunResult, durationMs: number): Promise<void> {
+	async grade(result: TrainingRunResult, timing: SolveTiming): Promise<void> {
 		const uuid = this.trainingUuid();
 		const current = this.current();
 
@@ -87,8 +84,8 @@ export class TrainingRunStore extends signalStore(
 		try {
 			const isClosed =
 				'calibration' === this.mode()
-					? await this.gradeCalibration(uuid, current.puzzle, result, durationMs)
-					: await this.gradeCycle(uuid, current, result, durationMs);
+					? await this.gradeCalibration(uuid, current.puzzle, result, timing)
+					: await this.gradeCycle(uuid, current, result, timing);
 
 			patchState(this, { isSubmitting: false, isDone: isClosed });
 		} catch (error) {
@@ -181,7 +178,7 @@ export class TrainingRunStore extends signalStore(
 		uuid: string,
 		puzzle: ApiPuzzle,
 		result: TrainingRunResult,
-		durationMs: number,
+		timing: SolveTiming,
 	): Promise<boolean> {
 		const round = this.round();
 
@@ -192,8 +189,8 @@ export class TrainingRunStore extends signalStore(
 		const { outcome } = await this.runRepository.submitCalibrationAttempt(uuid, {
 			roundUuid: round.uuid,
 			puzzleUuid: puzzle.uuid,
-			durationMs,
 			solved: 'solved' === result,
+			...timing,
 		});
 
 		if ('pending' !== outcome) {
@@ -217,7 +214,7 @@ export class TrainingRunStore extends signalStore(
 		uuid: string,
 		current: TrainingRunSlot,
 		result: TrainingRunResult,
-		durationMs: number,
+		timing: SolveTiming,
 	): Promise<boolean> {
 		if (null === current.cycleItemUuid) {
 			return true;
@@ -225,8 +222,8 @@ export class TrainingRunStore extends signalStore(
 
 		const { cycleFinished } = await this.runRepository.submitCycleAttempt(uuid, {
 			cycleItemUuid: current.cycleItemUuid,
-			durationMs,
 			solved: 'solved' === result,
+			...timing,
 		});
 
 		if (cycleFinished) {
@@ -262,6 +259,12 @@ export class TrainingRunStore extends signalStore(
 	}
 
 	private fail(error: unknown, fallback: string): void {
+		if (ApiCancelledError.is(error)) {
+			patchState(this, { isLoading: false, isSubmitting: false });
+
+			return;
+		}
+
 		patchState(this, {
 			isLoading: false,
 			isSubmitting: false,

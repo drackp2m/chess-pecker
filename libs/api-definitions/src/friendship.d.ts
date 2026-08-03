@@ -1,9 +1,11 @@
+import { UserRole } from './user';
+
 export type FriendshipStatus = 'pending' | 'accepted' | 'declined';
 
 export interface FriendUser {
 	readonly uuid: string;
 	readonly username: string;
-	readonly role: string;
+	readonly role: UserRole;
 	readonly email?: string;
 }
 
@@ -25,4 +27,12 @@ export interface UserBlock {
 	readonly uuid: string;
 	readonly blocked: FriendUser;
 	readonly createdAt: string;
+}
+
+export interface SendFriendRequest {
+	username: string;
+}
+
+export interface BlockUserRequest {
+	username: string;
 }

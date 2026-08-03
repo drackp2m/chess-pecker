@@ -8,7 +8,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { patchState } from '@ngrx/signals';
-import { firstValueFrom } from 'rxjs';
+import { NEVER, Observable, firstValueFrom } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { API_BASE_URL } from '@app/definition/api.constant';
@@ -24,6 +24,7 @@ const expired = { status: 401, statusText: 'Unauthorized' };
 
 interface RouterStub {
 	navigate: (commands: string[]) => Promise<boolean>;
+	events: Observable<unknown>;
 }
 
 interface Harness {
@@ -36,7 +37,9 @@ interface Harness {
 // The real store and the real repository: what is under test is how the three of them
 // behave when several requests race, which a stubbed renewal would decide for them.
 function setUp(): Harness {
-	const router: RouterStub = { navigate: vi.fn(() => Promise.resolve(true)) };
+	// `ApiSdkService` cancels on `NavigationStart`, so the stub owes it a stream of events:
+	// nothing navigates during these tests, and `NEVER` says exactly that.
+	const router: RouterStub = { navigate: vi.fn(() => Promise.resolve(true)), events: NEVER };
 
 	TestBed.configureTestingModule({
 		providers: [

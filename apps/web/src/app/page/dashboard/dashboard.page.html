@@ -24,7 +24,17 @@
 			@if (session.error(); as message) {
 				<p class="error fs-sm" role="alert">{{ message }}</p>
 			}
-		} @else {
+		} @else if (session.isUnreachable()) {
+			<p class="fs-sm color-contrast-mid">
+				The server is not answering, so there is no way to tell whether your session is open. It may
+				be waking up, which takes up to a minute on the free tier. Meanwhile the board, free play,
+				an imported set and your settings work as usual — they never leave this device.
+			</p>
+
+			<!-- No disabled state: the retry sets the status back to `unknown`, which takes
+			this whole branch off the screen until the server answers one way or the other. -->
+			<button appThemed (click)="retryConnection()">Try again</button>
+		} @else if (session.isAnonymous()) {
 			<p class="fs-sm color-contrast-mid">
 				An account opens a session against the Chess Pecker API. Your program, its cycles and every
 				exercise you solve are stored there, so they carry between devices.

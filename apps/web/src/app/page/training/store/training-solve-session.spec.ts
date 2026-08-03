@@ -1,11 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import type { ApiPuzzle, Training, TrainingCycleItem } from '@chesspecker/api-definitions';
 import { patchState } from '@ngrx/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_MISTAKE_POLICY } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
-import { ApiPuzzle, Training, TrainingCycleItem } from '@app/definition/training.interface';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
@@ -37,6 +37,8 @@ const TRAINING: Training = {
 
 /** Long enough for both beats of the opponent's opening move: it lights up, then moves. */
 const OPENING = 1500;
+
+const OPENED_AT = '2026-08-03T10:00:00.000Z';
 
 function toItem(puzzle: ApiPuzzle, uuid: string, position: number): TrainingCycleItem {
 	return { uuid, position, trainingPuzzle: { uuid: `tp-${uuid}`, puzzle } };
@@ -94,6 +96,7 @@ async function settleSolved(board: PuzzleStore): Promise<void> {
 describe('TrainingSolveSession', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
+		vi.setSystemTime(new Date(OPENED_AT));
 	});
 
 	afterEach(() => {
@@ -141,11 +144,30 @@ describe('TrainingSolveSession', () => {
 		vi.advanceTimersByTime(2000);
 		await settleSolved(board);
 
-		expect(repository.submitCycleAttempt).toHaveBeenCalledWith('training-1', {
-			cycleItemUuid: 'item-1',
-			durationMs: OPENING + 3000 + 2000,
-			solved: true,
-		});
+		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
+			'training-1',
+			expect.objectContaining({
+				cycleItemUuid: 'item-1',
+				durationMs: OPENING + 3000 + 2000,
+				solved: true,
+			}),
+		);
+	});
+
+	it('stamps the attempt with when the exercise opened and when it settled', async () => {
+		const repository = createRepository();
+		const { session, board } = configure(repository);
+
+		await enter(session);
+		await settleSolved(board);
+
+		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
+			'training-1',
+			expect.objectContaining({
+				createdAt: OPENED_AT,
+				updatedAt: '2026-08-03T10:00:01.500Z',
+			}),
+		);
 	});
 
 	it('carries the clock across a round trip instead of restarting it', async () => {

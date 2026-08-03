@@ -1,15 +1,21 @@
 import { HttpStatusCode } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
+import type { AuthUser, LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
-import { AuthUser, LoginRequest, RegisterRequest } from '@app/definition/auth.interface';
-import { SessionStatus } from '@app/definition/session-status.type';
+import { ConnectionPhase, SessionStatus } from '@app/definition/session-status.type';
 import { AuthRepository } from '@app/repository/auth.repository';
+import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
+
+/** How long the wait is allowed to look normal, and when it starts looking like a cold start. */
+const CONNECTING_AFTER_MS = 2000;
+const WAKING_AFTER_MS = 10000;
 
 interface SessionStoreProps {
 	status: SessionStatus;
 	user: AuthUser | null;
+	waiting: Exclude<ConnectionPhase, 'unreachable'>;
 	isSubmitting: boolean;
 	error: string | null;
 }
@@ -17,6 +23,7 @@ interface SessionStoreProps {
 const initialState: SessionStoreProps = {
 	status: 'unknown',
 	user: null,
+	waiting: 'idle',
 	isSubmitting: false,
 	error: null,
 };
@@ -27,23 +34,56 @@ const initialState: SessionStoreProps = {
 export class SessionStore extends signalStore({ protectedState: false }, withState(initialState)) {
 	readonly isAuthenticated = computed(() => 'authenticated' === this.status());
 	readonly isAnonymous = computed(() => 'anonymous' === this.status());
+	readonly isUnreachable = computed(() => 'unreachable' === this.status());
 	readonly username = computed(() => this.user()?.username ?? null);
+
+	/**
+	 * The one thing the interface can show while the session settles. A failed call wins
+	 * over the timers: once the API has answered badly there is nothing left to wait for.
+	 */
+	readonly connectionPhase = computed<ConnectionPhase>(() =>
+		'unreachable' === this.status() ? 'unreachable' : this.waiting(),
+	);
 
 	private readonly authRepository = inject(AuthRepository);
 	private refreshing: Promise<void> | null = null;
+	private waitTimers: ReturnType<typeof setTimeout>[] = [];
 
 	// Called once from the app initializer (see app.config.ts) rather than from a
 	// constructor, so nothing that injects the store kicks off an HTTP request. A 401 is
 	// not the end of it either: `authInterceptor` renews the session and repeats the call
 	// before anything reaches this `catch`, which therefore does mean "there is no session".
 	async restore(): Promise<void> {
+		this.startWaiting();
+
 		try {
 			const user = await this.authRepository.getCurrentUser();
 
 			patchState(this, { status: 'authenticated', user });
-		} catch {
-			patchState(this, { status: 'anonymous', user: null });
+		} catch (error) {
+			if (ApiCancelledError.is(error)) {
+				return;
+			}
+
+			patchState(this, { status: SessionStore.toFailedStatus(error), user: null });
+		} finally {
+			this.stopWaiting();
 		}
+	}
+
+	/**
+	 * The way out of `unreachable`: the server was asleep and someone is saying it may be
+	 * awake now. A restore already in flight is left alone — asking twice would only spend
+	 * another cold start.
+	 */
+	async retry(): Promise<void> {
+		if ('unknown' === this.status()) {
+			return;
+		}
+
+		patchState(this, { status: 'unknown' });
+
+		return this.restore();
 	}
 
 	async logIn(request: LoginRequest): Promise<boolean> {
@@ -134,6 +174,20 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		patchState(this, { error: null });
 	}
 
+	/**
+	 * A 401 here is the end of the conversation, not the start of one: `authInterceptor`
+	 * has already renewed and repeated the call before anything reaches this point, so it
+	 * does mean "there is no session". Anything else — no network, a 5xx, a gateway that
+	 * gave up on a cold start — says nothing about the session, and calling it `anonymous`
+	 * would log the user out of an interface that has no idea whether they are logged in.
+	 */
+	private static toFailedStatus(error: unknown): SessionStatus {
+		return HttpError.hasStatus(error, HttpStatusCode.Unauthorized) ||
+			HttpError.hasStatus(error, HttpStatusCode.Forbidden)
+			? 'anonymous'
+			: 'unreachable';
+	}
+
 	private static logInError(error: unknown): string {
 		if (HttpError.hasStatus(error, HttpStatusCode.Unauthorized)) {
 			return 'Wrong username or password.';
@@ -144,6 +198,33 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		}
 
 		return HttpError.toMessage(error, 'Could not log in. Try again.');
+	}
+
+	/**
+	 * Two timers rather than a ticking interval: the phases only change twice, and a clock
+	 * running for the whole visit to report a call that lasted two seconds is waste.
+	 */
+	private startWaiting(): void {
+		this.stopWaiting();
+		patchState(this, { waiting: 'idle' });
+
+		this.waitTimers = [
+			setTimeout(() => {
+				patchState(this, { waiting: 'connecting' });
+			}, CONNECTING_AFTER_MS),
+			setTimeout(() => {
+				patchState(this, { waiting: 'waking' });
+			}, WAKING_AFTER_MS),
+		];
+	}
+
+	private stopWaiting(): void {
+		for (const timer of this.waitTimers) {
+			clearTimeout(timer);
+		}
+
+		this.waitTimers = [];
+		patchState(this, { waiting: 'idle' });
 	}
 
 	private async renewSession(): Promise<void> {

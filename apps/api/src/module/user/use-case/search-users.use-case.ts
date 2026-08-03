@@ -1,6 +1,6 @@
+import type { UserSummary } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
-import { UserSummary } from '../definition/user-summary.interface';
 import { SearchUserRequestDto } from '../dto/request/search-user-request.dto';
 import { User } from '../user.entity';
 import { UserRepository } from '../user.repository';

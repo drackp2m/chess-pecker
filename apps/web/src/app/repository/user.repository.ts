@@ -1,25 +1,20 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import type { UserSummary } from '@chesspecker/api-definitions';
 
-import { API_BASE_URL } from '@app/definition/api.constant';
-import { UserSummary } from '@app/definition/user.interface';
+import { ApiSdkService } from '@app/service/api-sdk.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class UserRepository {
-	private readonly httpClient = inject(HttpClient);
-	private readonly baseUrl = `${API_BASE_URL}/user`;
+	private readonly apiSdk = inject(ApiSdkService);
 
 	/**
 	 * Prefix search over the username, which is what the friends screen needs to tell a
 	 * typo from a stranger before sending a request. Never answers with yourself, and
 	 * carries nothing but uuid and username.
 	 */
-	async search(username: string): Promise<UserSummary[]> {
-		const params = new HttpParams().set('username', username);
-
-		return firstValueFrom(this.httpClient.get<UserSummary[]>(this.baseUrl, { params }));
+	async search(username: string): Promise<readonly UserSummary[]> {
+		return this.apiSdk.GET.user('', { query: { username } });
 	}
 }
