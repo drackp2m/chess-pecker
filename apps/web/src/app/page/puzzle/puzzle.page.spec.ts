@@ -38,6 +38,14 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 	return TestBed.createComponent(PuzzlePage).componentInstance;
 }
 
+/** A file picker `change` event, with a file that reads however the test wants. */
+function createFileEvent(name: string, read: () => Promise<string>): Event {
+	const file = { name, text: read } as unknown as File;
+	const input = { files: [file], value: `C:\\fakepath\\${name}` } as unknown as HTMLInputElement;
+
+	return { target: input } as unknown as Event;
+}
+
 describe('PuzzlePage', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
@@ -74,5 +82,33 @@ describe('PuzzlePage', () => {
 		page.store.selectSquare('b1');
 
 		expect(page.store.history()[1]?.san).toBe('Rb1+');
+	});
+
+	it('reports an unreadable file instead of dying on the rejection', async () => {
+		const page = createPage({});
+		const event = createFileEvent('set.csv', () => Promise.reject(new Error('unreadable')));
+
+		await page.loadFile(event);
+
+		expect(page.store.library.importError()).toBe('Could not read set.csv.');
+		expect(page.store.library.puzzles()).toHaveLength(0);
+		// Cleared even on failure, so picking the same file again still fires `change`.
+		expect((event.target as HTMLInputElement).value).toBe('');
+	});
+
+	it('imports a readable file and clears the picker', async () => {
+		const page = createPage({ sample: true });
+		const sample = page.store.puzzle();
+		const event = createFileEvent('set.csv', () =>
+			Promise.resolve(
+				`PuzzleId,FEN,Moves,Rating\nZZZZZ,${sample?.fen ?? ''},${sample?.moves.join(' ') ?? ''},600`,
+			),
+		);
+
+		await page.loadFile(event);
+
+		expect(page.store.library.importError()).toBeUndefined();
+		expect(page.store.puzzle()?.id).toBe('ZZZZZ');
+		expect((event.target as HTMLInputElement).value).toBe('');
 	});
 });

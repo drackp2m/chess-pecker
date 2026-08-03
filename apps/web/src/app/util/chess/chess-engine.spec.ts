@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ChessMove, ChessPosition } from '@app/definition/chess.type';
+import { ChessMove, ChessPosition, Square } from '@app/definition/chess.type';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessNotation } from '@app/util/chess/chess-notation';
+import { ChessSquare } from '@app/util/chess/chess-square';
 
 /** Counts every leaf node of the move tree: the standard move-generation benchmark. */
 function perft(position: ChessPosition, depth: number): number {
@@ -97,6 +98,30 @@ describe('FEN', () => {
 	it('rejects a position without both kings', () => {
 		expect(ChessFen.isValid('8/8/8/8/8/8/8/K7 w - - 0 1')).toBe(false);
 		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - - 0 1')).toBe(true);
+	});
+
+	it('rejects a placement that does not describe sixty-four squares', () => {
+		expect(ChessFen.isValid('8/8/8/8/KQkq w - - 0 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6kq w - - 0 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K5k w - - 0 1')).toBe(false);
+	});
+
+	it('rejects an en passant field that is not a square on the board', () => {
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - z3 0 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - e3 0 1')).toBe(true);
+	});
+
+	it('rejects a move counter that is not a number', () => {
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - - x 1')).toBe(false);
+		expect(ChessFen.isValid('8/8/8/8/8/8/8/K6k w - - 0 x')).toBe(false);
+	});
+});
+
+describe('squares', () => {
+	it('refuses to index a square off the board', () => {
+		expect(() => ChessSquare.toIndex('z3' as Square)).toThrow(RangeError);
+		expect(() => ChessSquare.toIndex('a9' as Square)).toThrow(RangeError);
+		expect(ChessSquare.toIndex('h4')).toBe(39);
 	});
 });
 

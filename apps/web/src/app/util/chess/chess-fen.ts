@@ -12,8 +12,15 @@ import {
 	Square,
 } from '@app/definition/chess.type';
 import { ChessAttack } from '@app/util/chess/chess-attack';
+import { ChessSquare } from '@app/util/chess/chess-square';
 
-/** Reads and writes Forsyth–Edwards Notation, the format chess exercises ship in. */
+/**
+ * Reads and writes Forsyth–Edwards Notation, the format chess exercises ship in.
+ *
+ * `parse` is strict on purpose: it is the door a pasted CSV comes in through, so
+ * every field is either understood or the whole string is rejected. Nothing here
+ * returns a half-parsed position.
+ */
 export abstract class ChessFen {
 	static parse(fen: string): ChessPosition {
 		const [placement, turn, castling, enPassant, halfmove, fullmove] = fen.trim().split(/\s+/);
@@ -26,9 +33,9 @@ export abstract class ChessFen {
 			board: this.parsePlacement(placement),
 			turn: 'b' === turn ? 'black' : 'white',
 			castling: this.parseCastling(castling ?? '-'),
-			enPassant: undefined === enPassant || '-' === enPassant ? undefined : (enPassant as Square),
-			halfmoveClock: Number(halfmove ?? '0'),
-			fullmoveNumber: Math.max(1, Number(fullmove ?? '1')),
+			enPassant: this.parseEnPassant(enPassant ?? '-'),
+			halfmoveClock: this.parseCounter(halfmove ?? '0', 'halfmove clock'),
+			fullmoveNumber: Math.max(1, this.parseCounter(fullmove ?? '1', 'fullmove number')),
 		};
 	}
 
@@ -51,24 +58,10 @@ export abstract class ChessFen {
 	}
 
 	/**
-	 * Sanity check for a user supplied position: both kings must be present, and the
-	 * side that just moved may not be left in check — that position is unreachable.
+	 * Sanity check for a user supplied position: it has to parse, both kings must be
+	 * present, and the side that just moved may not be left in check — that position
+	 * is unreachable.
 	 */
-	// FixMe => this is the only gate a pasted CSV passes through, and it is thinner
-	// than it looks. It does not check that the placement describes exactly 64 squares
-	// (`parsePlacement` silently drops the overflow and leaves the shortfall empty, so
-	// `8/8/8/8/KQkq` validates), nor that the en-passant field is a real square. That
-	// second one is not cosmetic: `parse` casts it with `enPassant as Square`, and
-	// `ChessSquare.toIndex` computes `RANKS.indexOf(...) * 8 + FILES.indexOf(...)`
-	// without guarding the `-1`s — so `"z3"` resolves to index 39, a legitimate square
-	// (`h4`), and the move generator will happily offer a phantom en-passant capture
-	// there. Rejecting a malformed square in `parse`, or having `toIndex` refuse an
-	// off-board square, closes it.
-	//
-	// ToDo => `halfmoveClock: Number(halfmove ?? '0')` is `NaN` for a non-numeric
-	// field, and nothing here rejects it. It then leaks into `status()` (`100 <= NaN`
-	// is false, so the fifty-move draw never fires) and into `serialize`, which writes
-	// the string "NaN" back out.
 	static isValid(fen: string): boolean {
 		try {
 			const position = this.parse(fen);
@@ -86,34 +79,78 @@ export abstract class ChessFen {
 		}
 	}
 
+	/** Eight ranks of eight squares each, or nothing: a short row is not a position. */
 	private static parsePlacement(placement: string): readonly (Piece | undefined)[] {
+		const rows = placement.split('/');
+
+		if (BOARD_SIZE !== rows.length) {
+			throw new SyntaxError(`FEN placement is not eight ranks: ${placement}`);
+		}
+
 		const board = new Array<Piece | undefined>(SQUARE_COUNT).fill(undefined);
-		let index = 0;
 
-		for (const character of placement) {
-			if ('/' === character) {
-				continue;
-			}
+		rows.forEach((row, index) => {
+			this.parsePlacementRow(row, board, index * BOARD_SIZE);
+		});
 
+		return board;
+	}
+
+	private static parsePlacementRow(
+		row: string,
+		board: (Piece | undefined)[],
+		offset: number,
+	): void {
+		let file = 0;
+
+		for (const character of row) {
 			const skip = Number(character);
 
 			if (!Number.isNaN(skip)) {
-				index += skip;
+				file += skip;
 
 				continue;
 			}
 
 			const type = PIECE_BY_LETTER[character.toLowerCase()];
 
-			if (undefined !== type && index < SQUARE_COUNT) {
-				const color: PieceColor = character === character.toUpperCase() ? 'white' : 'black';
-				board[index] = { type, color };
+			if (undefined === type || file >= BOARD_SIZE) {
+				throw new SyntaxError(`Malformed FEN rank: ${row}`);
 			}
 
-			index++;
+			const color: PieceColor = character === character.toUpperCase() ? 'white' : 'black';
+			board[offset + file] = { type, color };
+			file++;
 		}
 
-		return board;
+		if (BOARD_SIZE !== file) {
+			throw new SyntaxError(`FEN rank is not eight squares: ${row}`);
+		}
+	}
+
+	private static parseEnPassant(enPassant: string): Square | undefined {
+		if ('-' === enPassant) {
+			return undefined;
+		}
+
+		if (!ChessSquare.isSquare(enPassant)) {
+			throw new SyntaxError(`Malformed FEN en passant square: ${enPassant}`);
+		}
+
+		return enPassant;
+	}
+
+	/**
+	 * A FEN counter is a plain non-negative integer. `Number` would take `"1e3"` and
+	 * hand back `NaN` for anything else, which then leaks into the fifty-move rule —
+	 * `100 <= NaN` is false, so the draw never fires — and back out through `serialize`.
+	 */
+	private static parseCounter(counter: string, field: string): number {
+		if (!/^\d+$/.test(counter)) {
+			throw new SyntaxError(`Malformed FEN ${field}: ${counter}`);
+		}
+
+		return Number(counter);
 	}
 
 	private static parseCastling(castling: string): CastlingRights {

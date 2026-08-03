@@ -61,10 +61,12 @@ export class PuzzlePage {
 		this.csvDraft.set((event.target as HTMLTextAreaElement).value);
 	}
 
-	// FixMe => `file.text()` rejects on an unreadable file (removed from disk, denied
-	// permission) and the template calls this straight from `(change)`, so the
-	// rejection is unhandled: no error shown, and `input.value` is never cleared, so
-	// picking the same file again fires no event and the picker looks dead.
+	/**
+	 * `file.text()` rejects on an unreadable file — removed from disk, permission
+	 * denied — and the template calls this straight from `(change)`, so the rejection
+	 * has to be handled here. Clearing the input is what lets the same file be picked
+	 * again: without it the value never changes and no further `change` event fires.
+	 */
 	async loadFile(event: Event): Promise<void> {
 		const input = event.target as HTMLInputElement;
 		const file = input.files?.[0];
@@ -73,8 +75,13 @@ export class PuzzlePage {
 			return;
 		}
 
-		this.store.loadCsv(await file.text());
-		input.value = '';
+		try {
+			this.store.loadCsv(await file.text());
+		} catch {
+			this.store.library.failImport(`Could not read ${file.name}.`);
+		} finally {
+			input.value = '';
+		}
 	}
 
 	private describe(): string {
