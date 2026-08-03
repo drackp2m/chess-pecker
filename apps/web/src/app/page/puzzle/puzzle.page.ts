@@ -86,7 +86,7 @@ export class PuzzlePage {
 
 	private describe(): string {
 		if (this.store.isFreePlay()) {
-			return 'Free play — both sides are yours, and none of it counts';
+			return this.describeFreePlay();
 		}
 
 		if (this.store.isRevealing()) {
@@ -106,6 +106,30 @@ export class PuzzlePage {
 			case 'solving':
 				return `Find the move for ${this.store.playerColor()}`;
 		}
+	}
+
+	/**
+	 * A free-play game ends the way any game ends, even though nothing here is graded
+	 * and the board stays open afterwards: it is a sandbox, and there is nothing to
+	 * lock down or record.
+	 */
+	private describeFreePlay(): string {
+		const status = this.store.freePlayStatus();
+
+		if ('checkmate' === status) {
+			// Whoever is to move is the one who has been mated.
+			return `Checkmate — ${'white' === this.store.position().turn ? 'black' : 'white'} wins`;
+		}
+
+		if ('stalemate' === status) {
+			return 'Stalemate — it is a draw';
+		}
+
+		if ('draw' === status) {
+			return 'Drawn position';
+		}
+
+		return 'Free play — both sides are yours, and none of it counts';
 	}
 
 	private describeSolved(): string {

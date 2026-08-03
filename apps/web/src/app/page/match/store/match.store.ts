@@ -90,7 +90,7 @@ export class MatchStore
 		patchState(this, {
 			...buildInitialState(position.turn),
 			position,
-			status: ChessMoveGenerator.status(position),
+			status: ChessMoveGenerator.status(position, []),
 		});
 
 		return true;
@@ -170,7 +170,7 @@ export class MatchStore
 			isOpponentThinking: false,
 			announced: undefined,
 			transition: undefined,
-			status: ChessMoveGenerator.status(rewound.position),
+			status: ChessMoveGenerator.status(rewound.position, rewound.positionHistory),
 			notationError: undefined,
 		});
 
@@ -210,12 +210,15 @@ export class MatchStore
 			fullmoveNumber: position.fullmoveNumber,
 		};
 		const next = ChessBoard.apply(position, move);
+		// The position just left behind is what makes this one a repetition, so the
+		// verdict is read from the history the move produces, not the one it found.
+		const positionHistory = [...this.positionHistory(), position];
 
 		patchState(this, {
 			position: next,
-			positionHistory: [...this.positionHistory(), position],
+			positionHistory,
 			history: [...this.history(), record],
-			status: ChessMoveGenerator.status(next),
+			status: ChessMoveGenerator.status(next, positionHistory),
 			selected: undefined,
 			pendingPromotion: undefined,
 			notationError: undefined,

@@ -49,14 +49,24 @@ export abstract class ChessMoveGenerator {
 		return undefined === king ? undefined : ChessSquare.fromIndex(king);
 	}
 
-	static status(position: ChessPosition): MatchStatus {
-		if (0 < this.legalMoves(position).length) {
-			return ChessBoard.hasInsufficientMaterial(position) || 100 <= position.halfmoveClock
-				? 'draw'
-				: 'playing';
+	/**
+	 * `history` is what the game passed through before this position, which only the
+	 * repetition rule needs. It has no default on purpose: an empty one is a fine
+	 * answer — a puzzle asking whether a move mates has no game behind it — but it has
+	 * to be written down, because a caller that has a history and forgets to pass it
+	 * gets no error, just a game where repetitions never draw.
+	 */
+	static status(position: ChessPosition, history: readonly ChessPosition[]): MatchStatus {
+		if (0 === this.legalMoves(position).length) {
+			return this.isInCheck(position, position.turn) ? 'checkmate' : 'stalemate';
 		}
 
-		return this.isInCheck(position, position.turn) ? 'checkmate' : 'stalemate';
+		const isDrawn =
+			ChessBoard.hasInsufficientMaterial(position) ||
+			100 <= position.halfmoveClock ||
+			ChessBoard.isThreefoldRepetition(position, history);
+
+		return isDrawn ? 'draw' : 'playing';
 	}
 
 	static pseudoLegalMoves(position: ChessPosition): ChessMove[] {

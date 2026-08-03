@@ -43,17 +43,34 @@ export abstract class ChessFen {
 		return this.parse(INITIAL_FEN);
 	}
 
+	/** The en passant field is written the way FEN records it: after any double push. */
 	static serialize(position: ChessPosition): string {
-		const turn = 'white' === position.turn ? 'w' : 'b';
-		const enPassant = position.enPassant ?? '-';
-
 		return [
 			this.serializePlacement(position.board),
-			turn,
+			'white' === position.turn ? 'w' : 'b',
 			this.serializeCastling(position.castling),
-			enPassant,
+			position.enPassant ?? '-',
 			position.halfmoveClock.toString(),
 			position.fullmoveNumber.toString(),
+		].join(' ');
+	}
+
+	/**
+	 * What decides whether two positions are *the same one* for the repetition rule:
+	 * placement, side to move, castling rights and the moves available. The counters
+	 * are left out precisely because they always differ.
+	 *
+	 * The en passant target is not the FEN field but the capture itself: a target that
+	 * nobody can legally answer changes nothing about what can be played, so the
+	 * position it belongs to is the same one as the position without it. Writing the
+	 * raw field here would split those two apart and delay a draw by a full repetition.
+	 */
+	static positionKey(position: ChessPosition): string {
+		return [
+			this.serializePlacement(position.board),
+			'white' === position.turn ? 'w' : 'b',
+			this.serializeCastling(position.castling),
+			this.hasEnPassantAnswer(position) ? position.enPassant : '-',
 		].join(' ');
 	}
 
@@ -126,6 +143,52 @@ export abstract class ChessFen {
 		if (BOARD_SIZE !== file) {
 			throw new SyntaxError(`FEN rank is not eight squares: ${row}`);
 		}
+	}
+
+	/**
+	 * Whether the side to move could really take en passant: a pawn beside the pushed
+	 * one — which sits a row further on than the target, seen from the mover — and a
+	 * capture that does not hand over its own king.
+	 */
+	private static hasEnPassantAnswer(position: ChessPosition): boolean {
+		if (undefined === position.enPassant) {
+			return false;
+		}
+
+		const target = ChessSquare.toIndex(position.enPassant);
+		const rowDelta = -ChessSquare.pawnDirection(position.turn);
+
+		return [-1, 1].some((fileDelta) => {
+			const from = ChessSquare.offset(target, fileDelta, rowDelta);
+
+			if (undefined === from) {
+				return false;
+			}
+
+			const pawn = position.board[from];
+
+			return (
+				'pawn' === pawn?.type &&
+				position.turn === pawn.color &&
+				this.isEnPassantLegal(position, from, target)
+			);
+		});
+	}
+
+	/**
+	 * Plays the capture on a copy and asks whether it leaves the own king in check.
+	 * Two pawns leave the board at once and land on neither's square, which is why
+	 * this cannot be shortened to "is the capturing pawn pinned": the classic case is
+	 * a rook already staring down the rank both of them are standing on.
+	 */
+	private static isEnPassantLegal(position: ChessPosition, from: number, target: number): boolean {
+		const board = [...position.board];
+
+		board[target] = board[from];
+		board[from] = undefined;
+		board[target - ChessSquare.pawnDirection(position.turn) * BOARD_SIZE] = undefined;
+
+		return !ChessAttack.isKingAttacked(board, position.turn);
 	}
 
 	private static parseEnPassant(enPassant: string): Square | undefined {

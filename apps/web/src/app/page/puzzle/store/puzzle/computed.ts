@@ -1,7 +1,13 @@
 import { Signal, computed, inject } from '@angular/core';
 import { signalStoreFeature, type, withComputed } from '@ngrx/signals';
 
-import { ChessMove, ChessPosition, PieceColor, Square } from '@app/definition/chess.type';
+import {
+	ChessMove,
+	ChessPosition,
+	MatchStatus,
+	PieceColor,
+	Square,
+} from '@app/definition/chess.type';
 import { Puzzle, PuzzleMove } from '@app/definition/puzzle.type';
 import {
 	FreePlayAnchor,
@@ -125,10 +131,32 @@ export function withPuzzleComputed() {
 				() => 'solving' === store.outcome() && position().turn === store.playerColor(),
 			);
 
+			/**
+			 * Free play is a real game on this board, so it gets a real verdict —
+			 * `undefined` while the exercise is being solved, which is graded against its
+			 * script and has nothing to say about mate or a draw. The positions before the
+			 * cursor are the history, exactly as the match store keeps it.
+			 */
+			// ToDo => nothing covers what stepping backwards does to this. Both halves
+			// depend on `cursor`, so rewinding re-judges the position on screen — which is
+			// what it should do — but it also shortens the history, so a threefold
+			// repetition stops counting when you step back over it and counts again when
+			// you step forward. That reads as coherent (the verdict of the position shown,
+			// from what was played up to it) and it is where the two boards diverge: the
+			// match rewinds by *destroying* history in `undoLastMove`, so there a repetition
+			// undone is gone for good. Pin whichever is wanted down in a test before either
+			// one is taken for granted.
+			const freePlayStatus = computed<MatchStatus | undefined>(() =>
+				script.isFreePlay()
+					? ChessMoveGenerator.status(position(), store.positions().slice(0, store.cursor()))
+					: undefined,
+			);
+
 			return {
 				puzzle,
 				position,
 				isPlayerTurn,
+				freePlayStatus,
 
 				...script,
 				...boardComputed(position, store.selected),

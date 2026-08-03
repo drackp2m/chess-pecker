@@ -104,7 +104,7 @@ export class SoundService {
 
 	/** Mate outranks check, which outranks a capture; a plain move is what is left. */
 	private static describe(position: ChessPosition, move: ChessMove): MoveSound {
-		if ('checkmate' === ChessMoveGenerator.status(position)) {
+		if ('checkmate' === ChessMoveGenerator.status(position, [])) {
 			return 'checkmate';
 		}
 

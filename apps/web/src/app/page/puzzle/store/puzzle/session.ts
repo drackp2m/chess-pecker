@@ -203,7 +203,8 @@ export function isSolution(
 		return true;
 	}
 
-	return 'checkmate' === ChessMoveGenerator.status(ChessBoard.apply(position, move));
+	// No history: an exercise is a position and a script, not a game that got here.
+	return 'checkmate' === ChessMoveGenerator.status(ChessBoard.apply(position, move), []);
 }
 
 /** Appends a move to the line, dropping anything the cursor had rewound past. */
@@ -324,7 +325,7 @@ export function describeOutcome(
 	}
 
 	const position = positions[cursor];
-	const isMate = undefined !== position && 'checkmate' === ChessMoveGenerator.status(position);
+	const isMate = undefined !== position && 'checkmate' === ChessMoveGenerator.status(position, []);
 
 	return cursor >= puzzle.moves.length || isMate ? 'solved' : 'solving';
 }
