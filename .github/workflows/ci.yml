@@ -73,12 +73,12 @@ jobs:
           set -o pipefail
           pnpm --filter @chesspecker/web build 2>&1 | tee /tmp/build.log
 
-      - name: Run tests
-        run: pnpm --filter @chesspecker/web test
-
       - name: Build summary
         if: always()
         run: node tools/scripts/build/summary.mjs /tmp/build.log
+
+      - name: Run tests
+        run: pnpm --filter @chesspecker/web test
 
   api:
     runs-on: ubuntu-24.04
