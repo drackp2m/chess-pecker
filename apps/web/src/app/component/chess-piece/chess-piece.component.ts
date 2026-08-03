@@ -14,7 +14,7 @@ export interface PieceSlide {
 
 /**
  * Draws one piece by masking a flat colour with the silhouette extracted from the
- * sprite, which keeps the piece readable on any square and in any theme.
+ * artwork, which keeps the piece readable on any square and in any theme.
  */
 @Component({
 	selector: 'app-chess-piece',
@@ -30,7 +30,7 @@ export class ChessPieceComponent {
 	readonly color = input.required<PieceColor>();
 	readonly slide = input<PieceSlide>();
 
-	readonly maskImage = computed(() => `url(svg/chess-${this.type()}-solid.svg)`);
+	readonly maskImage = computed(() => `url(svg/chess/${this.type()}.svg)`);
 
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 

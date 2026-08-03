@@ -11,6 +11,7 @@
 		"git:sync": "sh tools/scripts/sync-git-main.sh",
 		"pnpm:match": "node tools/scripts/match-pnpm-version.mjs",
 		"import:puzzles": "node tools/scripts/import-puzzles.mjs",
+		"split:chess": "node tools/scripts/split-chess-set.mjs",
 		"prepare": "husky"
 	},
 	"devDependencies": {
