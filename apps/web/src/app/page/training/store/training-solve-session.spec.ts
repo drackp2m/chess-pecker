@@ -10,11 +10,14 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
+import { AttemptRepository } from '@app/repository/attempt.repository';
+import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { TrainingStore } from '@app/store/training.store';
+import { SOLVE_FLUSH_INTERVAL_MS } from '@app/util/solve-timer';
 
 /** Black walks into the corner, White mates on the back rank: one move for the player. */
 const BACK_RANK_MATE: ApiPuzzle = {
@@ -57,13 +60,34 @@ function createRepository(cycleFinished = false) {
 	};
 }
 
-function configure(repository: ReturnType<typeof createRepository>) {
+/** Stands in for IndexedDB, and survives a reset so a reload can be replayed against it. */
+function createAttemptStorage() {
+	const rows = new Map<string, AttemptRow>();
+
+	return {
+		rows,
+		insert: vi.fn((_storeName: 'attempt', row: AttemptRow) => {
+			rows.set(row.uuid, row);
+
+			return Promise.resolve(row);
+		}),
+		findByIndex: vi.fn((_storeName: 'attempt', _indexName: 'slotId', slotId: string) =>
+			Promise.resolve([...rows.values()].find((row) => row.slotId === slotId)),
+		),
+	};
+}
+
+function configure(
+	repository: ReturnType<typeof createRepository>,
+	attempts = createAttemptStorage(),
+) {
 	TestBed.configureTestingModule({
 		providers: [
 			PuzzleLibraryStore,
 			PuzzleStore,
 			TrainingRunStore,
 			TrainingSolveSession,
+			{ provide: AttemptRepository, useValue: attempts },
 			{ provide: TrainingRunRepository, useValue: repository },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
 			{ provide: MistakePolicyService, useValue: { policy: signal(DEFAULT_MISTAKE_POLICY) } },
@@ -73,6 +97,7 @@ function configure(repository: ReturnType<typeof createRepository>) {
 	});
 
 	return {
+		attempts,
 		session: TestBed.inject(TrainingSolveSession),
 		run: TestBed.inject(TrainingRunStore),
 		board: TestBed.inject(PuzzleStore),
@@ -84,6 +109,11 @@ async function enter(session: TrainingSolveSession): Promise<void> {
 	await session.open();
 	TestBed.tick();
 	vi.advanceTimersByTime(OPENING);
+	await vi.advanceTimersByTimeAsync(0);
+}
+
+function onlyRow(attempts: ReturnType<typeof createAttemptStorage>): AttemptRow | undefined {
+	return [...attempts.rows.values()][0];
 }
 
 /** What the board does when the player finds the move, without playing the chess. */
@@ -217,5 +247,67 @@ describe('TrainingSolveSession', () => {
 
 		expect(repository.getNextItem).toHaveBeenCalledTimes(2);
 		expect(run.current()?.puzzle.uuid).toBe('puzzle-2');
+	});
+
+	it('writes a draft attempt row as soon as the exercise is on the board', async () => {
+		const { session, attempts } = configure(createRepository());
+
+		await enter(session);
+
+		expect(onlyRow(attempts)).toMatchObject({
+			trainingUuid: 'training-1',
+			kind: 'cycle',
+			slotId: 'item-1',
+			cycleItemUuid: 'item-1',
+			lichessId: 'AAA11',
+		});
+		expect(onlyRow(attempts)?.solved).toBeUndefined();
+	});
+
+	it('keeps the clock flowing into the row with nothing being played', async () => {
+		const { session, attempts } = configure(createRepository());
+
+		await enter(session);
+
+		expect(onlyRow(attempts)?.durationMs).toBe(OPENING);
+
+		await vi.advanceTimersByTimeAsync(SOLVE_FLUSH_INTERVAL_MS * 2);
+
+		expect(onlyRow(attempts)?.durationMs).toBe(SOLVE_FLUSH_INTERVAL_MS * 2);
+	});
+
+	it('picks a stored draft back up instead of restarting the clock', async () => {
+		const { session, attempts } = configure(createRepository());
+
+		await enter(session);
+		vi.advanceTimersByTime(3000);
+		session.pause();
+		await vi.advanceTimersByTimeAsync(0);
+
+		TestBed.resetTestingModule();
+
+		const repository = createRepository();
+		const reloaded = configure(repository, attempts);
+
+		await enter(reloaded.session);
+		vi.advanceTimersByTime(2000);
+		await settleSolved(reloaded.board);
+
+		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
+			'training-1',
+			expect.objectContaining({ durationMs: OPENING + 3000 + OPENING + 2000 }),
+		);
+		expect(attempts.rows.size).toBe(1);
+	});
+
+	it('closes the draft with the verdict once the exercise settles', async () => {
+		const { session, board, attempts } = configure(createRepository());
+
+		await enter(session);
+		await settleSolved(board);
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(onlyRow(attempts)?.solved).toBe(true);
+		expect(onlyRow(attempts)?.startedAt).toBeUndefined();
 	});
 });

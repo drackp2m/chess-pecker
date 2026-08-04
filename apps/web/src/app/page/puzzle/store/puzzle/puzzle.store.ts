@@ -22,17 +22,6 @@ import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 
-// ToDo => Woodpecker needs a clock, and nothing here measures time. The method is
-// scored on how long a cycle takes, so a session needs: when the exercise became
-// solvable (`outcome` reaching `'solving'`), when it was solved, how long the tab was
-// hidden in between (`visibilitychange`, otherwise a backgrounded tab inflates every
-// time), and whether the first attempt was correct — `result` now knows that much.
-// Capture the rest in the state built by `buildPuzzleState`, keep it out of the
-// animation timers, and hand it to a use-case that writes an attempt row.
-//
-// ToDo => an attempt is also lost on navigation: the store is provided by
-// `PuzzlePage`, so leaving the page destroys the session with no flush.
-
 @Injectable()
 export class PuzzleStore
 	extends signalStore(
