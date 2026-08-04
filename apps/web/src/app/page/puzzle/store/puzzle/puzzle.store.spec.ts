@@ -972,4 +972,104 @@ describe('PuzzleStore', () => {
 			expect(store.mistakeCount()).toBe(1);
 		});
 	});
+
+	describe('the solve record', () => {
+		/** The five plies `playFivePlyLine` leaves behind, as the record writes them. */
+		const FIVE_PLY = ['f1f8', 'b2b1', 'b3d1', 'b1d1', 'f8f1'];
+
+		it('is the script and nothing else for a clean solve', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b1', 'd1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			expect(store.record()).toEqual([...FIVE_PLY, 'd1f1']);
+			expect(store.excursions()).toEqual([]);
+		});
+
+		it('closes on the verdict, so the take-back it schedules never reaches it', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+
+			// The move that settles the verdict is in; the rewind that follows it is not.
+			expect(store.record()).toEqual(['f1f8', 'b2c2']);
+
+			vi.advanceTimersByTime(UNDO_TOTAL * 2);
+
+			expect(store.cursor()).toBe(1);
+			expect(store.record()).toEqual(['f1f8', 'b2c2']);
+		});
+
+		it('collapses a run of steps only while it keeps going the same way', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+
+			expect(store.record()).toEqual([...FIVE_PLY, -2]);
+
+			// Turning round starts a new run: adding through it would land on a `0`, and
+			// a `0` is a restart.
+			store.stepForward();
+
+			expect(store.record()).toEqual([...FIVE_PLY, -2, 1]);
+		});
+
+		it('tells the restart button apart from stepping all the way back', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.restart();
+
+			expect(store.record()).toEqual([...FIVE_PLY, 0]);
+
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			// Reopening replays the opening move, which is a move like any other.
+			expect(store.record()).toEqual([...FIVE_PLY, 0, 'f1f8']);
+		});
+
+		it('keeps a restart made inside an excursion out of the main line', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+			play(store, 'a7', 'a6');
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.record()).toEqual(['f1f8']);
+			expect(store.excursions()).toEqual([{ at: 1, events: ['a7a6', 0, 'f1f8'] }]);
+		});
+
+		it('anchors an excursion to the length the main line had reached', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+			store.stepBackward();
+			store.toggleFreePlay();
+			play(store, 'f8', 'f1');
+			store.stepBackward();
+			store.toggleFreePlay();
+
+			// Straight back in, with nothing in between: same anchor, second excursion.
+			store.toggleFreePlay();
+			store.toggleFreePlay();
+
+			expect(store.record()).toEqual([...FIVE_PLY, -3]);
+			expect(store.excursions()).toEqual([
+				{ at: 6, events: ['f8f1', -1] },
+				{ at: 6, events: [] },
+			]);
+		});
+	});
 });

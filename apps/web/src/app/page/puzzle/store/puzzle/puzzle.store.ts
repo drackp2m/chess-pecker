@@ -9,6 +9,13 @@ import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
 import { withPuzzleGating } from '@app/page/puzzle/store/puzzle/gating';
 import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
 import {
+	PuzzleRecord,
+	RecordState,
+	recordEntry,
+	recordRestart,
+	recordStep,
+} from '@app/page/puzzle/store/puzzle/record';
+import {
 	anchorFreePlay,
 	buildPuzzleState,
 	findPromotion,
@@ -80,14 +87,17 @@ export class PuzzleStore
 	/** Same exercise, so the verdict it was graded on survives the reopening. */
 	restart(): void {
 		const puzzle = this.puzzle();
+		// Read before anything moves, so the restart is written into the record the
+		// exercise already had instead of the blank one reopening it would hand out.
+		const recorded = recordRestart(this.recordState());
 
 		if (undefined === this.freePlay() || undefined === puzzle) {
-			this.open(this.result());
+			this.open(this.result(), recorded);
 
 			return;
 		}
 
-		patchState(this, restartLinePatch(puzzle));
+		patchState(this, restartLinePatch(puzzle), recorded);
 		this.playScripted();
 	}
 
@@ -190,7 +200,7 @@ export class PuzzleStore
 		patchState(this, { orientation: 'white' === this.orientation() ? 'black' : 'white' });
 	}
 
-	private open(result?: PuzzleResult): void {
+	private open(result?: PuzzleResult, recorded?: PuzzleRecord): void {
 		const puzzle = this.puzzle();
 
 		this.cancelPlayback();
@@ -201,7 +211,7 @@ export class PuzzleStore
 			return;
 		}
 
-		patchState(this, { ...openPuzzle(puzzle), result });
+		patchState(this, { ...openPuzzle(puzzle), ...recorded, result });
 		this.playScripted();
 	}
 
@@ -209,8 +219,17 @@ export class PuzzleStore
 		return { positions: this.positions(), line: this.line(), cursor: this.cursor() };
 	}
 
+	private recordState(): RecordState {
+		return {
+			record: this.record(),
+			excursions: this.excursions(),
+			freePlay: this.freePlay(),
+			result: this.result(),
+		};
+	}
+
 	private enterFreePlay(): void {
-		patchState(this, {
+		patchState(this, recordEntry, {
 			freePlay: anchorFreePlay(this.lineState(), this.deviation()),
 			selected: undefined,
 			pendingPromotion: undefined,
@@ -235,8 +254,10 @@ export class PuzzleStore
 	): void {
 		const outcome = this.outcomeAt(cursor);
 		const previous = this.position();
+		// What the cursor really did, which the clamped callers may have cut short.
+		const step = cursor - this.cursor();
 
-		patchState(this, {
+		patchState(this, (state) => recordStep(state, step), {
 			cursor,
 			selected: undefined,
 			outcome,

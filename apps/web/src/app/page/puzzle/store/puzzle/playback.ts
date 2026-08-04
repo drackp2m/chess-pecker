@@ -16,6 +16,7 @@ import {
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
 import { Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
+import { recordMove } from '@app/page/puzzle/store/puzzle/record';
 import {
 	PuzzleStoreProps,
 	commitPatch,
@@ -68,7 +69,11 @@ function commit(
 ): void {
 	const position = store.position();
 
-	patchState(store, (state) => commitPatch(state, position, move, isOpponent));
+	patchState(
+		store,
+		(state) => commitPatch(state, position, move, isOpponent),
+		(state) => recordMove(state, move),
+	);
 
 	// Read after the patch, so it is the position the move produced that is judged.
 	sound.playMove(store.position(), move);

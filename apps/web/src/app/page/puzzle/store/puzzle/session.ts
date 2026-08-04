@@ -14,12 +14,13 @@ import {
 	PuzzleProgress,
 	PuzzleResult,
 } from '@app/definition/puzzle.type';
+import { PuzzleRecord, blankRecord } from '@app/page/puzzle/store/puzzle/record';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
-export interface PuzzleStoreProps {
+export interface PuzzleStoreProps extends PuzzleRecord {
 	/** `positions[k]` is the position after `k` moves of the line; `[0]` is the FEN. */
 	positions: ChessPosition[];
 	/**
@@ -61,6 +62,7 @@ export interface FreePlayAnchor extends LineState {
 
 export function buildPuzzleState(): PuzzleStoreProps {
 	return {
+		...blankRecord(),
 		positions: [ChessFen.initial()],
 		line: [],
 		cursor: 0,
@@ -99,12 +101,16 @@ export function restartLinePatch(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 /**
  * Opens an exercise at its raw FEN. The side to move there is the opponent — it is
  * about to play `moves[0]` — so the player takes the other colour.
+ *
+ * A fresh exercise means a fresh record; reopening the same one keeps the one it has,
+ * which is why the caller gets to put its own back on top.
  */
 export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 	const position = ChessFen.parse(puzzle.fen);
 	const playerColor: PieceColor = 'white' === position.turn ? 'black' : 'white';
 
 	return {
+		...blankRecord(),
 		...startLine(position),
 		playerColor,
 		orientation: playerColor,
