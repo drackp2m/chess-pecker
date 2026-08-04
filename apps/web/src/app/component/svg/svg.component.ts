@@ -56,12 +56,12 @@ export class SvgComponent {
 	});
 
 	getIcon(value: string): string {
-		return `url(svg/${value}-solid.svg)`;
+		return `url(svg/icon/${value}-solid.svg)`;
 	}
 
 	private getAspectRatio(): [number, number] {
 		const icon = this.icon();
-		const iconNameRegex = /svg\/(.+)-solid.svg/;
+		const iconNameRegex = /svg\/icon\/(.+)-solid\.svg/;
 		const match = iconNameRegex.exec(icon);
 		const iconName = match?.[1];
 

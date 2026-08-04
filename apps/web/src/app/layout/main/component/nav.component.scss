@@ -1,20 +1,109 @@
+$items: 5;
+
 .nav {
+	--items: #{$items};
+	--icon-size: 28px;
+	--indicator-size: 40px;
+	--glass-opacity: 45%;
+	--edge-inset: var(--spacing-4);
+
+	position: relative;
 	flex-shrink: 0;
 	height: var(--nav-height);
-	padding-bottom: var(--safe-offset-bottom);
-	border-top: solid 1.5px var(--color-primary);
 
-	.app-button.icon {
-		padding: var(--spacing-2);
+	.glass,
+	.indicator {
+		pointer-events: none;
+		position: absolute;
+		inset-block: 0 var(--safe-offset-bottom);
 	}
 
-	[appRouterLink] {
-		--foreground: var(--color-primary-mid);
-		--foreground-hover: var(--color-primary-mid-hover);
+	.glass {
+		inset-inline: 0;
+		background-color: rgb(from var(--color-contrast-mid-dark) r g b / var(--glass-opacity));
+		backdrop-filter: blur(6px);
+	}
 
-		&.active {
-			--foreground: var(--color-primary);
-			--foreground-hover: var(--color-primary-hover);
+	.indicator {
+		left: var(--edge-inset);
+		transform: translateX(calc(var(--index, 0) * 100%));
+
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		width: calc((100% - var(--edge-inset) * 2) / var(--items));
+
+		opacity: 1;
+
+		transition:
+			transform var(--transition-duration) var(--transition-easing),
+			opacity var(--transition-duration) var(--transition-easing);
+
+		&::before {
+			content: '';
+			aspect-ratio: 1;
+			width: var(--indicator-size);
+			background-color: var(--color-accent);
+		}
+	}
+
+	.item {
+		pointer-events: none;
+
+		position: relative;
+
+		display: flex;
+		flex: 1;
+
+		height: 100%;
+		padding-bottom: var(--safe-offset-bottom);
+		border-top: solid 1.5px var(--color-primary);
+
+		background-color: var(--color-contrast);
+
+		mask-image: var(--icon), linear-gradient(rgb(0 0 0) 0 0);
+		mask-repeat: no-repeat;
+		mask-position: center;
+		mask-clip: border-box;
+		mask-origin: content-box, border-box;
+		mask-size:
+			auto var(--icon-size),
+			auto;
+		mask-composite: exclude;
+
+		&:not(:last-child) {
+			margin-right: -1px;
+		}
+
+		&:first-of-type {
+			margin-left: calc(var(--edge-inset) * -1);
+			padding-left: var(--edge-inset);
+		}
+
+		&:last-of-type {
+			margin-right: calc(var(--edge-inset) * -1);
+			padding-right: var(--edge-inset);
+		}
+
+		.hit {
+			pointer-events: auto;
+			flex: 1;
+			transition: background-color var(--transition-duration) var(--transition-easing);
+		}
+
+		&:focus-visible .hit {
+			background-color: var(--color-contrast-hover);
+		}
+	}
+
+	&:not(:has(.item.active)) .indicator {
+		opacity: 0;
+	}
+
+	@for $index from 1 through $items {
+		&:has(.item:nth-of-type(#{$index}).active) .indicator {
+			--index: #{$index - 1};
 		}
 	}
 }

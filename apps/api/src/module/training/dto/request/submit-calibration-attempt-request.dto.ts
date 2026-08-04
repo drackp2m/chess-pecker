@@ -1,8 +1,12 @@
+import type { SubmitCalibrationAttemptRequest } from '@chesspecker/api-definitions';
 import { IsBoolean, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
 
 import { SyncTimestampsDto } from './sync-timestamps.dto';
 
-export class SubmitCalibrationAttemptRequestDto extends SyncTimestampsDto {
+export class SubmitCalibrationAttemptRequestDto
+	extends SyncTimestampsDto
+	implements SubmitCalibrationAttemptRequest<Date>
+{
 	@IsString()
 	@IsNotEmpty()
 	roundUuid!: string;

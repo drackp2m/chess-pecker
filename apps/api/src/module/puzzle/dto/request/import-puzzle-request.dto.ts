@@ -1,3 +1,4 @@
+import type { ImportPuzzleItem, ImportPuzzleRequest } from '@chesspecker/api-definitions';
 import { Type } from 'class-transformer';
 import {
 	ArrayMaxSize,
@@ -10,7 +11,7 @@ import {
 	ValidateNested,
 } from 'class-validator';
 
-export class ImportPuzzleItemDto {
+export class ImportPuzzleItemDto implements ImportPuzzleItem {
 	@IsString()
 	@IsNotEmpty()
 	lichessId!: string;
@@ -33,7 +34,7 @@ export class ImportPuzzleItemDto {
 	themes!: string[];
 }
 
-export class ImportPuzzleRequestDto {
+export class ImportPuzzleRequestDto implements ImportPuzzleRequest {
 	@IsArray()
 	@ArrayNotEmpty()
 	@ArrayMaxSize(5000)

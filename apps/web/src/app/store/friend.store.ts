@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
+import type { FriendUser, Friendship, UserBlock, UserSummary } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
-import { FriendUser, Friendship, UserBlock } from '@app/definition/friendship.interface';
-import { UserSummary } from '@app/definition/user.interface';
 import { FriendshipRepository } from '@app/repository/friendship.repository';
 import { UserRepository } from '@app/repository/user.repository';
+import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
 interface FriendStoreProps {
@@ -63,7 +63,9 @@ export class FriendStore extends signalStore({ protectedState: false }, withStat
 		} catch (error) {
 			patchState(this, {
 				isLoading: false,
-				error: HttpError.toMessage(error, 'Could not load your friends.'),
+				...(ApiCancelledError.is(error)
+					? {}
+					: { error: HttpError.toMessage(error, 'Could not load your friends.') }),
 			});
 		}
 	}
@@ -93,7 +95,9 @@ export class FriendStore extends signalStore({ protectedState: false }, withStat
 				matches: [],
 				searchTerm: '',
 				isSearching: false,
-				error: HttpError.toMessage(error, 'The search could not be run.'),
+				...(ApiCancelledError.is(error)
+					? {}
+					: { error: HttpError.toMessage(error, 'The search could not be run.') }),
 			});
 		}
 	}

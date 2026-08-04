@@ -1,5 +1,7 @@
 IDBP
 ngrx
+pipefail
 projectable
 sonarjs
 titlecase
+Vitest

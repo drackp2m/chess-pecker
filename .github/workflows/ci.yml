@@ -43,6 +43,9 @@ jobs:
         if: always()
         run: node tools/scripts/install/summary.mjs /tmp/pnpm-install.log
 
+      - name: Typecheck shared definitions
+        run: pnpm --filter @chesspecker/api-definitions typecheck
+
       - name: Run lint
         run: pnpm run lint
 
@@ -68,9 +71,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm --filter @chesspecker/web test
-
       - name: Build application
         run: |
           set -o pipefail
@@ -80,10 +80,29 @@ jobs:
         if: always()
         run: node tools/scripts/build/summary.mjs /tmp/build.log
 
+      - name: Run tests
+        run: pnpm --filter @chesspecker/web test
+
   api:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
+    services:
+      postgres:
+        image: postgres:18-alpine3.23
+        env:
+          POSTGRES_USER: chesspecker
+          POSTGRES_PASSWORD: chesspecker
+          POSTGRES_DB: chesspecker_test
+          TZ: UTC
+          PGTZ: UTC
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U chesspecker -d chesspecker_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -106,10 +125,52 @@ jobs:
         run: echo "::add-matcher::.github/matchers/tsc.json"
 
       - name: Run typecheck
-        run: pnpm exec tsc --noEmit -p apps/api/tsconfig.json
+        run: |
+          set -o pipefail
+          pnpm exec tsc --noEmit --diagnostics -p apps/api/tsconfig.json 2>&1 | tee /tmp/typecheck.log
+
+      - name: Typecheck summary
+        if: always()
+        run: node tools/scripts/typecheck/summary.mjs /tmp/typecheck.log
 
       - name: Run tests
+        env:
+          GITHUB_STEP_SUMMARY: /tmp/unit-report.md
         run: pnpm --filter @chesspecker/api test
+
+      - name: Unit test summary
+        if: always()
+        run: node tools/scripts/test/summary.mjs /tmp/unit-report.md 'Unit Tests'
+
+      - name: Run integration tests
+        env:
+          GITHUB_STEP_SUMMARY: /tmp/integration-report.md
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: chesspecker
+          DB_PASS: chesspecker
+          DB_NAME: chesspecker
+          DB_NAME_TEST: chesspecker_test
+          DB_CERT: cert
+          API_PROTOCOL: https
+          API_DOMAIN: localhost
+          API_PORT: 3000
+          API_PREFIX: /api
+          API_CORS_ALLOWED_DOMAINS: https://localhost:4200
+          API_COOKIE_SECRET: secret
+          API_COOKIE_DOMAIN: localhost
+          JWT_ID: chesspecker
+          JWT_ALGORITHM: HS512
+          JWT_ISSUER: chesspecker
+          JWT_AUDIENCE: chesspecker
+          JWT_ACCESS_TOKEN_EXPIRES_IN: 1d
+          JWT_REFRESH_TOKEN_EXPIRES_IN: 15d
+          JWT_SECRET: secret
+        run: pnpm --filter @chesspecker/api test:integration
+
+      - name: Integration test summary
+        if: always()
+        run: node tools/scripts/test/summary.mjs /tmp/integration-report.md 'Integration Tests'
 
       - name: Build application
         run: pnpm --filter @chesspecker/api build

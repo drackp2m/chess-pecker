@@ -1,7 +1,8 @@
+import type { SearchPuzzleRequest } from '@chesspecker/api-definitions';
 import { Transform, Type } from 'class-transformer';
 import { IsArray, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-export class SearchPuzzleRequestDto {
+export class SearchPuzzleRequestDto implements SearchPuzzleRequest {
 	@IsOptional()
 	@Type(() => Number)
 	@IsInt()

@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import type { AuthUser } from '@chesspecker/api-definitions';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { AuthUser } from '@app/definition/auth.interface';
 import { AuthRepository } from '@app/repository/auth.repository';
 import { SessionStore } from '@app/store/session.store';
 
@@ -38,12 +38,16 @@ function createRepository(overrides: Partial<AuthRepositoryStub> = {}): AuthRepo
 	};
 }
 
-async function createStore(repository: AuthRepositoryStub): Promise<SessionStore> {
+function injectStore(repository: AuthRepositoryStub): SessionStore {
 	TestBed.configureTestingModule({
 		providers: [SessionStore, { provide: AuthRepository, useValue: repository }],
 	});
 
-	const store = TestBed.inject(SessionStore);
+	return TestBed.inject(SessionStore);
+}
+
+async function createStore(repository: AuthRepositoryStub): Promise<SessionStore> {
+	const store = injectStore(repository);
 
 	await store.restore();
 
@@ -102,6 +106,93 @@ describe('SessionStore', () => {
 		);
 
 		expect(store.isAnonymous()).toBe(true);
+	});
+
+	// The distinction the whole connection state rests on: a 401 is an answer, no network
+	// is the absence of one. Reading the second as `anonymous` logs out a user whose
+	// session may well be open, and sends them to a login page the same dead server would
+	// have to accept.
+	it('separates a server that does not answer from a session that does not exist', async () => {
+		const store = await createStore(
+			createRepository({ getCurrentUser: vi.fn(rejectsWith(0, null)) }),
+		);
+
+		expect(store.isUnreachable()).toBe(true);
+		expect(store.isAnonymous()).toBe(false);
+		expect(store.connectionPhase()).toBe('unreachable');
+	});
+
+	it('treats a gateway that gave up on a cold start as unreachable', async () => {
+		const store = await createStore(
+			createRepository({ getCurrentUser: vi.fn(rejectsWith(502, null)) }),
+		);
+
+		expect(store.isUnreachable()).toBe(true);
+	});
+
+	it('picks the session up when a retry finds the server awake', async () => {
+		let isAwake = false;
+		const getCurrentUser = vi.fn(() => {
+			if (!isAwake) {
+				throw new HttpErrorResponse({ status: 0, error: null });
+			}
+
+			return Promise.resolve(authUser);
+		});
+
+		const store = await createStore(createRepository({ getCurrentUser }));
+
+		expect(store.isUnreachable()).toBe(true);
+
+		isAwake = true;
+		await store.retry();
+
+		expect(store.isAuthenticated()).toBe(true);
+		expect(store.connectionPhase()).toBe('idle');
+	});
+
+	// A cold start is 30–50 seconds of a call that has not failed yet, so a retry during
+	// it would only queue a second one behind the same wait.
+	it('ignores a retry while the first call is still out', async () => {
+		const getCurrentUser = vi.fn(() => new Promise<AuthUser>(() => undefined));
+		const store = injectStore(createRepository({ getCurrentUser }));
+
+		void store.restore();
+		await store.retry();
+
+		expect(getCurrentUser).toHaveBeenCalledTimes(1);
+	});
+
+	it('says how long the first call is taking while it waits', async () => {
+		vi.useFakeTimers();
+
+		let answer!: (user: AuthUser) => void;
+		const getCurrentUser = vi.fn(
+			() =>
+				new Promise<AuthUser>((resolve) => {
+					answer = resolve;
+				}),
+		);
+
+		const store = injectStore(createRepository({ getCurrentUser }));
+		const restored = store.restore();
+
+		expect(store.connectionPhase()).toBe('idle');
+
+		vi.advanceTimersByTime(2000);
+
+		expect(store.connectionPhase()).toBe('connecting');
+
+		vi.advanceTimersByTime(8000);
+
+		expect(store.connectionPhase()).toBe('waking');
+
+		answer(authUser);
+		await restored;
+
+		expect(store.connectionPhase()).toBe('idle');
+
+		vi.useRealTimers();
 	});
 
 	it('keeps the username of whoever logs in', async () => {

@@ -21,6 +21,7 @@ describe('LogoutUseCase', () => {
 		},
 		api: {
 			cookieDomain: 'localhost',
+			prefix: '/api',
 		},
 	});
 

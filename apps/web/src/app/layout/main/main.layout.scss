@@ -1,8 +1,16 @@
 main {
+	position: relative;
 	height: 100dvh;
 
 	#router-outlet {
 		overflow: scroll;
-		height: 100%;
+		flex: 1;
+		min-height: 0;
+	}
+
+	app-nav {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 0;
 	}
 }

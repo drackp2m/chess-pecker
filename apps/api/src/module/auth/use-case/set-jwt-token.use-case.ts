@@ -7,6 +7,7 @@ import { ConfigurationService } from '../../../shared/module/config/configuratio
 import { getEnumKey } from '../../../shared/util/get-enum-key.util';
 import { JwtCookie } from '../definition/jwt-cookie.enum';
 import { JwtEndpoints } from '../definition/jwt-endpoints.enum';
+import { jwtCookiePath } from '../util/jwt-cookie-path.util';
 
 @Injectable({ scope: Scope.REQUEST })
 export class SetJwtTokenUseCase {
@@ -19,7 +20,7 @@ export class SetJwtTokenUseCase {
 		const enumKey = getEnumKey(JwtCookie, tokenType);
 
 		if (undefined !== enumKey) {
-			const path = JwtEndpoints[enumKey];
+			const path = jwtCookiePath(this.configService.api.prefix, JwtEndpoints[enumKey]);
 			const maxAge =
 				tokenType === JwtCookie.access
 					? this.configService.jwt.accessTokenExpiresIn

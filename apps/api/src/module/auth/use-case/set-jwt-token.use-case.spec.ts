@@ -27,6 +27,7 @@ describe('SetJwtTokenUseCase', () => {
 		},
 		api: {
 			cookieDomain: 'localhost',
+			prefix: '/api',
 		},
 	});
 

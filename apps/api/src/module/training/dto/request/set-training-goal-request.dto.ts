@@ -1,3 +1,4 @@
+import type { SetTrainingGoalRequest } from '@chesspecker/api-definitions';
 import { Type } from 'class-transformer';
 import { IsDate, IsInt, IsOptional, Min } from 'class-validator';
 
@@ -7,7 +8,10 @@ import { SyncTimestampsDto } from './sync-timestamps.dto';
  * Uno de los dos, o los dos. Se guarda lo que el usuario elige; los días que va a costar se
  * calculan y no se almacenan.
  */
-export class SetTrainingGoalRequestDto extends SyncTimestampsDto {
+export class SetTrainingGoalRequestDto
+	extends SyncTimestampsDto
+	implements SetTrainingGoalRequest<Date>
+{
 	@IsOptional()
 	@IsInt()
 	@Min(1)

@@ -1,0 +1,51 @@
+:host {
+	display: inline-flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.connection-indicator {
+	min-width: 0;
+}
+
+.label {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dot {
+	flex-shrink: 0;
+
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+
+	background-color: var(--color-accent);
+
+	animation: connection-pulse 1200ms ease-in-out infinite;
+
+	&[data-phase='unreachable'] {
+		background-color: var(--color-contrast-mid);
+		animation: none;
+	}
+}
+
+@keyframes connection-pulse {
+	0%,
+	100% {
+		transform: scale(0.7);
+		opacity: 0.3;
+	}
+
+	50% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.dot {
+		animation: none;
+	}
+}

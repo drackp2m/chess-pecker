@@ -1,34 +1,30 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-
-import { API_BASE_URL } from '@app/definition/api.constant';
-import {
+import type {
 	FriendRequests,
 	FriendUser,
 	Friendship,
 	UserBlock,
-} from '@app/definition/friendship.interface';
+} from '@chesspecker/api-definitions';
+
+import { ApiSdkService } from '@app/service/api-sdk.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class FriendshipRepository {
-	private readonly httpClient = inject(HttpClient);
-	private readonly baseUrl = `${API_BASE_URL}/friendship`;
-	private readonly blockUrl = `${API_BASE_URL}/user-block`;
+	private readonly apiSdk = inject(ApiSdkService);
 
 	/**
 	 * Answers with the *other person*, not with the `friendship` row, which is what the
 	 * screen paints. Undoing a friendship therefore goes by the friend's uuid — see
 	 * `removeByUser()` — because the uuid of the row never reaches the client.
 	 */
-	async listFriends(): Promise<FriendUser[]> {
-		return firstValueFrom(this.httpClient.get<FriendUser[]>(this.baseUrl));
+	async listFriends(): Promise<readonly FriendUser[]> {
+		return this.apiSdk.GET.friendship('');
 	}
 
 	async listRequests(): Promise<FriendRequests> {
-		return firstValueFrom(this.httpClient.get<FriendRequests>(`${this.baseUrl}/request`));
+		return this.apiSdk.GET.friendship('/request');
 	}
 
 	/**
@@ -36,22 +32,20 @@ export class FriendshipRepository {
 	 * gets typed. Finding out whether it exists is `UserRepository.search()`.
 	 */
 	async sendRequest(username: string): Promise<Friendship> {
-		return firstValueFrom(
-			this.httpClient.post<Friendship>(`${this.baseUrl}/request`, { username }),
-		);
+		return this.apiSdk.POST.friendship('/request', { params: { username } });
 	}
 
 	async accept(uuid: string): Promise<Friendship> {
-		return firstValueFrom(this.httpClient.patch<Friendship>(`${this.baseUrl}/${uuid}/accept`, {}));
+		return this.apiSdk.PATCH.friendship('/:uuid/accept', { path: { uuid } });
 	}
 
 	async decline(uuid: string): Promise<Friendship> {
-		return firstValueFrom(this.httpClient.patch<Friendship>(`${this.baseUrl}/${uuid}/decline`, {}));
+		return this.apiSdk.PATCH.friendship('/:uuid/decline', { path: { uuid } });
 	}
 
 	/** Cancels a request that has not been answered yet, by the uuid of the request. */
 	async remove(uuid: string): Promise<void> {
-		await firstValueFrom(this.httpClient.delete(`${this.baseUrl}/${uuid}`));
+		return this.apiSdk.DELETE.friendship('/:uuid', { path: { uuid } });
 	}
 
 	/**
@@ -60,18 +54,18 @@ export class FriendshipRepository {
 	 * exists between two people, so there is nothing to disambiguate.
 	 */
 	async removeByUser(userUuid: string): Promise<void> {
-		await firstValueFrom(this.httpClient.delete(`${this.baseUrl}/user/${userUuid}`));
+		return this.apiSdk.DELETE.friendship('/user/:uuid', { path: { uuid: userUuid } });
 	}
 
-	async listBlocked(): Promise<UserBlock[]> {
-		return firstValueFrom(this.httpClient.get<UserBlock[]>(this.blockUrl));
+	async listBlocked(): Promise<readonly UserBlock[]> {
+		return this.apiSdk.GET.userBlock('');
 	}
 
 	async block(username: string): Promise<UserBlock> {
-		return firstValueFrom(this.httpClient.post<UserBlock>(this.blockUrl, { username }));
+		return this.apiSdk.POST.userBlock('', { params: { username } });
 	}
 
 	async unblock(uuid: string): Promise<void> {
-		await firstValueFrom(this.httpClient.delete(`${this.blockUrl}/${uuid}`));
+		return this.apiSdk.DELETE.userBlock('/:uuid', { path: { uuid } });
 	}
 }

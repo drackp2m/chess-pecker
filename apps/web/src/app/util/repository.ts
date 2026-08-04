@@ -5,11 +5,13 @@ import { Migration } from '@app/repository/definition/migration.interface';
 import { SettingSchemaV1 } from '@app/repository/definition/setting-schema.interface';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
+import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
 
 export abstract class Repository {
 	private static migrations: (Migration<AppSchema> | Migration<SettingSchemaV1>)[] = [
 		createSettingStoreMigration,
 		rekeySettingStoreMigration,
+		createTrainingStoresMigration,
 	];
 
 	static getLatestVersion(): number {

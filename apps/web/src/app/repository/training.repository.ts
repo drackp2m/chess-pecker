@@ -1,58 +1,54 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-
-import { API_BASE_URL } from '@app/definition/api.constant';
-import {
+import type {
+	SetTrainingGoalRequest,
 	Training,
-	TrainingGoalRequest,
 	TrainingProgress,
-} from '@app/definition/training.interface';
+} from '@chesspecker/api-definitions';
+
+import { ApiSdkService } from '@app/service/api-sdk.service';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TrainingRepository {
-	private readonly httpClient = inject(HttpClient);
-	private readonly baseUrl = `${API_BASE_URL}/training`;
+	private readonly apiSdk = inject(ApiSdkService);
 
-	async list(): Promise<Training[]> {
-		return firstValueFrom(this.httpClient.get<Training[]>(this.baseUrl));
+	async list(): Promise<readonly Training[]> {
+		return this.apiSdk.GET.training('');
 	}
 
 	async start(): Promise<Training> {
-		return firstValueFrom(this.httpClient.post<Training>(this.baseUrl, {}));
+		return this.apiSdk.POST.training('');
 	}
 
 	async getOne(uuid: string): Promise<Training> {
-		return firstValueFrom(this.httpClient.get<Training>(`${this.baseUrl}/${uuid}`));
+		return this.apiSdk.GET.training('/:uuid', { path: { uuid } });
 	}
 
 	async getProgress(uuid: string): Promise<TrainingProgress> {
-		return firstValueFrom(
-			this.httpClient.get<TrainingProgress>(`${this.baseUrl}/${uuid}/progress`),
-		);
+		return this.apiSdk.GET.training('/:uuid/progress', { path: { uuid } });
 	}
 
 	/** Fixes the X exercises every cycle then runs over. Only possible once. */
 	async selectSet(uuid: string, size: number): Promise<number> {
-		const { size: selected } = await firstValueFrom(
-			this.httpClient.post<{ size: number }>(`${this.baseUrl}/${uuid}/set`, { size }),
-		);
+		const { size: selected } = await this.apiSdk.POST.training('/:uuid/set', {
+			path: { uuid },
+			params: { size },
+		});
 
 		return selected;
 	}
 
 	/** Append-only: every call adds a goal, and the current one is the last. */
-	async setGoal(uuid: string, goal: TrainingGoalRequest): Promise<void> {
-		await firstValueFrom(this.httpClient.post(`${this.baseUrl}/${uuid}/goal`, goal));
+	async setGoal(uuid: string, goal: SetTrainingGoalRequest): Promise<void> {
+		await this.apiSdk.POST.training('/:uuid/goal', { path: { uuid }, params: goal });
 	}
 
 	async finish(uuid: string): Promise<void> {
-		await firstValueFrom(this.httpClient.post(`${this.baseUrl}/${uuid}/finish`, {}));
+		return this.apiSdk.POST.training('/:uuid/finish', { path: { uuid } });
 	}
 
 	async cancel(uuid: string): Promise<void> {
-		await firstValueFrom(this.httpClient.delete(`${this.baseUrl}/${uuid}`));
+		return this.apiSdk.DELETE.training('/:uuid', { path: { uuid } });
 	}
 }

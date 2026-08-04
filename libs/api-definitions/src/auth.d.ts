@@ -1,3 +1,5 @@
+import { UserRole } from './user';
+
 export interface LoginRequest {
 	username: string;
 	password: string;
@@ -10,8 +12,8 @@ export interface RegisterRequest {
 }
 
 export interface AuthUser {
-	uuid: string;
-	username: string;
-	role: string;
-	email?: string;
+	readonly uuid: string;
+	readonly username: string;
+	readonly role: UserRole;
+	readonly email?: string;
 }
