@@ -930,6 +930,41 @@ describe('PuzzleStore', () => {
 			expect(store.isFreePlay()).toBe(true);
 		});
 
+		it('does not solve the exercise with the solution played in free play', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			// The whole script, mate included, played by hand: in free play both sides are
+			// the player's, so nothing here is answered for them and nothing is graded.
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b3', 'd1'],
+				['b1', 'd1'],
+				['f8', 'f1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			// The board is mated and says so; the exercise has not moved an inch.
+			expect(store.freePlayStatus()).toBe('checkmate');
+			expect(store.outcome()).toBe('solving');
+			expect(store.result()).toBeUndefined();
+			expect(store.progress().solvedMoves).toBe(0);
+
+			store.toggleFreePlay();
+
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.outcome()).toBe('solving');
+			expect(store.result()).toBeUndefined();
+			expect(store.progress().solvedMoves).toBe(0);
+			expect(store.isPlayerTurn()).toBe(true);
+		});
+
 		it('leaves a solved verdict to be earned after the exploration', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
