@@ -1,3 +1,28 @@
+# v1.9.0 (2026-08-04)
+
+## What's Changed
+
+### ✨ Features
+
+- add repository for puzzle, puzzle-set, cycle and attempt ([ea607d5](https://github.com/drackp2m/chess-pecker/commit/ea607d58df115f503102158192b33cb393d7b51b)) by Marc Jovaní González
+- connection status, angular sdk and shared types between api and web ([631b1a6](https://github.com/drackp2m/chess-pecker/commit/631b1a6ce7e455b8f7c9fe2306e93bf2c19aad56)) by Marc Jovaní González
+
+### 🎨 Styles
+
+- add crop effect to menu items, and blur as backdrop filter ([3478bd9](https://github.com/drackp2m/chess-pecker/commit/3478bd9e967792251658fee6b84a3320f40445ea)) by Marc Jovaní González
+- glass effect on navbar icons ([6ef7bec](https://github.com/drackp2m/chess-pecker/commit/6ef7becd96baa8810227c1d064eb7f3373c1a5e0)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- move icons folder, improve chess piece style ([84c1bc7](https://github.com/drackp2m/chess-pecker/commit/84c1bc7d848b371ca855266953f27a9a821d9960)) by Marc Jovaní González
+
+### 💻 Continuous Integration
+
+- add integration tests on CI ([dbf0bab](https://github.com/drackp2m/chess-pecker/commit/dbf0bab86bd7f8cf868f29aa5171a6f717fffafb)) by Marc Jovaní González
+- change jobs order ([187c82b](https://github.com/drackp2m/chess-pecker/commit/187c82b196c294f1c7c0fcaf83d318c1952f6f45)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.8.1...v1.9.0
+
 # v1.8.1 (2026-08-03)
 
 ## What's Changed
