@@ -15,7 +15,6 @@ import { UserModule } from '../user/user.module';
 import { UserSettingModule } from '../user-setting/user-setting.module';
 
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 
 @Module({
 	imports: [
@@ -34,7 +33,6 @@ import { AppService } from './app.service';
 		PuzzleModule,
 		TrainingModule,
 	],
-	providers: [AppService],
 	controllers: [AppController],
 })
 export class AppModule {}
