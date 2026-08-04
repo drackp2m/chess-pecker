@@ -1,4 +1,4 @@
-<nav class="nav force-light flex-row" aria-label="Main">
+<nav class="nav force-light px-4 flex-row" aria-label="Main">
 	<span class="glass" aria-hidden="true"></span>
 	<span class="indicator" aria-hidden="true"></span>
 
@@ -7,7 +7,9 @@
 		style="--icon: url('/svg/icon/house-solid.svg')"
 		appRouterLink="/"
 		aria-label="Home"
-	></button>
+	>
+		<span class="hit" aria-hidden="true"></span>
+	</button>
 
 	<button
 		class="item"
@@ -15,7 +17,9 @@
 		appRouterLink="/match"
 		aria-label="Play"
 		[routerLinkActiveOptions]="{ exact: false }"
-	></button>
+	>
+		<span class="hit" aria-hidden="true"></span>
+	</button>
 
 	<button
 		class="item"
@@ -23,7 +27,9 @@
 		appRouterLink="/training"
 		aria-label="Training"
 		[routerLinkActiveOptions]="{ exact: false }"
-	></button>
+	>
+		<span class="hit" aria-hidden="true"></span>
+	</button>
 
 	<button
 		class="item"
@@ -31,7 +37,9 @@
 		appRouterLink="/friends"
 		aria-label="Friends"
 		[routerLinkActiveOptions]="{ exact: false }"
-	></button>
+	>
+		<span class="hit" aria-hidden="true"></span>
+	</button>
 
 	<button
 		class="item"
@@ -39,5 +47,7 @@
 		appRouterLink="/settings"
 		aria-label="Settings"
 		[routerLinkActiveOptions]="{ exact: false }"
-	></button>
+	>
+		<span class="hit" aria-hidden="true"></span>
+	</button>
 </nav>

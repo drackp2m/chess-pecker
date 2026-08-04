@@ -4,12 +4,8 @@ main {
 
 	#router-outlet {
 		overflow: scroll;
-		height: 100%;
-
-		// The nav floats over the page instead of taking a row of its own, so the page
-		// keeps scrolling behind its cut-outs. The padding gives the end of the scroll
-		// the room the bar would otherwise have occupied.
-		padding-bottom: var(--nav-height);
+		flex: 1;
+		min-height: 0;
 	}
 
 	app-nav {
