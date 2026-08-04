@@ -689,10 +689,10 @@ describe('PuzzleStore', () => {
 	});
 
 	describe('free play', () => {
-		interface Excursion {
+		interface Exploration {
 			readonly entry: string;
 			readonly arrive: (store: PuzzleStore) => void;
-			readonly explored: readonly (readonly [Square, Square])[];
+			readonly moves: readonly (readonly [Square, Square])[];
 		}
 
 		const rewindToPlyTwo = (store: PuzzleStore): void => {
@@ -702,11 +702,11 @@ describe('PuzzleStore', () => {
 			store.stepBackward();
 		};
 
-		const EXCURSIONS: readonly Excursion[] = [
+		const EXPLORATIONS: readonly Exploration[] = [
 			{
 				entry: 'the opening position',
 				arrive: (): void => undefined,
-				explored: [
+				moves: [
 					['a7', 'a6'],
 					['a2', 'a3'],
 				],
@@ -714,7 +714,7 @@ describe('PuzzleStore', () => {
 			{
 				entry: 'a cursor rewound into a longer line',
 				arrive: rewindToPlyTwo,
-				explored: [
+				moves: [
 					['f8', 'f1'],
 					['b7', 'b6'],
 				],
@@ -722,7 +722,7 @@ describe('PuzzleStore', () => {
 			{
 				entry: 'the end of a played line',
 				arrive: playFivePlyLine,
-				explored: [
+				moves: [
 					['h5', 'f4'],
 					['a2', 'a3'],
 				],
@@ -730,18 +730,18 @@ describe('PuzzleStore', () => {
 			{
 				entry: 'a position off the script',
 				arrive: miss,
-				explored: [
+				moves: [
 					['a2', 'a3'],
 					['b7', 'b6'],
 				],
 			},
 		];
 
-		for (const excursion of EXCURSIONS) {
-			it(`comes back to ${excursion.entry} exactly as it left it`, () => {
+		for (const exploration of EXPLORATIONS) {
+			it(`comes back to ${exploration.entry} exactly as it left it`, () => {
 				const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
-				excursion.arrive(store);
+				exploration.arrive(store);
 
 				const entry = snapshot(store);
 				const outcome = store.outcome();
@@ -749,7 +749,7 @@ describe('PuzzleStore', () => {
 
 				store.toggleFreePlay();
 
-				for (const [from, to] of excursion.explored) {
+				for (const [from, to] of exploration.moves) {
 					play(store, from, to);
 				}
 
@@ -757,7 +757,7 @@ describe('PuzzleStore', () => {
 				store.stepForward();
 
 				expect(store.isFreePlay()).toBe(true);
-				expect(store.cursor()).toBe(entry.cursor + excursion.explored.length);
+				expect(store.cursor()).toBe(entry.cursor + exploration.moves.length);
 				expect(store.line()).not.toEqual(entry.line);
 
 				store.toggleFreePlay();
@@ -809,7 +809,7 @@ describe('PuzzleStore', () => {
 			expect(store.isPlayerTurn()).toBe(true);
 		});
 
-		it('gives the entry point back after the excursion was restarted', () => {
+		it('gives the entry point back after the exploration was restarted', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			rewindToPlyTwo(store);
@@ -840,7 +840,7 @@ describe('PuzzleStore', () => {
 			expect(store.outcome()).toBe('solving');
 		});
 
-		it('drops what the excursion had in flight when it is left', () => {
+		it('drops what the exploration had in flight when it is left', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			rewindToPlyTwo(store);
@@ -876,7 +876,7 @@ describe('PuzzleStore', () => {
 			expect(store.isFreePlay()).toBe(false);
 		});
 
-		it('keeps the verdict the exercise was graded on through a restarted excursion', () => {
+		it('keeps the verdict the exercise was graded on through a restarted exploration', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
@@ -895,7 +895,7 @@ describe('PuzzleStore', () => {
 			expect(store.cursor()).toBe(2);
 		});
 
-		it('never lets a scripted move land inside an excursion', () => {
+		it('never lets a scripted move land inside an exploration', () => {
 			const store = configure();
 
 			store.loadCsv(`${HEADER}\n${MATE_IN_3}`);
@@ -930,7 +930,7 @@ describe('PuzzleStore', () => {
 			expect(store.isFreePlay()).toBe(true);
 		});
 
-		it('leaves a solved verdict to be earned after the excursion', () => {
+		it('leaves a solved verdict to be earned after the exploration', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.toggleFreePlay();
@@ -954,7 +954,7 @@ describe('PuzzleStore', () => {
 			expect(store.result()).toBe('solved');
 		});
 
-		it('leaves a failed verdict to be earned after the excursion', () => {
+		it('leaves a failed verdict to be earned after the exploration', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.toggleFreePlay();
@@ -990,7 +990,7 @@ describe('PuzzleStore', () => {
 			}
 
 			expect(store.record()).toEqual([...FIVE_PLY, 'd1f1']);
-			expect(store.excursions()).toEqual([]);
+			expect(store.explorations()).toEqual([]);
 		});
 
 		it('closes on the verdict, so the take-back it schedules never reaches it', () => {
@@ -1037,7 +1037,7 @@ describe('PuzzleStore', () => {
 			expect(store.record()).toEqual([...FIVE_PLY, 0, 'f1f8']);
 		});
 
-		it('keeps a restart made inside an excursion out of the main line', () => {
+		it('keeps a restart made inside an exploration out of the main line', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.toggleFreePlay();
@@ -1046,10 +1046,10 @@ describe('PuzzleStore', () => {
 			vi.advanceTimersByTime(REPLAY_TOTAL);
 
 			expect(store.record()).toEqual(['f1f8']);
-			expect(store.excursions()).toEqual([{ at: 1, events: ['a7a6', 0, 'f1f8'] }]);
+			expect(store.explorations()).toEqual([{ at: 1, events: ['a7a6', 0, 'f1f8'] }]);
 		});
 
-		it('anchors an excursion to the length the main line had reached', () => {
+		it('anchors an exploration to the length the main line had reached', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			playFivePlyLine(store);
@@ -1061,12 +1061,12 @@ describe('PuzzleStore', () => {
 			store.stepBackward();
 			store.toggleFreePlay();
 
-			// Straight back in, with nothing in between: same anchor, second excursion.
+			// Straight back in, with nothing in between: same anchor, second exploration.
 			store.toggleFreePlay();
 			store.toggleFreePlay();
 
 			expect(store.record()).toEqual([...FIVE_PLY, -3]);
-			expect(store.excursions()).toEqual([
+			expect(store.explorations()).toEqual([
 				{ at: 6, events: ['f8f1', -1] },
 				{ at: 6, events: [] },
 			]);

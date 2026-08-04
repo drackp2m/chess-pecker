@@ -20,29 +20,29 @@ export interface FreePlayRun {
 	readonly events: readonly PuzzleEvent[];
 }
 
-/** How an exercise was solved: the main line, and the excursions hanging off it. */
+/** How an exercise was solved: the main line, and the explorations hanging off it. */
 export interface PuzzleRecord {
 	/** Every event outside free play, in the order they happened. */
 	readonly record: readonly PuzzleEvent[];
-	/** Every excursion into free play, in the order they were entered. */
-	readonly excursions: readonly FreePlayRun[];
+	/** Every exploration into free play, in the order they were entered. */
+	readonly explorations: readonly FreePlayRun[];
 }
 
 /** What a writer reads: the record so far, where it writes, and whether it still may. */
 export interface RecordState extends PuzzleRecord {
-	/** The free-play anchor; while one is standing the excursion is the target. */
+	/** The free-play anchor; while one is standing the exploration is the target. */
 	readonly freePlay: object | undefined;
 	/** The settled verdict, which closes the record for good. */
 	readonly result: PuzzleResult | undefined;
 }
 
 export function blankRecord(): PuzzleRecord {
-	return { record: [], excursions: [] };
+	return { record: [], explorations: [] };
 }
 
 /** The record untouched, for everything that happens once it is closed. */
 function keep(state: PuzzleRecord): PuzzleRecord {
-	return { record: state.record, excursions: state.excursions };
+	return { record: state.record, explorations: state.explorations };
 }
 
 function extend(events: readonly PuzzleEvent[], event: PuzzleEvent): readonly PuzzleEvent[] {
@@ -63,7 +63,7 @@ function extendRun(events: readonly PuzzleEvent[], step: number): readonly Puzzl
 
 /**
  * Puts whatever `write` appends where the exercise is recording right now: the open
- * excursion while free play is on, the main line otherwise, and nowhere at all once
+ * exploration while free play is on, the main line otherwise, and nowhere at all once
  * the verdict has been settled.
  */
 function record(
@@ -75,12 +75,12 @@ function record(
 	}
 
 	if (undefined === state.freePlay) {
-		return { record: write(state.record), excursions: state.excursions };
+		return { record: write(state.record), explorations: state.explorations };
 	}
 
-	const open = state.excursions.at(-1);
+	const open = state.explorations.at(-1);
 
-	// Free play without an excursion to write into is free play entered after the
+	// Free play without an exploration to write into is free play entered after the
 	// record was closed, which the guard above has already turned away.
 	if (undefined === open) {
 		return keep(state);
@@ -88,7 +88,7 @@ function record(
 
 	return {
 		record: state.record,
-		excursions: [...state.excursions.slice(0, -1), { ...open, events: write(open.events) }],
+		explorations: [...state.explorations.slice(0, -1), { ...open, events: write(open.events) }],
 	};
 }
 
@@ -110,7 +110,7 @@ export function recordRestart(state: RecordState): PuzzleRecord {
 }
 
 /**
- * A new excursion, anchored to the length the main line had reached. `at` is a length
+ * A new exploration, anchored to the length the main line had reached. `at` is a length
  * and not an index, so entering before anything at all has happened is plainly `0`.
  */
 export function recordEntry(state: RecordState): PuzzleRecord {
@@ -120,6 +120,6 @@ export function recordEntry(state: RecordState): PuzzleRecord {
 
 	return {
 		record: state.record,
-		excursions: [...state.excursions, { at: state.record.length, events: [] }],
+		explorations: [...state.explorations, { at: state.record.length, events: [] }],
 	};
 }

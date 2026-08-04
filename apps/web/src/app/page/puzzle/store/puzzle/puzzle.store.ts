@@ -222,7 +222,7 @@ export class PuzzleStore
 	private recordState(): RecordState {
 		return {
 			record: this.record(),
-			excursions: this.excursions(),
+			explorations: this.explorations(),
 			freePlay: this.freePlay(),
 			result: this.result(),
 		};
