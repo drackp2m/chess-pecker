@@ -15,6 +15,7 @@ import {
 	isSolution,
 	nextSelection,
 	openPuzzle,
+	restartLinePatch,
 	restoreFreePlayPatch,
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle/session';
@@ -78,7 +79,16 @@ export class PuzzleStore
 
 	/** Same exercise, so the verdict it was graded on survives the reopening. */
 	restart(): void {
-		this.open(this.result());
+		const puzzle = this.puzzle();
+
+		if (undefined === this.freePlay() || undefined === puzzle) {
+			this.open(this.result());
+
+			return;
+		}
+
+		patchState(this, restartLinePatch(puzzle));
+		this.playScripted();
 	}
 
 	/**
@@ -101,11 +111,13 @@ export class PuzzleStore
 		const anchor = this.freePlay();
 
 		if (undefined === anchor) {
+			this.settleScripted();
 			this.enterFreePlay();
 
 			return;
 		}
 
+		this.cancelScripted();
 		patchState(this, (state) => restoreFreePlayPatch(state, anchor));
 	}
 

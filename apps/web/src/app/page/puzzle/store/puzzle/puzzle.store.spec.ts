@@ -11,10 +11,12 @@ import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
+import { ChessFen } from '@app/util/chess/chess-fen';
 
 const HEADER = 'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor';
 const MATE_IN_3 =
 	'JOGv3,5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27,f1f8 b2b1 b3d1 b1d1 f8f1 d1f1,536,100,2178,backRankMate endgame long mate mateIn3,https://lichess.org/fFWULcre#53,500-599';
+const MATE_IN_3_FEN = '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27';
 const SHORT =
 	'ABC12,4k3/8/8/8/8/8/R7/4K2R w - - 0 1,h1h5 e8d8 a2a8,900,90,10,mate mateIn1,https://example.org,900-999';
 /** The script walks to mate with Qg4 first, but Qg7 mates straight away. */
@@ -73,6 +75,17 @@ function play(store: PuzzleStore, from: Square, to: Square): void {
 /** The first solving move of `MATE_IN_3` is Rb1+; Rc2 is a legal move that is not it. */
 function miss(store: PuzzleStore): void {
 	play(store, 'b2', 'c2');
+}
+
+function playFivePlyLine(store: PuzzleStore): void {
+	play(store, 'b2', 'b1');
+	vi.advanceTimersByTime(REPLAY_TOTAL);
+	play(store, 'b1', 'd1');
+	vi.advanceTimersByTime(REPLAY_TOTAL);
+}
+
+function snapshot(store: PuzzleStore) {
+	return { positions: store.positions(), line: store.line(), cursor: store.cursor() };
 }
 
 /**
@@ -673,5 +686,290 @@ describe('PuzzleStore', () => {
 		expect(store.loadCsv('nonsense')).toBe(false);
 		expect(store.library.importError()).toBeDefined();
 		expect(store.outcome()).toBe('idle');
+	});
+
+	describe('free play', () => {
+		interface Excursion {
+			readonly entry: string;
+			readonly arrive: (store: PuzzleStore) => void;
+			readonly explored: readonly (readonly [Square, Square])[];
+		}
+
+		const rewindToPlyTwo = (store: PuzzleStore): void => {
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+			store.stepBackward();
+		};
+
+		const EXCURSIONS: readonly Excursion[] = [
+			{
+				entry: 'the opening position',
+				arrive: (): void => undefined,
+				explored: [
+					['a7', 'a6'],
+					['a2', 'a3'],
+				],
+			},
+			{
+				entry: 'a cursor rewound into a longer line',
+				arrive: rewindToPlyTwo,
+				explored: [
+					['f8', 'f1'],
+					['b7', 'b6'],
+				],
+			},
+			{
+				entry: 'the end of a played line',
+				arrive: playFivePlyLine,
+				explored: [
+					['h5', 'f4'],
+					['a2', 'a3'],
+				],
+			},
+			{
+				entry: 'a position off the script',
+				arrive: miss,
+				explored: [
+					['a2', 'a3'],
+					['b7', 'b6'],
+				],
+			},
+		];
+
+		for (const excursion of EXCURSIONS) {
+			it(`comes back to ${excursion.entry} exactly as it left it`, () => {
+				const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+				excursion.arrive(store);
+
+				const entry = snapshot(store);
+				const outcome = store.outcome();
+				const result = store.result();
+
+				store.toggleFreePlay();
+
+				for (const [from, to] of excursion.explored) {
+					play(store, from, to);
+				}
+
+				store.stepBackward();
+				store.stepForward();
+
+				expect(store.isFreePlay()).toBe(true);
+				expect(store.cursor()).toBe(entry.cursor + excursion.explored.length);
+				expect(store.line()).not.toEqual(entry.line);
+
+				store.toggleFreePlay();
+
+				expect(store.isFreePlay()).toBe(false);
+				expect(snapshot(store)).toEqual(entry);
+				expect(store.outcome()).toBe(outcome);
+				expect(store.result()).toBe(result);
+			});
+		}
+
+		it('restarts the exercise inside free play, opponent reply and all', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			play(store, 'a7', 'a6');
+			play(store, 'a2', 'a3');
+			store.restart();
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.cursor()).toBe(0);
+			expect(store.line()).toHaveLength(0);
+			expect(ChessFen.serialize(store.position())).toBe(MATE_IN_3_FEN);
+			expect(store.isBusy()).toBe(true);
+
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.cursor()).toBe(1);
+			expect(store.history()).toHaveLength(1);
+			expect(store.history()[0]?.san).toBe('Rxf8');
+			expect(store.isLocked()).toBe(false);
+			expect(store.outcome()).toBe('solving');
+
+			store.stepBackward();
+
+			expect(store.cursor()).toBe(0);
+			expect(ChessFen.serialize(store.position())).toBe(MATE_IN_3_FEN);
+			expect(store.line()).toHaveLength(1);
+
+			store.toggleFreePlay();
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.outcome()).toBe('solving');
+			expect(store.isPlayerTurn()).toBe(true);
+		});
+
+		it('gives the entry point back after the excursion was restarted', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			rewindToPlyTwo(store);
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			play(store, 'f8', 'f1');
+			play(store, 'b7', 'b6');
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.cursor()).toBe(1);
+			expect(store.line()).toHaveLength(1);
+
+			play(store, 'b2', 'c2');
+
+			expect(store.cursor()).toBe(2);
+			expect(store.result()).toBeUndefined();
+
+			store.toggleFreePlay();
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.cursor()).toBe(2);
+			expect(store.line()).toHaveLength(5);
+			expect(store.outcome()).toBe('solving');
+		});
+
+		it('drops what the excursion had in flight when it is left', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			rewindToPlyTwo(store);
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			store.restart();
+			vi.advanceTimersByTime(400);
+
+			expect(store.announcedMove()?.to).toBe('f8');
+
+			store.toggleFreePlay();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 2);
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.announcedMove()).toBeUndefined();
+			expect(store.isBusy()).toBe(false);
+			expect(store.outcome()).toBe('solving');
+		});
+
+		it('leaves the take-back the exercise had waiting to do its job', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.toggleFreePlay();
+			store.toggleFreePlay();
+			vi.advanceTimersByTime(UNDO_TOTAL);
+
+			expect(store.cursor()).toBe(1);
+			expect(store.mistake()).toBeUndefined();
+			expect(store.isFreePlay()).toBe(false);
+		});
+
+		it('keeps the verdict the exercise was graded on through a restarted excursion', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.toggleFreePlay();
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.result()).toBe('failed');
+			expect(store.mistakeCount()).toBe(1);
+
+			store.toggleFreePlay();
+
+			expect(store.result()).toBe('failed');
+			expect(store.outcome()).toBe('failed');
+			expect(store.cursor()).toBe(2);
+		});
+
+		it('never lets a scripted move land inside an excursion', () => {
+			const store = configure();
+
+			store.loadCsv(`${HEADER}\n${MATE_IN_3}`);
+			vi.advanceTimersByTime(200);
+			store.toggleFreePlay();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 2);
+
+			expect(store.freePlay()?.line ?? store.line()).toHaveLength(1);
+			expect(store.outcome()).toBe('solving');
+			expect(store.isLocked()).toBe(false);
+		});
+
+		it('is only ever entered on purpose while the verdict is still open', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepForward();
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.result()).toBeUndefined();
+			expect(store.isFreePlay()).toBe(false);
+
+			miss(store);
+
+			expect(store.result()).toBe('failed');
+			expect(store.isFreePlay()).toBe(false);
+
+			play(store, 'a2', 'a3');
+
+			expect(store.isFreePlay()).toBe(true);
+		});
+
+		it('leaves a solved verdict to be earned after the excursion', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+			play(store, 'a7', 'a6');
+			play(store, 'a2', 'a3');
+			store.stepBackward();
+			store.toggleFreePlay();
+
+			expect(store.result()).toBeUndefined();
+
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b1', 'd1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			expect(store.outcome()).toBe('solved');
+			expect(store.result()).toBe('solved');
+		});
+
+		it('leaves a failed verdict to be earned after the excursion', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+			miss(store);
+			play(store, 'a2', 'a3');
+			store.toggleFreePlay();
+
+			expect(store.result()).toBeUndefined();
+			expect(store.mistakeCount()).toBe(0);
+
+			miss(store);
+
+			expect(store.result()).toBe('failed');
+			expect(store.outcome()).toBe('failed');
+			expect(store.mistakeCount()).toBe(1);
+		});
 	});
 });

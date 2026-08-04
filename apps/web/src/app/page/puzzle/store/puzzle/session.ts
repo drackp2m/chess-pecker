@@ -80,6 +80,22 @@ export function buildPuzzleState(): PuzzleStoreProps {
 	};
 }
 
+function startLine(position: ChessPosition): Partial<PuzzleStoreProps> {
+	return {
+		positions: [position],
+		line: [],
+		cursor: 0,
+		announced: undefined,
+		transition: undefined,
+		selected: undefined,
+		pendingPromotion: undefined,
+	};
+}
+
+export function restartLinePatch(puzzle: Puzzle): Partial<PuzzleStoreProps> {
+	return startLine(ChessFen.parse(puzzle.fen));
+}
+
 /**
  * Opens an exercise at its raw FEN. The side to move there is the opponent — it is
  * about to play `moves[0]` — so the player takes the other colour.
@@ -89,15 +105,9 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 	const playerColor: PieceColor = 'white' === position.turn ? 'black' : 'white';
 
 	return {
-		positions: [position],
-		line: [],
-		cursor: 0,
-		announced: undefined,
-		transition: undefined,
+		...startLine(position),
 		playerColor,
 		orientation: playerColor,
-		selected: undefined,
-		pendingPromotion: undefined,
 		outcome: 'opening',
 		result: undefined,
 		freePlay: undefined,
@@ -126,7 +136,7 @@ function keptTransition(state: RewindState, cursor: number): BoardTransition | u
 	return cursor === state.cursor ? state.transition : undefined;
 }
 
-/** Puts the line back exactly where free play picked it up. */
+/** Puts the line back exactly where free play picked it up, and nothing in flight. */
 export function restoreFreePlayPatch(
 	state: RewindState,
 	anchor: FreePlayAnchor,
@@ -139,6 +149,7 @@ export function restoreFreePlayPatch(
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
+		isReplaying: false,
 		transition: keptTransition(state, anchor.cursor),
 	};
 }

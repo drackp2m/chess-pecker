@@ -175,6 +175,18 @@ function buildMethods(context: PlaybackContext) {
 			playScripted(context);
 		},
 
+		settleScripted: (): void => {
+			if (store.isReplaying()) {
+				scheduled.flush();
+			}
+		},
+
+		cancelScripted: (): void => {
+			if (store.isReplaying()) {
+				scheduled.cancel();
+			}
+		},
+
 		cancelPlayback: (): void => {
 			scheduled.cancel();
 		},
