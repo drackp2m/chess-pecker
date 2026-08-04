@@ -1,6 +1,7 @@
 import {
 	AttemptSchema,
 	AttemptSchemaV3,
+	AttemptSchemaV4,
 } from '@app/repository/definition/attempt-schema.interface';
 import { CycleSchema } from '@app/repository/definition/cycle-schema.interface';
 import { PuzzleSchema } from '@app/repository/definition/puzzle-schema.interface';
@@ -9,6 +10,9 @@ import { SettingSchema } from '@app/repository/definition/setting-schema.interfa
 
 export interface AppSchema
 	extends AttemptSchema, CycleSchema, PuzzleSchema, PuzzleSetSchema, SettingSchema {}
+
+export interface AppSchemaV4
+	extends AttemptSchemaV4, CycleSchema, PuzzleSchema, PuzzleSetSchema, SettingSchema {}
 
 export interface AppSchemaV3
 	extends AttemptSchemaV3, CycleSchema, PuzzleSchema, PuzzleSetSchema, SettingSchema {}

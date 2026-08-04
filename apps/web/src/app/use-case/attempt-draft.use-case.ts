@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import type { PuzzleAttemptKind } from '@chesspecker/api-definitions';
 
+import { PieceColor } from '@app/definition/chess.type';
+import { PuzzleRecord } from '@app/definition/puzzle.type';
 import { AttemptRepository } from '@app/repository/attempt.repository';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 
@@ -19,10 +21,10 @@ export interface AttemptDraft {
 	readonly createdAt: Date;
 }
 
-export interface AttemptProgress {
+export interface AttemptProgress extends PuzzleRecord {
 	readonly durationMs: number;
-	readonly movesPlayed: number;
 	readonly updatedAt: Date;
+	readonly orientation: PieceColor;
 	readonly startedAt?: Date;
 	readonly solved?: boolean;
 }
@@ -60,7 +62,9 @@ export class AttemptDraftUseCase {
 			puzzleUuid: identity.puzzleUuid,
 			lichessId: identity.lichessId,
 			durationMs: progress.durationMs,
-			movesPlayed: progress.movesPlayed,
+			record: progress.record,
+			explorations: progress.explorations,
+			orientation: progress.orientation,
 			createdAt: draft.createdAt,
 			updatedAt: progress.updatedAt,
 			...(undefined === identity.roundUuid ? {} : { roundUuid: identity.roundUuid }),

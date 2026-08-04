@@ -174,7 +174,9 @@ export class TrainingSolveSession {
 			.save(draft, {
 				durationMs,
 				updatedAt,
-				movesPlayed: this.board.line().length,
+				record: this.board.record(),
+				explorations: this.board.explorations(),
+				orientation: this.board.orientation(),
 				...(undefined === startedAt ? {} : { startedAt }),
 				...(undefined === result ? {} : { solved: 'solved' === result }),
 			})

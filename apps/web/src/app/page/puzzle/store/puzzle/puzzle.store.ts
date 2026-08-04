@@ -4,12 +4,17 @@ import { patchState, signalStore, withState } from '@ngrx/signals';
 import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
-import { Puzzle, PuzzleOutcome, PuzzleResult, settleResult } from '@app/definition/puzzle.type';
+import {
+	Puzzle,
+	PuzzleOutcome,
+	PuzzleRecord,
+	PuzzleResult,
+	settleResult,
+} from '@app/definition/puzzle.type';
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
 import { withPuzzleGating } from '@app/page/puzzle/store/puzzle/gating';
 import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
 import {
-	PuzzleRecord,
 	RecordState,
 	recordEntry,
 	recordRestart,

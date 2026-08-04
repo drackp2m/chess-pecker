@@ -61,6 +61,29 @@ export function settleResult(
 	return 'solved' === outcome || 'failed' === outcome ? outcome : undefined;
 }
 
+/**
+ * One thing that happened while the exercise was being solved: a move in UCI, a run
+ * of cursor steps as a signed count, or `0` for a restart. Replaying a prefix of them
+ * rebuilds one and only one board, which is what the whole format rests on.
+ */
+export type PuzzleEvent = string | number;
+
+/** A visit to free play: where the main line stood, and what was played inside. */
+export interface FreePlayRun {
+	/** How many events of the main line had happened at the moment it was entered. */
+	readonly at: number;
+	/** The events inside, encoded exactly like the ones outside. */
+	readonly events: readonly PuzzleEvent[];
+}
+
+/** How an exercise was solved: the main line, and the explorations hanging off it. */
+export interface PuzzleRecord {
+	/** Every event outside free play, in the order they happened. */
+	readonly record: readonly PuzzleEvent[];
+	/** Every exploration into free play, in the order they were entered. */
+	readonly explorations: readonly FreePlayRun[];
+}
+
 /** A move played during a session, plus where it came from. */
 export interface PuzzleMove extends ChessMoveRecord {
 	readonly isOpponent: boolean;

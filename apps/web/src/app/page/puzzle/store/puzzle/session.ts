@@ -12,9 +12,10 @@ import {
 	PuzzleMove,
 	PuzzleOutcome,
 	PuzzleProgress,
+	PuzzleRecord,
 	PuzzleResult,
 } from '@app/definition/puzzle.type';
-import { PuzzleRecord, blankRecord } from '@app/page/puzzle/store/puzzle/record';
+import { blankRecord } from '@app/page/puzzle/store/puzzle/record';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
