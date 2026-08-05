@@ -8,7 +8,7 @@ import {
 	Puzzle,
 	PuzzleOutcome,
 	PuzzleRecord,
-	PuzzleResult,
+	settleClosure,
 	settleResult,
 } from '@app/definition/puzzle.type';
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
@@ -21,6 +21,7 @@ import {
 	recordStep,
 } from '@app/page/puzzle/store/puzzle/record';
 import {
+	PuzzleVerdict,
 	anchorFreePlay,
 	buildPuzzleState,
 	findPromotion,
@@ -96,7 +97,7 @@ export class PuzzleStore
 		}
 	}
 
-	/** Same exercise, so the verdict it was graded on survives the reopening. */
+	/** Same exercise, so what it was graded and closed on survives the reopening. */
 	restart(): void {
 		const puzzle = this.puzzle();
 		// Read before anything moves, so the restart is written into the record the
@@ -104,7 +105,7 @@ export class PuzzleStore
 		const recorded = recordRestart(this.recordState());
 
 		if (undefined === this.freePlay() || undefined === puzzle) {
-			this.open(this.result(), recorded);
+			this.open(this.verdict(), recorded);
 
 			return;
 		}
@@ -114,8 +115,9 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Plays what is left of the solution, from wherever the line stopped following it.
-	 * The result was settled on the first try, so watching the answer never revises it.
+	 * Gives up: plays what is left of the solution, from wherever the line stopped
+	 * following it. It is asked for after a miss and it ends the exercise, though not
+	 * the verdict — that was settled on the first try, and watching never revises it.
 	 */
 	revealSolution(): void {
 		if (!this.canRevealSolution()) {
@@ -125,6 +127,15 @@ export class PuzzleStore
 		this.cancelPlayback();
 		patchState(this, (state) => revealPatch(state, this.deviation()));
 		this.playScripted();
+	}
+
+	/** Uncovers the themes. It is help, so it is remembered, but it closes nothing. */
+	useHint(): void {
+		if (!this.canUseHint()) {
+			return;
+		}
+
+		patchState(this, { hintUsed: true });
 	}
 
 	toggleFreePlay(): void {
@@ -212,7 +223,7 @@ export class PuzzleStore
 		patchState(this, { orientation: 'white' === this.orientation() ? 'black' : 'white' });
 	}
 
-	private open(result?: PuzzleResult, recorded?: PuzzleRecord): void {
+	private open(verdict?: PuzzleVerdict, recorded?: PuzzleRecord): void {
 		const puzzle = this.puzzle();
 
 		this.cancelPlayback();
@@ -223,7 +234,7 @@ export class PuzzleStore
 			return;
 		}
 
-		patchState(this, { ...openPuzzle(puzzle), ...recorded, result });
+		patchState(this, { ...openPuzzle(puzzle), ...recorded, ...verdict });
 		this.playScripted();
 	}
 
@@ -231,12 +242,21 @@ export class PuzzleStore
 		return { positions: this.positions(), line: this.line(), cursor: this.cursor() };
 	}
 
+	private verdict(): PuzzleVerdict {
+		return {
+			result: this.result(),
+			closure: this.closure(),
+			hintUsed: this.hintUsed(),
+			mistakeCount: this.mistakeCount(),
+		};
+	}
+
 	private recordState(): RecordState {
 		return {
 			record: this.record(),
 			explorations: this.explorations(),
 			freePlay: this.freePlay(),
-			result: this.result(),
+			closure: this.closure(),
 		};
 	}
 
@@ -290,6 +310,9 @@ export class PuzzleStore
 	 * Grades the player's move, then lets the opponent answer if it was right. Only a
 	 * move played against the script is graded at all: off it, and in free play, the
 	 * board is a sandbox and nothing there may reach `result`.
+	 *
+	 * The move that completes the line is also the one that ends the exercise, whether
+	 * it was found first time or after any number of misses.
 	 */
 	private attemptMove(move: ChessMove): void {
 		if (this.isFreePlay() || this.isOffScript()) {
@@ -309,7 +332,11 @@ export class PuzzleStore
 		const outcome: PuzzleOutcome =
 			'solved' === this.outcomeAt(this.cursor()) ? 'solved' : 'replying';
 
-		patchState(this, { outcome, result: settleResult(this.result(), outcome) });
+		patchState(this, {
+			outcome,
+			result: settleResult(this.result(), outcome),
+			closure: 'solved' === outcome ? settleClosure(this.closure(), 'found') : this.closure(),
+		});
 
 		if ('solved' !== outcome) {
 			this.playScripted();

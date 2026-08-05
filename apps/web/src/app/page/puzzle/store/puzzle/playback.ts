@@ -15,7 +15,7 @@ import {
 	REPLAY_DELAY,
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
-import { Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
+import { Puzzle, PuzzleClosure, PuzzleOutcome, settleClosure } from '@app/definition/puzzle.type';
 import { recordMove } from '@app/page/puzzle/store/puzzle/record';
 import {
 	PuzzleStoreProps,
@@ -59,6 +59,21 @@ function outcomeAt(store: PlaybackStore, cursor: number): PuzzleOutcome {
 	return undefined === puzzle || store.isReplaying() || undefined !== store.freePlay()
 		? store.outcome()
 		: describeOutcome(store.positions(), puzzle, store.deviation(), cursor);
+}
+
+/**
+ * Whether the line that just landed ends the exercise. Only the main line played out
+ * on the board does: free play is a sandbox, and an answer playing itself is the very
+ * thing the player did not find.
+ */
+function landedClosure(
+	store: PlaybackStore,
+	outcome: PuzzleOutcome,
+	wasRevealing: boolean,
+): PuzzleClosure {
+	const isFound = 'solved' === outcome && !wasRevealing && undefined === store.freePlay();
+
+	return isFound ? settleClosure(store.closure(), 'found') : store.closure();
 }
 
 function commit(
@@ -123,8 +138,9 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 	}
 
 	const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
+	const wasRevealing = store.isRevealing();
 
-	if (store.isRevealing() && undefined !== move && isScriptLeft) {
+	if (wasRevealing && undefined !== move && isScriptLeft) {
 		playScripted(context);
 
 		return;
@@ -133,7 +149,10 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 	// Real Lichess lines end on a player move, but a set that ends on the
 	// opponent's would otherwise leave the exercise waiting forever.
 	patchState(store, { isReplaying: false, isRevealing: false });
-	patchState(store, { outcome: outcomeAt(store, store.cursor()) });
+
+	const outcome = outcomeAt(store, store.cursor());
+
+	patchState(store, { outcome, closure: landedClosure(store, outcome, wasRevealing) });
 }
 
 /** Leaves the refuted move up long enough to be seen, then takes it back. */

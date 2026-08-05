@@ -9,7 +9,7 @@ import type {
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import {
-	TrainingRunResult,
+	TrainingAttemptRecord,
 	TrainingRunSlot,
 	describeOutcome,
 	initialState,
@@ -68,10 +68,11 @@ export class TrainingRunStore extends signalStore(
 	}
 
 	/**
-	 * Records how the exercise on screen went. Woodpecker grades on the first try, so
-	 * this runs once per exercise and is never revised.
+	 * Records how the exercise on screen went, once it is over. Woodpecker grades on the
+	 * first try, so the verdict inside `record` was settled long before the exercise
+	 * closed; this still runs once per exercise and is never revised.
 	 */
-	async grade(result: TrainingRunResult, timing: SolveTiming): Promise<void> {
+	async grade(record: TrainingAttemptRecord, timing: SolveTiming): Promise<void> {
 		const uuid = this.trainingUuid();
 		const current = this.current();
 
@@ -79,13 +80,17 @@ export class TrainingRunStore extends signalStore(
 			return;
 		}
 
-		patchState(this, { isSubmitting: true, error: null, lastResult: result });
+		patchState(this, {
+			isSubmitting: true,
+			error: null,
+			lastResult: record.solved ? 'solved' : 'failed',
+		});
 
 		try {
 			const isClosed =
 				'calibration' === this.mode()
-					? await this.gradeCalibration(uuid, current.puzzle, result, timing)
-					: await this.gradeCycle(uuid, current, result, timing);
+					? await this.gradeCalibration(uuid, current.puzzle, record, timing)
+					: await this.gradeCycle(uuid, current, record, timing);
 
 			patchState(this, { isSubmitting: false, isDone: isClosed });
 		} catch (error) {
@@ -177,7 +182,7 @@ export class TrainingRunStore extends signalStore(
 	private async gradeCalibration(
 		uuid: string,
 		puzzle: ApiPuzzle,
-		result: TrainingRunResult,
+		record: TrainingAttemptRecord,
 		timing: SolveTiming,
 	): Promise<boolean> {
 		const round = this.round();
@@ -189,7 +194,7 @@ export class TrainingRunStore extends signalStore(
 		const { outcome } = await this.runRepository.submitCalibrationAttempt(uuid, {
 			roundUuid: round.uuid,
 			puzzleUuid: puzzle.uuid,
-			solved: 'solved' === result,
+			...record,
 			...timing,
 		});
 
@@ -213,7 +218,7 @@ export class TrainingRunStore extends signalStore(
 	private async gradeCycle(
 		uuid: string,
 		current: TrainingRunSlot,
-		result: TrainingRunResult,
+		record: TrainingAttemptRecord,
 		timing: SolveTiming,
 	): Promise<boolean> {
 		if (null === current.cycleItemUuid) {
@@ -222,7 +227,7 @@ export class TrainingRunStore extends signalStore(
 
 		const { cycleFinished } = await this.runRepository.submitCycleAttempt(uuid, {
 			cycleItemUuid: current.cycleItemUuid,
-			solved: 'solved' === result,
+			...record,
 			...timing,
 		});
 

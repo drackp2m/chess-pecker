@@ -462,8 +462,8 @@ describe('PuzzleStore', () => {
 		store.revealSolution();
 		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
 
-		// Once seen, it is spent: the navigation buttons are what replays it.
-		expect(store.isRevealed()).toBe(true);
+		// Once given up on, it is spent: the navigation buttons are what replays it.
+		expect(store.closure()).toBe('revealed');
 		expect(store.canRevealSolution()).toBe(false);
 	});
 
@@ -499,7 +499,7 @@ describe('PuzzleStore', () => {
 		}
 
 		expect(store.mistakeCount()).toBe(3);
-		expect(store.isRevealed()).toBe(false);
+		expect(store.closure()).toBe('open');
 		expect(store.cursor()).toBe(1);
 		expect(store.outcome()).toBe('solving');
 	});
@@ -1063,6 +1063,163 @@ describe('PuzzleStore', () => {
 		});
 	});
 
+	describe('the closure', () => {
+		const SOLVING_LINE = [
+			['b2', 'b1'],
+			['b1', 'd1'],
+			['d1', 'f1'],
+		] as const;
+
+		function solve(store: PuzzleStore): void {
+			for (const [from, to] of SOLVING_LINE) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+		}
+
+		it('outlives the verdict: a miss grades the attempt but does not end it', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+
+			expect(store.result()).toBe('failed');
+			expect(store.closure()).toBe('open');
+
+			solve(store);
+
+			// Found on the retry: the exercise is over, the note it was sealed with is not.
+			expect(store.closure()).toBe('found');
+			expect(store.result()).toBe('failed');
+		});
+
+		it('closes on any mate that ends the line, scripted or not', () => {
+			const store = createStore(`${HEADER}\n${ALT_MATE}`);
+
+			play(store, 'g1', 'g7');
+
+			expect(store.closure()).toBe('found');
+			expect(store.result()).toBe('solved');
+		});
+
+		it('is never reached by the answer playing itself', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 1 });
+
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+
+			expect(store.closure()).toBe('revealed');
+
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+			// The line is complete, but it is not the player who completed it.
+			expect(store.outcome()).toBe('solved');
+			expect(store.closure()).toBe('revealed');
+		});
+
+		it('is not something free play can reach, mate and all', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b3', 'd1'],
+				['b1', 'd1'],
+				['f8', 'f1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			expect(store.freePlayStatus()).toBe('checkmate');
+			expect(store.closure()).toBe('open');
+		});
+
+		it('takes a miss before the answer can be asked for', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+
+			expect(store.canRevealSolution()).toBe(false);
+
+			miss(store);
+
+			expect(store.canRevealSolution()).toBe(true);
+
+			store.revealSolution();
+
+			expect(store.closure()).toBe('revealed');
+			expect(store.canRevealSolution()).toBe(false);
+		});
+
+		it('survives a restart, along with the verdict, the misses and the hint', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+
+			store.useHint();
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+			store.revealSolution();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.cursor()).toBe(1);
+			expect(store.closure()).toBe('revealed');
+			expect(store.result()).toBe('failed');
+			expect(store.mistakeCount()).toBe(1);
+			expect(store.hintUsed()).toBe(true);
+			expect(store.canRevealSolution()).toBe(false);
+		});
+
+		it('opens the next exercise on a clean slate', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`, {
+				mistakesBeforeSolution: 0,
+			});
+
+			store.useHint();
+			miss(store);
+			store.revealSolution();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			store.nextPuzzle();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.closure()).toBe('open');
+			expect(store.result()).toBeUndefined();
+			expect(store.mistakeCount()).toBe(0);
+			expect(store.hintUsed()).toBe(false);
+		});
+	});
+
+	describe('the hint', () => {
+		it('uncovers the themes and closes nothing', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			expect(store.canUseHint()).toBe(true);
+			expect(store.areThemesShown()).toBe(false);
+
+			store.useHint();
+
+			expect(store.hintUsed()).toBe(true);
+			expect(store.areThemesShown()).toBe(true);
+			expect(store.canUseHint()).toBe(false);
+			expect(store.closure()).toBe('open');
+			expect(store.result()).toBeUndefined();
+			expect(store.isPlayerTurn()).toBe(true);
+		});
+
+		it('is spent once the exercise is over, which hands the themes over anyway', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+
+			miss(store);
+			store.revealSolution();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+			expect(store.canUseHint()).toBe(false);
+			expect(store.hintUsed()).toBe(false);
+			expect(store.areThemesShown()).toBe(true);
+		});
+	});
+
 	describe('the solve record', () => {
 		/** The five plies `playFivePlyLine` leaves behind, as the record writes them. */
 		const FIVE_PLY = ['f1f8', 'b2b1', 'b3d1', 'b1d1', 'f8f1'];
@@ -1083,18 +1240,53 @@ describe('PuzzleStore', () => {
 			expect(store.explorations()).toEqual([]);
 		});
 
-		it('closes on the verdict, so the take-back it schedules never reaches it', () => {
+		it('stays open through a miss, so the take-back and the retry are both in it', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
 
-			// The move that settles the verdict is in; the rewind that follows it is not.
 			expect(store.record()).toEqual(['f1f8', 'b2c2']);
 
 			vi.advanceTimersByTime(UNDO_TOTAL * 2);
 
+			// The verdict is settled by now, and the exercise is still being solved.
 			expect(store.cursor()).toBe(1);
-			expect(store.record()).toEqual(['f1f8', 'b2c2']);
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+
+			play(store, 'b2', 'b1');
+
+			expect(store.result()).toBe('failed');
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1, 'b2b1']);
+		});
+
+		it('keeps an exploration made after the miss, anchor and all', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+			store.toggleFreePlay();
+			play(store, 'b2', 'c2');
+			store.toggleFreePlay();
+
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+			expect(store.explorations()).toEqual([{ at: 3, events: ['b2c2'] }]);
+		});
+
+		it('writes the rewind giving up does, and nothing the answer plays after it', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.revealSolution();
+
+			// The refuted move was still on the board, so the answer had to rewind onto the
+			// script first — a step like any other, and the last one the record ever takes.
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+			expect(store.history().at(-1)?.san).toBe('Rxf1#');
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+			expect(replayRecord(MATE_IN_3_FEN, store.record()).cursor).toBe(1);
 		});
 
 		it('collapses a run of steps only while it keeps going the same way', () => {

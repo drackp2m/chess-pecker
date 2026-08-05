@@ -2,7 +2,7 @@ import type { PuzzleAttemptKind } from '@chesspecker/api-definitions';
 import { DBSchema } from 'idb';
 
 import { PieceColor } from '@app/definition/chess.type';
-import { FreePlayRun, PuzzleEvent } from '@app/definition/puzzle.type';
+import { FreePlayRun, PuzzleClosure, PuzzleEvent } from '@app/definition/puzzle.type';
 import { LocalRecord } from '@app/repository/definition/local-record.interface';
 
 export interface AttemptRow extends LocalRecord {
@@ -26,13 +26,46 @@ export interface AttemptRow extends LocalRecord {
 	 * board's position— and it is absent on rows written before v5.
 	 */
 	readonly orientation?: PieceColor;
+	/** The verdict, sealed on the first try, or absent while there is none yet. */
 	readonly solved?: boolean;
+	/** Whether the exercise is over, which is what reopening it looks at. */
+	readonly closure: PuzzleClosure;
+	readonly hintUsed: boolean;
+	readonly mistakeCount: number;
 }
 
 export interface AttemptSchema extends DBSchema {
 	attempt: {
 		key: string;
 		value: AttemptRow;
+		indexes: {
+			slotId: string;
+			trainingUuid: string;
+		};
+	};
+}
+
+export interface AttemptRowV5 extends LocalRecord {
+	readonly uuid: string;
+	readonly trainingUuid: string;
+	readonly kind: PuzzleAttemptKind;
+	readonly slotId: string;
+	readonly roundUuid?: string;
+	readonly cycleItemUuid?: string;
+	readonly puzzleUuid: string;
+	readonly lichessId: string;
+	readonly startedAt?: Date;
+	readonly durationMs: number;
+	readonly record: readonly PuzzleEvent[];
+	readonly explorations: readonly FreePlayRun[];
+	readonly orientation?: PieceColor;
+	readonly solved?: boolean;
+}
+
+export interface AttemptSchemaV5 extends DBSchema {
+	attempt: {
+		key: string;
+		value: AttemptRowV5;
 		indexes: {
 			slotId: string;
 			trainingUuid: string;

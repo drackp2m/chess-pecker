@@ -1,5 +1,5 @@
 import { ChessMove } from '@app/definition/chess.type';
-import { PuzzleEvent, PuzzleRecord, PuzzleResult } from '@app/definition/puzzle.type';
+import { PuzzleClosure, PuzzleEvent, PuzzleRecord } from '@app/definition/puzzle.type';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
 /** What a restart looks like in the record, wherever the board was when it happened. */
@@ -9,8 +9,8 @@ const RESTART = 0;
 export interface RecordState extends PuzzleRecord {
 	/** The free-play anchor; while one is standing the exploration is the target. */
 	readonly freePlay: object | undefined;
-	/** The settled verdict, which closes the record for good. */
-	readonly result: PuzzleResult | undefined;
+	/** How the exercise ended, which closes the record for good. */
+	readonly closure: PuzzleClosure;
 }
 
 export function blankRecord(): PuzzleRecord {
@@ -41,13 +41,14 @@ function extendRun(events: readonly PuzzleEvent[], step: number): readonly Puzzl
 /**
  * Puts whatever `write` appends where the exercise is recording right now: the open
  * exploration while free play is on, the main line otherwise, and nowhere at all once
- * the verdict has been settled.
+ * the exercise has been closed. A miss no longer closes anything, so the take-back it
+ * schedules, the retries after it and the explorations around them are all in here.
  */
 function record(
 	state: RecordState,
 	write: (events: readonly PuzzleEvent[]) => readonly PuzzleEvent[],
 ): PuzzleRecord {
-	if (undefined !== state.result) {
+	if ('open' !== state.closure) {
 		return keep(state);
 	}
 
@@ -91,7 +92,7 @@ export function recordRestart(state: RecordState): PuzzleRecord {
  * and not an index, so entering before anything at all has happened is plainly `0`.
  */
 export function recordEntry(state: RecordState): PuzzleRecord {
-	if (undefined !== state.result) {
+	if ('open' !== state.closure) {
 		return keep(state);
 	}
 

@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzzle-difficulty.component';
 import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
@@ -19,7 +20,7 @@ import { TrainingSolveSession } from '@app/page/training/store/training-solve-se
 @Component({
 	templateUrl: './training-solve.page.html',
 	styleUrl: './training-solve.page.scss',
-	imports: [PuzzleSolverComponent, ButtonDirective, RouterLinkDirective],
+	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent, ButtonDirective, RouterLinkDirective],
 })
 export class TrainingSolvePage implements OnInit, OnDestroy {
 	readonly run = inject(TrainingRunStore);
@@ -28,11 +29,12 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	readonly headline = computed(() => this.describe());
 
 	/**
-	 * Said out loud as soon as the miss is in, so playing on never leaves any doubt
-	 * about what was recorded — least of all in a calibration round.
+	 * Said out loud as soon as the miss is in — which is where the note is sealed, long
+	 * before the exercise is over — so playing on never leaves any doubt about what will
+	 * be recorded, least of all in a calibration round.
 	 */
 	readonly practiceNotice = computed(() => {
-		if ('failed' !== this.run.lastResult()) {
+		if (!this.board.isPractice()) {
 			return null;
 		}
 
@@ -114,14 +116,8 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			return 'Free play — both sides are yours, and none of it counts.';
 		}
 
-		const result = this.run.lastResult();
-
-		if ('failed' === result) {
-			return this.describeMiss();
-		}
-
-		if ('solved' === result) {
-			return 'Solved.';
+		if (!this.board.isOpen()) {
+			return this.describeClosed();
 		}
 
 		switch (this.board.outcome()) {
@@ -130,24 +126,37 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			case 'opening':
 			case 'replying':
 				return 'Opponent is moving…';
-			case 'solving':
-				return `Find the move for ${this.board.playerColor()}`;
 			case 'failed':
+				return 'Not the move. It is taken back on its own — try it again.';
+			case 'solving':
+				return this.describeSolving();
 			case 'solved':
 				return 'Recording the attempt…';
 		}
 	}
 
-	/** The exercise is graded by now, so this only says what is left to do with it. */
-	private describeMiss(): string {
-		if (this.board.isRevealed()) {
-			return this.board.isRevealing() ? 'Missed. Watch how it went.' : 'Missed. That was the line.';
+	/** The exercise is over, so this only says how it ended. */
+	private describeClosed(): string {
+		if ('revealed' === this.board.closure()) {
+			return this.board.isRevealing()
+				? 'Gave up. Watch how it went.'
+				: 'Gave up. That was the line.';
 		}
 
-		if ('solved' === this.board.outcome()) {
-			return 'Missed. Found it on the retry, which leaves the attempt as it was.';
+		return 'failed' === this.board.result()
+			? 'Found it, after the miss, which leaves the attempt as it was.'
+			: 'Solved.';
+	}
+
+	/**
+	 * The note is sealed on the first try, so a miss is said out loud straight away —
+	 * but the exercise goes on until the line is found or handed over.
+	 */
+	private describeSolving(): string {
+		if (this.board.isPractice()) {
+			return 'Missed. Try it again, or give up to see the line.';
 		}
 
-		return 'Missed. It has been taken back — try it again, watch the solution, or move on.';
+		return `Find the move for ${this.board.playerColor()}`;
 	}
 }

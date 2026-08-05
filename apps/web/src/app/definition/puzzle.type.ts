@@ -23,8 +23,31 @@ export interface Puzzle {
  * How the attempt was graded, settled the first time the exercise is either finished
  * or left the script, and never revised after that. Woodpecker scores the first try,
  * so anything played from there on — a retry, a reveal — leaves this untouched.
+ *
+ * Settling it does not end the exercise: that is what `PuzzleClosure` says.
  */
 export type PuzzleResult = 'solved' | 'failed';
+
+/**
+ * Whether the exercise is over, which is a different question from how it was graded:
+ * the note is sealed on the first try, but the exercise itself runs until the solution
+ * is out — played by the player, or handed over to them when they give up.
+ */
+export type PuzzleClosure =
+	/** Still being solved, however many misses and retries it has taken. */
+	| 'open'
+	/** The player played the whole line out on the board. */
+	| 'found'
+	/** The player gave up, and the rest of the line was played out for them. */
+	| 'revealed';
+
+/**
+ * The closure to keep: the first one the exercise reaches is the one it ended on, so
+ * an answer watched after the line was found never turns a `found` into a `revealed`.
+ */
+export function settleClosure(current: PuzzleClosure, closure: PuzzleClosure): PuzzleClosure {
+	return 'open' === current ? closure : current;
+}
 
 /** What the board is currently showing, which a rewound cursor changes freely. */
 export type PuzzleOutcome =
@@ -100,3 +123,6 @@ export interface PuzzleProgress {
 	readonly totalMoves: number;
 	readonly playerColor: PieceColor;
 }
+
+/** How hard an exercise reads at a glance, from its rating's last two digits. */
+export type PuzzleDifficulty = 'easy' | 'medium' | 'hard';

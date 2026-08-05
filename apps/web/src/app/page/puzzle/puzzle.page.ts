@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzzle-difficulty.component';
 import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
@@ -14,7 +15,7 @@ const SAMPLE_CSV =
 @Component({
 	templateUrl: './puzzle.page.html',
 	styleUrl: './puzzle.page.scss',
-	imports: [PuzzleSolverComponent, ButtonDirective],
+	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent, ButtonDirective],
 	providers: [
 		PuzzleLibraryStore,
 		PuzzleStore,
@@ -135,7 +136,7 @@ export class PuzzlePage implements OnInit {
 	}
 
 	private describeSolved(): string {
-		if (this.store.isRevealed()) {
+		if ('revealed' === this.store.closure()) {
 			return 'That was the line';
 		}
 

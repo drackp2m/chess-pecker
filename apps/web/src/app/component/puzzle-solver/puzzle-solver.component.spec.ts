@@ -71,15 +71,33 @@ function createHost() {
 
 	fixture.detectChanges();
 
+	const element = fixture.nativeElement as HTMLElement;
+
 	return {
 		store: fixture.componentInstance.store,
 
-		element: fixture.nativeElement as HTMLElement,
+		element,
 
 		open(): void {
 			fixture.componentInstance.store.setPuzzles([PUZZLE]);
 			vi.advanceTimersByTime(1500);
 			fixture.detectChanges();
+		},
+
+		/** Clicks a button by the label it carries, the way the player finds it. */
+		click(label: string): void {
+			fixture.detectChanges();
+
+			const button = [...element.querySelectorAll('button')].find(
+				(candidate) => label === candidate.textContent.trim(),
+			);
+
+			button?.click();
+			fixture.detectChanges();
+		},
+
+		themes(): string[] {
+			return [...element.querySelectorAll('.theme')].map((item) => item.textContent);
 		},
 	};
 }
@@ -107,11 +125,37 @@ describe('PuzzleSolverComponent', () => {
 
 		expect(host.element.querySelector('app-chess-board')).not.toBeNull();
 		expect(host.element.querySelector('app-move-history')).not.toBeNull();
-		expect([...host.element.querySelectorAll('.theme')].map((li) => li.textContent)).toEqual([
-			'backRankMate',
-			'mateIn3',
-		]);
-		expect(host.element.querySelector('.panel')?.textContent).toContain('Rating 536');
+		expect(host.element.querySelector('.panel')).not.toBeNull();
+	});
+
+	it('keeps the themes covered until the hint is taken', () => {
+		const host = createHost();
+
+		host.open();
+
+		expect(host.themes()).toEqual([]);
+		expect(host.element.querySelector('.themes')).toBeNull();
+
+		host.click('Hint');
+
+		expect(host.themes()).toEqual(['backRankMate', 'mateIn3']);
+		expect(host.store.hintUsed()).toBe(true);
+	});
+
+	it('offers the answer only once the exercise has been missed', () => {
+		const host = createHost();
+
+		host.open();
+		host.click('Give up');
+
+		expect(host.store.closure()).toBe('open');
+
+		// The move to find is Rb1+; Rc2 is legal and is not it.
+		host.store.selectSquare('b2');
+		host.store.selectSquare('c2');
+		host.click('Give up');
+
+		expect(host.store.closure()).toBe('revealed');
 	});
 
 	it('shows the host its own controls under the board', () => {

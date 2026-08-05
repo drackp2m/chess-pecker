@@ -7,13 +7,17 @@
 				<span class="color-contrast">{{ puzzle.id }}</span>
 			</h4>
 
-			<p
-				class="headline fs-lg fw-lg"
-				[class.failed]="'failed' === store.outcome()"
-				[class.solved]="'solved' === store.outcome()"
-			>
-				{{ headline() }}
-			</p>
+			<div class="flex-row justify-between align-center gap-2">
+				<p
+					class="headline fs-lg fw-lg"
+					[class.failed]="'failed' === store.outcome()"
+					[class.solved]="'solved' === store.outcome()"
+				>
+					{{ headline() }}
+				</p>
+
+				<app-puzzle-difficulty />
+			</div>
 		</header>
 	}
 

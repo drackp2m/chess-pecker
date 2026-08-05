@@ -118,7 +118,14 @@ function onlyRow(attempts: ReturnType<typeof createAttemptStorage>): AttemptRow 
 
 /** What the board does when the player finds the move, without playing the chess. */
 async function settleSolved(board: PuzzleStore): Promise<void> {
-	patchState(board, { result: 'solved' });
+	patchState(board, { result: 'solved', closure: 'found' });
+	TestBed.tick();
+	await vi.advanceTimersByTimeAsync(0);
+}
+
+/** The same for a miss, which grades the attempt without ending the exercise. */
+async function settleFailed(board: PuzzleStore): Promise<void> {
+	patchState(board, { result: 'failed' });
 	TestBed.tick();
 	await vi.advanceTimersByTimeAsync(0);
 }
@@ -300,7 +307,29 @@ describe('TrainingSolveSession', () => {
 		expect(attempts.rows.size).toBe(1);
 	});
 
-	it('closes the draft with the verdict once the exercise settles', async () => {
+	it('holds the attempt back while the miss is still being worked on', async () => {
+		const repository = createRepository();
+		const { session, board } = configure(repository);
+
+		await enter(session);
+		await settleFailed(board);
+		vi.advanceTimersByTime(4000);
+
+		// The verdict is sealed, the exercise is not: nothing has been sent, and the
+		// clock is still running on it.
+		expect(repository.submitCycleAttempt).not.toHaveBeenCalled();
+
+		patchState(board, { closure: 'revealed' });
+		TestBed.tick();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
+			'training-1',
+			expect.objectContaining({ solved: false, durationMs: OPENING + 4000 }),
+		);
+	});
+
+	it('closes the draft with the verdict once the exercise closes', async () => {
 		const { session, board, attempts } = configure(createRepository());
 
 		await enter(session);

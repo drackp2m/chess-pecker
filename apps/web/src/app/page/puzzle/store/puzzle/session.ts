@@ -9,13 +9,15 @@ import {
 } from '@app/definition/chess.type';
 import {
 	Puzzle,
+	PuzzleClosure,
 	PuzzleMove,
 	PuzzleOutcome,
 	PuzzleProgress,
 	PuzzleRecord,
 	PuzzleResult,
+	settleClosure,
 } from '@app/definition/puzzle.type';
-import { blankRecord } from '@app/page/puzzle/store/puzzle/record';
+import { RecordState, blankRecord, recordStep } from '@app/page/puzzle/store/puzzle/record';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
@@ -42,6 +44,10 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 	outcome: PuzzleOutcome;
 	/** The graded verdict, kept once it is settled however the board moves on. */
 	result: PuzzleResult | undefined;
+	/** Whether the exercise is over, and how it got there. */
+	closure: PuzzleClosure;
+	/** The themes have been looked at, which is help and is kept as such. */
+	hintUsed: boolean;
 	/** Where free play started, or `undefined` while it is off. */
 	freePlay: FreePlayAnchor | undefined;
 	/** Wrong moves in this exercise, counted from the moment it was opened. */
@@ -49,12 +55,19 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 	isReplaying: boolean;
 	/** The rest of the solution is being played out right now. */
 	isRevealing: boolean;
-	/** It has been played out at some point, so the board is showing the answer. */
-	isRevealed: boolean;
 }
 
 /** The slice of state that describes the played line. */
 export type LineState = Pick<PuzzleStoreProps, 'positions' | 'line' | 'cursor'>;
+
+/**
+ * What reopening the very same exercise carries over: it has already been graded, it
+ * may already be closed, and the help it took is spent whatever the board does next.
+ */
+export type PuzzleVerdict = Pick<
+	PuzzleStoreProps,
+	'result' | 'closure' | 'hintUsed' | 'mistakeCount'
+>;
 
 /** The line free play began from, plus the deviation it had reached. */
 export interface FreePlayAnchor extends LineState {
@@ -75,11 +88,12 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		pendingPromotion: undefined,
 		outcome: 'idle',
 		result: undefined,
+		closure: 'open',
+		hintUsed: false,
 		freePlay: undefined,
 		mistakeCount: 0,
 		isReplaying: false,
 		isRevealing: false,
-		isRevealed: false,
 	};
 }
 
@@ -117,11 +131,12 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		orientation: playerColor,
 		outcome: 'opening',
 		result: undefined,
+		closure: 'open',
+		hintUsed: false,
 		freePlay: undefined,
 		mistakeCount: 0,
 		isReplaying: true,
 		isRevealing: false,
-		isRevealed: false,
 	};
 }
 
@@ -164,14 +179,20 @@ export function restoreFreePlayPatch(
 /**
  * Puts the line back where it stopped following the script, dropping the moves that
  * strayed, so the solution can be played out from there.
+ *
+ * Asking for it is giving up, and that closes the exercise, so the answer played out
+ * from here is not recorded. The rewind onto the script is, as the negative step it
+ * really is: the record has to end on the board the line was left standing on, or it
+ * stops replaying.
  */
 export function revealPatch(
-	state: LineState & Pick<PuzzleStoreProps, 'transition'>,
+	state: LineState & RecordState & Pick<PuzzleStoreProps, 'transition'>,
 	deviation: number | undefined,
 ): Partial<PuzzleStoreProps> {
 	const cursor = Math.min(state.cursor, deviation ?? state.cursor);
 
 	return {
+		...recordStep(state, cursor - state.cursor),
 		cursor,
 		line: state.line.slice(0, cursor),
 		positions: state.positions.slice(0, cursor + 1),
@@ -179,8 +200,8 @@ export function revealPatch(
 		selected: undefined,
 		pendingPromotion: undefined,
 		transition: keptTransition(state, cursor),
+		closure: settleClosure(state.closure, 'revealed'),
 		isRevealing: true,
-		isRevealed: true,
 	};
 }
 
