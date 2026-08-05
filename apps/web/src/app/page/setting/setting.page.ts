@@ -8,13 +8,11 @@ import {
 	MoveAnimation,
 } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_LABEL, buildMoveInputMethods } from '@app/definition/board-input.type';
-import { MISTAKE_THRESHOLD_OPTIONS } from '@app/definition/mistake-policy.type';
 import { MOVE_SPEEDS, MOVE_SPEED_LABEL, MoveSpeed } from '@app/definition/move-speed.type';
 import { Theme } from '@app/definition/service/theme.type';
 import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
 import { version } from '@app/package';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { ThemeService } from '@app/service/theme.service';
 import { bindSetting } from '@app/util/setting-binding';
@@ -33,11 +31,9 @@ export class SettingPage {
 	readonly moveAnimations = MOVE_ANIMATIONS;
 	readonly animationLabel = MOVE_ANIMATION_LABEL;
 	readonly inputLabel = MOVE_INPUT_LABEL;
-	readonly mistakeOptions = MISTAKE_THRESHOLD_OPTIONS;
 
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
-	private readonly mistakePolicy = inject(MistakePolicyService);
 	private readonly sound = inject(SoundService);
 
 	readonly form = new FormGroup({
@@ -58,12 +54,6 @@ export class SettingPage {
 			drag: new FormControl<boolean>(this.isMethodEnabled('drag'), { nonNullable: true }),
 		}),
 		sound: new FormControl<boolean>(this.sound.isEnabled(), { nonNullable: true }),
-		mistake: new FormGroup({
-			mistakesBeforeSolution: new FormControl<number>(
-				this.mistakePolicy.policy().mistakesBeforeSolution,
-				{ nonNullable: true },
-			),
-		}),
 	});
 
 	// Mirrors both the stored value and the correction made when a selection would
@@ -96,10 +86,6 @@ export class SettingPage {
 
 		bindSetting(this.form.controls.sound, this.sound.isEnabled, (isEnabled) => {
 			this.sound.update(isEnabled);
-		});
-
-		bindSetting(this.form.controls.mistake, this.mistakePolicy.policy, (policy) => {
-			this.mistakePolicy.update(policy);
 		});
 	}
 

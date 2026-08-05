@@ -4,13 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BoardTransition } from '@app/definition/board-animation.type';
 import { ChessPosition, Square } from '@app/definition/chess.type';
-import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
 import { PuzzleEvent } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 import { ChessBoard } from '@app/util/chess/chess-board';
@@ -43,21 +41,14 @@ function createImportStub(): Partial<PuzzleImportUseCase> {
 }
 
 /**
- * Every settings-backed service is stubbed whole, so the store is tested against a
- * policy rather than against IndexedDB — and so no test needs an `AudioContext`.
+ * Every settings-backed service is stubbed whole, so the store is tested against fixed
+ * preferences rather than against IndexedDB — and so no test needs an `AudioContext`.
  */
-function configure(
-	policy: Partial<MistakePolicy> = {},
-	speed: MoveSpeed = DEFAULT_MOVE_SPEED,
-): PuzzleStore {
+function configure(speed: MoveSpeed = DEFAULT_MOVE_SPEED): PuzzleStore {
 	TestBed.configureTestingModule({
 		providers: [
 			PuzzleLibraryStore,
 			PuzzleStore,
-			{
-				provide: MistakePolicyService,
-				useValue: { policy: signal({ ...DEFAULT_MISTAKE_POLICY, ...policy }) },
-			},
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(speed) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 			{ provide: PuzzleImportUseCase, useValue: createImportStub() },
@@ -67,12 +58,8 @@ function configure(
 	return TestBed.inject(PuzzleStore);
 }
 
-function createStore(
-	csv: string,
-	policy: Partial<MistakePolicy> = {},
-	speed: MoveSpeed = DEFAULT_MOVE_SPEED,
-): PuzzleStore {
-	const store = configure(policy, speed);
+function createStore(csv: string, speed: MoveSpeed = DEFAULT_MOVE_SPEED): PuzzleStore {
+	const store = configure(speed);
 
 	store.loadCsv(csv, 'Spec set');
 	vi.advanceTimersByTime(REPLAY_TOTAL * 2);
@@ -467,45 +454,8 @@ describe('PuzzleStore', () => {
 		expect(store.canRevealSolution()).toBe(false);
 	});
 
-	it('plays the solution on its own once the misses reach the threshold', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
-
-		miss(store);
-		vi.advanceTimersByTime(UNDO_TOTAL);
-
-		// One miss short of the threshold: taken back, and nothing else.
-		expect(store.cursor()).toBe(1);
-		expect(store.isRevealing()).toBe(false);
-
-		miss(store);
-		vi.advanceTimersByTime(UNDO_TOTAL);
-
-		expect(store.mistakeCount()).toBe(2);
-		expect(store.isRevealing()).toBe(true);
-
-		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
-
-		expect(store.history().at(-1)?.san).toBe('Rxf1#');
-		expect(store.outcome()).toBe('solved');
-		expect(store.result()).toBe('failed');
-	});
-
-	it('never plays the solution on its own when the threshold is off', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
-
-		for (let attempt = 0; 3 > attempt; attempt += 1) {
-			miss(store);
-			vi.advanceTimersByTime(UNDO_TOTAL);
-		}
-
-		expect(store.mistakeCount()).toBe(3);
-		expect(store.closure()).toBe('open');
-		expect(store.cursor()).toBe(1);
-		expect(store.outcome()).toBe('solving');
-	});
-
 	it('counts misses per exercise, resetting them when the next one opens', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`, { mistakesBeforeSolution: 0 });
+		const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`);
 
 		miss(store);
 		vi.advanceTimersByTime(UNDO_TOTAL);
@@ -546,7 +496,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('gives every board event a tick of its own, whatever the exercise did before', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 		const log = createSlideLog(store);
 
 		/** One run through every way the board can move, sampled where the DOM settles. */
@@ -600,7 +550,7 @@ describe('PuzzleStore', () => {
 
 		const ticks = log.slides.map((slide) => slide.tick);
 
-		// The walk covered the whole policy, so every level of it was exercised.
+		// The walk covered every way the board moves on its own.
 		expect(new Set(log.slides.map((slide) => slide.kind))).toEqual(
 			new Set(['played', 'forward', 'backward']),
 		);
@@ -629,7 +579,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('leaves the take-back on screen when the answer follows it in the same breath', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		miss(store);
 		vi.advanceTimersByTime(UNDO_TOTAL);
@@ -638,9 +588,10 @@ describe('PuzzleStore', () => {
 		const refuted = store.transition();
 
 		vi.advanceTimersByTime(UNDO_TOTAL);
+		store.revealSolution();
 
-		// The take-back and the reveal it sets off land together; the reveal rewinds to
-		// the square the line already stood on, so it has nothing to take back over.
+		// The take-back and the reveal that follows it land together; the reveal rewinds
+		// to the square the line already stood on, so it has nothing to take back over.
 		expect(store.isRevealing()).toBe(true);
 		expect(store.transition()).toMatchObject({ from: 'c2', to: 'b2', kind: 'backward' });
 		expect(store.transition()?.tick).toBeGreaterThan(refuted?.tick ?? 0);
@@ -652,7 +603,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('waits on the refuted move for as long as the chosen move speed says', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, {}, 'slow');
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, 'slow');
 
 		miss(store);
 
@@ -1078,7 +1029,7 @@ describe('PuzzleStore', () => {
 		}
 
 		it('outlives the verdict: a miss grades the attempt but does not end it', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
 			vi.advanceTimersByTime(UNDO_TOTAL);
@@ -1103,10 +1054,10 @@ describe('PuzzleStore', () => {
 		});
 
 		it('is never reached by the answer playing itself', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 1 });
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
-			vi.advanceTimersByTime(UNDO_TOTAL);
+			store.revealSolution();
 
 			expect(store.closure()).toBe('revealed');
 
@@ -1138,7 +1089,7 @@ describe('PuzzleStore', () => {
 		});
 
 		it('takes a miss before the answer can be asked for', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			expect(store.canRevealSolution()).toBe(false);
 
@@ -1153,7 +1104,7 @@ describe('PuzzleStore', () => {
 		});
 
 		it('survives a restart, along with the verdict, the misses and the hint', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.useHint();
 			miss(store);
@@ -1172,9 +1123,7 @@ describe('PuzzleStore', () => {
 		});
 
 		it('opens the next exercise on a clean slate', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`, {
-				mistakesBeforeSolution: 0,
-			});
+			const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`);
 
 			store.useHint();
 			miss(store);
@@ -1208,7 +1157,7 @@ describe('PuzzleStore', () => {
 		});
 
 		it('is spent once the exercise is over, which hands the themes over anyway', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
 			store.revealSolution();

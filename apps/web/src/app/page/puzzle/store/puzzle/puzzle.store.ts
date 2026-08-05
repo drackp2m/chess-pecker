@@ -33,7 +33,6 @@ import {
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle/session';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 
 @Injectable()
@@ -49,9 +48,6 @@ export class PuzzleStore
 {
 	/** The loaded set and the cursor over it; the template reads it directly. */
 	readonly library = inject(PuzzleLibraryStore);
-
-	/** How many misses it takes for the answer to play itself, chosen in the settings. */
-	private readonly policy = inject(MistakePolicyService).policy;
 
 	private readonly sound = inject(SoundService);
 
@@ -358,26 +354,15 @@ export class PuzzleStore
 	 * purpose: only the last one scheduled survives, so two would cancel each other.
 	 */
 	private registerMistake(move: ChessMove): void {
-		const count = this.mistakeCount() + 1;
-
 		this.commit(move, false);
 		patchState(this, {
 			outcome: 'failed',
 			result: settleResult(this.result(), 'failed'),
-			mistakeCount: count,
+			mistakeCount: this.mistakeCount() + 1,
 		});
 
 		this.scheduleUndo(() => {
 			this.stepBackward();
-			this.playSolutionIfDue(count);
 		});
-	}
-
-	private playSolutionIfDue(count: number): void {
-		const threshold = this.policy().mistakesBeforeSolution;
-
-		if (0 < threshold && count >= threshold) {
-			this.revealSolution();
-		}
 	}
 }

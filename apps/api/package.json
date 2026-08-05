@@ -9,6 +9,7 @@
 		"migration:check": "mikro-orm migration:pending",
 		"migration:create": "mikro-orm migration:create",
 		"migration:execute": "mikro-orm migration:up",
+		"migration:undo": "mikro-orm migration:down",
 		"build": "nest build && tsc -p tsconfig.migrations.json",
 		"start": "nest start",
 		"start:dev": "nest start --watch",

@@ -64,9 +64,9 @@ export class PuzzleAttempt extends CustomBaseEntity<PuzzleAttempt> {
 	@Enum({ items: () => PuzzleAttemptClosure })
 	closure!: PuzzleAttemptClosure;
 
-	@Property()
+	@Property({ default: false })
 	hintUsed!: boolean;
 
-	@Property()
+	@Property({ default: 0 })
 	mistakeCount!: number;
 }

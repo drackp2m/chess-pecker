@@ -5,7 +5,6 @@ export enum SettingType {
 	MOVE_ANIMATION = 'move-animation',
 	MOVE_INPUT = 'move-input',
 	MOVE_SPEED = 'move-speed',
-	MISTAKE_POLICY = 'mistake-policy',
 	SOUND = 'sound',
 }
 

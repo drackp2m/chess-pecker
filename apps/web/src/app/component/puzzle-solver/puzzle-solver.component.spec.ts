@@ -6,13 +6,11 @@ import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solve
 import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
-import { DEFAULT_MISTAKE_POLICY } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
@@ -46,7 +44,6 @@ class SolverHostComponent {
 function createHost() {
 	TestBed.configureTestingModule({
 		providers: [
-			{ provide: MistakePolicyService, useValue: { policy: signal(DEFAULT_MISTAKE_POLICY) } },
 			{
 				provide: BoardPreferenceService,
 				useValue: {

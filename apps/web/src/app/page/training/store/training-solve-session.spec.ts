@@ -4,7 +4,6 @@ import type { ApiPuzzle, Training, TrainingCycleItem } from '@chesspecker/api-de
 import { patchState } from '@ngrx/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_MISTAKE_POLICY } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
@@ -14,7 +13,6 @@ import { AttemptRepository } from '@app/repository/attempt.repository';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { TrainingStore } from '@app/store/training.store';
 import { SOLVE_FLUSH_INTERVAL_MS } from '@app/util/solve-timer';
@@ -90,7 +88,6 @@ function configure(
 			{ provide: AttemptRepository, useValue: attempts },
 			{ provide: TrainingRunRepository, useValue: repository },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
-			{ provide: MistakePolicyService, useValue: { policy: signal(DEFAULT_MISTAKE_POLICY) } },
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 		],
