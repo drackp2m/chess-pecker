@@ -4,7 +4,6 @@ import type { ApiPuzzle, Training, TrainingCycleItem } from '@chesspecker/api-de
 import { patchState } from '@ngrx/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DEFAULT_MISTAKE_POLICY } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
@@ -14,7 +13,6 @@ import { AttemptRepository } from '@app/repository/attempt.repository';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { TrainingStore } from '@app/store/training.store';
 import { SOLVE_FLUSH_INTERVAL_MS } from '@app/util/solve-timer';
@@ -90,7 +88,6 @@ function configure(
 			{ provide: AttemptRepository, useValue: attempts },
 			{ provide: TrainingRunRepository, useValue: repository },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
-			{ provide: MistakePolicyService, useValue: { policy: signal(DEFAULT_MISTAKE_POLICY) } },
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 		],
@@ -118,7 +115,14 @@ function onlyRow(attempts: ReturnType<typeof createAttemptStorage>): AttemptRow 
 
 /** What the board does when the player finds the move, without playing the chess. */
 async function settleSolved(board: PuzzleStore): Promise<void> {
-	patchState(board, { result: 'solved' });
+	patchState(board, { result: 'solved', closure: 'found' });
+	TestBed.tick();
+	await vi.advanceTimersByTimeAsync(0);
+}
+
+/** The same for a miss, which grades the attempt without ending the exercise. */
+async function settleFailed(board: PuzzleStore): Promise<void> {
+	patchState(board, { result: 'failed' });
 	TestBed.tick();
 	await vi.advanceTimersByTimeAsync(0);
 }
@@ -300,7 +304,29 @@ describe('TrainingSolveSession', () => {
 		expect(attempts.rows.size).toBe(1);
 	});
 
-	it('closes the draft with the verdict once the exercise settles', async () => {
+	it('holds the attempt back while the miss is still being worked on', async () => {
+		const repository = createRepository();
+		const { session, board } = configure(repository);
+
+		await enter(session);
+		await settleFailed(board);
+		vi.advanceTimersByTime(4000);
+
+		// The verdict is sealed, the exercise is not: nothing has been sent, and the
+		// clock is still running on it.
+		expect(repository.submitCycleAttempt).not.toHaveBeenCalled();
+
+		patchState(board, { closure: 'revealed' });
+		TestBed.tick();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
+			'training-1',
+			expect.objectContaining({ solved: false, durationMs: OPENING + 4000 }),
+		);
+	});
+
+	it('closes the draft with the verdict once the exercise closes', async () => {
 		const { session, board, attempts } = configure(createRepository());
 
 		await enter(session);

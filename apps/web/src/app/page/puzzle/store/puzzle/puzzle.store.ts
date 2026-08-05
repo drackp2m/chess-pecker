@@ -8,7 +8,7 @@ import {
 	Puzzle,
 	PuzzleOutcome,
 	PuzzleRecord,
-	PuzzleResult,
+	settleClosure,
 	settleResult,
 } from '@app/definition/puzzle.type';
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
@@ -21,6 +21,7 @@ import {
 	recordStep,
 } from '@app/page/puzzle/store/puzzle/record';
 import {
+	PuzzleVerdict,
 	anchorFreePlay,
 	buildPuzzleState,
 	findPromotion,
@@ -32,7 +33,6 @@ import {
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle/session';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 
 @Injectable()
@@ -48,9 +48,6 @@ export class PuzzleStore
 {
 	/** The loaded set and the cursor over it; the template reads it directly. */
 	readonly library = inject(PuzzleLibraryStore);
-
-	/** How many misses it takes for the answer to play itself, chosen in the settings. */
-	private readonly policy = inject(MistakePolicyService).policy;
 
 	private readonly sound = inject(SoundService);
 
@@ -96,7 +93,7 @@ export class PuzzleStore
 		}
 	}
 
-	/** Same exercise, so the verdict it was graded on survives the reopening. */
+	/** Same exercise, so what it was graded and closed on survives the reopening. */
 	restart(): void {
 		const puzzle = this.puzzle();
 		// Read before anything moves, so the restart is written into the record the
@@ -104,7 +101,7 @@ export class PuzzleStore
 		const recorded = recordRestart(this.recordState());
 
 		if (undefined === this.freePlay() || undefined === puzzle) {
-			this.open(this.result(), recorded);
+			this.open(this.verdict(), recorded);
 
 			return;
 		}
@@ -114,8 +111,11 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Plays what is left of the solution, from wherever the line stopped following it.
-	 * The result was settled on the first try, so watching the answer never revises it.
+	 * Gives up: plays what is left of the solution, from wherever the line stopped
+	 * following it. It ends the exercise, though not the verdict — that was settled on
+	 * the first try, and watching never revises it. Asked for again once the exercise is
+	 * over there is nothing left ahead, so it rewinds to the start and plays the whole
+	 * line out; the record is closed by then and takes none of it.
 	 */
 	revealSolution(): void {
 		if (!this.canRevealSolution()) {
@@ -123,8 +123,17 @@ export class PuzzleStore
 		}
 
 		this.cancelPlayback();
-		patchState(this, (state) => revealPatch(state, this.deviation()));
+		patchState(this, (state) => revealPatch(state, this.isOpen() ? this.deviation() : 0));
 		this.playScripted();
+	}
+
+	/** Uncovers the themes. It is help, so it is remembered, but it closes nothing. */
+	useHint(): void {
+		if (!this.canUseHint()) {
+			return;
+		}
+
+		patchState(this, { hintUsed: true });
 	}
 
 	toggleFreePlay(): void {
@@ -212,7 +221,7 @@ export class PuzzleStore
 		patchState(this, { orientation: 'white' === this.orientation() ? 'black' : 'white' });
 	}
 
-	private open(result?: PuzzleResult, recorded?: PuzzleRecord): void {
+	private open(verdict?: PuzzleVerdict, recorded?: PuzzleRecord): void {
 		const puzzle = this.puzzle();
 
 		this.cancelPlayback();
@@ -223,7 +232,7 @@ export class PuzzleStore
 			return;
 		}
 
-		patchState(this, { ...openPuzzle(puzzle), ...recorded, result });
+		patchState(this, { ...openPuzzle(puzzle), ...recorded, ...verdict });
 		this.playScripted();
 	}
 
@@ -231,12 +240,21 @@ export class PuzzleStore
 		return { positions: this.positions(), line: this.line(), cursor: this.cursor() };
 	}
 
+	private verdict(): PuzzleVerdict {
+		return {
+			result: this.result(),
+			closure: this.closure(),
+			hintUsed: this.hintUsed(),
+			mistakeCount: this.mistakeCount(),
+		};
+	}
+
 	private recordState(): RecordState {
 		return {
 			record: this.record(),
 			explorations: this.explorations(),
 			freePlay: this.freePlay(),
-			result: this.result(),
+			closure: this.closure(),
 		};
 	}
 
@@ -290,6 +308,9 @@ export class PuzzleStore
 	 * Grades the player's move, then lets the opponent answer if it was right. Only a
 	 * move played against the script is graded at all: off it, and in free play, the
 	 * board is a sandbox and nothing there may reach `result`.
+	 *
+	 * The move that completes the line is also the one that ends the exercise, whether
+	 * it was found first time or after any number of misses.
 	 */
 	private attemptMove(move: ChessMove): void {
 		if (this.isFreePlay() || this.isOffScript()) {
@@ -309,7 +330,11 @@ export class PuzzleStore
 		const outcome: PuzzleOutcome =
 			'solved' === this.outcomeAt(this.cursor()) ? 'solved' : 'replying';
 
-		patchState(this, { outcome, result: settleResult(this.result(), outcome) });
+		patchState(this, {
+			outcome,
+			result: settleResult(this.result(), outcome),
+			closure: 'solved' === outcome ? settleClosure(this.closure(), 'found') : this.closure(),
+		});
 
 		if ('solved' !== outcome) {
 			this.playScripted();
@@ -331,26 +356,15 @@ export class PuzzleStore
 	 * purpose: only the last one scheduled survives, so two would cancel each other.
 	 */
 	private registerMistake(move: ChessMove): void {
-		const count = this.mistakeCount() + 1;
-
 		this.commit(move, false);
 		patchState(this, {
 			outcome: 'failed',
 			result: settleResult(this.result(), 'failed'),
-			mistakeCount: count,
+			mistakeCount: this.mistakeCount() + 1,
 		});
 
 		this.scheduleUndo(() => {
 			this.stepBackward();
-			this.playSolutionIfDue(count);
 		});
-	}
-
-	private playSolutionIfDue(count: number): void {
-		const threshold = this.policy().mistakesBeforeSolution;
-
-		if (0 < threshold && count >= threshold) {
-			this.revealSolution();
-		}
 	}
 }

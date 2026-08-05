@@ -1,5 +1,7 @@
 import type { SubmitCycleAttemptRequest } from '@chesspecker/api-definitions';
-import { IsBoolean, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+
+import { PuzzleAttemptClosure } from '../../definition/puzzle-attempt-closure.enum';
 
 import { SyncTimestampsDto } from './sync-timestamps.dto';
 
@@ -18,4 +20,14 @@ export class SubmitCycleAttemptRequestDto
 
 	@IsBoolean()
 	solved!: boolean;
+
+	@IsEnum(PuzzleAttemptClosure)
+	closure!: PuzzleAttemptClosure;
+
+	@IsBoolean()
+	hintUsed!: boolean;
+
+	@IsInt()
+	@Min(0)
+	mistakeCount!: number;
 }

@@ -1,15 +1,38 @@
 :host {
-	overflow-y: auto;
 	display: block;
-	max-height: 16rem;
+	min-width: 0;
+}
+
+.line {
+	scrollbar-width: thin;
+	overflow-x: auto;
+	list-style: none;
 }
 
 .turn {
-	display: grid;
-	grid-template-columns: 2.5rem 1fr 1fr;
+	flex: none;
 	font-variant-numeric: tabular-nums;
+}
 
-	&:nth-child(odd) {
-		background-color: color-mix(in oklab, var(--color-contrast) 6%, transparent);
+.number {
+	color: var(--color-contrast-mid);
+}
+
+.moves {
+	overflow: hidden;
+}
+
+// White keeps the colour of the square it plays from whichever theme the page is in;
+// black takes the muted contrast fill instead, since the dark square would sink into
+// the background.
+.move {
+	&.white {
+		color: var(--color-contrast-light);
+		background-color: var(--color-primary-light);
+	}
+
+	&.black {
+		color: var(--color-contrast);
+		background-color: var(--color-contrast-mid-light);
 	}
 }

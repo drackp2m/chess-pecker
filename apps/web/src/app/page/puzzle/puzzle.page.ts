@@ -1,8 +1,8 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
-import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
+import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzzle-difficulty.component';
+import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
@@ -15,7 +15,7 @@ const SAMPLE_CSV =
 @Component({
 	templateUrl: './puzzle.page.html',
 	styleUrl: './puzzle.page.scss',
-	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective],
+	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent, ButtonDirective],
 	providers: [
 		PuzzleLibraryStore,
 		PuzzleStore,
@@ -132,11 +132,11 @@ export class PuzzlePage implements OnInit {
 			return 'Drawn position';
 		}
 
-		return 'Free play — both sides are yours, and none of it counts';
+		return 'Free play — both sides are yours.';
 	}
 
 	private describeSolved(): string {
-		if (this.store.isRevealed()) {
+		if ('revealed' === this.store.closure()) {
 			return 'That was the line';
 		}
 

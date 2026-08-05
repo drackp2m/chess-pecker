@@ -1,5 +1,3 @@
-@use '../../../scss/abstract/mixin' as mix;
-
 .headline {
 	&.failed {
 		color: rgb(196 48 38);
@@ -7,15 +5,6 @@
 
 	&.solved {
 		color: var(--color-accent);
-	}
-}
-
-// Same treatment as the exercise trainer: on a phone the board is the page, so it
-// cancels the section inset and runs edge to edge.
-app-chess-board {
-	@include mix.media($until: lg) {
-		width: calc(100% + var(--page-padding) * 2);
-		margin-inline: calc(var(--page-padding) * -1);
 	}
 }
 

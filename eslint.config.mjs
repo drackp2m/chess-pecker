@@ -321,6 +321,21 @@ export default typescriptEslint.config(
 		},
 	},
 
+	// ── Angular tests ──────────────────────────────────────────────────────────
+	{
+		name: 'Angular tests',
+		files: ['apps/web/**/*.spec.ts'],
+		plugins: {
+			'angular-custom': angularCustomPlugin,
+		},
+		rules: {
+			// A test host is a line of markup that exists to mount something else, and it
+			// belongs beside the test that reads it: a `templateUrl` would only buy a file
+			// nobody opens. `animations` and `styles` stay forbidden here too.
+			'angular-custom/no-forbidden-component-property': ['warn', ['animations', 'styles']],
+		},
+	},
+
 	// ── Complexity ─────────────────────────────────────────────────────────────
 	{
 		name: 'Complexity',

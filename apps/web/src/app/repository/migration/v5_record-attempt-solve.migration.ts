@@ -1,4 +1,4 @@
-import { AppSchema } from '@app/repository/definition/app-schema.interface';
+import { AppSchemaV5 } from '@app/repository/definition/app-schema.interface';
 import { AttemptRowV4 } from '@app/repository/definition/attempt-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
@@ -8,7 +8,7 @@ import { Migration } from '@app/repository/definition/migration.interface';
  * says. So the rows are walked and rewritten in the shape the code now reads, with an
  * empty record, which is the truth about an attempt nobody was recording.
  */
-export const recordAttemptSolveMigration: Migration<AppSchema> = {
+export const recordAttemptSolveMigration: Migration<AppSchemaV5> = {
 	version: 5,
 	description: 'replace the attempt move count with the solve record',
 	apply: async ({ transaction }) => {

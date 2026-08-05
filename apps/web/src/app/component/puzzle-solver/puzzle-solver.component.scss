@@ -1,0 +1,66 @@
+@use '../../../scss/abstract/mixin' as mix;
+
+:host {
+	display: block;
+}
+
+.layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: var(--spacing-6);
+	align-items: start;
+
+	@include mix.media($from: lg) {
+		grid-template-columns: minmax(0, 1fr) 20rem;
+	}
+}
+
+// The board is the page on a phone, so it cancels the section inset and runs edge to
+// edge. From lg it shares the row with the panel, where escaping would put it under
+// the gap, so there it just fills its own column.
+app-chess-board {
+	@include mix.media($until: lg) {
+		width: calc(100% + var(--page-padding) * 2);
+		margin-inline: calc(var(--page-padding) * -1);
+	}
+}
+
+// Three columns rather than a `space-between` row, so the arrows sit on the edges
+// without the middle drifting when one of them is wider than the other. The row runs
+// as wide as the board it belongs to, escaping the section inset alongside it.
+.controls {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+
+	@include mix.media($until: lg) {
+		width: calc(100% + var(--page-padding) * 2);
+		margin-inline: calc(var(--page-padding) * -1);
+	}
+
+	> :first-child {
+		justify-self: start;
+	}
+
+	> :last-child {
+		justify-self: end;
+	}
+}
+
+// Both the panel and the row that carries the scrolling line have to be allowed to
+// shrink, or the widest history pushes the whole grid past the viewport.
+.panel,
+.line {
+	min-width: 0;
+
+	> h5 {
+		flex: none;
+	}
+}
+
+.themes {
+	list-style: none;
+}
+
+.theme {
+	background-color: color-mix(in oklab, var(--color-contrast) 10%, transparent);
+}

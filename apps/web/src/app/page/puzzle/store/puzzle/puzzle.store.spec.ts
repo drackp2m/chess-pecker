@@ -4,13 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BoardTransition } from '@app/definition/board-animation.type';
 import { ChessPosition, Square } from '@app/definition/chess.type';
-import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
 import { PuzzleEvent } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 import { ChessBoard } from '@app/util/chess/chess-board';
@@ -43,21 +41,14 @@ function createImportStub(): Partial<PuzzleImportUseCase> {
 }
 
 /**
- * Every settings-backed service is stubbed whole, so the store is tested against a
- * policy rather than against IndexedDB — and so no test needs an `AudioContext`.
+ * Every settings-backed service is stubbed whole, so the store is tested against fixed
+ * preferences rather than against IndexedDB — and so no test needs an `AudioContext`.
  */
-function configure(
-	policy: Partial<MistakePolicy> = {},
-	speed: MoveSpeed = DEFAULT_MOVE_SPEED,
-): PuzzleStore {
+function configure(speed: MoveSpeed = DEFAULT_MOVE_SPEED): PuzzleStore {
 	TestBed.configureTestingModule({
 		providers: [
 			PuzzleLibraryStore,
 			PuzzleStore,
-			{
-				provide: MistakePolicyService,
-				useValue: { policy: signal({ ...DEFAULT_MISTAKE_POLICY, ...policy }) },
-			},
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(speed) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 			{ provide: PuzzleImportUseCase, useValue: createImportStub() },
@@ -67,12 +58,8 @@ function configure(
 	return TestBed.inject(PuzzleStore);
 }
 
-function createStore(
-	csv: string,
-	policy: Partial<MistakePolicy> = {},
-	speed: MoveSpeed = DEFAULT_MOVE_SPEED,
-): PuzzleStore {
-	const store = configure(policy, speed);
+function createStore(csv: string, speed: MoveSpeed = DEFAULT_MOVE_SPEED): PuzzleStore {
+	const store = configure(speed);
 
 	store.loadCsv(csv, 'Spec set');
 	vi.advanceTimersByTime(REPLAY_TOTAL * 2);
@@ -445,7 +432,7 @@ describe('PuzzleStore', () => {
 		expect(store.result()).toBe('failed');
 	});
 
-	it('refuses the solution before the exercise has been failed, and after it was seen', () => {
+	it('refuses the solution before the exercise has been failed', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		expect(store.canRevealSolution()).toBe(false);
@@ -458,54 +445,32 @@ describe('PuzzleStore', () => {
 		miss(store);
 
 		expect(store.canRevealSolution()).toBe(true);
+	});
 
+	it('plays the line out again every time it is asked for after the exercise is over', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
 		store.revealSolution();
 		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
 
-		// Once seen, it is spent: the navigation buttons are what replays it.
-		expect(store.isRevealed()).toBe(true);
-		expect(store.canRevealSolution()).toBe(false);
-	});
+		expect(store.canRevealSolution()).toBe(true);
 
-	it('plays the solution on its own once the misses reach the threshold', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+		// Nothing is left ahead, so it starts the line over instead of standing still.
+		store.revealSolution();
 
-		miss(store);
-		vi.advanceTimersByTime(UNDO_TOTAL);
-
-		// One miss short of the threshold: taken back, and nothing else.
-		expect(store.cursor()).toBe(1);
-		expect(store.isRevealing()).toBe(false);
-
-		miss(store);
-		vi.advanceTimersByTime(UNDO_TOTAL);
-
-		expect(store.mistakeCount()).toBe(2);
 		expect(store.isRevealing()).toBe(true);
+		expect(store.cursor()).toBe(0);
 
-		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+		vi.advanceTimersByTime(REPLAY_TOTAL * 6);
 
+		expect(store.isRevealing()).toBe(false);
+		expect(store.history()).toHaveLength(6);
 		expect(store.history().at(-1)?.san).toBe('Rxf1#');
-		expect(store.outcome()).toBe('solved');
-		expect(store.result()).toBe('failed');
-	});
-
-	it('never plays the solution on its own when the threshold is off', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 0 });
-
-		for (let attempt = 0; 3 > attempt; attempt += 1) {
-			miss(store);
-			vi.advanceTimersByTime(UNDO_TOTAL);
-		}
-
-		expect(store.mistakeCount()).toBe(3);
-		expect(store.isRevealed()).toBe(false);
-		expect(store.cursor()).toBe(1);
-		expect(store.outcome()).toBe('solving');
 	});
 
 	it('counts misses per exercise, resetting them when the next one opens', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`, { mistakesBeforeSolution: 0 });
+		const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`);
 
 		miss(store);
 		vi.advanceTimersByTime(UNDO_TOTAL);
@@ -546,7 +511,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('gives every board event a tick of its own, whatever the exercise did before', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 		const log = createSlideLog(store);
 
 		/** One run through every way the board can move, sampled where the DOM settles. */
@@ -600,7 +565,7 @@ describe('PuzzleStore', () => {
 
 		const ticks = log.slides.map((slide) => slide.tick);
 
-		// The walk covered the whole policy, so every level of it was exercised.
+		// The walk covered every way the board moves on its own.
 		expect(new Set(log.slides.map((slide) => slide.kind))).toEqual(
 			new Set(['played', 'forward', 'backward']),
 		);
@@ -629,7 +594,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('leaves the take-back on screen when the answer follows it in the same breath', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, { mistakesBeforeSolution: 2 });
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		miss(store);
 		vi.advanceTimersByTime(UNDO_TOTAL);
@@ -638,9 +603,10 @@ describe('PuzzleStore', () => {
 		const refuted = store.transition();
 
 		vi.advanceTimersByTime(UNDO_TOTAL);
+		store.revealSolution();
 
-		// The take-back and the reveal it sets off land together; the reveal rewinds to
-		// the square the line already stood on, so it has nothing to take back over.
+		// The take-back and the reveal that follows it land together; the reveal rewinds
+		// to the square the line already stood on, so it has nothing to take back over.
 		expect(store.isRevealing()).toBe(true);
 		expect(store.transition()).toMatchObject({ from: 'c2', to: 'b2', kind: 'backward' });
 		expect(store.transition()?.tick).toBeGreaterThan(refuted?.tick ?? 0);
@@ -652,7 +618,7 @@ describe('PuzzleStore', () => {
 	});
 
 	it('waits on the refuted move for as long as the chosen move speed says', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`, {}, 'slow');
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`, 'slow');
 
 		miss(store);
 
@@ -1063,6 +1029,159 @@ describe('PuzzleStore', () => {
 		});
 	});
 
+	describe('the closure', () => {
+		const SOLVING_LINE = [
+			['b2', 'b1'],
+			['b1', 'd1'],
+			['d1', 'f1'],
+		] as const;
+
+		function solve(store: PuzzleStore): void {
+			for (const [from, to] of SOLVING_LINE) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+		}
+
+		it('outlives the verdict: a miss grades the attempt but does not end it', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+
+			expect(store.result()).toBe('failed');
+			expect(store.closure()).toBe('open');
+
+			solve(store);
+
+			// Found on the retry: the exercise is over, the note it was sealed with is not.
+			expect(store.closure()).toBe('found');
+			expect(store.result()).toBe('failed');
+		});
+
+		it('closes on any mate that ends the line, scripted or not', () => {
+			const store = createStore(`${HEADER}\n${ALT_MATE}`);
+
+			play(store, 'g1', 'g7');
+
+			expect(store.closure()).toBe('found');
+			expect(store.result()).toBe('solved');
+		});
+
+		it('is never reached by the answer playing itself', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.revealSolution();
+
+			expect(store.closure()).toBe('revealed');
+
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+			// The line is complete, but it is not the player who completed it.
+			expect(store.outcome()).toBe('solved');
+			expect(store.closure()).toBe('revealed');
+		});
+
+		it('is not something free play can reach, mate and all', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b3', 'd1'],
+				['b1', 'd1'],
+				['f8', 'f1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			expect(store.freePlayStatus()).toBe('checkmate');
+			expect(store.closure()).toBe('open');
+		});
+
+		it('is settled by the first ask for the answer, and no later one revises it', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.revealSolution();
+
+			expect(store.closure()).toBe('revealed');
+
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			store.revealSolution();
+
+			expect(store.closure()).toBe('revealed');
+		});
+
+		it('survives a restart, along with the verdict, the misses and the hint', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.useHint();
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+			store.revealSolution();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.cursor()).toBe(1);
+			expect(store.closure()).toBe('revealed');
+			expect(store.result()).toBe('failed');
+			expect(store.mistakeCount()).toBe(1);
+			expect(store.hintUsed()).toBe(true);
+		});
+
+		it('opens the next exercise on a clean slate', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`);
+
+			store.useHint();
+			miss(store);
+			store.revealSolution();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			store.nextPuzzle();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.closure()).toBe('open');
+			expect(store.result()).toBeUndefined();
+			expect(store.mistakeCount()).toBe(0);
+			expect(store.hintUsed()).toBe(false);
+		});
+	});
+
+	describe('the hint', () => {
+		it('uncovers the themes and closes nothing', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			expect(store.canUseHint()).toBe(true);
+			expect(store.areThemesShown()).toBe(false);
+
+			store.useHint();
+
+			expect(store.hintUsed()).toBe(true);
+			expect(store.areThemesShown()).toBe(true);
+			expect(store.canUseHint()).toBe(false);
+			expect(store.closure()).toBe('open');
+			expect(store.result()).toBeUndefined();
+			expect(store.isPlayerTurn()).toBe(true);
+		});
+
+		it('is spent once the exercise is over, which hands the themes over anyway', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.revealSolution();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+			expect(store.canUseHint()).toBe(false);
+			expect(store.hintUsed()).toBe(false);
+			expect(store.areThemesShown()).toBe(true);
+		});
+	});
+
 	describe('the solve record', () => {
 		/** The five plies `playFivePlyLine` leaves behind, as the record writes them. */
 		const FIVE_PLY = ['f1f8', 'b2b1', 'b3d1', 'b1d1', 'f8f1'];
@@ -1083,18 +1202,53 @@ describe('PuzzleStore', () => {
 			expect(store.explorations()).toEqual([]);
 		});
 
-		it('closes on the verdict, so the take-back it schedules never reaches it', () => {
+		it('stays open through a miss, so the take-back and the retry are both in it', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
 
-			// The move that settles the verdict is in; the rewind that follows it is not.
 			expect(store.record()).toEqual(['f1f8', 'b2c2']);
 
 			vi.advanceTimersByTime(UNDO_TOTAL * 2);
 
+			// The verdict is settled by now, and the exercise is still being solved.
 			expect(store.cursor()).toBe(1);
-			expect(store.record()).toEqual(['f1f8', 'b2c2']);
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+
+			play(store, 'b2', 'b1');
+
+			expect(store.result()).toBe('failed');
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1, 'b2b1']);
+		});
+
+		it('keeps an exploration made after the miss, anchor and all', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+			store.toggleFreePlay();
+			play(store, 'b2', 'c2');
+			store.toggleFreePlay();
+
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+			expect(store.explorations()).toEqual([{ at: 3, events: ['b2c2'] }]);
+		});
+
+		it('writes the rewind giving up does, and nothing the answer plays after it', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.revealSolution();
+
+			// The refuted move was still on the board, so the answer had to rewind onto the
+			// script first — a step like any other, and the last one the record ever takes.
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+			expect(store.history().at(-1)?.san).toBe('Rxf1#');
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
+			expect(replayRecord(MATE_IN_3_FEN, store.record()).cursor).toBe(1);
 		});
 
 		it('collapses a run of steps only while it keeps going the same way', () => {

@@ -2,10 +2,14 @@ import type {
 	ApiPuzzle,
 	CalibrationRound,
 	CalibrationRoundOutcome,
+	PuzzleAttemptRecord,
 } from '@chesspecker/api-definitions';
 
 export type TrainingRunMode = 'calibration' | 'cycle';
 export type TrainingRunResult = 'solved' | 'failed';
+
+/** How the exercise went, minus the clock: that travels as its own `SolveTiming`. */
+export type TrainingAttemptRecord = Omit<PuzzleAttemptRecord, 'durationMs'>;
 
 /** One exercise on the board, with whatever the API needs to record its attempt. */
 export interface TrainingRunSlot {

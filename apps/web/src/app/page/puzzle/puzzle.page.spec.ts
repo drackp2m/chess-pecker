@@ -5,12 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
-import { DEFAULT_MISTAKE_POLICY } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { PuzzlePage } from '@app/page/puzzle/puzzle.page';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
@@ -24,7 +22,6 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 		imports: [PuzzlePage],
 		providers: [
 			{ provide: ActivatedRoute, useValue: { snapshot: { data } } },
-			{ provide: MistakePolicyService, useValue: { policy: signal(DEFAULT_MISTAKE_POLICY) } },
 			{
 				provide: BoardPreferenceService,
 				useValue: {

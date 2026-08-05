@@ -15,6 +15,9 @@ const ASPECT_RATIOS: Record<string, [number, number]> = {
 	stop: [384, 512],
 	xmark: [384, 512],
 
+	'chess-board': [448, 512],
+	flag: [448, 512],
+	'flag-hollow': [448, 512],
 	rabbit: [448, 512],
 	trash: [448, 512],
 
@@ -22,6 +25,10 @@ const ASPECT_RATIOS: Record<string, [number, number]> = {
 
 	'delete-left': [576, 512],
 
+	cloud: [640, 512],
+	'cloud-hollow': [640, 512],
+	'cloud-arrow-down': [640, 512],
+	'cloud-arrow-up': [640, 512],
 	dice: [640, 512],
 	'user-plus': [640, 512],
 };
@@ -56,12 +63,12 @@ export class SvgComponent {
 	});
 
 	getIcon(value: string): string {
-		return `url(svg/icon/${value}-solid.svg)`;
+		return `url(svg/icon/${value}.svg)`;
 	}
 
 	private getAspectRatio(): [number, number] {
 		const icon = this.icon();
-		const iconNameRegex = /svg\/icon\/(.+)-solid\.svg/;
+		const iconNameRegex = /svg\/icon\/(.+)\.svg/;
 		const match = iconNameRegex.exec(icon);
 		const iconName = match?.[1];
 

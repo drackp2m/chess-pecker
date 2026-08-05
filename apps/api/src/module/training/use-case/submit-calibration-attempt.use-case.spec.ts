@@ -6,6 +6,7 @@ import { PreconditionFailedException } from '../../../shared/exception/precondit
 import { Puzzle } from '../../puzzle/puzzle.entity';
 import { CalibrationRoundKind } from '../definition/calibration-round-kind.enum';
 import { CalibrationRoundOutcome } from '../definition/calibration-round-outcome.enum';
+import { PuzzleAttemptClosure } from '../definition/puzzle-attempt-closure.enum';
 import { SubmitCalibrationAttemptRequestDto } from '../dto/request/submit-calibration-attempt-request.dto';
 import { PuzzleAttempt } from '../puzzle-attempt.entity';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
@@ -35,6 +36,9 @@ describe('SubmitCalibrationAttemptUseCase', () => {
 		puzzleUuid: 'puzzle-uuid',
 		durationMs: 1000,
 		solved: true,
+		closure: PuzzleAttemptClosure.Found,
+		hintUsed: false,
+		mistakeCount: 0,
 	};
 
 	const dealtPuzzle = (uuid: string, position: number): TrainingCalibrationPuzzle =>

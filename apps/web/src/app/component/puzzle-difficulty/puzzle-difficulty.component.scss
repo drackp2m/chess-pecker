@@ -1,0 +1,38 @@
+:host {
+	display: block;
+}
+
+.difficulty {
+	align-items: flex-end;
+	list-style: none;
+
+	&.easy .filled {
+		background-color: rgb(234 179 8);
+	}
+
+	&.medium .filled {
+		background-color: rgb(234 88 12);
+	}
+
+	&.hard .filled {
+		background-color: rgb(196 48 38);
+	}
+}
+
+.difficulty-bar {
+	width: 0.3rem;
+	border-radius: 1px;
+	background-color: color-mix(in oklab, var(--color-contrast) 15%, transparent);
+
+	&:nth-child(1) {
+		height: 0.5rem;
+	}
+
+	&:nth-child(2) {
+		height: 0.8rem;
+	}
+
+	&:nth-child(3) {
+		height: 1.1rem;
+	}
+}

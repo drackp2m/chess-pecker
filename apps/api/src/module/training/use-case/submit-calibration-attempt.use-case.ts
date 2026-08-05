@@ -41,17 +41,7 @@ export class SubmitCalibrationAttemptUseCase {
 			throw new PreconditionFailedException('already attempted', 'puzzle');
 		}
 
-		const attempt = this.applySyncTimestampsUseCase.execute(
-			new PuzzleAttempt({
-				training,
-				kind: PuzzleAttemptKind.Calibration,
-				calibrationRound: round,
-				puzzle,
-				durationMs: submitRequest.durationMs,
-				solved: submitRequest.solved,
-			}),
-			submitRequest,
-		);
+		const attempt = this.buildAttempt(training, round, puzzle, submitRequest);
 
 		await this.puzzleAttemptRepository.insert(attempt);
 
@@ -64,7 +54,6 @@ export class SubmitCalibrationAttemptUseCase {
 		return { attempt, outcome: await this.closeRound(training, round, attempts) };
 	}
 
-	/** Sólo se puede intentar lo que la ronda repartió, no cualquier ejercicio del catálogo. */
 	private static resolveDealtPuzzle(
 		dealt: TrainingCalibrationPuzzle[],
 		submitRequest: SubmitCalibrationAttemptRequestDto,
@@ -78,6 +67,28 @@ export class SubmitCalibrationAttemptUseCase {
 		}
 
 		return calibrationPuzzle.puzzle;
+	}
+
+	private buildAttempt(
+		training: Training,
+		round: TrainingCalibrationRound,
+		puzzle: Puzzle,
+		submitRequest: SubmitCalibrationAttemptRequestDto,
+	): PuzzleAttempt {
+		return this.applySyncTimestampsUseCase.execute(
+			new PuzzleAttempt({
+				training,
+				kind: PuzzleAttemptKind.Calibration,
+				calibrationRound: round,
+				puzzle,
+				durationMs: submitRequest.durationMs,
+				solved: submitRequest.solved,
+				closure: submitRequest.closure,
+				hintUsed: submitRequest.hintUsed,
+				mistakeCount: submitRequest.mistakeCount,
+			}),
+			submitRequest,
+		);
 	}
 
 	/** El último intento cierra la ronda, que se juzga contra lo que dijeron las anteriores. */

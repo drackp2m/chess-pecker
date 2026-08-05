@@ -4,6 +4,7 @@ import {
 	AppSchema,
 	AppSchemaV3,
 	AppSchemaV4,
+	AppSchemaV5,
 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 import { SettingSchemaV1 } from '@app/repository/definition/setting-schema.interface';
@@ -12,12 +13,14 @@ import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-s
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
 import { rekeyAttemptStoreMigration } from '@app/repository/migration/v4_rekey-attempt-store.migration';
 import { recordAttemptSolveMigration } from '@app/repository/migration/v5_record-attempt-solve.migration';
+import { recordAttemptClosureMigration } from '@app/repository/migration/v6_record-attempt-closure.migration';
 
 export abstract class Repository {
 	private static migrations: (
 		| Migration<AppSchema>
 		| Migration<AppSchemaV3>
 		| Migration<AppSchemaV4>
+		| Migration<AppSchemaV5>
 		| Migration<SettingSchemaV1>
 	)[] = [
 		createSettingStoreMigration,
@@ -25,6 +28,7 @@ export abstract class Repository {
 		createTrainingStoresMigration,
 		rekeyAttemptStoreMigration,
 		recordAttemptSolveMigration,
+		recordAttemptClosureMigration,
 	];
 
 	static getLatestVersion(): number {

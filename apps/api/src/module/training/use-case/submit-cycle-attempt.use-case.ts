@@ -42,6 +42,9 @@ export class SubmitCycleAttemptUseCase {
 				puzzle: item.trainingPuzzle.puzzle,
 				durationMs: submitRequest.durationMs,
 				solved: submitRequest.solved,
+				closure: submitRequest.closure,
+				hintUsed: submitRequest.hintUsed,
+				mistakeCount: submitRequest.mistakeCount,
 			}),
 			submitRequest,
 		);

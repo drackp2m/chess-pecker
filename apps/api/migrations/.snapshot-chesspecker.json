@@ -536,6 +536,57 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "boolean"
+        },
+        "closure": {
+          "name": "closure",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "found",
+            "revealed"
+          ],
+          "mappedType": "enum"
+        },
+        "hint_used": {
+          "name": "hint_used",
+          "type": "bool",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "false",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "boolean"
+        },
+        "mistake_count": {
+          "name": "mistake_count",
+          "type": "int4",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 32,
+          "scale": 0,
+          "default": "0",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "integer"
         }
       },
       "name": "puzzle_attempt",
@@ -587,7 +638,7 @@
       "checks": [
         {
           "name": "puzzle_attempt_kind_parent_check",
-          "columnName": "kind",
+          "columnName": "cycle_item_uuid",
           "definition": "CHECK ((((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))))",
           "expression": "((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))"
         }

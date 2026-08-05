@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, effect, inject } from '@angular/core';
 
-import { PuzzleResult } from '@app/definition/puzzle.type';
+import { PuzzleClosure } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { TrainingRunSlot } from '@app/page/training/store/training-run-state';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
@@ -33,7 +33,7 @@ export class TrainingSolveSession {
 		});
 
 		effect(() => {
-			this.gradeIfSettled(this.board.result());
+			this.submitIfClosed(this.board.closure());
 		});
 
 		effect(() => {
@@ -107,7 +107,8 @@ export class TrainingSolveSession {
 	/**
 	 * An exercise is reopened on the draft row it left behind, not from zero: without
 	 * this the row would be written and then immediately overwritten with a fresh clock,
-	 * which is the whole point of persisting it.
+	 * which is the whole point of persisting it. A row that was closed is left alone —
+	 * its verdict says nothing about that, since a missed exercise goes on being solved.
 	 */
 	private async openDraft(
 		slot: TrainingRunSlot,
@@ -119,7 +120,7 @@ export class TrainingSolveSession {
 
 		const stored = await this.drafts.find(identity).catch(() => undefined);
 
-		if (this.slot !== slot || undefined !== stored?.solved) {
+		if (this.slot !== slot || (undefined !== stored && 'open' !== stored.closure)) {
 			return;
 		}
 
@@ -160,8 +161,11 @@ export class TrainingSolveSession {
 	 * Everything the row is composed from is read synchronously, so a flush in flight
 	 * while the next exercise opens still writes the clock of the one it belongs to.
 	 * A failed write is swallowed on purpose: losing the draft must not stop the solve.
+	 *
+	 * The verdict goes in as soon as the board settles it, which is not the end of the
+	 * exercise any more: what says the row is finished is its closure.
 	 */
-	private flush(result?: PuzzleResult): Promise<void> {
+	private flush(): Promise<void> {
 		const draft = this.draft;
 
 		if (undefined === draft) {
@@ -169,6 +173,7 @@ export class TrainingSolveSession {
 		}
 
 		const { durationMs, startedAt, updatedAt } = this.timer.snapshot();
+		const result = this.board.result();
 
 		return this.drafts
 			.save(draft, {
@@ -177,6 +182,9 @@ export class TrainingSolveSession {
 				record: this.board.record(),
 				explorations: this.board.explorations(),
 				orientation: this.board.orientation(),
+				closure: this.board.closure(),
+				hintUsed: this.board.hintUsed(),
+				mistakeCount: this.board.mistakeCount(),
 				...(undefined === startedAt ? {} : { startedAt }),
 				...(undefined === result ? {} : { solved: 'solved' === result }),
 			})
@@ -184,13 +192,20 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * The board settles its verdict on the first try and keeps it, so a retry or a
-	 * reveal never reaches this — the attempt is submitted exactly once.
+	 * Submits the attempt when the exercise closes, which is once the solution is out —
+	 * found or given up on — and not when the verdict was settled: the board seals that
+	 * on the first try, but the clock runs for as long as the exercise is still being
+	 * worked on. The closure is settled once too, so this submits exactly once.
 	 */
-	private gradeIfSettled(result: PuzzleResult | undefined): void {
+	private submitIfClosed(closure: PuzzleClosure): void {
 		const slot = this.slot;
+		const result = this.board.result();
 
-		if (undefined === slot || undefined === result || this.gradedUuid === slot.puzzle.uuid) {
+		if ('open' === closure || undefined === slot || undefined === result) {
+			return;
+		}
+
+		if (this.gradedUuid === slot.puzzle.uuid) {
 			return;
 		}
 
@@ -198,9 +213,17 @@ export class TrainingSolveSession {
 
 		const timing = this.timer.stop();
 
-		void this.flush(result);
+		void this.flush();
 		this.draft = undefined;
 
-		void this.run.grade(result, timing);
+		void this.run.grade(
+			{
+				solved: 'solved' === result,
+				closure,
+				hintUsed: this.board.hintUsed(),
+				mistakeCount: this.board.mistakeCount(),
+			},
+			timing,
+		);
 	}
 }

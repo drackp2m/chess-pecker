@@ -4,121 +4,31 @@
 			<h4 class="title color-contrast-mid">
 				Solving
 
-				<span class="color-contrast">{{ puzzle.id }}</span>
+				<span class="color-contrast">{{ puzzle.id }}</span> · {{ counter() }}
 			</h4>
 
-			<p
-				class="headline fs-lg fw-lg"
-				[class.failed]="'failed' === store.outcome()"
-				[class.solved]="'solved' === store.outcome()"
-			>
-				{{ headline() }}
-			</p>
-		</header>
+			<div class="flex-row justify-between align-center gap-2">
+				<p
+					class="headline fs-lg fw-lg"
+					[class.failed]="'failed' === store.outcome()"
+					[class.solved]="'solved' === store.outcome()"
+				>
+					{{ headline() }}
+				</p>
 
-		<div class="layout">
-			<div class="flex-col gap-3">
-				<app-chess-board />
-
-				<div class="controls flex-row gap-2 justify-center">
-					<button
-						appThemed
-						icon="backward-fast"
-						iconSquared
-						aria-label="Restart exercise"
-						[disabled]="0 === store.cursor() && !store.canStepBackward()"
-						(click)="store.restart()"
-						class="px-2"
-					></button>
-
-					<button
-						appThemed
-						icon="backward-step"
-						iconSquared
-						aria-label="Step back one move"
-						[disabled]="store.isBusy() || !store.canStepBackward()"
-						(click)="store.stepBackward()"
-						class="px-2"
-					></button>
-
-					<button
-						appThemed
-						icon="forward-step"
-						iconSquared
-						aria-label="Step forward one move"
-						[disabled]="store.isBusy() || !store.canStepForward()"
-						(click)="store.stepForward()"
-						class="px-2"
-					></button>
-
-					<button
-						appThemed
-						icon="rotate"
-						iconSquared
-						aria-label="Flip board"
-						(click)="store.flipBoard()"
-						class="px-2"
-					></button>
-				</div>
-
-				<div class="flex-row flex-wrap gap-2 justify-center">
-					<button
-						appThemed
-						[disabled]="!store.canRevealSolution()"
-						(click)="store.revealSolution()"
-					>
-						Show solution
-					</button>
-
-					<button appThemed (click)="store.toggleFreePlay()">
-						{{ store.isFreePlay() ? 'Leave free play' : 'Free play' }}
-					</button>
-				</div>
-
-				<div class="navigation flex-row gap-2 align-center justify-between">
-					<button
-						appThemed
-						[disabled]="!store.library.hasPrevious()"
-						(click)="store.previousPuzzle()"
-					>
-						Previous
-					</button>
-
-					<span class="counter color-contrast-mid">{{ counter() }}</span>
-
-					<button appThemed [disabled]="!store.library.hasNext()" (click)="store.nextPuzzle()">
-						Next
-					</button>
-				</div>
+				<app-puzzle-difficulty />
 			</div>
-
-			<aside class="panel flex-col gap-4">
-				<div class="flex-col gap-2">
-					<p class="fs-sm color-contrast-mid">
-						Rating {{ puzzle.rating }} · playing {{ store.playerColor() }}
-					</p>
-
-					<p class="fs-sm">
-						Found {{ store.progress().solvedMoves }} of {{ store.progress().totalMoves }} moves
-					</p>
-
-					@if (0 < puzzle.themes.length) {
-						<ul class="themes flex-row flex-wrap gap-1">
-							@for (theme of puzzle.themes; track theme) {
-								<li class="theme px-2 br-1 fs-sm">{{ theme }}</li>
-							}
-						</ul>
-					}
-				</div>
-
-				<div class="flex-col gap-2">
-					<h5>Line</h5>
-
-					<app-move-history />
-				</div>
-			</aside>
-		</div>
+		</header>
 	}
+
+	<app-puzzle-solver
+		previousLabel="Previous exercise"
+		nextLabel="Next exercise"
+		[isPreviousDisabled]="!store.library.hasPrevious()"
+		[isNextDisabled]="!store.library.hasNext()"
+		(previous)="store.previousPuzzle()"
+		(next)="store.nextPuzzle()"
+	/>
 
 	<details class="import p-3 br-2" [open]="0 === store.library.puzzles().length">
 		<summary class="fw-xl">Load exercises</summary>

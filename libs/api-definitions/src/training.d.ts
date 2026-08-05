@@ -13,6 +13,12 @@ export type TrainingCycleStatus = 'running' | 'finished' | 'abandoned';
 
 export type PuzzleAttemptKind = 'calibration' | 'cycle';
 
+/**
+ * Cómo acabó el ejercicio: el usuario dio con la línea, o se rindió y se la enseñaron. No
+ * hay estado abierto porque el intento no se manda hasta que la solución está fuera.
+ */
+export type PuzzleAttemptClosure = 'found' | 'revealed';
+
 export interface Training {
 	readonly uuid: string;
 	readonly status: TrainingStatus;
@@ -95,17 +101,27 @@ export interface SetTrainingGoalRequest<TDate = string> extends SyncTimestamps<T
 	endDate?: TDate;
 }
 
-export interface SubmitCalibrationAttemptRequest<TDate = string> extends SyncTimestamps<TDate> {
-	roundUuid: string;
-	puzzleUuid: string;
+/**
+ * Cómo fue el intento, igual en calibración que en ciclo. `solved` es la nota, sellada al
+ * primer intento; el resto cuenta lo que costó llegar hasta la solución.
+ */
+export interface PuzzleAttemptRecord {
 	durationMs: number;
 	solved: boolean;
+	closure: PuzzleAttemptClosure;
+	hintUsed: boolean;
+	mistakeCount: number;
 }
 
-export interface SubmitCycleAttemptRequest<TDate = string> extends SyncTimestamps<TDate> {
+export interface SubmitCalibrationAttemptRequest<TDate = string>
+	extends SyncTimestamps<TDate>, PuzzleAttemptRecord {
+	roundUuid: string;
+	puzzleUuid: string;
+}
+
+export interface SubmitCycleAttemptRequest<TDate = string>
+	extends SyncTimestamps<TDate>, PuzzleAttemptRecord {
 	cycleItemUuid: string;
-	durationMs: number;
-	solved: boolean;
 }
 
 export interface CycleProgress {

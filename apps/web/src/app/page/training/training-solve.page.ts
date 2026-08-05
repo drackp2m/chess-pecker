@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import {
 	Component,
 	HostListener,
@@ -9,10 +10,8 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
-import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
-import { ButtonDirective } from '@app/directive/button.directive';
-import { RouterLinkDirective } from '@app/directive/router-link.directive';
+import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzzle-difficulty.component';
+import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
@@ -20,7 +19,7 @@ import { TrainingSolveSession } from '@app/page/training/store/training-solve-se
 @Component({
 	templateUrl: './training-solve.page.html',
 	styleUrl: './training-solve.page.scss',
-	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective, RouterLinkDirective],
+	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent],
 })
 export class TrainingSolvePage implements OnInit, OnDestroy {
 	readonly run = inject(TrainingRunStore);
@@ -28,12 +27,17 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 
 	readonly headline = computed(() => this.describe());
 
+	readonly nextLabel = computed(() =>
+		!this.run.hasNext() && this.run.hasNextRound() ? 'Next round' : 'Next exercise',
+	);
+
 	/**
-	 * Said out loud as soon as the miss is in, so playing on never leaves any doubt
-	 * about what was recorded — least of all in a calibration round.
+	 * Said out loud as soon as the miss is in — which is where the note is sealed, long
+	 * before the exercise is over — so playing on never leaves any doubt about what will
+	 * be recorded, least of all in a calibration round.
 	 */
 	readonly practiceNotice = computed(() => {
-		if ('failed' !== this.run.lastResult()) {
+		if (!this.board.isPractice()) {
 			return null;
 		}
 
@@ -62,6 +66,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			: `Cycle · exercise ${(position + 1).toString()}`;
 	});
 
+	private readonly location = inject(Location);
 	private readonly router = inject(Router);
 	private readonly session = inject(TrainingSolveSession);
 
@@ -102,27 +107,28 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 		this.session.pause();
 	}
 
-	next(): void {
-		this.run.advance();
+	/** Wherever the exercise was opened from — the training page, a link, a reload. */
+	back(): void {
+		this.location.back();
 	}
 
-	nextRound(): void {
+	next(): void {
+		if (this.run.hasNext()) {
+			this.run.advance();
+
+			return;
+		}
+
 		void this.run.openNextRound();
 	}
 
 	private describe(): string {
 		if (this.board.isFreePlay()) {
-			return 'Free play — both sides are yours, and none of it counts.';
+			return 'Free play — both sides are yours.';
 		}
 
-		const result = this.run.lastResult();
-
-		if ('failed' === result) {
-			return this.describeMiss();
-		}
-
-		if ('solved' === result) {
-			return 'Solved.';
+		if (!this.board.isOpen()) {
+			return this.describeClosed();
 		}
 
 		switch (this.board.outcome()) {
@@ -131,24 +137,38 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			case 'opening':
 			case 'replying':
 				return 'Opponent is moving…';
-			case 'solving':
-				return `Find the move for ${this.board.playerColor()}`;
 			case 'failed':
+				return 'Nope!';
+			case 'solving':
+				return this.describeSolving();
 			case 'solved':
 				return 'Recording the attempt…';
 		}
 	}
 
-	/** The exercise is graded by now, so this only says what is left to do with it. */
-	private describeMiss(): string {
-		if (this.board.isRevealed()) {
-			return this.board.isRevealing() ? 'Missed. Watch how it went.' : 'Missed. That was the line.';
+	/** The exercise is over, so this only says how it ended. */
+	private describeClosed(): string {
+		if ('revealed' === this.board.closure()) {
+			return this.board.isRevealing()
+				? 'Gave up. Watch how it went.'
+				: 'Gave up. That was the line.';
 		}
 
-		if ('solved' === this.board.outcome()) {
-			return 'Missed. Found it on the retry, which leaves the attempt as it was.';
+		return 'failed' === this.board.result()
+			? 'Found it, after the miss, which leaves the attempt as it was.'
+			: 'Solved.';
+	}
+
+	/**
+	 * The note is sealed on the first try, so a miss is said out loud straight away —
+	 * but the exercise goes on until the line is found or handed over.
+	 */
+	private describeSolving(): string {
+		// ToDo => why "is Practice" is true when make a mistake?
+		if (this.board.isPractice()) {
+			return 'Missed. Try it again, or give up to see the line.';
 		}
 
-		return 'Missed. It has been taken back — try it again, watch the solution, or move on.';
+		return `Find the move for ${this.board.playerColor()}`;
 	}
 }

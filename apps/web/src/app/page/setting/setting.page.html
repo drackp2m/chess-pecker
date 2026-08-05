@@ -94,27 +94,6 @@
 				/>
 			</form>
 		</div>
-
-		<div class="flex-col gap-2">
-			<h5>Play the answer after a miss</h5>
-
-			<p class="fs-sm color-contrast-mid">
-				A wrong move is always taken back and the exercise can always be tried again. This is how
-				many misses it takes before the board plays the solution out for you, once per exercise.
-			</p>
-
-			<form [formGroup]="form.controls.mistake" class="flex-col gap-1">
-				@for (option of mistakeOptions; track option.value) {
-					<input
-						appThemed
-						type="radio"
-						[label]="option.label"
-						[value]="option.value"
-						formControlName="mistakesBeforeSolution"
-					/>
-				}
-			</form>
-		</div>
 	</div>
 
 	<p class="flex-row flex-grow justify-center align-end mono fs-sm">version {{ VERSION }}</p>

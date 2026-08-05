@@ -1,0 +1,111 @@
+@if (store.puzzle(); as puzzle) {
+	<div class="layout">
+		<div class="flex-col gap-3">
+			<app-chess-board />
+
+			<div class="controls align-center px-3">
+				<button
+					appThemed
+					icon="chevron-left"
+					iconSquared
+					[attr.aria-label]="previousLabel()"
+					[disabled]="isPreviousDisabled()"
+					(click)="previous.emit()"
+				></button>
+
+				<div class="actions flex-row gap-3 justify-center">
+					<button
+						appThemed
+						icon="flag"
+						iconSquared
+						aria-label="Give up"
+						[class.active]="'revealed' === store.closure()"
+						[disabled]="!store.canRevealSolution()"
+						(click)="store.revealSolution()"
+					></button>
+
+					<button
+						appThemed
+						icon="rotate"
+						iconSquared
+						aria-label="Flip board"
+						(click)="store.flipBoard()"
+					></button>
+
+					<button
+						appThemed
+						icon="backward-fast"
+						iconSquared
+						aria-label="Restart exercise"
+						[disabled]="0 === store.cursor() && !store.canStepBackward()"
+						(click)="store.restart()"
+					></button>
+
+					<button
+						appThemed
+						icon="backward-step"
+						iconSquared
+						aria-label="Step back one move"
+						[disabled]="store.isBusy() || !store.canStepBackward()"
+						(click)="store.stepBackward()"
+					></button>
+
+					<button
+						appThemed
+						icon="forward-step"
+						iconSquared
+						aria-label="Step forward one move"
+						[disabled]="store.isBusy() || !store.canStepForward()"
+						(click)="store.stepForward()"
+					></button>
+
+					<button
+						appThemed
+						icon="magnifying-glass"
+						iconSquared
+						aria-label="Free play"
+						[class.active]="store.isFreePlay()"
+						(click)="store.toggleFreePlay()"
+					></button>
+
+					<button
+						appThemed
+						icon="circle-info"
+						iconSquared
+						aria-label="Hint"
+						[class.active]="store.hintUsed()"
+						[disabled]="!store.canUseHint()"
+						(click)="store.useHint()"
+					></button>
+				</div>
+
+				<button
+					appThemed
+					icon="chevron-right"
+					iconSquared
+					[attr.aria-label]="nextLabel()"
+					[disabled]="isNextDisabled()"
+					(click)="next.emit()"
+				></button>
+			</div>
+		</div>
+
+		<aside class="panel flex-col gap-4">
+			<div class="flex-col gap-2">
+				@if (0 < puzzle.themes.length && store.areThemesShown()) {
+					<ul class="themes flex-row flex-wrap gap-1">
+						@for (theme of puzzle.themes; track theme) {
+							<li class="theme px-2 br-1 fs-sm">{{ theme }}</li>
+						}
+					</ul>
+				}
+			</div>
+
+			<div class="line flex-row align-center gap-2">
+				<h5>Line</h5>
+
+				<app-move-history class="flex-grow" />
+			</div>
+		</aside>
+	</div>
+}
