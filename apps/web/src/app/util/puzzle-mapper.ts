@@ -5,7 +5,7 @@ import { Puzzle } from '@app/definition/puzzle.type';
 const RATING_BUCKET_SIZE = 100;
 
 export abstract class PuzzleMapper {
-	static toPuzzle(puzzle: ApiPuzzle): Puzzle {
+	static toPuzzle(puzzle: Omit<ApiPuzzle, 'uuid'>): Puzzle {
 		const bucket = Math.floor(puzzle.rating / RATING_BUCKET_SIZE) * RATING_BUCKET_SIZE;
 
 		return {

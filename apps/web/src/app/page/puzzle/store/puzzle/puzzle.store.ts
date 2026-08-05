@@ -55,14 +55,21 @@ export class PuzzleStore
 	private readonly sound = inject(SoundService);
 
 	/** Imports exercises from raw CSV text and opens the first one. */
-	loadCsv(text: string): boolean {
-		const isLoaded = this.library.loadCsv(text);
+	loadCsv(text: string, name: string): boolean {
+		const isLoaded = this.library.loadCsv(text, name);
 
 		if (isLoaded) {
 			this.open();
 		}
 
 		return isLoaded;
+	}
+
+	/** Reopens the last imported set, so a reload does not lose it. */
+	async restore(): Promise<void> {
+		if (0 < (await this.library.restore()).length) {
+			this.open();
+		}
 	}
 
 	/** Source-agnostic entry point: feed it rows from a database just as well. */

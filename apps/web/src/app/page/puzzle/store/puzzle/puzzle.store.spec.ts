@@ -12,6 +12,7 @@ import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
+import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessNotation } from '@app/util/chess/chess-notation';
@@ -33,6 +34,14 @@ const REPLAY_PLY = 800;
 /** Long enough for the refuted move to be taken back on its own. */
 const UNDO_TOTAL = 1000;
 
+/** Imports go nowhere here: persistence is the library store's own concern. */
+function createImportStub(): Partial<PuzzleImportUseCase> {
+	return {
+		import: (name, puzzles) => Promise.resolve({ uuid: name, name, puzzles }),
+		findLast: () => Promise.resolve(undefined),
+	};
+}
+
 /**
  * Every settings-backed service is stubbed whole, so the store is tested against a
  * policy rather than against IndexedDB — and so no test needs an `AudioContext`.
@@ -51,6 +60,7 @@ function configure(
 			},
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(speed) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
+			{ provide: PuzzleImportUseCase, useValue: createImportStub() },
 		],
 	});
 
@@ -64,7 +74,7 @@ function createStore(
 ): PuzzleStore {
 	const store = configure(policy, speed);
 
-	store.loadCsv(csv);
+	store.loadCsv(csv, 'Spec set');
 	vi.advanceTimersByTime(REPLAY_TOTAL * 2);
 
 	return store;
@@ -180,7 +190,7 @@ describe('PuzzleStore', () => {
 	it('lights the opponent piece up before it actually moves', () => {
 		const store = configure();
 
-		store.loadCsv(`${HEADER}\n${MATE_IN_3}`);
+		store.loadCsv(`${HEADER}\n${MATE_IN_3}`, 'Spec set');
 		vi.advanceTimersByTime(350);
 
 		// First beat: the rook on f1 is announced but has not left its square.
@@ -728,7 +738,7 @@ describe('PuzzleStore', () => {
 	it('reports an unreadable import', () => {
 		const store = configure();
 
-		expect(store.loadCsv('nonsense')).toBe(false);
+		expect(store.loadCsv('nonsense', 'Spec set')).toBe(false);
 		expect(store.library.importError()).toBeDefined();
 		expect(store.outcome()).toBe('idle');
 	});
@@ -943,7 +953,7 @@ describe('PuzzleStore', () => {
 		it('never lets a scripted move land inside an exploration', () => {
 			const store = configure();
 
-			store.loadCsv(`${HEADER}\n${MATE_IN_3}`);
+			store.loadCsv(`${HEADER}\n${MATE_IN_3}`, 'Spec set');
 			vi.advanceTimersByTime(200);
 			store.toggleFreePlay();
 			vi.advanceTimersByTime(REPLAY_TOTAL * 2);
