@@ -3,15 +3,18 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BoardTransition } from '@app/definition/board-animation.type';
-import { Square } from '@app/definition/chess.type';
+import { ChessPosition, Square } from '@app/definition/chess.type';
 import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
+import { PuzzleEvent } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
+import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
+import { ChessNotation } from '@app/util/chess/chess-notation';
 
 const HEADER = 'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor';
 const MATE_IN_3 =
@@ -86,6 +89,48 @@ function playFivePlyLine(store: PuzzleStore): void {
 
 function snapshot(store: PuzzleStore) {
 	return { positions: store.positions(), line: store.line(), cursor: store.cursor() };
+}
+
+function describeLine(state: ReturnType<typeof snapshot>) {
+	return {
+		fens: state.positions.map((position) => ChessFen.serialize(position)),
+		line: state.line.map((move) => ChessNotation.describeLong(move)),
+		cursor: state.cursor,
+	};
+}
+
+function replayRecord(fen: string, events: readonly PuzzleEvent[]) {
+	const start = ChessFen.parse(fen);
+	let positions: ChessPosition[] = [start];
+	let line: string[] = [];
+	let cursor = 0;
+
+	for (const event of events) {
+		if ('number' === typeof event) {
+			if (0 === event) {
+				positions = [start];
+				line = [];
+				cursor = 0;
+			} else {
+				cursor += event;
+			}
+
+			continue;
+		}
+
+		const position = positions[cursor];
+		const move = undefined === position ? undefined : ChessNotation.parse(position, event);
+
+		if (undefined === position || undefined === move) {
+			throw new Error(`the record does not replay: ${event} at ply ${cursor.toString()}`);
+		}
+
+		positions = [...positions.slice(0, cursor + 1), ChessBoard.apply(position, move)];
+		line = [...line.slice(0, cursor), event];
+		cursor = line.length;
+	}
+
+	return { fens: positions.map((position) => ChessFen.serialize(position)), line, cursor };
 }
 
 /**
@@ -1105,6 +1150,42 @@ describe('PuzzleStore', () => {
 				{ at: 6, events: ['f8f1', -1] },
 				{ at: 6, events: [] },
 			]);
+		});
+
+		it('replays the main line back into the board each exploration started from', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+			const entries: ReturnType<typeof snapshot>[] = [];
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+
+			entries.push(snapshot(store));
+			store.toggleFreePlay();
+			play(store, 'a7', 'a6');
+			store.toggleFreePlay();
+
+			store.stepForward();
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			entries.push(snapshot(store));
+			store.toggleFreePlay();
+			store.toggleFreePlay();
+
+			const anchors = store.explorations().map((run) => run.at);
+
+			expect(store.record()).toEqual([...FIVE_PLY, -2, 1, 0, 'f1f8']);
+			expect(store.explorations()).toEqual([
+				{ at: 6, events: ['a7a6'] },
+				{ at: 9, events: [] },
+			]);
+
+			for (const [index, entry] of entries.entries()) {
+				expect(replayRecord(MATE_IN_3_FEN, store.record().slice(0, anchors[index]))).toEqual(
+					describeLine(entry),
+				);
+			}
 		});
 	});
 });
