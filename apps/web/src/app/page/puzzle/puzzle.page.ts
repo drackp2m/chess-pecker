@@ -1,8 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
-import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
+import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
@@ -15,7 +14,7 @@ const SAMPLE_CSV =
 @Component({
 	templateUrl: './puzzle.page.html',
 	styleUrl: './puzzle.page.scss',
-	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective],
+	imports: [PuzzleSolverComponent, ButtonDirective],
 	providers: [
 		PuzzleLibraryStore,
 		PuzzleStore,

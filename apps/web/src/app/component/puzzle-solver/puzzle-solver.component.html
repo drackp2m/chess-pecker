@@ -1,0 +1,86 @@
+@if (store.puzzle(); as puzzle) {
+	<div class="layout">
+		<div class="flex-col gap-3">
+			<app-chess-board />
+
+			<div class="controls flex-row gap-2 justify-center">
+				<button
+					appThemed
+					icon="backward-fast"
+					iconSquared
+					aria-label="Restart exercise"
+					[disabled]="0 === store.cursor() && !store.canStepBackward()"
+					(click)="store.restart()"
+					class="px-2"
+				></button>
+
+				<button
+					appThemed
+					icon="backward-step"
+					iconSquared
+					aria-label="Step back one move"
+					[disabled]="store.isBusy() || !store.canStepBackward()"
+					(click)="store.stepBackward()"
+					class="px-2"
+				></button>
+
+				<button
+					appThemed
+					icon="forward-step"
+					iconSquared
+					aria-label="Step forward one move"
+					[disabled]="store.isBusy() || !store.canStepForward()"
+					(click)="store.stepForward()"
+					class="px-2"
+				></button>
+
+				<button
+					appThemed
+					icon="rotate"
+					iconSquared
+					aria-label="Flip board"
+					(click)="store.flipBoard()"
+					class="px-2"
+				></button>
+			</div>
+
+			<div class="flex-row flex-wrap gap-2 justify-center">
+				<button appThemed [disabled]="!store.canRevealSolution()" (click)="store.revealSolution()">
+					Show solution
+				</button>
+
+				<button appThemed (click)="store.toggleFreePlay()">
+					{{ store.isFreePlay() ? 'Leave free play' : 'Free play' }}
+				</button>
+			</div>
+
+			<ng-content />
+		</div>
+
+		<aside class="panel flex-col gap-4">
+			<div class="flex-col gap-2">
+				<p class="fs-sm color-contrast-mid">
+					Rating {{ puzzle.rating }} · playing {{ store.playerColor() }}
+				</p>
+
+				<p class="fs-sm">
+					Found {{ store.progress().solvedMoves }} of {{ store.progress().totalMoves }} moves
+				</p>
+
+				@if (0 < puzzle.themes.length) {
+					<ul class="themes flex-row flex-wrap gap-1">
+						@for (theme of puzzle.themes; track theme) {
+							<li class="theme px-2 br-1 fs-sm">{{ theme }}</li>
+						}
+					</ul>
+				}
+			</div>
+
+			<div class="flex-col gap-2">
+				<h5>Line</h5>
+
+				<app-move-history />
+			</div>
+		</aside>
+	</div>
+}

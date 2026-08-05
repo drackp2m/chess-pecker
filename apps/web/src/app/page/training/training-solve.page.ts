@@ -9,8 +9,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
-import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
+import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
@@ -20,7 +19,7 @@ import { TrainingSolveSession } from '@app/page/training/store/training-solve-se
 @Component({
 	templateUrl: './training-solve.page.html',
 	styleUrl: './training-solve.page.scss',
-	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective, RouterLinkDirective],
+	imports: [PuzzleSolverComponent, ButtonDirective, RouterLinkDirective],
 })
 export class TrainingSolvePage implements OnInit, OnDestroy {
 	readonly run = inject(TrainingRunStore);

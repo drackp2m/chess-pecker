@@ -24,66 +24,7 @@
 	}
 
 	@if (null !== run.current()) {
-		<div class="flex-col gap-3">
-			<app-chess-board />
-
-			<div class="controls flex-row gap-2 justify-center">
-				<button
-					appThemed
-					icon="backward-fast"
-					iconSquared
-					aria-label="Restart exercise"
-					[disabled]="0 === board.cursor() && !board.canStepBackward()"
-					(click)="board.restart()"
-					class="px-2"
-				></button>
-
-				<button
-					appThemed
-					icon="backward-step"
-					iconSquared
-					aria-label="Step back one move"
-					[disabled]="board.isBusy() || !board.canStepBackward()"
-					(click)="board.stepBackward()"
-					class="px-2"
-				></button>
-
-				<button
-					appThemed
-					icon="forward-step"
-					iconSquared
-					aria-label="Step forward one move"
-					[disabled]="board.isBusy() || !board.canStepForward()"
-					(click)="board.stepForward()"
-					class="px-2"
-				></button>
-
-				<button
-					appThemed
-					icon="rotate"
-					iconSquared
-					aria-label="Flip board"
-					(click)="board.flipBoard()"
-					class="px-2"
-				></button>
-			</div>
-
-			<div class="flex-row flex-wrap gap-2 justify-center">
-				<button appThemed [disabled]="!board.canRevealSolution()" (click)="board.revealSolution()">
-					Show solution
-				</button>
-
-				<button appThemed (click)="board.toggleFreePlay()">
-					{{ board.isFreePlay() ? 'Leave free play' : 'Free play' }}
-				</button>
-			</div>
-
-			<div class="flex-col gap-2">
-				<h5>Line</h5>
-
-				<app-move-history />
-			</div>
-		</div>
+		<app-puzzle-solver />
 	}
 
 	<div class="flex-row flex-wrap gap-2 align-center justify-between">
