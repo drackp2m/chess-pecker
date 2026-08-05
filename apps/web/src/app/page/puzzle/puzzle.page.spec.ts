@@ -7,10 +7,12 @@ import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
 import { DEFAULT_MISTAKE_POLICY } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
+import { Puzzle } from '@app/definition/puzzle.type';
 import { PuzzlePage } from '@app/page/puzzle/puzzle.page';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
+import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 /**
  * Every settings-backed service is stubbed whole, the same way `puzzle.store.spec` does
@@ -32,10 +34,23 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 				},
 			},
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
+			{
+				provide: PuzzleImportUseCase,
+				useValue: {
+					import: (name: string, puzzles: readonly Puzzle[]) =>
+						Promise.resolve({ uuid: name, name, puzzles }),
+					findLast: () => Promise.resolve(undefined),
+				} satisfies Partial<PuzzleImportUseCase>,
+			},
 		],
 	});
 
-	return TestBed.createComponent(PuzzlePage).componentInstance;
+	const fixture = TestBed.createComponent(PuzzlePage);
+
+	// The route decides what the page opens with, and that now runs in `ngOnInit`.
+	fixture.detectChanges();
+
+	return fixture.componentInstance;
 }
 
 /** A file picker `change` event, with a file that reads however the test wants. */

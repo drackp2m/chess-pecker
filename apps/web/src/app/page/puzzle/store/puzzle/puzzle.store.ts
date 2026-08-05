@@ -4,10 +4,22 @@ import { patchState, signalStore, withState } from '@ngrx/signals';
 import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
-import { Puzzle, PuzzleOutcome, PuzzleResult, settleResult } from '@app/definition/puzzle.type';
+import {
+	Puzzle,
+	PuzzleOutcome,
+	PuzzleRecord,
+	PuzzleResult,
+	settleResult,
+} from '@app/definition/puzzle.type';
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
 import { withPuzzleGating } from '@app/page/puzzle/store/puzzle/gating';
 import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
+import {
+	RecordState,
+	recordEntry,
+	recordRestart,
+	recordStep,
+} from '@app/page/puzzle/store/puzzle/record';
 import {
 	anchorFreePlay,
 	buildPuzzleState,
@@ -15,23 +27,13 @@ import {
 	isSolution,
 	nextSelection,
 	openPuzzle,
+	restartLinePatch,
 	restoreFreePlayPatch,
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle/session';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
-
-// ToDo => Woodpecker needs a clock, and nothing here measures time. The method is
-// scored on how long a cycle takes, so a session needs: when the exercise became
-// solvable (`outcome` reaching `'solving'`), when it was solved, how long the tab was
-// hidden in between (`visibilitychange`, otherwise a backgrounded tab inflates every
-// time), and whether the first attempt was correct — `result` now knows that much.
-// Capture the rest in the state built by `buildPuzzleState`, keep it out of the
-// animation timers, and hand it to a use-case that writes an attempt row.
-//
-// ToDo => an attempt is also lost on navigation: the store is provided by
-// `PuzzlePage`, so leaving the page destroys the session with no flush.
 
 @Injectable()
 export class PuzzleStore
@@ -53,14 +55,21 @@ export class PuzzleStore
 	private readonly sound = inject(SoundService);
 
 	/** Imports exercises from raw CSV text and opens the first one. */
-	loadCsv(text: string): boolean {
-		const isLoaded = this.library.loadCsv(text);
+	loadCsv(text: string, name: string): boolean {
+		const isLoaded = this.library.loadCsv(text, name);
 
 		if (isLoaded) {
 			this.open();
 		}
 
 		return isLoaded;
+	}
+
+	/** Reopens the last imported set, so a reload does not lose it. */
+	async restore(): Promise<void> {
+		if (0 < (await this.library.restore()).length) {
+			this.open();
+		}
 	}
 
 	/** Source-agnostic entry point: feed it rows from a database just as well. */
@@ -89,7 +98,19 @@ export class PuzzleStore
 
 	/** Same exercise, so the verdict it was graded on survives the reopening. */
 	restart(): void {
-		this.open(this.result());
+		const puzzle = this.puzzle();
+		// Read before anything moves, so the restart is written into the record the
+		// exercise already had instead of the blank one reopening it would hand out.
+		const recorded = recordRestart(this.recordState());
+
+		if (undefined === this.freePlay() || undefined === puzzle) {
+			this.open(this.result(), recorded);
+
+			return;
+		}
+
+		patchState(this, restartLinePatch(puzzle), recorded);
+		this.playScripted();
 	}
 
 	/**
@@ -112,11 +133,13 @@ export class PuzzleStore
 		const anchor = this.freePlay();
 
 		if (undefined === anchor) {
+			this.settleScripted();
 			this.enterFreePlay();
 
 			return;
 		}
 
+		this.cancelScripted();
 		patchState(this, (state) => restoreFreePlayPatch(state, anchor));
 	}
 
@@ -189,7 +212,7 @@ export class PuzzleStore
 		patchState(this, { orientation: 'white' === this.orientation() ? 'black' : 'white' });
 	}
 
-	private open(result?: PuzzleResult): void {
+	private open(result?: PuzzleResult, recorded?: PuzzleRecord): void {
 		const puzzle = this.puzzle();
 
 		this.cancelPlayback();
@@ -200,7 +223,7 @@ export class PuzzleStore
 			return;
 		}
 
-		patchState(this, { ...openPuzzle(puzzle), result });
+		patchState(this, { ...openPuzzle(puzzle), ...recorded, result });
 		this.playScripted();
 	}
 
@@ -208,8 +231,17 @@ export class PuzzleStore
 		return { positions: this.positions(), line: this.line(), cursor: this.cursor() };
 	}
 
+	private recordState(): RecordState {
+		return {
+			record: this.record(),
+			explorations: this.explorations(),
+			freePlay: this.freePlay(),
+			result: this.result(),
+		};
+	}
+
 	private enterFreePlay(): void {
-		patchState(this, {
+		patchState(this, recordEntry, {
 			freePlay: anchorFreePlay(this.lineState(), this.deviation()),
 			selected: undefined,
 			pendingPromotion: undefined,
@@ -234,8 +266,10 @@ export class PuzzleStore
 	): void {
 		const outcome = this.outcomeAt(cursor);
 		const previous = this.position();
+		// What the cursor really did, which the clamped callers may have cut short.
+		const step = cursor - this.cursor();
 
-		patchState(this, {
+		patchState(this, (state) => recordStep(state, step), {
 			cursor,
 			selected: undefined,
 			outcome,

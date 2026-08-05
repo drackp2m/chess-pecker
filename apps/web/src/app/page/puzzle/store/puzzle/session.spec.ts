@@ -1,14 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
+import { nextTransition } from '@app/definition/board-animation.type';
 import { ChessMove } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
-import { isSolution, openPuzzle } from '@app/page/puzzle/store/puzzle/session';
+import {
+	FreePlayAnchor,
+	LineState,
+	anchorFreePlay,
+	extendLine,
+	isSolution,
+	openPuzzle,
+	restoreFreePlayPatch,
+	toRecord,
+} from '@app/page/puzzle/store/puzzle/session';
+import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
 /** Two white queens; both `Qg7#` and `Qf8#` mate the king on h8, the white king
  * on h6 covering g7 and h7 in either case. */
 const TWO_MATES = '7k/8/7K/8/8/8/8/5QQ1 w - - 0 1';
+
+const MATE_IN_3 = '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27';
 
 function move(fen: string, uci: string): ChessMove {
 	const parsed = ChessNotation.parse(ChessFen.parse(fen), uci);
@@ -18,6 +31,30 @@ function move(fen: string, uci: string): ChessMove {
 	}
 
 	return parsed;
+}
+
+function append(state: LineState, notation: string): LineState {
+	const position = state.positions[state.cursor];
+
+	if (undefined === position) {
+		throw new Error(`the line holds no position at ply ${state.cursor.toString()}`);
+	}
+
+	const played = ChessNotation.parse(position, notation);
+
+	if (undefined === played) {
+		throw new Error(`${notation} is not legal at ply ${state.cursor.toString()}`);
+	}
+
+	return extendLine(state, toRecord(position, played, false), ChessBoard.apply(position, played));
+}
+
+function buildLine(fen: string, notations: readonly string[]): LineState {
+	return notations.reduce<LineState>(append, {
+		positions: [ChessFen.parse(fen)],
+		line: [],
+		cursor: 0,
+	});
 }
 
 describe('isSolution', () => {
@@ -64,5 +101,56 @@ describe('openPuzzle', () => {
 		expect(opened.orientation).toBe('black');
 		expect(opened.cursor).toBe(0);
 		expect(opened.outcome).toBe('opening');
+	});
+});
+
+describe('the free play anchor', () => {
+	const LINE = buildLine(MATE_IN_3, ['f1f8', 'b2b1', 'b3d1', 'b1d1']);
+
+	function restore(anchor: FreePlayAnchor, cursor: number) {
+		return restoreFreePlayPatch({ cursor, transition: undefined }, anchor);
+	}
+
+	it('captures the line free play picked up, deviation and all', () => {
+		expect(anchorFreePlay(LINE, 2)).toEqual({ ...LINE, deviation: 2 });
+		expect(anchorFreePlay(LINE, undefined).deviation).toBeUndefined();
+	});
+
+	it('puts positions, line and cursor back where free play started', () => {
+		const anchor = anchorFreePlay(LINE, undefined);
+		const strayed = append(append(LINE, 'f8f1'), 'd1f1');
+
+		expect(strayed.cursor).toBe(6);
+
+		const patch = restore(anchor, strayed.cursor);
+
+		expect(patch.positions).toEqual(LINE.positions);
+		expect(patch.line).toEqual(LINE.line);
+		expect(patch.cursor).toBe(4);
+		expect(patch.freePlay).toBeUndefined();
+	});
+
+	it('gives back the moves a rewound entry had left ahead of the cursor', () => {
+		const rewound: LineState = { ...LINE, cursor: 2 };
+		const anchor = anchorFreePlay(rewound, undefined);
+		const strayed = append(rewound, 'f8f1');
+
+		expect(strayed.line).toHaveLength(3);
+
+		const patch = restore(anchor, strayed.cursor);
+
+		expect(patch.line).toEqual(LINE.line);
+		expect(patch.line).toHaveLength(4);
+		expect(patch.cursor).toBe(2);
+	});
+
+	it('keeps the slide that lands on the cursor it restores, and drops any other', () => {
+		const anchor = anchorFreePlay(LINE, undefined);
+		const slide = nextTransition(move(MATE_IN_3, 'f1f8'), 'played');
+
+		expect(restoreFreePlayPatch({ cursor: 4, transition: slide }, anchor).transition).toBe(slide);
+		expect(
+			restoreFreePlayPatch({ cursor: 6, transition: slide }, anchor).transition,
+		).toBeUndefined();
 	});
 });

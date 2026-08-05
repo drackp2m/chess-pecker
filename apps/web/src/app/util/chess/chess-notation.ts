@@ -13,9 +13,10 @@ const SAN_PATTERN = /^([KQRBN])?([a-h])?([1-8])?x?([a-h][1-8])(?:=?([QRBN]))?$/;
 const LONG_PATTERN = /^([a-h][1-8])([a-h][1-8])([qrbn])?$/;
 
 /**
- * Standard Algebraic Notation, in both directions. `describe` renders a played move
- * and `parse` turns a written move (`Nf3`, `exd5`, `O-O`, `e7e8=Q`, or the long form
- * `e2e4`) back into the concrete move a caller can play.
+ * Standard Algebraic Notation, in both directions. `describe` renders a played move,
+ * `describeLong` writes the same move in the position-free UCI form, and `parse` turns
+ * a written move (`Nf3`, `exd5`, `O-O`, `e7e8=Q`, or the long form `e2e4`) back into
+ * the concrete move a caller can play.
  */
 export abstract class ChessNotation {
 	/** Full SAN for a move about to be played from `position`, suffix included. */
@@ -27,6 +28,17 @@ export abstract class ChessNotation {
 	// precomputed `legalMoves` through the private helpers removes two of the three.
 	static describe(position: ChessPosition, move: ChessMove): string {
 		return this.describeBody(position, move) + this.suffix(position, move);
+	}
+
+	/**
+	 * The long algebraic (UCI) form of a move: origin, target, and the piece a promotion
+	 * picked. It needs no position, which is what makes it the shape a record is kept in.
+	 */
+	static describeLong(move: ChessMove): string {
+		const promotion =
+			undefined === move.promotion ? '' : PIECE_LETTER[move.promotion].toLowerCase();
+
+		return move.from + move.to + promotion;
 	}
 
 	/** Resolves written notation against the legal moves of `position`. */

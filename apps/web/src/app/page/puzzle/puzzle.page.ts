@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
@@ -22,7 +22,7 @@ const SAMPLE_CSV =
 		{ provide: BOARD_PRESENTER, useExisting: PuzzleStore },
 	],
 })
-export class PuzzlePage {
+export class PuzzlePage implements OnInit {
 	readonly store = inject(PuzzleStore);
 
 	readonly csvDraft = signal('');
@@ -37,23 +37,26 @@ export class PuzzlePage {
 			: `${(this.store.library.index() + 1).toString()} / ${total.toString()}`;
 	});
 
-	constructor() {
-		const isSample: unknown = inject(ActivatedRoute).snapshot.data['sample'];
+	private readonly isSample = true === inject(ActivatedRoute).snapshot.data['sample'];
 
-		if (true === isSample) {
+	/** The sample route never touches the database; every other one reopens the last set. */
+	ngOnInit(): void {
+		if (this.isSample) {
 			this.loadSample();
+		} else {
+			void this.store.restore();
 		}
 	}
 
 	loadDraft(): void {
-		if (this.store.loadCsv(this.csvDraft())) {
+		if (this.store.loadCsv(this.csvDraft(), 'Pasted set')) {
 			this.csvDraft.set('');
 		}
 	}
 
 	/** Loads the bundled example straight onto the board. */
 	loadSample(): void {
-		this.store.loadCsv(SAMPLE_CSV);
+		this.store.loadCsv(SAMPLE_CSV, 'Sample exercise');
 		this.csvDraft.set('');
 	}
 
@@ -76,7 +79,7 @@ export class PuzzlePage {
 		}
 
 		try {
-			this.store.loadCsv(await file.text());
+			this.store.loadCsv(await file.text(), file.name);
 		} catch {
 			this.store.library.failImport(`Could not read ${file.name}.`);
 		} finally {

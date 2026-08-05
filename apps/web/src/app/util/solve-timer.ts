@@ -3,28 +3,45 @@
  * records — not the difference between two dates. A backgrounded tab would otherwise
  * inflate every measurement, so the clock only runs while the page is being looked at.
  */
-// ToDo => the accumulator only lives as long as the training section's route injector.
-// The schema expects `durationMs` to survive the exercise being left and picked up days
-// later, which needs the running total flushed somewhere durable (the local draft attempt
-// row of section 5 of the schema notes) on a cadence, not only at the final OK/KO.
 export interface SolveTiming {
 	readonly durationMs: number;
 	readonly createdAt: string;
 	readonly updatedAt: string;
 }
 
+export interface SolveSnapshot {
+	readonly durationMs: number;
+	readonly startedAt: Date | undefined;
+	readonly createdAt: Date;
+	readonly updatedAt: Date;
+}
+
+export const SOLVE_FLUSH_INTERVAL_MS = 5000;
+
 export class SolveTimer {
 	private accumulated = 0;
 	private openedAt: Date | undefined;
 	private startedAt: number | undefined;
+	private ticker: ReturnType<typeof setInterval> | undefined;
+
+	constructor(private readonly onTick: () => void = (): void => undefined) {}
 
 	start(): void {
 		this.accumulated = 0;
 		this.openedAt = new Date();
 		this.startedAt = Date.now();
+
+		this.startTicking();
+	}
+
+	restore(durationMs: number, openedAt: Date): void {
+		this.accumulated += durationMs;
+		this.openedAt = openedAt;
 	}
 
 	pause(): void {
+		this.stopTicking();
+
 		if (undefined === this.startedAt) {
 			return;
 		}
@@ -35,6 +52,19 @@ export class SolveTimer {
 
 	resume(): void {
 		this.startedAt ??= Date.now();
+
+		this.startTicking();
+	}
+
+	snapshot(): SolveSnapshot {
+		const running = undefined === this.startedAt ? 0 : Date.now() - this.startedAt;
+
+		return {
+			durationMs: this.accumulated + running,
+			startedAt: undefined === this.startedAt ? undefined : new Date(this.startedAt),
+			createdAt: this.openedAt ?? new Date(),
+			updatedAt: new Date(),
+		};
 	}
 
 	/**
@@ -45,10 +75,27 @@ export class SolveTimer {
 	stop(): SolveTiming {
 		this.pause();
 
+		const { durationMs, createdAt, updatedAt } = this.snapshot();
+
 		return {
-			durationMs: this.accumulated,
-			createdAt: (this.openedAt ?? new Date()).toISOString(),
-			updatedAt: new Date().toISOString(),
+			durationMs,
+			createdAt: createdAt.toISOString(),
+			updatedAt: updatedAt.toISOString(),
 		};
+	}
+
+	private startTicking(): void {
+		this.ticker ??= setInterval(() => {
+			this.onTick();
+		}, SOLVE_FLUSH_INTERVAL_MS);
+	}
+
+	private stopTicking(): void {
+		if (undefined === this.ticker) {
+			return;
+		}
+
+		clearInterval(this.ticker);
+		this.ticker = undefined;
 	}
 }

@@ -3,18 +3,24 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BoardTransition } from '@app/definition/board-animation.type';
-import { Square } from '@app/definition/chess.type';
+import { ChessPosition, Square } from '@app/definition/chess.type';
 import { DEFAULT_MISTAKE_POLICY, MistakePolicy } from '@app/definition/mistake-policy.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
+import { PuzzleEvent } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { MistakePolicyService } from '@app/service/mistake-policy.service';
 import { SoundService } from '@app/service/sound.service';
+import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
+import { ChessBoard } from '@app/util/chess/chess-board';
+import { ChessFen } from '@app/util/chess/chess-fen';
+import { ChessNotation } from '@app/util/chess/chess-notation';
 
 const HEADER = 'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor';
 const MATE_IN_3 =
 	'JOGv3,5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27,f1f8 b2b1 b3d1 b1d1 f8f1 d1f1,536,100,2178,backRankMate endgame long mate mateIn3,https://lichess.org/fFWULcre#53,500-599';
+const MATE_IN_3_FEN = '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27';
 const SHORT =
 	'ABC12,4k3/8/8/8/8/8/R7/4K2R w - - 0 1,h1h5 e8d8 a2a8,900,90,10,mate mateIn1,https://example.org,900-999';
 /** The script walks to mate with Qg4 first, but Qg7 mates straight away. */
@@ -27,6 +33,14 @@ const REPLAY_TOTAL = 1500;
 const REPLAY_PLY = 800;
 /** Long enough for the refuted move to be taken back on its own. */
 const UNDO_TOTAL = 1000;
+
+/** Imports go nowhere here: persistence is the library store's own concern. */
+function createImportStub(): Partial<PuzzleImportUseCase> {
+	return {
+		import: (name, puzzles) => Promise.resolve({ uuid: name, name, puzzles }),
+		findLast: () => Promise.resolve(undefined),
+	};
+}
 
 /**
  * Every settings-backed service is stubbed whole, so the store is tested against a
@@ -46,6 +60,7 @@ function configure(
 			},
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(speed) } },
 			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
+			{ provide: PuzzleImportUseCase, useValue: createImportStub() },
 		],
 	});
 
@@ -59,7 +74,7 @@ function createStore(
 ): PuzzleStore {
 	const store = configure(policy, speed);
 
-	store.loadCsv(csv);
+	store.loadCsv(csv, 'Spec set');
 	vi.advanceTimersByTime(REPLAY_TOTAL * 2);
 
 	return store;
@@ -73,6 +88,59 @@ function play(store: PuzzleStore, from: Square, to: Square): void {
 /** The first solving move of `MATE_IN_3` is Rb1+; Rc2 is a legal move that is not it. */
 function miss(store: PuzzleStore): void {
 	play(store, 'b2', 'c2');
+}
+
+function playFivePlyLine(store: PuzzleStore): void {
+	play(store, 'b2', 'b1');
+	vi.advanceTimersByTime(REPLAY_TOTAL);
+	play(store, 'b1', 'd1');
+	vi.advanceTimersByTime(REPLAY_TOTAL);
+}
+
+function snapshot(store: PuzzleStore) {
+	return { positions: store.positions(), line: store.line(), cursor: store.cursor() };
+}
+
+function describeLine(state: ReturnType<typeof snapshot>) {
+	return {
+		fens: state.positions.map((position) => ChessFen.serialize(position)),
+		line: state.line.map((move) => ChessNotation.describeLong(move)),
+		cursor: state.cursor,
+	};
+}
+
+function replayRecord(fen: string, events: readonly PuzzleEvent[]) {
+	const start = ChessFen.parse(fen);
+	let positions: ChessPosition[] = [start];
+	let line: string[] = [];
+	let cursor = 0;
+
+	for (const event of events) {
+		if ('number' === typeof event) {
+			if (0 === event) {
+				positions = [start];
+				line = [];
+				cursor = 0;
+			} else {
+				cursor += event;
+			}
+
+			continue;
+		}
+
+		const position = positions[cursor];
+		const move = undefined === position ? undefined : ChessNotation.parse(position, event);
+
+		if (undefined === position || undefined === move) {
+			throw new Error(`the record does not replay: ${event} at ply ${cursor.toString()}`);
+		}
+
+		positions = [...positions.slice(0, cursor + 1), ChessBoard.apply(position, move)];
+		line = [...line.slice(0, cursor), event];
+		cursor = line.length;
+	}
+
+	return { fens: positions.map((position) => ChessFen.serialize(position)), line, cursor };
 }
 
 /**
@@ -122,7 +190,7 @@ describe('PuzzleStore', () => {
 	it('lights the opponent piece up before it actually moves', () => {
 		const store = configure();
 
-		store.loadCsv(`${HEADER}\n${MATE_IN_3}`);
+		store.loadCsv(`${HEADER}\n${MATE_IN_3}`, 'Spec set');
 		vi.advanceTimersByTime(350);
 
 		// First beat: the rook on f1 is announced but has not left its square.
@@ -670,8 +738,464 @@ describe('PuzzleStore', () => {
 	it('reports an unreadable import', () => {
 		const store = configure();
 
-		expect(store.loadCsv('nonsense')).toBe(false);
+		expect(store.loadCsv('nonsense', 'Spec set')).toBe(false);
 		expect(store.library.importError()).toBeDefined();
 		expect(store.outcome()).toBe('idle');
+	});
+
+	describe('free play', () => {
+		interface Exploration {
+			readonly entry: string;
+			readonly arrive: (store: PuzzleStore) => void;
+			readonly moves: readonly (readonly [Square, Square])[];
+		}
+
+		const rewindToPlyTwo = (store: PuzzleStore): void => {
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+			store.stepBackward();
+		};
+
+		const EXPLORATIONS: readonly Exploration[] = [
+			{
+				entry: 'the opening position',
+				arrive: (): void => undefined,
+				moves: [
+					['a7', 'a6'],
+					['a2', 'a3'],
+				],
+			},
+			{
+				entry: 'a cursor rewound into a longer line',
+				arrive: rewindToPlyTwo,
+				moves: [
+					['f8', 'f1'],
+					['b7', 'b6'],
+				],
+			},
+			{
+				entry: 'the end of a played line',
+				arrive: playFivePlyLine,
+				moves: [
+					['h5', 'f4'],
+					['a2', 'a3'],
+				],
+			},
+			{
+				entry: 'a position off the script',
+				arrive: miss,
+				moves: [
+					['a2', 'a3'],
+					['b7', 'b6'],
+				],
+			},
+		];
+
+		for (const exploration of EXPLORATIONS) {
+			it(`comes back to ${exploration.entry} exactly as it left it`, () => {
+				const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+				exploration.arrive(store);
+
+				const entry = snapshot(store);
+				const outcome = store.outcome();
+				const result = store.result();
+
+				store.toggleFreePlay();
+
+				for (const [from, to] of exploration.moves) {
+					play(store, from, to);
+				}
+
+				store.stepBackward();
+				store.stepForward();
+
+				expect(store.isFreePlay()).toBe(true);
+				expect(store.cursor()).toBe(entry.cursor + exploration.moves.length);
+				expect(store.line()).not.toEqual(entry.line);
+
+				store.toggleFreePlay();
+
+				expect(store.isFreePlay()).toBe(false);
+				expect(snapshot(store)).toEqual(entry);
+				expect(store.outcome()).toBe(outcome);
+				expect(store.result()).toBe(result);
+			});
+		}
+
+		it('restarts the exercise inside free play, opponent reply and all', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			play(store, 'a7', 'a6');
+			play(store, 'a2', 'a3');
+			store.restart();
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.cursor()).toBe(0);
+			expect(store.line()).toHaveLength(0);
+			expect(ChessFen.serialize(store.position())).toBe(MATE_IN_3_FEN);
+			expect(store.isBusy()).toBe(true);
+
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.cursor()).toBe(1);
+			expect(store.history()).toHaveLength(1);
+			expect(store.history()[0]?.san).toBe('Rxf8');
+			expect(store.isLocked()).toBe(false);
+			expect(store.outcome()).toBe('solving');
+
+			store.stepBackward();
+
+			expect(store.cursor()).toBe(0);
+			expect(ChessFen.serialize(store.position())).toBe(MATE_IN_3_FEN);
+			expect(store.line()).toHaveLength(1);
+
+			store.toggleFreePlay();
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.outcome()).toBe('solving');
+			expect(store.isPlayerTurn()).toBe(true);
+		});
+
+		it('gives the entry point back after the exploration was restarted', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			rewindToPlyTwo(store);
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			play(store, 'f8', 'f1');
+			play(store, 'b7', 'b6');
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.cursor()).toBe(1);
+			expect(store.line()).toHaveLength(1);
+
+			play(store, 'b2', 'c2');
+
+			expect(store.cursor()).toBe(2);
+			expect(store.result()).toBeUndefined();
+
+			store.toggleFreePlay();
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.cursor()).toBe(2);
+			expect(store.line()).toHaveLength(5);
+			expect(store.outcome()).toBe('solving');
+		});
+
+		it('drops what the exploration had in flight when it is left', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			rewindToPlyTwo(store);
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			store.restart();
+			vi.advanceTimersByTime(400);
+
+			expect(store.announcedMove()?.to).toBe('f8');
+
+			store.toggleFreePlay();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 2);
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.announcedMove()).toBeUndefined();
+			expect(store.isBusy()).toBe(false);
+			expect(store.outcome()).toBe('solving');
+		});
+
+		it('leaves the take-back the exercise had waiting to do its job', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.toggleFreePlay();
+			store.toggleFreePlay();
+			vi.advanceTimersByTime(UNDO_TOTAL);
+
+			expect(store.cursor()).toBe(1);
+			expect(store.mistake()).toBeUndefined();
+			expect(store.isFreePlay()).toBe(false);
+		});
+
+		it('keeps the verdict the exercise was graded on through a restarted exploration', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			store.toggleFreePlay();
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.isFreePlay()).toBe(true);
+			expect(store.result()).toBe('failed');
+			expect(store.mistakeCount()).toBe(1);
+
+			store.toggleFreePlay();
+
+			expect(store.result()).toBe('failed');
+			expect(store.outcome()).toBe('failed');
+			expect(store.cursor()).toBe(2);
+		});
+
+		it('never lets a scripted move land inside an exploration', () => {
+			const store = configure();
+
+			store.loadCsv(`${HEADER}\n${MATE_IN_3}`, 'Spec set');
+			vi.advanceTimersByTime(200);
+			store.toggleFreePlay();
+			vi.advanceTimersByTime(REPLAY_TOTAL * 2);
+
+			expect(store.freePlay()?.line ?? store.line()).toHaveLength(1);
+			expect(store.outcome()).toBe('solving');
+			expect(store.isLocked()).toBe(false);
+		});
+
+		it('is only ever entered on purpose while the verdict is still open', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepForward();
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.result()).toBeUndefined();
+			expect(store.isFreePlay()).toBe(false);
+
+			miss(store);
+
+			expect(store.result()).toBe('failed');
+			expect(store.isFreePlay()).toBe(false);
+
+			play(store, 'a2', 'a3');
+
+			expect(store.isFreePlay()).toBe(true);
+		});
+
+		it('does not solve the exercise with the solution played in free play', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+
+			const entry = snapshot(store);
+
+			// The whole script, mate included, played by hand: in free play both sides are
+			// the player's, so nothing here is answered for them and nothing is graded.
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b3', 'd1'],
+				['b1', 'd1'],
+				['f8', 'f1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			// The board is mated and says so; the exercise has not moved an inch.
+			expect(store.freePlayStatus()).toBe('checkmate');
+			expect(store.outcome()).toBe('solving');
+			expect(store.result()).toBeUndefined();
+			expect(store.progress().solvedMoves).toBe(0);
+
+			store.toggleFreePlay();
+
+			expect(snapshot(store)).toEqual(entry);
+			expect(store.outcome()).toBe('solving');
+			expect(store.result()).toBeUndefined();
+			expect(store.progress().solvedMoves).toBe(0);
+			expect(store.isPlayerTurn()).toBe(true);
+		});
+
+		it('leaves a solved verdict to be earned after the exploration', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+			play(store, 'a7', 'a6');
+			play(store, 'a2', 'a3');
+			store.stepBackward();
+			store.toggleFreePlay();
+
+			expect(store.result()).toBeUndefined();
+
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b1', 'd1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			expect(store.outcome()).toBe('solved');
+			expect(store.result()).toBe('solved');
+		});
+
+		it('leaves a failed verdict to be earned after the exploration', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+			miss(store);
+			play(store, 'a2', 'a3');
+			store.toggleFreePlay();
+
+			expect(store.result()).toBeUndefined();
+			expect(store.mistakeCount()).toBe(0);
+
+			miss(store);
+
+			expect(store.result()).toBe('failed');
+			expect(store.outcome()).toBe('failed');
+			expect(store.mistakeCount()).toBe(1);
+		});
+	});
+
+	describe('the solve record', () => {
+		/** The five plies `playFivePlyLine` leaves behind, as the record writes them. */
+		const FIVE_PLY = ['f1f8', 'b2b1', 'b3d1', 'b1d1', 'f8f1'];
+
+		it('is the script and nothing else for a clean solve', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			for (const [from, to] of [
+				['b2', 'b1'],
+				['b1', 'd1'],
+				['d1', 'f1'],
+			] as const) {
+				play(store, from, to);
+				vi.advanceTimersByTime(REPLAY_TOTAL);
+			}
+
+			expect(store.record()).toEqual([...FIVE_PLY, 'd1f1']);
+			expect(store.explorations()).toEqual([]);
+		});
+
+		it('closes on the verdict, so the take-back it schedules never reaches it', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+
+			// The move that settles the verdict is in; the rewind that follows it is not.
+			expect(store.record()).toEqual(['f1f8', 'b2c2']);
+
+			vi.advanceTimersByTime(UNDO_TOTAL * 2);
+
+			expect(store.cursor()).toBe(1);
+			expect(store.record()).toEqual(['f1f8', 'b2c2']);
+		});
+
+		it('collapses a run of steps only while it keeps going the same way', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+
+			expect(store.record()).toEqual([...FIVE_PLY, -2]);
+
+			// Turning round starts a new run: adding through it would land on a `0`, and
+			// a `0` is a restart.
+			store.stepForward();
+
+			expect(store.record()).toEqual([...FIVE_PLY, -2, 1]);
+		});
+
+		it('tells the restart button apart from stepping all the way back', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.restart();
+
+			expect(store.record()).toEqual([...FIVE_PLY, 0]);
+
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			// Reopening replays the opening move, which is a move like any other.
+			expect(store.record()).toEqual([...FIVE_PLY, 0, 'f1f8']);
+		});
+
+		it('keeps a restart made inside an exploration out of the main line', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			store.toggleFreePlay();
+			play(store, 'a7', 'a6');
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			expect(store.record()).toEqual(['f1f8']);
+			expect(store.explorations()).toEqual([{ at: 1, events: ['a7a6', 0, 'f1f8'] }]);
+		});
+
+		it('anchors an exploration to the length the main line had reached', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+			store.stepBackward();
+			store.toggleFreePlay();
+			play(store, 'f8', 'f1');
+			store.stepBackward();
+			store.toggleFreePlay();
+
+			// Straight back in, with nothing in between: same anchor, second exploration.
+			store.toggleFreePlay();
+			store.toggleFreePlay();
+
+			expect(store.record()).toEqual([...FIVE_PLY, -3]);
+			expect(store.explorations()).toEqual([
+				{ at: 6, events: ['f8f1', -1] },
+				{ at: 6, events: [] },
+			]);
+		});
+
+		it('replays the main line back into the board each exploration started from', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+			const entries: ReturnType<typeof snapshot>[] = [];
+
+			playFivePlyLine(store);
+			store.stepBackward();
+			store.stepBackward();
+
+			entries.push(snapshot(store));
+			store.toggleFreePlay();
+			play(store, 'a7', 'a6');
+			store.toggleFreePlay();
+
+			store.stepForward();
+			store.restart();
+			vi.advanceTimersByTime(REPLAY_TOTAL);
+
+			entries.push(snapshot(store));
+			store.toggleFreePlay();
+			store.toggleFreePlay();
+
+			const anchors = store.explorations().map((run) => run.at);
+
+			expect(store.record()).toEqual([...FIVE_PLY, -2, 1, 0, 'f1f8']);
+			expect(store.explorations()).toEqual([
+				{ at: 6, events: ['a7a6'] },
+				{ at: 9, events: [] },
+			]);
+
+			for (const [index, entry] of entries.entries()) {
+				expect(replayRecord(MATE_IN_3_FEN, store.record().slice(0, anchors[index]))).toEqual(
+					describeLine(entry),
+				);
+			}
+		});
 	});
 });

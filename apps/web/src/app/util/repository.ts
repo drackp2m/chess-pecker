@@ -1,17 +1,30 @@
 import { IDBPDatabase, IDBPTransaction, StoreNames } from 'idb';
 
-import { AppSchema } from '@app/repository/definition/app-schema.interface';
+import {
+	AppSchema,
+	AppSchemaV3,
+	AppSchemaV4,
+} from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 import { SettingSchemaV1 } from '@app/repository/definition/setting-schema.interface';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
+import { rekeyAttemptStoreMigration } from '@app/repository/migration/v4_rekey-attempt-store.migration';
+import { recordAttemptSolveMigration } from '@app/repository/migration/v5_record-attempt-solve.migration';
 
 export abstract class Repository {
-	private static migrations: (Migration<AppSchema> | Migration<SettingSchemaV1>)[] = [
+	private static migrations: (
+		| Migration<AppSchema>
+		| Migration<AppSchemaV3>
+		| Migration<AppSchemaV4>
+		| Migration<SettingSchemaV1>
+	)[] = [
 		createSettingStoreMigration,
 		rekeySettingStoreMigration,
 		createTrainingStoresMigration,
+		rekeyAttemptStoreMigration,
+		recordAttemptSolveMigration,
 	];
 
 	static getLatestVersion(): number {

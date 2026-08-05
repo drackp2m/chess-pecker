@@ -85,6 +85,15 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 		}
 	}
 
+	/**
+	 * The partner of `visibilitychange` and the last thing a page is guaranteed on
+	 * mobile, where `beforeunload` often never fires at all.
+	 */
+	@HostListener('window:pagehide')
+	onPageHide(): void {
+		this.session.pause();
+	}
+
 	ngOnInit(): void {
 		void this.session.open();
 	}

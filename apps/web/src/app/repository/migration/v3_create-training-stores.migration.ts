@@ -1,7 +1,7 @@
-import { AppSchema } from '@app/repository/definition/app-schema.interface';
+import { AppSchemaV3 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
-export const createTrainingStoresMigration: Migration<AppSchema> = {
+export const createTrainingStoresMigration: Migration<AppSchemaV3> = {
 	version: 3,
 	description: 'create puzzle, puzzle set, cycle and attempt stores',
 	apply: ({ database }) => {
