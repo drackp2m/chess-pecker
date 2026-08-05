@@ -4,15 +4,17 @@ import type { FriendUser } from '@chesspecker/api-definitions';
 
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
-import { FriendStore } from '@app/store/friend.store';
+import { ProfileStore } from '@app/store/profile.store';
+import { SessionStore } from '@app/store/session.store';
 
 @Component({
-	templateUrl: './friend.page.html',
-	styleUrl: './friend.page.scss',
+	templateUrl: './profile.page.html',
+	styleUrl: './profile.page.scss',
 	imports: [ReactiveFormsModule, InputDirective, ButtonDirective],
 })
-export class FriendPage implements OnInit {
-	readonly store = inject(FriendStore);
+export class ProfilePage implements OnInit {
+	readonly store = inject(ProfileStore);
+	readonly session = inject(SessionStore);
 
 	readonly form = new FormGroup({
 		username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -22,6 +24,14 @@ export class FriendPage implements OnInit {
 		this.store.clearFeedback();
 		this.store.clearSearch();
 		void this.store.load();
+	}
+
+	logOut(): void {
+		void this.session.logOut();
+	}
+
+	retryConnection(): void {
+		void this.session.retry();
 	}
 
 	submit(): void {

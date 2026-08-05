@@ -4,7 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { ModalOutletComponent } from '@app/component/modal-outlet/modal-outlet.component';
 import { NotificationOutletComponent } from '@app/component/notification-outlet/notification-outlet.component';
 import { HeaderComponent } from '@app/layout/main/component/header.component';
-import { NavComponent } from '@app/layout/main/component/nav.component';
+import { NavbarComponent } from '@app/layout/main/component/navbar.component';
 
 @Component({
 	templateUrl: './main.layout.html',
@@ -12,7 +12,7 @@ import { NavComponent } from '@app/layout/main/component/nav.component';
 	imports: [
 		HeaderComponent,
 		RouterOutlet,
-		NavComponent,
+		NavbarComponent,
 		ModalOutletComponent,
 		NotificationOutletComponent,
 	],
