@@ -432,7 +432,7 @@ describe('PuzzleStore', () => {
 		expect(store.result()).toBe('failed');
 	});
 
-	it('refuses the solution before the exercise has been failed, and after it was seen', () => {
+	it('refuses the solution before the exercise has been failed', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		expect(store.canRevealSolution()).toBe(false);
@@ -445,13 +445,28 @@ describe('PuzzleStore', () => {
 		miss(store);
 
 		expect(store.canRevealSolution()).toBe(true);
+	});
 
+	it('plays the line out again every time it is asked for after the exercise is over', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
 		store.revealSolution();
 		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
 
-		// Once given up on, it is spent: the navigation buttons are what replays it.
-		expect(store.closure()).toBe('revealed');
-		expect(store.canRevealSolution()).toBe(false);
+		expect(store.canRevealSolution()).toBe(true);
+
+		// Nothing is left ahead, so it starts the line over instead of standing still.
+		store.revealSolution();
+
+		expect(store.isRevealing()).toBe(true);
+		expect(store.cursor()).toBe(0);
+
+		vi.advanceTimersByTime(REPLAY_TOTAL * 6);
+
+		expect(store.isRevealing()).toBe(false);
+		expect(store.history()).toHaveLength(6);
+		expect(store.history().at(-1)?.san).toBe('Rxf1#');
 	});
 
 	it('counts misses per exercise, resetting them when the next one opens', () => {
@@ -1088,19 +1103,18 @@ describe('PuzzleStore', () => {
 			expect(store.closure()).toBe('open');
 		});
 
-		it('takes a miss before the answer can be asked for', () => {
+		it('is settled by the first ask for the answer, and no later one revises it', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
-			expect(store.canRevealSolution()).toBe(false);
-
 			miss(store);
-
-			expect(store.canRevealSolution()).toBe(true);
-
 			store.revealSolution();
 
 			expect(store.closure()).toBe('revealed');
-			expect(store.canRevealSolution()).toBe(false);
+
+			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			store.revealSolution();
+
+			expect(store.closure()).toBe('revealed');
 		});
 
 		it('survives a restart, along with the verdict, the misses and the hint', () => {
@@ -1119,7 +1133,6 @@ describe('PuzzleStore', () => {
 			expect(store.result()).toBe('failed');
 			expect(store.mistakeCount()).toBe(1);
 			expect(store.hintUsed()).toBe(true);
-			expect(store.canRevealSolution()).toBe(false);
 		});
 
 		it('opens the next exercise on a clean slate', () => {

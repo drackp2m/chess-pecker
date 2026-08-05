@@ -4,7 +4,7 @@
 			<h4 class="title color-contrast-mid">
 				Solving
 
-				<span class="color-contrast">{{ puzzle.id }}</span>
+				<span class="color-contrast">{{ puzzle.id }}</span> · {{ counter() }}
 			</h4>
 
 			<div class="flex-row justify-between align-center gap-2">
@@ -21,19 +21,14 @@
 		</header>
 	}
 
-	<app-puzzle-solver>
-		<div class="navigation flex-row gap-2 align-center justify-between">
-			<button appThemed [disabled]="!store.library.hasPrevious()" (click)="store.previousPuzzle()">
-				Previous
-			</button>
-
-			<span class="counter color-contrast-mid">{{ counter() }}</span>
-
-			<button appThemed [disabled]="!store.library.hasNext()" (click)="store.nextPuzzle()">
-				Next
-			</button>
-		</div>
-	</app-puzzle-solver>
+	<app-puzzle-solver
+		previousLabel="Previous exercise"
+		nextLabel="Next exercise"
+		[isPreviousDisabled]="!store.library.hasPrevious()"
+		[isNextDisabled]="!store.library.hasNext()"
+		(previous)="store.previousPuzzle()"
+		(next)="store.nextPuzzle()"
+	/>
 
 	<details class="import p-3 br-2" [open]="0 === store.library.puzzles().length">
 		<summary class="fw-xl">Load exercises</summary>

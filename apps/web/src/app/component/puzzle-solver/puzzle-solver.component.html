@@ -3,60 +3,91 @@
 		<div class="flex-col gap-3">
 			<app-chess-board />
 
-			<div class="controls flex-row gap-2 justify-center">
+			<div class="controls align-center px-3">
 				<button
 					appThemed
-					icon="backward-fast"
+					icon="chevron-left"
 					iconSquared
-					aria-label="Restart exercise"
-					[disabled]="0 === store.cursor() && !store.canStepBackward()"
-					(click)="store.restart()"
-					class="px-2"
+					[attr.aria-label]="previousLabel()"
+					[disabled]="isPreviousDisabled()"
+					(click)="previous.emit()"
 				></button>
+
+				<div class="actions flex-row gap-3 justify-center">
+					<button
+						appThemed
+						icon="flag"
+						iconSquared
+						aria-label="Give up"
+						[class.active]="'revealed' === store.closure()"
+						[disabled]="!store.canRevealSolution()"
+						(click)="store.revealSolution()"
+					></button>
+
+					<button
+						appThemed
+						icon="rotate"
+						iconSquared
+						aria-label="Flip board"
+						(click)="store.flipBoard()"
+					></button>
+
+					<button
+						appThemed
+						icon="backward-fast"
+						iconSquared
+						aria-label="Restart exercise"
+						[disabled]="0 === store.cursor() && !store.canStepBackward()"
+						(click)="store.restart()"
+					></button>
+
+					<button
+						appThemed
+						icon="backward-step"
+						iconSquared
+						aria-label="Step back one move"
+						[disabled]="store.isBusy() || !store.canStepBackward()"
+						(click)="store.stepBackward()"
+					></button>
+
+					<button
+						appThemed
+						icon="forward-step"
+						iconSquared
+						aria-label="Step forward one move"
+						[disabled]="store.isBusy() || !store.canStepForward()"
+						(click)="store.stepForward()"
+					></button>
+
+					<button
+						appThemed
+						icon="magnifying-glass"
+						iconSquared
+						aria-label="Free play"
+						[class.active]="store.isFreePlay()"
+						(click)="store.toggleFreePlay()"
+					></button>
+
+					<button
+						appThemed
+						icon="circle-info"
+						iconSquared
+						aria-label="Hint"
+						[class.active]="store.hintUsed()"
+						[disabled]="!store.canUseHint()"
+						(click)="store.useHint()"
+					></button>
+				</div>
 
 				<button
 					appThemed
-					icon="backward-step"
+					icon="chevron-right"
 					iconSquared
-					aria-label="Step back one move"
-					[disabled]="store.isBusy() || !store.canStepBackward()"
-					(click)="store.stepBackward()"
-					class="px-2"
-				></button>
-
-				<button
-					appThemed
-					icon="forward-step"
-					iconSquared
-					aria-label="Step forward one move"
-					[disabled]="store.isBusy() || !store.canStepForward()"
-					(click)="store.stepForward()"
-					class="px-2"
-				></button>
-
-				<button
-					appThemed
-					icon="rotate"
-					iconSquared
-					aria-label="Flip board"
-					(click)="store.flipBoard()"
-					class="px-2"
+					[attr.aria-label]="nextLabel()"
+					[disabled]="isNextDisabled()"
+					(click)="next.emit()"
 				></button>
 			</div>
-
-			<div class="flex-row flex-wrap gap-2 justify-center">
-				<button appThemed [disabled]="!store.canUseHint()" (click)="store.useHint()">Hint</button>
-
-				<button appThemed [disabled]="!store.canRevealSolution()" (click)="store.revealSolution()">
-					Give up
-				</button>
-
-				<button appThemed (click)="store.toggleFreePlay()">
-					{{ store.isFreePlay() ? 'Leave free play' : 'Free play' }}
-				</button>
-			</div>
-
-			<ng-content />
 		</div>
 
 		<aside class="panel flex-col gap-4">
@@ -70,10 +101,10 @@
 				}
 			</div>
 
-			<div class="flex-col gap-2">
+			<div class="line flex-row align-center gap-2">
 				<h5>Line</h5>
 
-				<app-move-history />
+				<app-move-history class="flex-grow" />
 			</div>
 		</aside>
 	</div>

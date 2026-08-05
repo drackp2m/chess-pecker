@@ -112,8 +112,10 @@ export class PuzzleStore
 
 	/**
 	 * Gives up: plays what is left of the solution, from wherever the line stopped
-	 * following it. It is asked for after a miss and it ends the exercise, though not
-	 * the verdict — that was settled on the first try, and watching never revises it.
+	 * following it. It ends the exercise, though not the verdict — that was settled on
+	 * the first try, and watching never revises it. Asked for again once the exercise is
+	 * over there is nothing left ahead, so it rewinds to the start and plays the whole
+	 * line out; the record is closed by then and takes none of it.
 	 */
 	revealSolution(): void {
 		if (!this.canRevealSolution()) {
@@ -121,7 +123,7 @@ export class PuzzleStore
 		}
 
 		this.cancelPlayback();
-		patchState(this, (state) => revealPatch(state, this.deviation()));
+		patchState(this, (state) => revealPatch(state, this.isOpen() ? this.deviation() : 0));
 		this.playScripted();
 	}
 

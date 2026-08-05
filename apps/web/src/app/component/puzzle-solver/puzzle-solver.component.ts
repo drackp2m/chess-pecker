@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, input, output } from '@angular/core';
 
 import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
 import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
@@ -7,9 +7,9 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 
 /**
  * The solving view itself: the board, the line controls, free play, the themes panel
- * and the scoresheet. Whoever hosts it owns the exercise around it — the library and
- * its importer on `/puzzle`, the run and its "Next" on `/training` — and hands those
- * in through the projection slot under the board.
+ * and the scoresheet. Whoever hosts it owns the exercise around it — the library on
+ * `/puzzle`, the run on `/training` — and steps through it with the two arrows pinned
+ * to the ends of the control row, which are theirs to label, gate and answer.
  */
 @Component({
 	selector: 'app-puzzle-solver',
@@ -19,4 +19,12 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 })
 export class PuzzleSolverComponent {
 	readonly store = inject(PuzzleStore);
+
+	readonly previousLabel = input('Previous');
+	readonly nextLabel = input('Next');
+	readonly isPreviousDisabled = input(false);
+	readonly isNextDisabled = input(false);
+
+	readonly previous = output();
+	readonly next = output();
 }

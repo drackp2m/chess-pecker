@@ -132,7 +132,7 @@ export class PuzzlePage implements OnInit {
 			return 'Drawn position';
 		}
 
-		return 'Free play — both sides are yours, and none of it counts';
+		return 'Free play — both sides are yours.';
 	}
 
 	private describeSolved(): string {

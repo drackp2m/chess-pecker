@@ -1,4 +1,11 @@
-import { Component, computed, inject } from '@angular/core';
+import {
+	Component,
+	ElementRef,
+	afterRenderEffect,
+	computed,
+	inject,
+	viewChild,
+} from '@angular/core';
 
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 
@@ -36,4 +43,18 @@ export class MoveHistoryComponent {
 
 		return [...grouped.values()];
 	});
+
+	private readonly line = viewChild<ElementRef<HTMLElement>>('line');
+
+	constructor() {
+		// The line runs off the right edge, so whatever was just written has to be pulled
+		// back into view — after the render that put it there, never before.
+		afterRenderEffect(() => {
+			this.turns();
+
+			const element = this.line()?.nativeElement;
+
+			element?.scrollTo({ left: element.scrollWidth });
+		});
+	}
 }

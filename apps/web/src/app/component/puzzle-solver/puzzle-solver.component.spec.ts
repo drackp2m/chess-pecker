@@ -24,13 +24,18 @@ const PUZZLE: Puzzle = {
 };
 
 /**
- * Stands in for whichever page hosts the view: it owns the exercise and the stores,
- * and puts its own controls through the projection slot.
+ * Stands in for whichever page hosts the view: it owns the exercise and the stores, and
+ * answers the two arrows the view pins to the ends of the control row.
  */
 @Component({
 	selector: 'app-solver-host',
 	imports: [PuzzleSolverComponent],
-	template: `<app-puzzle-solver><button class="host-control">Next</button></app-puzzle-solver>`,
+	template: `<app-puzzle-solver
+		previousLabel="Previous exercise"
+		nextLabel="Next exercise"
+		(previous)="stepped.push('previous')"
+		(next)="stepped.push('next')"
+	/>`,
 	providers: [
 		PuzzleLibraryStore,
 		PuzzleStore,
@@ -39,6 +44,8 @@ const PUZZLE: Puzzle = {
 })
 class SolverHostComponent {
 	readonly store = inject(PuzzleStore);
+
+	readonly stepped: string[] = [];
 }
 
 function createHost() {
@@ -72,6 +79,7 @@ function createHost() {
 
 	return {
 		store: fixture.componentInstance.store,
+		stepped: fixture.componentInstance.stepped,
 
 		element,
 
@@ -81,15 +89,12 @@ function createHost() {
 			fixture.detectChanges();
 		},
 
-		/** Clicks a button by the label it carries, the way the player finds it. */
+		/** Clicks a control by its label, which on an icon button is all the player has. */
 		click(label: string): void {
 			fixture.detectChanges();
 
-			const button = [...element.querySelectorAll('button')].find(
-				(candidate) => label === candidate.textContent.trim(),
-			);
+			element.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)?.click();
 
-			button?.click();
 			fixture.detectChanges();
 		},
 
@@ -155,12 +160,14 @@ describe('PuzzleSolverComponent', () => {
 		expect(host.store.closure()).toBe('revealed');
 	});
 
-	it('shows the host its own controls under the board', () => {
+	it('hands the arrows on the ends of the row back to the host, under its own labels', () => {
 		const host = createHost();
 
 		host.open();
+		host.click('Previous exercise');
+		host.click('Next exercise');
 
-		expect(host.element.querySelector('.host-control')).not.toBeNull();
+		expect(host.stepped).toEqual(['previous', 'next']);
 	});
 
 	it('drives the shared store from the line controls', () => {
@@ -171,11 +178,11 @@ describe('PuzzleSolverComponent', () => {
 		// The opponent's opening move has been replayed, so the line can be rewound.
 		expect(host.store.cursor()).toBe(1);
 
-		host.element.querySelector<HTMLButtonElement>('[aria-label="Step back one move"]')?.click();
+		host.click('Step back one move');
 
 		expect(host.store.cursor()).toBe(0);
 
-		host.element.querySelector<HTMLButtonElement>('[aria-label="Flip board"]')?.click();
+		host.click('Flip board');
 
 		expect(host.store.orientation()).toBe('white');
 	});

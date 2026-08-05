@@ -24,13 +24,13 @@ function hintComputed(store: GatingStore, isOpen: Signal<boolean>) {
 }
 
 /**
- * Giving up is asking for the answer, so it takes a miss to have earned it, and it is
- * offered only while the exercise is open — playing it out is what ends it.
+ * Giving up is asking for the answer, so it takes a miss to have earned it. Once earned
+ * it stays on offer: the first ask closes the exercise, and every one after it only
+ * plays the line out again.
  */
-function canGiveUp(store: GatingStore, isOpen: boolean): boolean {
+function canGiveUp(store: GatingStore): boolean {
 	return (
 		undefined !== store.puzzle() &&
-		isOpen &&
 		0 < store.mistakeCount() &&
 		!store.isReplaying() &&
 		!store.isFreePlay()
@@ -67,7 +67,7 @@ export function withPuzzleGating() {
 
 				...hintComputed(store, isOpen),
 
-				canRevealSolution: computed(() => canGiveUp(store, isOpen())),
+				canRevealSolution: computed(() => canGiveUp(store)),
 
 				isLocked: computed(() => undefined === store.puzzle() || !canPlay()),
 			};

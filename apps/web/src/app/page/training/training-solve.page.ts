@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import {
 	Component,
 	HostListener,
@@ -11,8 +12,6 @@ import { Router } from '@angular/router';
 
 import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzzle-difficulty.component';
 import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
-import { ButtonDirective } from '@app/directive/button.directive';
-import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
@@ -20,13 +19,17 @@ import { TrainingSolveSession } from '@app/page/training/store/training-solve-se
 @Component({
 	templateUrl: './training-solve.page.html',
 	styleUrl: './training-solve.page.scss',
-	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent, ButtonDirective, RouterLinkDirective],
+	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent],
 })
 export class TrainingSolvePage implements OnInit, OnDestroy {
 	readonly run = inject(TrainingRunStore);
 	readonly board = inject(PuzzleStore);
 
 	readonly headline = computed(() => this.describe());
+
+	readonly nextLabel = computed(() =>
+		!this.run.hasNext() && this.run.hasNextRound() ? 'Next round' : 'Next exercise',
+	);
 
 	/**
 	 * Said out loud as soon as the miss is in — which is where the note is sealed, long
@@ -63,6 +66,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			: `Cycle · exercise ${(position + 1).toString()}`;
 	});
 
+	private readonly location = inject(Location);
 	private readonly router = inject(Router);
 	private readonly session = inject(TrainingSolveSession);
 
@@ -103,17 +107,24 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 		this.session.pause();
 	}
 
-	next(): void {
-		this.run.advance();
+	/** Wherever the exercise was opened from — the training page, a link, a reload. */
+	back(): void {
+		this.location.back();
 	}
 
-	nextRound(): void {
+	next(): void {
+		if (this.run.hasNext()) {
+			this.run.advance();
+
+			return;
+		}
+
 		void this.run.openNextRound();
 	}
 
 	private describe(): string {
 		if (this.board.isFreePlay()) {
-			return 'Free play — both sides are yours, and none of it counts.';
+			return 'Free play — both sides are yours.';
 		}
 
 		if (!this.board.isOpen()) {
@@ -127,7 +138,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			case 'replying':
 				return 'Opponent is moving…';
 			case 'failed':
-				return 'Not the move. It is taken back on its own — try it again.';
+				return 'Nope!';
 			case 'solving':
 				return this.describeSolving();
 			case 'solved':
@@ -153,6 +164,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	 * but the exercise goes on until the line is found or handed over.
 	 */
 	private describeSolving(): string {
+		// ToDo => why "is Practice" is true when make a mistake?
 		if (this.board.isPractice()) {
 			return 'Missed. Try it again, or give up to see the line.';
 		}
