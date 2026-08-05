@@ -1,3 +1,31 @@
+# v1.10.0 (2026-08-05)
+
+## What's Changed
+
+### ✨ Features
+
+- can reset exercise on free play ([328b5f4](https://github.com/drackp2m/chess-pecker/commit/328b5f4d2a5211c579911a1a5b9df9a731c6bbc9)) by Marc Jovaní González
+- persist new fields on exercise resolution ([4063c64](https://github.com/drackp2m/chess-pecker/commit/4063c64ef78780d2a4506733af987df91660d5d7)) by Marc Jovaní González
+- persist solve time in a local draft attempt row ([3914d25](https://github.com/drackp2m/chess-pecker/commit/3914d25ad02d4ed0947afddba16e359cf988fe86)) by Marc Jovaní González
+- persist the imported set and reopen it on reload ([2f867cd](https://github.com/drackp2m/chess-pecker/commit/2f867cd43f8285cbc1028e20904834542ecb2422)) by Marc Jovaní González
+- save main exercises moves and free play moves into store ([a43c85d](https://github.com/drackp2m/chess-pecker/commit/a43c85d43a0e994f4df8d7cbb8f12c81c62fb7ce)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- does not solve the exercise with the solution played in free play ([cb6d3df](https://github.com/drackp2m/chess-pecker/commit/cb6d3df409098755c3c8338a06339253dd4bc1e2)) by Marc Jovaní González
+- replays the main line back into the board each exploration started from ([8de6b1b](https://github.com/drackp2m/chess-pecker/commit/8de6b1bedf807ca1197e3753252d9745ae5bd92b)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- excursions is now explorations ([ea5f37c](https://github.com/drackp2m/chess-pecker/commit/ea5f37c5e189bce9158a0d84490dcef908a8bf75)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- add version to api status message ([59014e7](https://github.com/drackp2m/chess-pecker/commit/59014e76f07ea38e5e519425827d5017f1790bca)) by Marc Jovaní González
+- AGENTS renamed to CLAUDE.md, summarize file ([58f2c44](https://github.com/drackp2m/chess-pecker/commit/58f2c4487e895443ddcfa57d36df2f145dcf58d1)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.9.0...v1.10.0
+
 # v1.9.0 (2026-08-04)
 
 ## What's Changed
