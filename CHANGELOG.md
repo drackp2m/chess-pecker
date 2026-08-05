@@ -1,3 +1,23 @@
+# v1.11.0 (2026-08-05)
+
+## What's Changed
+
+### ✨ Features
+
+- persist mistake count, hint use and closure with the attempt ([05d4b42](https://github.com/drackp2m/chess-pecker/commit/05d4b42259a815972133010deb0597ddcdc40525)) by Marc Jovaní González
+
+### 🎨 Styles
+
+- redesign board controls ([402285a](https://github.com/drackp2m/chess-pecker/commit/402285aad1880656619cf1faac278296b0d5cafc)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- add new icons, change others, remove -solid suffix ([c296558](https://github.com/drackp2m/chess-pecker/commit/c29655846f42cf7fca241d74ba704a3911fb3db0)) by Marc Jovaní González
+- extract the solving view into a shared component ([8fdcf6a](https://github.com/drackp2m/chess-pecker/commit/8fdcf6aae5661f3ca63009e49f391d7215cba7e9)) by Marc Jovaní González
+- retire mistakesBeforeSolution and fix its migration ([b5b9c11](https://github.com/drackp2m/chess-pecker/commit/b5b9c11e7be3af6c28808f874434cf2dc96efea6)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.10.0...v1.11.0
+
 # v1.10.0 (2026-08-05)
 
 ## What's Changed
