@@ -1,11 +1,22 @@
 :host {
-	display: block;
+	display: flex;
+	gap: var(--spacing-2);
+	align-items: baseline;
 	min-width: 0;
+}
+
+h5 {
+	flex: none;
 }
 
 .line {
 	scrollbar-width: thin;
+
 	overflow-x: auto;
+	flex: 1;
+
+	min-width: 0;
+
 	list-style: none;
 }
 
@@ -28,11 +39,11 @@
 .move {
 	&.white {
 		color: var(--color-contrast-light);
-		background-color: var(--color-primary-light);
+		background-color: var(--color-primary-mid-light);
 	}
 
 	&.black {
-		color: var(--color-contrast);
+		color: var(--color-primary-light);
 		background-color: var(--color-contrast-mid-light);
 	}
 }

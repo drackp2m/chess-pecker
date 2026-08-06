@@ -13,12 +13,12 @@ export const APP_ROUTES: Routes = [
 				loadChildren: () => import('./page/dashboard/dashboard.routes'),
 			},
 			{
-				path: 'match',
-				loadChildren: () => import('./page/match/match.routes'),
+				path: 'register',
+				loadChildren: () => import('./page/auth/register.routes'),
 			},
 			{
-				path: 'puzzles',
-				loadChildren: () => import('./page/puzzle/puzzle.routes'),
+				path: 'login',
+				loadChildren: () => import('./page/auth/login.routes'),
 			},
 			{
 				path: 'training',
@@ -26,21 +26,21 @@ export const APP_ROUTES: Routes = [
 				loadChildren: () => import('./page/training/training.routes'),
 			},
 			{
-				path: 'friends',
+				path: 'puzzles',
+				loadChildren: () => import('./page/puzzle/puzzle.routes'),
+			},
+			{
+				path: 'profile',
 				canActivate: [authenticatedGuard],
-				loadChildren: () => import('./page/friend/friend.routes'),
+				loadChildren: () => import('./page/profile/profile.routes'),
+			},
+			{
+				path: 'match',
+				loadChildren: () => import('./page/match/match.routes'),
 			},
 			{
 				path: 'settings',
 				loadChildren: () => import('./page/setting/setting.routes'),
-			},
-			{
-				path: 'login',
-				loadChildren: () => import('./page/auth/login.routes'),
-			},
-			{
-				path: 'register',
-				loadChildren: () => import('./page/auth/register.routes'),
 			},
 		],
 	},

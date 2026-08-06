@@ -7,7 +7,7 @@ import { UserRepository } from '@app/repository/user.repository';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
-interface FriendStoreProps {
+interface ProfileStoreProps {
 	friends: readonly FriendUser[];
 	received: readonly Friendship[];
 	sent: readonly Friendship[];
@@ -22,7 +22,7 @@ interface FriendStoreProps {
 	notice: string | null;
 }
 
-const initialState: FriendStoreProps = {
+const initialState: ProfileStoreProps = {
 	friends: [],
 	received: [],
 	sent: [],
@@ -39,7 +39,7 @@ const initialState: FriendStoreProps = {
 @Injectable({
 	providedIn: 'root',
 })
-export class FriendStore extends signalStore({ protectedState: false }, withState(initialState)) {
+export class ProfileStore extends signalStore({ protectedState: false }, withState(initialState)) {
 	private readonly friendshipRepository = inject(FriendshipRepository);
 	private readonly userRepository = inject(UserRepository);
 
