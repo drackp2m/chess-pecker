@@ -21,6 +21,7 @@ const ASPECT_RATIOS: Record<string, [number, number]> = {
 	rabbit: [448, 512],
 	trash: [448, 512],
 
+	flashlight: [512, 255],
 	turtle: [512, 398],
 
 	'delete-left': [576, 512],

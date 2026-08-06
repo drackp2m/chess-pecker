@@ -29,12 +29,6 @@
 				ng-component {
 					> section {
 						padding: var(--page-padding);
-
-						// The nav floats over the page, so the page owns the room it takes up.
-						// It goes in the page's own padding and not at the end of the scroller:
-						// end padding of a scroll container is not reliably part of what can be
-						// scrolled to, and the last stretch of the page ends up unreachable.
-						padding-bottom: calc(var(--page-padding) + var(--nav-height));
 					}
 				}
 			}
