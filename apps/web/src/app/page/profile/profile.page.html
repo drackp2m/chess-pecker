@@ -125,7 +125,9 @@
 					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
 						<span class="fw-lg">{{ request.addressee.username }}</span>
 
-						<button appThemed (click)="remove(request.uuid)">Cancel</button>
+						<button appThemed (click)="remove(request.uuid)">
+							{{ I18n.common.CANCEL | transloco }}
+						</button>
 					</li>
 				}
 			</ul>

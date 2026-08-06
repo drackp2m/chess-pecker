@@ -15,9 +15,11 @@
 /node_modules
 /coverage
 /apps/web/.angular
+/apps/web/coverage
 /apps/web/dist
 /apps/web/out-tsc
 /apps/web/node_modules
+/apps/api/coverage
 /apps/api/dist
 /apps/api/migrations
 /apps/api/node_modules

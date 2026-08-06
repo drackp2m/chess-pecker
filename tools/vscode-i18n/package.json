@@ -1,0 +1,62 @@
+{
+	"name": "chesspecker-i18n",
+	"displayName": "Chesspecker i18n",
+	"description": "Inline translations, hover, go-to-definition and diagnostics for the ULID-based transloco keys",
+	"version": "0.1.0",
+	"private": true,
+	"publisher": "drackp2m",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"main": "./src/extension.js",
+	"activationEvents": [
+		"onLanguage:typescript",
+		"onLanguage:html"
+	],
+	"contributes": {
+		"commands": [
+			{
+				"command": "chesspeckerI18n.createKey",
+				"title": "i18n: Create translation key",
+				"category": "Chesspecker"
+			},
+			{
+				"command": "chesspeckerI18n.reload",
+				"title": "i18n: Reload translation index",
+				"category": "Chesspecker"
+			},
+			{
+				"command": "chesspeckerI18n.toggleInlineText",
+				"title": "i18n: Toggle inline translations",
+				"category": "Chesspecker"
+			}
+		],
+		"configuration": {
+			"title": "Chesspecker i18n",
+			"properties": {
+				"chesspeckerI18n.langs": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "Languages to resolve. Empty means the defaults from tools/scripts/i18n/config.mjs."
+				},
+				"chesspeckerI18n.inlineText": {
+					"type": "boolean",
+					"default": true,
+					"description": "Render the default language translation in place of every key usage."
+				},
+				"chesspeckerI18n.inlineTextMaxLength": {
+					"type": "number",
+					"default": 60,
+					"description": "Characters shown before the inline translation is ellipsised."
+				}
+			}
+		}
+	}
+}

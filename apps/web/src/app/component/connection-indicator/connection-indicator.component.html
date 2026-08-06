@@ -5,7 +5,9 @@
 		<span class="label fs-sm">{{ text }}</span>
 
 		@if (canRetry()) {
-			<button appThemed color="accent" class="retry fs-sm p-0 px-2" (click)="retry()">Retry</button>
+			<button appThemed color="accent" class="retry fs-sm p-0 px-2" (click)="retry()">
+				{{ I18n.common.RETRY | transloco }}
+			</button>
 		}
 	</span>
 }

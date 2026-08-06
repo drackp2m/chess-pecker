@@ -7,6 +7,7 @@
 	"scripts": {
 		"lint": "node tools/scripts/lint/lint.mjs --max-warnings 0",
 		"lint:fix": "node tools/scripts/lint/lint.mjs --fix --max-warnings 0 --verbose",
+		"i18n:check": "node tools/scripts/i18n/index.mjs",
 		"update:deps": "sh tools/scripts/update-deps.sh",
 		"git:sync": "sh tools/scripts/sync-git-main.sh",
 		"pnpm:match": "node tools/scripts/match-pnpm-version.mjs",

@@ -2,11 +2,13 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
 import { TitleStrategy, provideRouter, withHashLocation, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
+import { provideTransloco } from '@jsverse/transloco';
 
 import { APP_ROUTES } from '@app/app.routes';
 import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SettingRepository } from '@app/repository/setting.repository';
 import { ThemeService } from '@app/service/theme.service';
+import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
 import { SessionStore } from '@app/store/session.store';
 import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.strategy';
@@ -32,6 +34,16 @@ export const appConfig: ApplicationConfig = {
 				onSameUrlNavigation: 'reload',
 			}),
 		),
+		provideTransloco({
+			config: {
+				availableLangs: ['en', 'es'],
+				defaultLang: 'es',
+				fallbackLang: 'es',
+				reRenderOnLangChange: true,
+				prodMode: !isDevMode(),
+			},
+			loader: TranslocoLoaderService,
+		}),
 		{ provide: TitleStrategy, useClass: TemplatePageTitleStrategy },
 		provideServiceWorker('ngsw-worker.js', {
 			enabled: !isDevMode(),

@@ -19,11 +19,13 @@
 			"@app/app.config": ["./src/app/app.config.ts"],
 			"@app/app.routes": ["./src/app/app.routes.ts"],
 			"@app/app.component": ["./src/app/app.component.ts"],
+			"@app/i18n": ["./src/app/i18n/index.ts"],
 
 			"@app/component/*": ["./src/app/component/*"],
 			"@app/definition/*": ["./src/app/definition/*"],
 			"@app/directive/*": ["./src/app/directive/*"],
 			"@app/guard/*": ["./src/app/guard/*"],
+			"@app/i18n/*": ["./src/app/i18n/*"],
 			"@app/interceptor/*": ["./src/app/interceptor/*"],
 			"@app/layout/*": ["./src/app/layout/*"],
 			"@app/model/*": ["./src/app/model/*"],
