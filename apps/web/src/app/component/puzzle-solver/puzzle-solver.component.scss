@@ -46,15 +46,11 @@ app-chess-board {
 	}
 }
 
-// Both the panel and the row that carries the scrolling line have to be allowed to
-// shrink, or the widest history pushes the whole grid past the viewport.
-.panel,
-.line {
+// The panel has to be allowed to shrink, or the widest history pushes the whole grid
+// past the viewport.
+// ToDo => Investigate why this is necessary.
+.panel {
 	min-width: 0;
-
-	> h5 {
-		flex: none;
-	}
 }
 
 .themes {

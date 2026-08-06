@@ -38,6 +38,13 @@ app-chess-board {
 	}
 }
 
+// Has to be allowed to shrink, or the widest history pushes the grid past the viewport
+// instead of scrolling inside its own column.
+// ToDo => Investigate why this is necessary.
+.panel {
+	min-width: 0;
+}
+
 .fen {
 	overflow-wrap: anywhere;
 }

@@ -1,3 +1,7 @@
+@if (title(); as label) {
+	<h5>{{ label }}</h5>
+}
+
 @if (0 === turns().length) {
 	<p class="fs-sm color-contrast-mid">No moves yet.</p>
 } @else {

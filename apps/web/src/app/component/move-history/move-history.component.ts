@@ -4,6 +4,7 @@ import {
 	afterRenderEffect,
 	computed,
 	inject,
+	input,
 	viewChild,
 } from '@angular/core';
 
@@ -23,6 +24,8 @@ interface HistoryTurn {
 })
 export class MoveHistoryComponent {
 	readonly store = inject(BOARD_PRESENTER);
+
+	readonly title = input<string>();
 
 	readonly turns = computed<HistoryTurn[]>(() => {
 		const grouped = new Map<number, HistoryTurn>();
