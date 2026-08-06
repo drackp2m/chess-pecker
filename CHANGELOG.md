@@ -1,3 +1,17 @@
+# v1.11.1 (2026-08-06)
+
+## What's Changed
+
+### ♻️ Code Refactoring
+
+- friends are now profile, move user info from dashboard to profile ([6be2b95](https://github.com/drackp2m/chess-pecker/commit/6be2b95db96ac4c436c64e35e2c57d5ca9c68189)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- prevent moves overflow in /match route ([e4ec180](https://github.com/drackp2m/chess-pecker/commit/e4ec1805263b941c0535eb7c2f430751566630d5)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.11.0...v1.11.1
+
 # v1.11.0 (2026-08-05)
 
 ## What's Changed
