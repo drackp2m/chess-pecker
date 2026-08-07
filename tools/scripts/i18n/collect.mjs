@@ -16,11 +16,14 @@ function collectEntries(source) {
 
 	const visit = (node) => {
 		if (ts.isPropertyAssignment(node) && ts.isStringLiteralLike(node.initializer)) {
+			const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source));
+
 			entries.push({
 				name: node.name.getText(source),
 				value: node.initializer.text,
 				ulid: node.initializer.text.split('.').pop(),
-				line: source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1,
+				line: line + 1,
+				col: character + 1,
 			});
 		}
 
@@ -55,15 +58,127 @@ function readKeysFile(file) {
 	return { constName: findConstName(source), entries: collectEntries(source) };
 }
 
+const BARREL_CONST = 'I18n';
+const BARREL_PARAMS = 'I18nParams';
+
+function intersectionMembers(node) {
+	if (ts.isIntersectionTypeNode(node)) {
+		return node.types.flatMap((type) => intersectionMembers(type));
+	}
+
+	return ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) ? [node.typeName.text] : [];
+}
+
+function findParamsAlias(source) {
+	let found = null;
+
+	const visit = (node) => {
+		if (ts.isTypeAliasDeclaration(node) && BARREL_PARAMS === node.name.text) {
+			found = node;
+		}
+
+		ts.forEachChild(node, visit);
+	};
+
+	visit(source);
+
+	return found;
+}
+
+function barrelObject(declaration) {
+	const initializer = ts.isAsExpression(declaration.initializer)
+		? declaration.initializer.expression
+		: declaration.initializer;
+
+	return initializer && ts.isObjectLiteralExpression(initializer) ? initializer : null;
+}
+
+function positionOf(source, node) {
+	if (!node) {
+		return {};
+	}
+
+	const { line, character } = source.getLineAndCharacterOfPosition(node.getStart(source));
+
+	return { line: line + 1, col: character + 1 };
+}
+
+function findBarrelDeclaration(source) {
+	let found = null;
+
+	const visit = (node) => {
+		if (
+			ts.isVariableDeclaration(node) &&
+			ts.isIdentifier(node.name) &&
+			BARREL_CONST === node.name.text
+		) {
+			found = node;
+		}
+
+		ts.forEachChild(node, visit);
+	};
+
+	visit(source);
+
+	return found;
+}
+
+export function parseBarrelSource(i18nDir) {
+	const file = path.join(i18nDir, 'index.ts');
+
+	if (!existsSync(file)) {
+		return { file, exists: false };
+	}
+
+	const text = readFileSync(file, 'utf8');
+	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+	const declaration = findBarrelDeclaration(source);
+
+	return {
+		file,
+		exists: true,
+		text,
+		source,
+		declaration,
+		object: declaration ? barrelObject(declaration) : null,
+		imports: source.statements.filter((statement) => ts.isImportDeclaration(statement)),
+		alias: findParamsAlias(source),
+	};
+}
+
+export function readBarrel(i18nDir) {
+	const parsed = parseBarrelSource(i18nDir);
+
+	if (!parsed.exists) {
+		return { file: parsed.file, exists: false, scopes: new Set(), params: new Set(), paramsAt: {} };
+	}
+
+	const { file, source, declaration, object, alias } = parsed;
+	const properties = (object?.properties ?? []).filter((property) =>
+		ts.isPropertyAssignment(property),
+	);
+
+	return {
+		file,
+		exists: true,
+		...positionOf(source, declaration),
+		scopes: new Set(properties.map((property) => toKebabCase(property.name.getText(source)))),
+		params: new Set(alias ? intersectionMembers(alias.type) : []),
+		paramsAt: positionOf(source, alias),
+	};
+}
+
 function readTranslation(file) {
 	if (!existsSync(file)) {
-		return { exists: false, data: null, error: null };
+		return { exists: false, data: null, error: null, text: null };
 	}
 
 	try {
-		return { exists: true, data: JSON.parse(readFileSync(file, 'utf8')), error: null };
+		const text = readFileSync(file, 'utf8');
+
+		return { exists: true, data: JSON.parse(text), error: null, text };
 	} catch (error) {
-		return { exists: true, data: null, error: error.message };
+		return { exists: true, data: null, error: error.message, text: null };
 	}
 }
 
@@ -121,6 +236,53 @@ function* walkSources(dir) {
 	}
 }
 
+function blank(text, start, end) {
+	return text.slice(0, start) + ' '.repeat(end - start) + text.slice(end);
+}
+
+function tsCommentRanges(content) {
+	const scanner = ts.createScanner(
+		ts.ScriptTarget.Latest,
+		false,
+		ts.LanguageVariant.Standard,
+		content,
+	);
+	const ranges = [];
+	let token = scanner.scan();
+
+	while (ts.SyntaxKind.EndOfFileToken !== token) {
+		if (
+			ts.SyntaxKind.SingleLineCommentTrivia === token ||
+			ts.SyntaxKind.MultiLineCommentTrivia === token
+		) {
+			ranges.push([scanner.getTokenPos(), scanner.getTextPos()]);
+		}
+
+		token = scanner.scan();
+	}
+
+	return ranges;
+}
+
+function htmlCommentRanges(content) {
+	return [...content.matchAll(/<!--[\s\S]*?-->/g)].map((match) => [
+		match.index,
+		match.index + match[0].length,
+	]);
+}
+
+// Split each file into its "real" code (comments blanked out, so a key merely
+// mentioned in a comment never counts as usage) and its comments alone (so a
+// key that only shows up there can still be flagged, separately, as such).
+function splitComments(content, file) {
+	const ranges =
+		'.html' === path.extname(file) ? htmlCommentRanges(content) : tsCommentRanges(content);
+	const code = ranges.reduce((text, [start, end]) => blank(text, start, end), content);
+	const comments = ranges.map(([start, end]) => content.slice(start, end)).join('\n');
+
+	return { code, comments };
+}
+
 function recordUsages(content, file, usages) {
 	const add = (scope, key) => {
 		const id = `${scope}:${key}`;
@@ -137,12 +299,16 @@ function recordUsages(content, file, usages) {
 
 export function collectUsages(sourceDirs) {
 	const usages = new Map();
+	const commented = new Map();
 
 	for (const dir of sourceDirs.filter((entry) => existsSync(entry))) {
 		for (const file of walkSources(dir)) {
-			recordUsages(readFileSync(file, 'utf8'), file, usages);
+			const { code, comments } = splitComments(readFileSync(file, 'utf8'), file);
+
+			recordUsages(code, file, usages);
+			recordUsages(comments, file, commented);
 		}
 	}
 
-	return usages;
+	return { usages, commented };
 }

@@ -97,7 +97,19 @@ class I18nIndex {
 		const scopes = collect.readScopes({ i18nDir: this.i18nDir, langs: this.langs });
 
 		this.scopes = new Map(scopes.map((scope) => [scope.name, this.toScope(scope)]));
-		this.declaredParams = params.readDeclaredParams(params.paramsFile(this.i18nDir));
+		this.declaredParams = this.readParams(params, scopes);
+	}
+
+	readParams(params, scopes) {
+		const declared = new Map();
+
+		for (const scope of scopes) {
+			for (const [key, fields] of params.readDeclaredParams(params.paramsFile(scope.dir))) {
+				declared.set(key, fields);
+			}
+		}
+
+		return declared;
 	}
 
 	toScope(scope) {

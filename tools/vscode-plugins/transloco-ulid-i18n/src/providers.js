@@ -135,7 +135,7 @@ function scopeItems(index) {
 		const keys = index.keysOf(name).length;
 
 		return new vscode.CompletionItem(
-			{ label: name, description: `${keys} key(s)` },
+			{ label: name, description: `${keys} ${1 === keys ? 'key' : 'keys'}` },
 			vscode.CompletionItemKind.Module,
 		);
 	});

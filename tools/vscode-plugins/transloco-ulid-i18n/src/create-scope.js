@@ -8,6 +8,7 @@ const NEW_SCOPE = '$(add) New scope…';
 const SCOPE_NAME = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 const BARREL_END = '} as const;';
 const BARREL_ENTRY = /^\t([a-zA-Z0-9]+):/;
+const PARAMS_UNION = /^type I18nParams = (.+);$/;
 
 const toCamelCase = (name) => name.replace(/-([a-z0-9])/g, (_match, char) => char.toUpperCase());
 
@@ -43,6 +44,11 @@ async function createFiles(index, name) {
 		`export const ${toPascalCase(name)}I18n = {\n${BARREL_END}\n`,
 	);
 
+	await writeFile(
+		path.join(dir, 'params.ts'),
+		`export type ${toPascalCase(name)}I18nParams = Record<never, never>;\n`,
+	);
+
 	for (const lang of index.langs) {
 		await writeFile(path.join(dir, `${lang}.json`), '{}\n');
 	}
@@ -68,19 +74,45 @@ function barrelPropertyEdit(document, name) {
 	);
 }
 
+function barrelParamsEdit(document, name) {
+	const lines = document.getText().split('\n');
+	const position = lines.findIndex((line) => PARAMS_UNION.test(line));
+
+	if (-1 === position) {
+		throw new Error('Cannot find the I18nParams union in the i18n barrel');
+	}
+
+	const line = lines[position];
+	const members = [...PARAMS_UNION.exec(line)[1].split(' & '), `${toPascalCase(name)}I18nParams`];
+
+	return vscode.TextEdit.replace(
+		new vscode.Range(new vscode.Position(position, 0), new vscode.Position(position, line.length)),
+		`type I18nParams = ${members.sort().join(' & ')};`,
+	);
+}
+
+function barrelEdits(document, name) {
+	const constant = `@app/i18n/${name}/keys`;
+	const params = `@app/i18n/${name}/params`;
+
+	return [
+		importEdit(document, constant, `import { ${toPascalCase(name)}I18n } from '${constant}';`),
+		importEdit(
+			document,
+			params,
+			`import type { ${toPascalCase(name)}I18nParams } from '${params}';`,
+		),
+		barrelPropertyEdit(document, name),
+		barrelParamsEdit(document, name),
+	].filter((change) => null !== change);
+}
+
 async function editBarrel(index, name) {
 	const file = path.join(index.i18nDir, 'index.ts');
 	const document = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
-	const specifier = `@app/i18n/${name}/keys`;
-	const statement = `import { ${toPascalCase(name)}I18n } from '${specifier}';`;
 	const edit = new vscode.WorkspaceEdit();
 
-	edit.set(
-		document.uri,
-		[importEdit(document, specifier, statement), barrelPropertyEdit(document, name)].filter(
-			(change) => null !== change,
-		),
-	);
+	edit.set(document.uri, barrelEdits(document, name));
 
 	await vscode.workspace.applyEdit(edit);
 	await document.save();

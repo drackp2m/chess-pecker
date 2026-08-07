@@ -11,11 +11,16 @@ export const c = {
 	yellow: '\x1b[33m',
 	red: '\x1b[31m',
 	cyan: '\x1b[36m',
+	blue: '\x1b[34m',
 };
+
+const SEVERITY_COLOR = { error: c.red, warning: c.yellow, info: c.blue };
 
 export const plural = (value, word) => `${value} ${word}${1 === value ? '' : 's'}`;
 
-function printProblems(problems) {
+const locationOf = (item) => (undefined !== item.line ? `${item.line}:${item.col}` : '');
+
+export function printProblems(problems) {
 	const byFile = new Map();
 
 	for (const problem of problems) {
@@ -26,16 +31,15 @@ function printProblems(problems) {
 	}
 
 	for (const [file, items] of byFile) {
-		const locOf = (item) => (undefined !== item.line ? `${item.line}:${item.col}` : '');
-		const locWidth = Math.max(...items.map((item) => locOf(item).length));
+		const locWidth = Math.max(...items.map((item) => locationOf(item).length));
 		const sevWidth = Math.max(...items.map((item) => item.severity.length));
 		const msgWidth = Math.max(...items.map((item) => item.message.length));
 
 		console.log(`\n${c.underline}${file}${c.reset}`);
 
 		for (const item of items) {
-			const location = locOf(item).padEnd(locWidth);
-			const color = 'error' === item.severity ? c.red : c.yellow;
+			const location = locationOf(item).padEnd(locWidth);
+			const color = SEVERITY_COLOR[item.severity] ?? c.yellow;
 			const severity = item.severity.padEnd(sevWidth);
 			const rule = item.rule ? `${c.dim}${item.rule}${c.reset}` : '';
 			console.log(
@@ -46,13 +50,12 @@ function printProblems(problems) {
 	}
 }
 
-// The problems left, followed by the error/warning tally ESLint prints under them.
-function printRemaining(remaining) {
-	console.log(`  ${c.dim}Files with problems:${c.reset}`);
-	printProblems(remaining);
-
-	const errors = remaining.filter((problem) => 'error' === problem.severity).length;
-	const warnings = remaining.length - errors;
+// The error/warning tally ESLint prints under the problems. Callers keep info
+// findings out of this list entirely — they are not problems, so they never
+// reach this tally or the CI exit code.
+export function printTally(problems) {
+	const errors = problems.filter((problem) => 'error' === problem.severity).length;
+	const warnings = problems.length - errors;
 	const icon = 0 !== errors ? `${c.red}✖${c.reset}` : `${c.yellow}⚠${c.reset}`;
 	const errorBlock =
 		0 !== errors ? `${c.red}${plural(errors, 'error')}${c.reset}` : plural(errors, 'error');
@@ -61,9 +64,13 @@ function printRemaining(remaining) {
 			? `${c.yellow}${plural(warnings, 'warning')}${c.reset}`
 			: plural(warnings, 'warning');
 
-	console.log(
-		`\n  ${icon} ${plural(remaining.length, 'problem')} (${errorBlock}, ${warningBlock})`,
-	);
+	console.log(`\n  ${icon} ${plural(problems.length, 'problem')} (${errorBlock}, ${warningBlock})`);
+}
+
+function printRemaining(remaining) {
+	console.log(`  ${c.dim}Files with problems:${c.reset}`);
+	printProblems(remaining);
+	printTally(remaining);
 }
 
 function printFixed(fixed, printedBlock) {

@@ -3,13 +3,16 @@ import { provideTranslocoScope } from '@jsverse/transloco';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { DashboardI18n } from '@app/i18n/dashboard/keys';
+import type { DashboardI18nParams } from '@app/i18n/dashboard/params';
 import { CommonI18n } from '@app/i18n/keys';
-import type { I18nParams } from '@app/i18n/params';
+import type { CommonI18nParams } from '@app/i18n/params';
 
 export const I18n = {
 	common: CommonI18n,
 	dashboard: DashboardI18n,
 } as const;
+
+type I18nParams = CommonI18nParams & DashboardI18nParams;
 
 type KeyValues<T> = { [Scope in keyof T]: T[Scope][keyof T[Scope]] }[keyof T];
 

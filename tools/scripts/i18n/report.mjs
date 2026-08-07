@@ -1,83 +1,157 @@
 import path from 'node:path';
 
-const R = '\x1b[0m';
-const B = '\x1b[1m';
-const D = '\x1b[90m';
-const C = '\x1b[94m';
-const G = '\x1b[92m';
-const Y = '\x1b[93m';
-const RD = '\x1b[91m';
+import { c, plural, printProblems, printTally } from '../lint/lint-report.mjs';
 
-const LEVELS = {
-	'missing-keys-file': ['error', 'Scopes without keys.ts'],
-	'missing-lang-file': ['error', 'Missing language files'],
-	'invalid-json': ['error', 'Malformed JSON'],
-	'bad-const-name': ['error', 'Unexpected exported constant'],
-	'invalid-ulid': ['error', 'Keys whose value is not a ULID'],
-	'bad-scope-prefix': ['error', 'Keys whose value does not match their scope'],
-	'duplicate-ulid': ['error', 'ULIDs declared more than once'],
-	'missing-translation': ['error', 'Declared keys with no entry'],
-	'param-mismatch': ['error', 'Interpolations that do not match the default language'],
-	'stale-params': ['error', 'Generated params.ts out of date'],
-	'empty-translation': ['warn', 'Entries with an empty value'],
-	'orphan-translation': ['warn', 'Entries not declared in keys.ts'],
-	'unused-key': ['warn', 'Declared keys never referenced'],
-};
+const ERROR_TYPES = new Set([
+	'missing-keys-file',
+	'missing-lang-file',
+	'invalid-json',
+	'bad-const-name',
+	'invalid-ulid',
+	'bad-scope-prefix',
+	'duplicate-ulid',
+	'missing-translation',
+	'param-mismatch',
+	'stale-params',
+	'missing-params-file',
+	'missing-barrel',
+	'unregistered-scope',
+	'unregistered-params',
+]);
 
-const levelOf = (type) => LEVELS[type]?.[0] ?? 'warn';
+const INFO_TYPES = new Set(['commented-usage']);
 
-const shortPath = (file) => path.relative(process.cwd(), file) || file;
+const FIXABLE_TYPES = new Set([
+	'stale-params',
+	'missing-params-file',
+	'missing-translation',
+	'unregistered-scope',
+	'orphan-translation',
+]);
 
-const groupByType = (findings) => {
-	const groups = new Map();
+const KEYS_COLUMN = 'keys';
+const PARAMS_COLUMN = 'params';
+const NAME_COLUMN = 'scope';
+const OK = `${c.green}✔${c.reset}`;
+const WARN = `${c.yellow}⚠${c.reset}`;
+const FAIL = `${c.red}✖${c.reset}`;
 
-	for (const item of findings) {
-		groups.set(item.type, [...(groups.get(item.type) ?? []), item]);
+const severityOf = (type) => {
+	if (ERROR_TYPES.has(type)) {
+		return 'error';
 	}
 
-	return groups;
+	return INFO_TYPES.has(type) ? 'info' : 'warning';
 };
 
-function printGroup(type, items) {
-	const [level, title] = LEVELS[type] ?? ['warn', type];
-	const color = 'error' === level ? RD : Y;
+const fullPath = (file) => path.resolve(file);
 
-	console.log(`${color}${B}${'error' === level ? '✖' : '⚠'} ${title}${R} ${D}(${type})${R}`);
+const columnOf = (item) => item.lang ?? item.column ?? KEYS_COLUMN;
 
-	for (const { scope, file, line, message } of items) {
-		const at = line ? `${shortPath(file)}:${line}` : shortPath(file);
+const padIcon = (icon, column) => `${icon}${' '.repeat(Math.max(0, column.length - 1))}`;
 
-		console.log(`  ${D}${at}${R} ${C}${scope}${R} ${message}`);
+// Infos never turn a cell yellow: they aren't problems, so a column with only
+// a note (e.g. a key referenced from a comment) still reads as OK.
+function statusOf(items) {
+	const relevant = items.filter(({ type }) => 'info' !== severityOf(type));
+
+	if (relevant.some(({ type }) => 'error' === severityOf(type))) {
+		return FAIL;
 	}
 
-	console.log('');
+	return 0 === relevant.length ? OK : WARN;
 }
 
-export function printFindings(findings, { scopes, langs }) {
-	console.log(`🔍 ${B}${scopes.length}${R} scope(s), ${B}${langs.join(', ')}${R}\n`);
+function tableRow(scope, findings, columns) {
+	const mine = findings.filter((item) => item.scope === scope.name);
 
-	if (!findings.length) {
-		console.log(`✅ ${G}Every key is declared, translated and used.${R}`);
+	return {
+		name: scope.name,
+		cells: columns.map((column) => statusOf(mine.filter((item) => columnOf(item) === column))),
+	};
+}
 
-		return 0;
+function printTable(scopes, findings, langs) {
+	const columns = [KEYS_COLUMN, PARAMS_COLUMN, ...langs];
+	const rows = scopes.map((scope) => tableRow(scope, findings, columns));
+	const nameWidth = Math.max(...rows.map((row) => row.name.length), NAME_COLUMN.length);
+
+	console.log(`\n  ${c.dim}${NAME_COLUMN.padEnd(nameWidth)}  ${columns.join('  ')}${c.reset}`);
+
+	for (const { name, cells } of rows) {
+		const painted = cells.map((cell, index) => padIcon(cell, columns[index]));
+
+		console.log(`  ${c.cyan}${name.padEnd(nameWidth)}${c.reset}  ${painted.join('  ')}`);
+	}
+}
+
+function toProblems(findings) {
+	const order = [...new Set(findings.map(({ file }) => file))];
+
+	return findings
+		.map((item) => ({
+			file: fullPath(item.file),
+			...(null === item.line ? {} : { line: item.line, col: item.col ?? 1 }),
+			severity: severityOf(item.type),
+			message: item.message,
+			rule: item.type,
+			order: order.indexOf(item.file),
+		}))
+		.sort((left, right) => left.order - right.order || (left.line ?? 0) - (right.line ?? 0));
+}
+
+function printFixable(findings) {
+	const fixable = findings.filter(({ type }) => FIXABLE_TYPES.has(type)).length;
+
+	if (0 !== fixable) {
+		const message = `${plural(fixable, 'problem')} potentially fixable with the --fix option.`;
+
+		console.log(`  ${c.dim}${message}${c.reset}`);
+	}
+}
+
+// Infos are surfaced but kept out of "Problems" entirely — they never reach
+// the tally, the --fix hint, or the exit code, so 0 problems always means CI
+// exits 0 even when notes are printed above it.
+export function printFindings(findings, { scopes, langs, fix }) {
+	printTable(scopes, findings, langs);
+
+	const infos = toProblems(findings.filter((item) => 'info' === severityOf(item.type)));
+	const problems = toProblems(findings.filter((item) => 'info' !== severityOf(item.type)));
+
+	if (0 === problems.length) {
+		console.log(`\n  ${c.green}✔ Every key is declared, translated and used.${c.reset}`);
+	} else {
+		console.log(`\n${c.bold}${c.cyan}━━ Problems ━━${c.reset}`);
+		printProblems(problems);
+		printTally(problems);
+
+		if (!fix) {
+			printFixable(findings);
+		}
 	}
 
-	for (const [type, items] of groupByType(findings)) {
-		printGroup(type, items);
+	if (0 !== infos.length) {
+		console.log(`\n${c.bold}${c.cyan}━━ Info ━━${c.reset}`);
+		printProblems(infos);
+		console.log(`\n  ${c.blue}ℹ${c.reset} ${plural(infos.length, 'note')}`);
 	}
 
-	const errors = findings.filter(({ type }) => 'error' === levelOf(type)).length;
-	const warnings = findings.length - errors;
-
-	console.log(`${B}${RD}${errors} error(s)${R}, ${B}${Y}${warnings} warning(s)${R}`);
-
-	return 0 === errors ? 0 : 1;
+	return problems.some(({ severity }) => 'error' === severity) ? 1 : 0;
 }
 
 export function printWritten(written) {
-	for (const file of written) {
-		console.log(`✏️  ${C}${shortPath(file)}${R}`);
+	if (0 === written.length) {
+		console.log(`\n  ${c.dim}✓ Nothing to write${c.reset}`);
+
+		return;
 	}
 
-	console.log(`\n✅ ${G}${written.length} file(s) updated.${R}`);
+	console.log(`\n  ${c.dim}Files written:${c.reset}`);
+
+	for (const file of written) {
+		console.log(`      ${fullPath(file)}`);
+	}
+
+	console.log(`\n  ${c.green}✔ ${plural(written.length, 'file')} updated${c.reset}`);
 }

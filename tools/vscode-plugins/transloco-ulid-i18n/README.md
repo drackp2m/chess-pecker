@@ -13,7 +13,7 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   `I18n.scope.KEY | i18n` collapses to the text. Put the cursor inside and the real source comes
   back, so it stays editable.
 - **Hover** — every language at once, the params the key takes with the types declared in the
-  generated `i18n/params.ts`, and the raw `scope.ULID` value.
+  generated `<scope>/params.ts`, and the raw `scope.ULID` value.
 - **Go to definition** — `ctrl+click` a key to jump to its line in each `<lang>.json` and in `keys.ts`.
 - **Diagnostics** — undeclared keys and missing/empty translations underlined in `.ts` and `.html`.
 - **Completion** — scopes after `I18n.`, keys after `I18n.dashboard.` and while the key is half
@@ -24,7 +24,7 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   and a last one _after_ the `}}`, so the next key is one keystroke away. That last jump happens for
   every key, params or not, whenever the completion can see the whole `| i18n }}` on the line. Inside
   `i18nRef(I18n.dashboard.|)` it appends `, { … }` the same way. The types are the ones declared in
-  the generated `i18n/params.ts`.
+  the generated `<scope>/params.ts`.
 - **Snippet** — typing `i18n` expands to `{{ I18n.| | i18n }}` in HTML (to `I18n.|` when the cursor
   already is inside an interpolation) and to `I18n.|` in TypeScript. The TypeScript one adds
   `import { I18n } from '@app/i18n';`; the HTML one patches the sibling component instead, adding the
@@ -35,9 +35,11 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   not written at all, so only the default one is required. With text selected it works as an extract:
   the selection seeds the default language and is replaced by `{{ I18n.scope.KEY | i18n }}` in
   HTML — wiring the sibling component up like the snippet does — or `I18n.scope.KEY` in TypeScript.
-- **Create scope** — the scope picker ends in `New scope…`: it writes `<name>/keys.ts` and an empty
-  `<name>/<lang>.json` per language, and registers the scope in `i18n/index.ts` (import plus the
-  camelCased property), which is what feeds completion back. The component still needs its
+- **Create scope** — the scope picker ends in `New scope…`: it writes `<name>/keys.ts`, an empty
+  `<name>/params.ts` and an empty `<name>/<lang>.json` per language, and registers the scope in
+  `i18n/index.ts` twice — the import plus the camelCased property in the `I18n` barrel, which is what
+  feeds completion back, and the import plus the member in the `I18nParams` union, which is what
+  types the pipe. The component still needs its
   `provideI18nScope('<name>')` by hand, which will only accept the scope once it has its first key.
 
 ## Running it
