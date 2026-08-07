@@ -41,6 +41,25 @@ const OPENING = 1500;
 
 const OPENED_AT = '2026-08-03T10:00:00.000Z';
 
+const STORED_DRAFT: AttemptRow = {
+	uuid: 'attempt-draft-1',
+	trainingUuid: 'training-1',
+	kind: 'cycle',
+	slotId: 'item-1',
+	cycleItemUuid: 'item-1',
+	puzzleUuid: 'puzzle-1',
+	lichessId: 'AAA11',
+	durationMs: 12_000,
+	record: ['g8h8', 'a1a2', -1],
+	explorations: [],
+	orientation: 'white',
+	closure: 'open',
+	hintUsed: true,
+	mistakeCount: 1,
+	createdAt: new Date('2026-08-03T09:00:00.000Z'),
+	updatedAt: new Date('2026-08-03T09:00:12.000Z'),
+};
+
 function toItem(puzzle: ApiPuzzle, uuid: string, position: number): TrainingCycleItem {
 	return { uuid, position, trainingPuzzle: { uuid: `tp-${uuid}`, puzzle } };
 }
@@ -302,6 +321,45 @@ describe('TrainingSolveSession', () => {
 			expect.objectContaining({ durationMs: OPENING + 3000 + OPENING + 2000 }),
 		);
 		expect(attempts.rows.size).toBe(1);
+	});
+
+	it('leaves the stored row untouched while nothing has been played on the board', async () => {
+		const attempts = createAttemptStorage();
+
+		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
+
+		const { session } = configure(createRepository(), attempts);
+
+		await enter(session);
+		await vi.advanceTimersByTimeAsync(SOLVE_FLUSH_INTERVAL_MS * 2);
+
+		session.pause();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(attempts.rows.size).toBe(1);
+		expect(onlyRow(attempts)).toEqual(STORED_DRAFT);
+	});
+
+	it('takes the stored row over again once the player plays on the board', async () => {
+		const attempts = createAttemptStorage();
+
+		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
+
+		const { session, board } = configure(createRepository(), attempts);
+
+		await enter(session);
+
+		board.selectSquare('a1');
+		board.selectSquare('a2');
+		TestBed.tick();
+		await vi.advanceTimersByTimeAsync(0);
+
+		expect(attempts.rows.size).toBe(1);
+		expect(onlyRow(attempts)).toMatchObject({
+			uuid: STORED_DRAFT.uuid,
+			record: ['g8h8', 'a1a2'],
+			mistakeCount: 1,
+		});
 	});
 
 	it('holds the attempt back while the miss is still being worked on', async () => {
