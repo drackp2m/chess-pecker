@@ -7,7 +7,7 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}/tools/vscode-i18n",
+				"--extensionDevelopmentPath=${workspaceFolder}/tools/vscode-plugins/transloco-ulid-i18n",
 				"${workspaceFolder}"
 			]
 		},

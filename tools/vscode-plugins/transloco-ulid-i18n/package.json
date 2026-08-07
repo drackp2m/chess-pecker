@@ -1,8 +1,8 @@
 {
-	"name": "chesspecker-i18n",
-	"displayName": "Chesspecker i18n",
+	"name": "transloco-ulid-i18n",
+	"displayName": "Transloco ULID i18n",
 	"description": "Inline translations, hover, go-to-definition and diagnostics for the ULID-based transloco keys",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": true,
 	"publisher": "drackp2m",
 	"license": "MIT",
@@ -20,25 +20,25 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "chesspeckerI18n.createKey",
+				"command": "translocoUlidI18n.createKey",
 				"title": "i18n: Create translation key",
-				"category": "Chesspecker"
+				"category": "Transloco ULID i18n"
 			},
 			{
-				"command": "chesspeckerI18n.reload",
+				"command": "translocoUlidI18n.reload",
 				"title": "i18n: Reload translation index",
-				"category": "Chesspecker"
+				"category": "Transloco ULID i18n"
 			},
 			{
-				"command": "chesspeckerI18n.toggleInlineText",
+				"command": "translocoUlidI18n.toggleInlineText",
 				"title": "i18n: Toggle inline translations",
-				"category": "Chesspecker"
+				"category": "Transloco ULID i18n"
 			}
 		],
 		"configuration": {
-			"title": "Chesspecker i18n",
+			"title": "Transloco ULID i18n",
 			"properties": {
-				"chesspeckerI18n.langs": {
+				"translocoUlidI18n.langs": {
 					"type": "array",
 					"items": {
 						"type": "string"
@@ -46,12 +46,12 @@
 					"default": [],
 					"description": "Languages to resolve. Empty means the defaults from tools/scripts/i18n/config.mjs."
 				},
-				"chesspeckerI18n.inlineText": {
+				"translocoUlidI18n.inlineText": {
 					"type": "boolean",
 					"default": true,
 					"description": "Render the default language translation in place of every key usage."
 				},
-				"chesspeckerI18n.inlineTextMaxLength": {
+				"translocoUlidI18n.inlineTextMaxLength": {
 					"type": "number",
 					"default": 60,
 					"description": "Characters shown before the inline translation is ellipsised."

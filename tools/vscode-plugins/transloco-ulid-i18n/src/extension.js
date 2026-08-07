@@ -8,13 +8,13 @@ const { I18nIndex } = require('./index');
 
 const DEBOUNCE = 250;
 
-const langsSetting = () => vscode.workspace.getConfiguration('chesspeckerI18n').get('langs', []);
+const langsSetting = () => vscode.workspace.getConfiguration('translocoUlidI18n').get('langs', []);
 
 async function reload(index, annotations, notify) {
 	const error = await index.reload(langsSetting());
 
 	if (null !== error && true === notify) {
-		vscode.window.showErrorMessage(`Chesspecker i18n: ${error}`);
+		vscode.window.showErrorMessage(`Transloco ULID i18n: ${error}`);
 	}
 
 	annotations.refreshAll();
@@ -56,27 +56,29 @@ function watchEditors(index, annotations) {
 
 function registerCommands(index, annotations) {
 	const run = (task) => () => {
-		task().catch((error) => vscode.window.showErrorMessage(`Chesspecker i18n: ${error.message}`));
+		task().catch((error) =>
+			vscode.window.showErrorMessage(`Transloco ULID i18n: ${error.message}`),
+		);
 	};
 
 	return [
 		vscode.commands.registerCommand(
-			'chesspeckerI18n.createKey',
+			'translocoUlidI18n.createKey',
 			run(() => createKey(index, annotations)),
 		),
 		vscode.commands.registerCommand(
-			'chesspeckerI18n.reload',
+			'translocoUlidI18n.reload',
 			run(() => reload(index, annotations, true)),
 		),
 		vscode.commands.registerCommand(
-			'chesspeckerI18n.toggleInlineText',
+			'translocoUlidI18n.toggleInlineText',
 			run(() => toggleInlineText(annotations)),
 		),
 	];
 }
 
 async function toggleInlineText(annotations) {
-	const settings = vscode.workspace.getConfiguration('chesspeckerI18n');
+	const settings = vscode.workspace.getConfiguration('translocoUlidI18n');
 
 	await settings.update('inlineText', true !== settings.get('inlineText', true), true);
 
@@ -104,7 +106,7 @@ async function activate(context) {
 		...watchEditors(index, annotations),
 		...registerCommands(index, annotations),
 		vscode.workspace.onDidChangeConfiguration((event) => {
-			if (event.affectsConfiguration('chesspeckerI18n')) {
+			if (event.affectsConfiguration('translocoUlidI18n')) {
 				void reload(index, annotations, false);
 			}
 		}),

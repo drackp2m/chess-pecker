@@ -14,7 +14,7 @@ const inlineType = vscode.window.createTextEditorDecorationType({
 	},
 });
 
-const settings = () => vscode.workspace.getConfiguration('chesspeckerI18n');
+const settings = () => vscode.workspace.getConfiguration('translocoUlidI18n');
 
 function inlineLabel(index, usage) {
 	const entry = index.entry(usage.scope, usage.key);
@@ -90,7 +90,7 @@ function diagnosticFor(index, document, usage) {
 class Annotations {
 	constructor(index) {
 		this.index = index;
-		this.diagnostics = vscode.languages.createDiagnosticCollection('chesspecker-i18n');
+		this.diagnostics = vscode.languages.createDiagnosticCollection('transloco-ulid-i18n');
 	}
 
 	clear(document) {

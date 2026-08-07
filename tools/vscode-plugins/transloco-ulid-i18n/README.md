@@ -1,4 +1,4 @@
-# Chesspecker i18n
+# Transloco ULID i18n
 
 An i18n-ally-flavoured VSCode extension for this repo's transloco setup. It resolves
 `I18n.<scope>.<KEY>` (and `<Scope>I18n.KEY`) through the same chain the CLI uses:
@@ -32,7 +32,7 @@ extension host runs **inside the container** and reads `~/.vscode-server/extensi
 `~/.vscode/extensions` — run this from a container terminal:
 
 ```sh
-ln -sfn "$PWD/tools/vscode-i18n" ~/.vscode-server/extensions/drackp2m.chesspecker-i18n-0.1.0
+ln -sfn "$PWD/tools/vscode-plugins/transloco-ulid-i18n" ~/.vscode-server/extensions/drackp2m.transloco-ulid-i18n-0.1.1
 ```
 
 The folder name has to be `<publisher>.<name>-<version>` or the scanner skips it. `.vscode-server`
@@ -43,11 +43,11 @@ Opening the repo natively instead (no container) is the same command against `~/
 
 ## Settings
 
-| Setting                               | Default | Meaning                                                           |
-| ------------------------------------- | ------- | ----------------------------------------------------------------- |
-| `chesspeckerI18n.langs`               | `[]`    | Languages to resolve; empty uses `tools/scripts/i18n/config.mjs`. |
-| `chesspeckerI18n.inlineText`          | `true`  | Show the inline translation.                                      |
-| `chesspeckerI18n.inlineTextMaxLength` | `60`    | Where the inline text is ellipsised.                              |
+| Setting                                 | Default | Meaning                                                           |
+| --------------------------------------- | ------- | ----------------------------------------------------------------- |
+| `translocoUlidI18n.langs`               | `[]`    | Languages to resolve; empty uses `tools/scripts/i18n/config.mjs`. |
+| `translocoUlidI18n.inlineText`          | `true`  | Show the inline translation.                                      |
+| `translocoUlidI18n.inlineTextMaxLength` | `60`    | Where the inline text is ellipsised.                              |
 
 The index rebuilds itself whenever anything under the i18n directory changes;
 `i18n: Reload translation index` forces it.
