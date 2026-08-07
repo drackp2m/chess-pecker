@@ -31,7 +31,7 @@ function locate(file, needle) {
 	return new vscode.Location(vscode.Uri.file(file), new vscode.Position(line, character));
 }
 
-const TRANSLOCO_PIPE = /^\s*\|\s*transloco\b/;
+const TRANSLOCO_PIPE = /^\s*\|\s*i18n\b/;
 
 function displayRange(document, usage) {
 	const [pipe] = TRANSLOCO_PIPE.exec(document.getText().slice(usage.end)) ?? [];

@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { isUlid } from './config.mjs';
+import { buildParams } from './params.mjs';
 
 function nextContent(scope, translation, prune) {
 	const data = translation.data ?? {};
@@ -21,7 +22,7 @@ function nextContent(scope, translation, prune) {
 	return `${JSON.stringify(result, null, '\t')}\n`;
 }
 
-export function applyFix({ scopes, langs, prune }) {
+export function applyFix({ scopes, langs, prune, i18nDir, defaultLang }) {
 	const written = [];
 
 	for (const scope of scopes.filter((entry) => entry.keys)) {
@@ -40,6 +41,13 @@ export function applyFix({ scopes, langs, prune }) {
 				written.push(translation.file);
 			}
 		}
+	}
+
+	const params = buildParams({ scopes, i18nDir, defaultLang });
+
+	if (params.stale) {
+		writeFileSync(params.file, params.content, 'utf8');
+		written.push(params.file);
 	}
 
 	return written;

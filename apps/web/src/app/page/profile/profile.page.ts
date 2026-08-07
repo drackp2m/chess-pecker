@@ -1,18 +1,18 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { FriendUser } from '@chesspecker/api-definitions';
-import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { I18n } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { ProfileStore } from '@app/store/profile.store';
 import { SessionStore } from '@app/store/session.store';
 
 @Component({
 	templateUrl: './profile.page.html',
 	styleUrl: './profile.page.scss',
-	imports: [ReactiveFormsModule, InputDirective, ButtonDirective, TranslocoPipe],
+	imports: [ReactiveFormsModule, InputDirective, ButtonDirective, I18nPipe],
 })
 export class ProfilePage implements OnInit {
 	protected readonly I18n = I18n;

@@ -1,8 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
-import { TranslocoPipe } from '@jsverse/transloco';
 
 import { ButtonDirective } from '@app/directive/button.directive';
 import { I18n } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { SessionStore } from '@app/store/session.store';
 
 /**
@@ -27,7 +27,7 @@ const PHASE_DETAILS = {
 	selector: 'app-connection-indicator',
 	templateUrl: './connection-indicator.component.html',
 	styleUrl: './connection-indicator.component.scss',
-	imports: [ButtonDirective, TranslocoPipe],
+	imports: [ButtonDirective, I18nPipe],
 })
 export class ConnectionIndicatorComponent {
 	protected readonly I18n = I18n;

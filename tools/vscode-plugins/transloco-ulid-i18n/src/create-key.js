@@ -3,6 +3,9 @@ const { readFileSync } = require('node:fs');
 
 const vscode = require('vscode');
 
+const { NEW_SCOPE, createScope } = require('./create-scope');
+const { ensureTemplateSetup } = require('./setup');
+
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const KEY_NAME = /^[A-Z][A-Z0-9_]*$/;
 const KEYS_END = '} as const;';
@@ -28,16 +31,16 @@ async function pickScope(index, document) {
 	const names = index.scopeNames();
 	const guess = names.find((name) => document?.uri.fsPath.includes(`${name}.page.`));
 
-	if (!names.length) {
-		throw new Error('No i18n scope found');
-	}
-
-	const picked = await vscode.window.showQuickPick(names, {
+	const picked = await vscode.window.showQuickPick([...names, NEW_SCOPE], {
 		title: 'i18n scope',
-		placeHolder: guess ?? names[0],
+		placeHolder: guess ?? names[0] ?? NEW_SCOPE,
 	});
 
-	return picked ?? null;
+	if (undefined === picked) {
+		return null;
+	}
+
+	return NEW_SCOPE === picked ? createScope(index) : picked;
 }
 
 async function askName(index, scope) {
@@ -104,7 +107,7 @@ function editTranslation(edit, translation, id, text) {
 function reference(document, scope, name) {
 	const expression = `I18n.${scope}.${name}`;
 
-	return 'html' === document?.languageId ? `{{ ${expression} | transloco }}` : expression;
+	return 'html' === document?.languageId ? `{{ ${expression} | i18n }}` : expression;
 }
 
 function buildEdit(index, scopeName, name, texts, editor) {
@@ -116,7 +119,11 @@ function buildEdit(index, scopeName, name, texts, editor) {
 	editKeysFile(edit, scope, name, id);
 
 	for (const lang of index.langs) {
-		editTranslation(edit, scope.translations.get(lang), id, texts.get(lang));
+		const text = texts.get(lang);
+
+		if ('' !== text.trim()) {
+			editTranslation(edit, scope.translations.get(lang), id, text);
+		}
 	}
 
 	if (undefined !== editor && false === editor.selection.isEmpty) {
@@ -162,6 +169,11 @@ async function createKey(index, annotations) {
 
 	await vscode.workspace.applyEdit(edit);
 	await save(files);
+
+	if (selected && 'html' === editor.document.languageId) {
+		await ensureTemplateSetup(editor.document.uri);
+	}
+
 	await index.reload();
 
 	annotations.refreshAll();

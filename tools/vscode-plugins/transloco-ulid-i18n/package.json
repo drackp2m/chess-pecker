@@ -2,7 +2,7 @@
 	"name": "transloco-ulid-i18n",
 	"displayName": "Transloco ULID i18n",
 	"description": "Inline translations, hover, go-to-definition and diagnostics for the ULID-based transloco keys",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"private": true,
 	"publisher": "drackp2m",
 	"license": "MIT",
@@ -21,20 +21,28 @@
 		"commands": [
 			{
 				"command": "translocoUlidI18n.createKey",
-				"title": "i18n: Create translation key",
-				"category": "Transloco ULID i18n"
+				"title": "Create translation key",
+				"category": "i18n"
 			},
 			{
 				"command": "translocoUlidI18n.reload",
-				"title": "i18n: Reload translation index",
-				"category": "Transloco ULID i18n"
+				"title": "Reload translation index",
+				"category": "i18n"
 			},
 			{
 				"command": "translocoUlidI18n.toggleInlineText",
-				"title": "i18n: Toggle inline translations",
-				"category": "Transloco ULID i18n"
+				"title": "Toggle inline translations",
+				"category": "i18n"
 			}
 		],
+		"configurationDefaults": {
+			"[html]": {
+				"editor.suggest.showWords": false
+			},
+			"[typescript]": {
+				"editor.suggest.showWords": false
+			}
+		},
 		"configuration": {
 			"title": "Transloco ULID i18n",
 			"properties": {

@@ -5,7 +5,7 @@ import type {
 } from '@chesspecker/api-definitions';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
-import { I18n } from '@app/i18n';
+import { I18n, i18nRef } from '@app/i18n';
 
 export interface ProgramSummaryRow {
 	readonly key: string;
@@ -108,7 +108,7 @@ const toRoundRow = (round: CalibrationRoundProgress): ProgramSummaryRow => ({
 /** A cycle is long enough that how far into it you are matters as much as how it went. */
 const toCycleRow = (cycle: CycleProgress): ProgramSummaryRow => ({
 	key: `cycle-${cycle.uuid}`,
-	stage: { key: I18n.common.CYCLE, params: { index: cycle.index } },
+	stage: i18nRef(I18n.common.CYCLE, { index: cycle.index }),
 	stageDetail: '',
 	solved: ratio(cycle.solved, cycle.total),
 	result: { key: CYCLE_RESULT[cycle.status] },

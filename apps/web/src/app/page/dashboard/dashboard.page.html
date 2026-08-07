@@ -9,13 +9,13 @@
 <section class="flex-col gap-6">
 	@if (session.isAuthenticated()) {
 		<div class="flex-col gap-2">
-			<h4>{{ I18n.dashboard.YOUR_PROGRAM | transloco }}</h4>
+			<h4>{{ I18n.dashboard.YOUR_PROGRAM | i18n }}</h4>
 
 			@if (summary(); as program) {
 				<p class="fs-sm color-contrast-mid">
 					{{
 						I18n.dashboard.PROGRAM_TOTALS
-							| transloco
+							| i18n
 								: {
 										solved: program.solved,
 										total: program.total,
@@ -23,22 +23,22 @@
 								  }
 					}}
 					@if (program.rating; as rating) {
-						{{ I18n.dashboard.PROGRAM_LEVEL | transloco: { rating } }}
+						{{ I18n.dashboard.PROGRAM_LEVEL | i18n: { rating } }}
 					}
 				</p>
 
 				@if (program.current; as current) {
-					<p class="fs-sm color-contrast-mid">{{ current.key | transloco: current.params }}</p>
+					<p class="fs-sm color-contrast-mid">{{ current.key | i18n: current.params }}</p>
 				}
 
 				<table class="summary fs-sm">
 					<thead>
 						<tr>
-							<th scope="col">{{ I18n.common.STAGE | transloco }}</th>
+							<th scope="col">{{ I18n.common.STAGE | i18n }}</th>
 
-							<th scope="col">{{ I18n.common.SOLVED | transloco }}</th>
+							<th scope="col">{{ I18n.common.SOLVED | i18n }}</th>
 
-							<th scope="col">{{ I18n.common.RESULT | transloco }}</th>
+							<th scope="col">{{ I18n.common.RESULT | i18n }}</th>
 						</tr>
 					</thead>
 
@@ -46,12 +46,12 @@
 						@for (row of program.rows; track row.key) {
 							<tr>
 								<th scope="row">
-									{{ row.stage.key | transloco: row.stage.params }} {{ row.stageDetail }}
+									{{ row.stage.key | i18n: row.stage.params }} {{ row.stageDetail }}
 								</th>
 
 								<td class="mono">{{ row.solved }}</td>
 
-								<td>{{ row.result.key | transloco: row.result.params }} {{ row.resultDetail }}</td>
+								<td>{{ row.result.key | i18n: row.result.params }} {{ row.resultDetail }}</td>
 							</tr>
 						}
 					</tbody>
@@ -59,46 +59,46 @@
 			}
 
 			<button appThemed color="accent" [disabled]="training.isLoading()" (click)="openProgram()">
-				{{ programLabel().key | transloco: programLabel().params }}
+				{{ programLabel().key | i18n: programLabel().params }}
 			</button>
 		</div>
 	}
 
 	<div class="flex-col gap-2">
-		<h4>{{ I18n.dashboard.PRACTICE | transloco }}</h4>
+		<h4>{{ I18n.dashboard.PRACTICE | i18n }}</h4>
 
 		<div class="flex-col gap-2">
 			<button appThemed color="accent" appRouterLink="/puzzles">
-				{{ I18n.dashboard.LOAD_EXERCISES | transloco }}
+				{{ I18n.dashboard.LOAD_EXERCISES | i18n }}
 			</button>
 
 			<button appThemed color="primary-mid" appRouterLink="/puzzles/sample">
-				{{ I18n.dashboard.TRY_SAMPLE | transloco }}
+				{{ I18n.dashboard.TRY_SAMPLE | i18n }}
 			</button>
 
 			<button appThemed appRouterLink="/match">
-				{{ I18n.dashboard.NEW_MATCH | transloco }}
+				{{ I18n.dashboard.NEW_MATCH | i18n }}
 			</button>
 		</div>
 	</div>
 
 	<div class="flex-col gap-2">
-		<h4>{{ I18n.dashboard.METHOD_TITLE | transloco }}</h4>
+		<h4>{{ I18n.dashboard.METHOD_TITLE | i18n }}</h4>
 
-		<p class="fs-sm color-contrast-mid">{{ I18n.dashboard.METHOD_INTRO | transloco }}</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.dashboard.METHOD_INTRO | i18n }}</p>
 
 		<ul class="method flex-col gap-1 fs-sm">
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_BUILD | transloco }}</li>
+			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_BUILD | i18n }}</li>
 
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_PASSES | transloco }}</li>
+			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_PASSES | i18n }}</li>
 
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_TIME | transloco }}</li>
+			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_TIME | i18n }}</li>
 
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_MISS | transloco }}</li>
+			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_MISS | i18n }}</li>
 
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_SHUFFLE | transloco }}</li>
+			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_SHUFFLE | i18n }}</li>
 		</ul>
 
-		<p class="fs-sm color-contrast-mid">{{ I18n.dashboard.METHOD_OUTRO | transloco }}</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.dashboard.METHOD_OUTRO | i18n }}</p>
 	</div>
 </section>

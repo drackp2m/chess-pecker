@@ -1,20 +1,20 @@
 import { Component, computed, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
-import { I18n } from '@app/i18n';
+import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
 import { toProgramSummary } from '@app/page/dashboard/program-summary';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
 
 @Component({
 	templateUrl: './dashboard.page.html',
 	styleUrl: './dashboard.page.scss',
-	imports: [ButtonDirective, RouterLinkDirective, TranslocoPipe],
-	providers: [provideTranslocoScope('dashboard')],
+	imports: [ButtonDirective, RouterLinkDirective, I18nPipe],
+	providers: [provideI18nScope('dashboard')],
 })
 export class DashboardPage {
 	protected readonly I18n = I18n;
@@ -29,12 +29,12 @@ export class DashboardPage {
 		const runningCycle = this.training.runningCycle();
 
 		if ('calibrating' === this.training.active()?.status) {
-			return { key: I18n.dashboard.PROGRAM_REFINE };
+			return i18nRef(I18n.dashboard.PROGRAM_REFINE);
 		}
 
 		return undefined === runningCycle
-			? { key: I18n.dashboard.PROGRAM_START }
-			: { key: I18n.dashboard.PROGRAM_CONTINUE, params: { index: runningCycle.index } };
+			? i18nRef(I18n.dashboard.PROGRAM_START)
+			: i18nRef(I18n.dashboard.PROGRAM_CONTINUE, { index: runningCycle.index });
 	});
 
 	/** Anything already in progress goes straight to the board; the rest needs the forms. */

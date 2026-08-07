@@ -1,4 +1,5 @@
 import { isUlid, toPascalCase } from './config.mjs';
+import { buildParams } from './params.mjs';
 
 const PARAM_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
 
@@ -114,6 +115,20 @@ function checkUsage(scope, usages) {
 		);
 }
 
+const listOf = (names) => `{{ ${names.join(' }}, {{ ')} }}`;
+
+function comparePair(base, value, ulid) {
+	const expected = paramsOf(base);
+	const actual = paramsOf(value);
+	const dropped = [...expected].filter((name) => !actual.has(name));
+	const added = [...actual].filter((name) => !expected.has(name));
+
+	return [
+		...(dropped.length ? [`${ulid} drops ${listOf(dropped)}`] : []),
+		...(added.length ? [`${ulid} adds ${listOf(added)}`] : []),
+	];
+}
+
 function comparePairs(base, data, file, scopeName) {
 	const findings = [];
 
@@ -122,12 +137,7 @@ function comparePairs(base, data, file, scopeName) {
 			continue;
 		}
 
-		const actual = paramsOf(value);
-		const missing = [...paramsOf(base[ulid])].filter((name) => !actual.has(name));
-
-		if (missing.length) {
-			const message = `${ulid} drops {{ ${missing.join(' }}, {{ ')} }}`;
-
+		for (const message of comparePair(base[ulid], value, ulid)) {
 			findings.push(finding('param-mismatch', scopeName, file, message));
 		}
 	}
@@ -154,9 +164,16 @@ function checkParams(scope, langs, defaultLang) {
 	return findings;
 }
 
-export function buildFindings({ scopes, usages, langs, defaultLang }) {
+function checkParamsFile(scopes, i18nDir, defaultLang) {
+	const { file, stale } = buildParams({ scopes, i18nDir, defaultLang });
+	const message = 'does not match the default language, run pnpm i18n:check --fix';
+
+	return stale ? [finding('stale-params', 'all', file, message)] : [];
+}
+
+export function buildFindings({ scopes, usages, langs, defaultLang, i18nDir }) {
 	const seenUlids = new Map();
-	const findings = [];
+	const findings = checkParamsFile(scopes, i18nDir, defaultLang);
 
 	for (const scope of scopes) {
 		findings.push(...checkStructure(scope, langs));
