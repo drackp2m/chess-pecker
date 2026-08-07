@@ -13,6 +13,13 @@ export const MOVE_SPEED_LABEL: Record<MoveSpeed, string> = {
 /** Pause before the piece lights up. */
 export const REPLAY_DELAY = 300;
 
+/**
+ * The longer pause a board that is being come back to takes before it replays anything:
+ * nothing here is the answer to something just done, so the position has to be there to
+ * be read first.
+ */
+export const RESUME_DELAY = 700;
+
 /** Time the machine appears to think before it reveals its move. */
 export const THINK_DELAY = 350;
 

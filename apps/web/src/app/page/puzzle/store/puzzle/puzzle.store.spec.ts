@@ -4,7 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BoardTransition, BoardTransitionKind } from '@app/definition/board-animation.type';
 import { ChessPosition, Square } from '@app/definition/chess.type';
-import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
+import {
+	ANNOUNCE_DELAY,
+	DEFAULT_MOVE_SPEED,
+	MoveSpeed,
+	RESUME_DELAY,
+	scaleForSpeed,
+} from '@app/definition/move-speed.type';
 import { PuzzleEvent } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
@@ -521,6 +527,84 @@ describe('PuzzleStore', () => {
 		store.stepForward();
 
 		expect(slideOf(store.transition())).toMatchObject({ from: 'b3', to: 'd1', kind: 'forward' });
+	});
+
+	/**
+	 * The board is redrawn from scratch when the exercise is picked up again, so what it
+	 * shows is the line it was left on — and a rewind is how that line came to be looked
+	 * at from there, not something to be watched happening a second time.
+	 */
+	it('replays the move the line stands on, not the last thing done to the board', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		playFivePlyLine(store);
+		store.stepBackward();
+
+		expect(slideOf(store.transition())).toMatchObject({ kind: 'backward' });
+
+		const recorded = store.record();
+
+		store.replayLastMove();
+
+		// The take-back is off the board at once, and the line stands where the move it
+		// is about to run was played from.
+		expect(store.transition()).toBeUndefined();
+		expect(store.announcedMove()).toBeUndefined();
+		expect(store.cursor()).toBe(3);
+
+		vi.advanceTimersByTime(scaleForSpeed(RESUME_DELAY, DEFAULT_MOVE_SPEED));
+
+		// Nothing here was asked for just now, so the piece is named before it travels.
+		expect(store.announcedMove()).toMatchObject({ from: 'b1', to: 'd1' });
+		expect(store.cursor()).toBe(3);
+
+		vi.advanceTimersByTime(scaleForSpeed(ANNOUNCE_DELAY, DEFAULT_MOVE_SPEED));
+
+		expect(store.announcedMove()).toBeUndefined();
+		expect(store.cursor()).toBe(4);
+		expect(slideOf(store.transition())).toMatchObject({ from: 'b1', to: 'd1', kind: 'forward' });
+		// None of it happened to the line, so none of it is in the record.
+		expect(store.record()).toEqual(recorded);
+	});
+
+	it('takes no input while it replays the move the exercise was left on', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		playFivePlyLine(store);
+		store.replayLastMove();
+
+		expect(store.isBusy()).toBe(true);
+
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.isBusy()).toBe(false);
+		expect(store.cursor()).toBe(5);
+	});
+
+	it('leaves a refuted move to the take-back it is already waiting for', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
+		store.replayLastMove();
+
+		// Dropped all the same: the move is on screen already and the board comes back
+		// to it standing there.
+		expect(store.transition()).toBeUndefined();
+
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		expect(store.mistake()).toBeUndefined();
+		expect(store.cursor()).toBe(1);
+	});
+
+	it('has nothing to replay before the exercise has moved at all', () => {
+		const store = configure();
+
+		store.replayLastMove();
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.transition()).toBeUndefined();
+		expect(store.cursor()).toBe(0);
 	});
 
 	it('gives every board event a tick of its own, whatever the exercise did before', () => {

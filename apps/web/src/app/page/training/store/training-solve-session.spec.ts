@@ -181,6 +181,33 @@ describe('TrainingSolveSession', () => {
 		expect(board.cursor()).toBe(cursor);
 	});
 
+	/**
+	 * The board is drawn from scratch on the way in, so the beat it was left mid-way
+	 * through would otherwise be run again as if it had just been asked for.
+	 */
+	it('plays the move the line was left standing on when the exercise is opened again', async () => {
+		const { session, board } = configure(createRepository());
+
+		await enter(session);
+
+		const settled = board.transition();
+
+		session.pause();
+		await session.open();
+
+		expect(board.transition()).toBeUndefined();
+
+		vi.advanceTimersByTime(OPENING);
+
+		const replayed = board.transition();
+
+		expect(board.cursor()).toBe(1);
+		expect(replayed?.kind).toBe('forward');
+		// A slide the board has already run is one no piece will run again, so the move
+		// coming back comes back under a beat of its own.
+		expect(replayed?.stages[0]?.tick).toBeGreaterThan(settled?.stages[0]?.tick ?? 0);
+	});
+
 	it('records only the time the exercise spent on screen', async () => {
 		const repository = createRepository();
 		const { session, board } = configure(repository);
