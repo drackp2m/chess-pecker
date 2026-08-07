@@ -3,6 +3,12 @@ import { CastlingSide, ChessMove, ChessPosition, Piece } from '@app/definition/c
 import { ChessAttack } from '@app/util/chess/chess-attack';
 import { ChessSquare } from '@app/util/chess/chess-square';
 
+/** The board indexes the rook travels between while the king castles. */
+export interface CastlingRookMove {
+	readonly from: number;
+	readonly to: number;
+}
+
 /**
  * Castling has more preconditions than any other move, so it lives apart from the
  * main generator: the right must survive, the path must be clear, and the king may
@@ -29,6 +35,18 @@ export abstract class ChessCastling {
 		return sides
 			.filter((side) => this.isPathUsable(position, index, king, side))
 			.map((side) => this.build(index, king, side));
+	}
+
+	/**
+	 * The rook's half of the move, read off the square the king reached. The king
+	 * never leaves its row, so both squares are the same two files on whichever rank
+	 * it castled on and only the side chooses between them. The board applies it and
+	 * the animation slides it, which is why neither owns the arithmetic.
+	 */
+	static rookMove(kingTo: number, side: CastlingSide): CastlingRookMove {
+		const row = ChessSquare.rowOf(kingTo) * BOARD_SIZE;
+
+		return { from: row + ('king' === side ? 7 : 0), to: row + ('king' === side ? 5 : 3) };
 	}
 
 	private static hasRight(position: ChessPosition, king: Piece, side: CastlingSide): boolean {

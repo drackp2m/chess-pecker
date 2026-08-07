@@ -2,14 +2,13 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { BoardTransition } from '@app/definition/board-animation.type';
+import { BoardTransition, BoardTransitionKind } from '@app/definition/board-animation.type';
 import { ChessPosition, Square } from '@app/definition/chess.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
 import { PuzzleEvent } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { SoundService } from '@app/service/sound.service';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
@@ -50,7 +49,6 @@ function configure(speed: MoveSpeed = DEFAULT_MOVE_SPEED): PuzzleStore {
 			PuzzleLibraryStore,
 			PuzzleStore,
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(speed) } },
-			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 			{ provide: PuzzleImportUseCase, useValue: createImportStub() },
 		],
 	});
@@ -130,6 +128,21 @@ function replayRecord(fen: string, events: readonly PuzzleEvent[]) {
 	return { fens: positions.map((position) => ChessFen.serialize(position)), line, cursor };
 }
 
+/** What the board is about to slide, flattened to the one beat a plain move takes. */
+interface FlatSlide {
+	readonly from: Square | undefined;
+	readonly to: Square | undefined;
+	readonly kind: BoardTransitionKind | undefined;
+	readonly tick: number | undefined;
+}
+
+function slideOf(transition: BoardTransition | undefined): FlatSlide {
+	const stage = transition?.stages[0];
+	const slide = stage?.slides[0];
+
+	return { from: slide?.from, to: slide?.to, kind: transition?.kind, tick: stage?.tick };
+}
+
 /**
  * The slides the board would actually run. Signals are glitch-free, so a transition
  * only ever reaches the DOM if it is the one still standing when the block that set
@@ -137,16 +150,16 @@ function replayRecord(fen: string, events: readonly PuzzleEvent[]) {
  * breath is one the player never sees.
  */
 function createSlideLog(store: PuzzleStore) {
-	const slides: BoardTransition[] = [];
+	const slides: FlatSlide[] = [];
 
 	return {
 		slides,
 
 		sample(): void {
-			const transition = store.transition();
+			const slide = slideOf(store.transition());
 
-			if (undefined !== transition && transition.tick !== slides.at(-1)?.tick) {
-				slides.push(transition);
+			if (undefined !== slide.tick && slide.tick !== slides.at(-1)?.tick) {
+				slides.push(slide);
 			}
 		},
 	};
@@ -491,23 +504,23 @@ describe('PuzzleStore', () => {
 		store.selectSquare('b1');
 
 		// Playing a move.
-		expect(store.transition()).toMatchObject({ from: 'b2', to: 'b1', kind: 'played' });
+		expect(slideOf(store.transition())).toMatchObject({ from: 'b2', to: 'b1', kind: 'played' });
 
-		const tick = store.transition()?.tick ?? 0;
+		const tick = slideOf(store.transition()).tick ?? 0;
 
 		vi.advanceTimersByTime(REPLAY_TOTAL);
 
-		expect(store.transition()).toMatchObject({ to: 'd1', kind: 'played' });
-		expect(store.transition()?.tick).toBeGreaterThan(tick);
+		expect(slideOf(store.transition())).toMatchObject({ to: 'd1', kind: 'played' });
+		expect(slideOf(store.transition()).tick).toBeGreaterThan(tick);
 
 		store.stepBackward();
 
 		// Taking a move back travels the other way, so the squares are reversed.
-		expect(store.transition()).toMatchObject({ from: 'd1', to: 'b3', kind: 'backward' });
+		expect(slideOf(store.transition())).toMatchObject({ from: 'd1', to: 'b3', kind: 'backward' });
 
 		store.stepForward();
 
-		expect(store.transition()).toMatchObject({ from: 'b3', to: 'd1', kind: 'forward' });
+		expect(slideOf(store.transition())).toMatchObject({ from: 'b3', to: 'd1', kind: 'forward' });
 	});
 
 	it('gives every board event a tick of its own, whatever the exercise did before', () => {
@@ -563,7 +576,7 @@ describe('PuzzleStore', () => {
 			log.sample();
 		}
 
-		const ticks = log.slides.map((slide) => slide.tick);
+		const ticks = log.slides.map((slide) => slide.tick ?? 0);
 
 		// The walk covered every way the board moves on its own.
 		expect(new Set(log.slides.map((slide) => slide.kind))).toEqual(
@@ -578,19 +591,19 @@ describe('PuzzleStore', () => {
 
 	it('slides the opening move again when the exercise is reopened after a miss', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
-		const opening = store.transition();
+		const opening = slideOf(store.transition());
 
 		miss(store);
 		vi.advanceTimersByTime(UNDO_TOTAL);
 		store.restart();
 		vi.advanceTimersByTime(REPLAY_TOTAL);
 
-		const reopened = store.transition();
+		const reopened = slideOf(store.transition());
 
 		// The same move onto the same square as before, so only the tick tells the two
 		// slides apart — and the miss in between must not have rewound it.
 		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'played' });
-		expect(reopened?.tick).toBeGreaterThan(opening?.tick ?? 0);
+		expect(reopened.tick).toBeGreaterThan(opening.tick ?? 0);
 	});
 
 	it('leaves the take-back on screen when the answer follows it in the same breath', () => {
@@ -600,7 +613,7 @@ describe('PuzzleStore', () => {
 		vi.advanceTimersByTime(UNDO_TOTAL);
 		miss(store);
 
-		const refuted = store.transition();
+		const refuted = slideOf(store.transition());
 
 		vi.advanceTimersByTime(UNDO_TOTAL);
 		store.revealSolution();
@@ -608,13 +621,13 @@ describe('PuzzleStore', () => {
 		// The take-back and the reveal that follows it land together; the reveal rewinds
 		// to the square the line already stood on, so it has nothing to take back over.
 		expect(store.isRevealing()).toBe(true);
-		expect(store.transition()).toMatchObject({ from: 'c2', to: 'b2', kind: 'backward' });
-		expect(store.transition()?.tick).toBeGreaterThan(refuted?.tick ?? 0);
+		expect(slideOf(store.transition())).toMatchObject({ from: 'c2', to: 'b2', kind: 'backward' });
+		expect(slideOf(store.transition()).tick).toBeGreaterThan(refuted.tick ?? 0);
 
 		vi.advanceTimersByTime(REPLAY_PLY);
 
 		// And the answer played out from there arrives under a tick of its own.
-		expect(store.transition()).toMatchObject({ from: 'b2', to: 'b1', kind: 'played' });
+		expect(slideOf(store.transition())).toMatchObject({ from: 'b2', to: 'b1', kind: 'played' });
 	});
 
 	it('waits on the refuted move for as long as the chosen move speed says', () => {
@@ -640,7 +653,7 @@ describe('PuzzleStore', () => {
 
 		// The refuted move is still up, so revealing has to rewind past it: the piece
 		// is about to be somewhere else entirely, and its slide no longer describes it.
-		expect(store.transition()).toMatchObject({ to: 'c2', kind: 'played' });
+		expect(slideOf(store.transition())).toMatchObject({ to: 'c2', kind: 'played' });
 
 		store.revealSolution();
 

@@ -2,8 +2,10 @@ import { DestroyRef, Injectable, effect, inject } from '@angular/core';
 
 import { PuzzleClosure } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { isUntouchedRecord } from '@app/page/puzzle/store/puzzle/record';
 import { TrainingRunSlot } from '@app/page/training/store/training-run-state';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
+import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingStore } from '@app/store/training.store';
 import {
 	AttemptDraft,
@@ -26,6 +28,7 @@ export class TrainingSolveSession {
 	private slot: TrainingRunSlot | undefined;
 	private gradedUuid: string | undefined;
 	private draft: AttemptDraft | undefined;
+	private stored: AttemptRow | undefined;
 
 	constructor() {
 		effect(() => {
@@ -83,6 +86,7 @@ export class TrainingSolveSession {
 		this.slot = undefined;
 		this.gradedUuid = undefined;
 		this.draft = undefined;
+		this.stored = undefined;
 		this.timer.pause();
 		this.run.reset();
 	}
@@ -98,6 +102,7 @@ export class TrainingSolveSession {
 
 		this.slot = slot;
 		this.draft = undefined;
+		this.stored = undefined;
 		this.board.setPuzzles([PuzzleMapper.toPuzzle(slot.puzzle)]);
 		this.timer.start();
 
@@ -128,6 +133,7 @@ export class TrainingSolveSession {
 			this.timer.restore(stored.durationMs, stored.createdAt);
 		}
 
+		this.stored = stored;
 		this.draft = {
 			uuid: stored?.uuid ?? crypto.randomUUID(),
 			createdAt: stored?.createdAt ?? this.timer.snapshot().createdAt,
@@ -157,6 +163,16 @@ export class TrainingSolveSession {
 		};
 	}
 
+	private representsDraft(): boolean {
+		if (undefined === this.stored) {
+			return true;
+		}
+
+		const written = { record: this.board.record(), explorations: this.board.explorations() };
+
+		return 'open' !== this.board.closure() || !isUntouchedRecord(written);
+	}
+
 	/**
 	 * Everything the row is composed from is read synchronously, so a flush in flight
 	 * while the next exercise opens still writes the clock of the one it belongs to.
@@ -168,7 +184,7 @@ export class TrainingSolveSession {
 	private flush(): Promise<void> {
 		const draft = this.draft;
 
-		if (undefined === draft) {
+		if (undefined === draft || !this.representsDraft()) {
 			return Promise.resolve();
 		}
 

@@ -5,4 +5,5 @@ pipefail
 projectable
 sonarjs
 titlecase
+transloco
 Vitest

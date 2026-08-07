@@ -3,17 +3,24 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "i18n extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}/tools/vscode-plugins/transloco-ulid-i18n",
+				"${workspaceFolder}"
+			]
+		},
+		{
 			"name": "ng serve",
 			"type": "chrome",
 			"request": "launch",
-			"preLaunchTask": "npm: start",
 			"url": "http://localhost:4200/"
 		},
 		{
 			"name": "ng test",
 			"type": "chrome",
 			"request": "launch",
-			"preLaunchTask": "npm: test",
 			"url": "http://localhost:9876/debug.html"
 		}
 	]

@@ -4,18 +4,16 @@ import type {
 	TrainingProgress,
 } from '@chesspecker/api-definitions';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n } from '@app/i18n';
+
 export interface ProgramSummaryRow {
 	readonly key: string;
-	readonly stage: string;
+	readonly stage: TranslationRef;
+	readonly stageDetail: string;
 	readonly solved: string;
-	readonly result: string;
-}
-
-export interface ProgramStageSummary {
-	readonly label: string;
-	readonly solved: number;
-	readonly total: number;
-	readonly percentage: string;
+	readonly result: TranslationRef;
+	readonly resultDetail: string;
 }
 
 export interface ProgramSummary {
@@ -25,7 +23,7 @@ export interface ProgramSummary {
 	readonly percentage: string;
 	readonly rating: number | null;
 	/** The phase being played right now, when it is not the whole program already. */
-	readonly current: ProgramStageSummary | null;
+	readonly current: TranslationRef | null;
 }
 
 /**
@@ -56,7 +54,7 @@ export function toProgramSummary(progress: TrainingProgress | null): ProgramSumm
 		total,
 		percentage: percentage(solved, total),
 		rating: progress.calibration.rating,
-		current: null !== current && current.total === total ? null : current,
+		current: null !== current && current.total !== total ? current.text : null,
 	};
 }
 
@@ -65,28 +63,33 @@ interface ProgramStage {
 	readonly total: number;
 }
 
-const ROUND_KIND: Record<CalibrationRoundProgress['kind'], string> = {
-	scan: 'Scan',
-	refine: 'Refine',
+interface ProgramStageSummary {
+	readonly total: number;
+	readonly text: TranslationRef;
+}
+
+const ROUND_STAGE: Record<CalibrationRoundProgress['kind'], string> = {
+	scan: I18n.common.SCAN,
+	refine: I18n.common.REFINE,
 };
 
 /** How the phase is named when it is the one being played, not a row of the log. */
-const PHASE_LABEL: Record<CalibrationRoundProgress['kind'], string> = {
-	scan: 'the scans',
-	refine: 'refinement',
+const PHASE_STAGE: Record<CalibrationRoundProgress['kind'], string> = {
+	scan: I18n.dashboard.PROGRAM_CURRENT_SCANS,
+	refine: I18n.dashboard.PROGRAM_CURRENT_REFINE,
 };
 
 const ROUND_RESULT: Record<CalibrationRoundProgress['outcome'], string> = {
-	pending: 'In progress',
-	raise: 'Probes higher',
-	lower: 'Probes lower',
-	accept: 'Level found',
+	pending: I18n.common.IN_PROGRESS,
+	raise: I18n.common.PROBES_HIGHER,
+	lower: I18n.common.PROBES_LOWER,
+	accept: I18n.common.LEVEL_FOUND,
 };
 
 const CYCLE_RESULT: Record<CycleProgress['status'], string> = {
-	running: 'Running',
-	finished: 'Finished',
-	abandoned: 'Cancelled',
+	running: I18n.common.RUNNING,
+	finished: I18n.common.FINISHED,
+	abandoned: I18n.common.CANCELLED,
 };
 
 /**
@@ -95,20 +98,21 @@ const CYCLE_RESULT: Record<CycleProgress['status'], string> = {
  */
 const toRoundRow = (round: CalibrationRoundProgress): ProgramSummaryRow => ({
 	key: `round-${round.uuid}`,
-	stage: `${ROUND_KIND[round.kind]} · ELO ${round.rating.toString()}`,
+	stage: { key: ROUND_STAGE[round.kind] },
+	stageDetail: `· ELO ${round.rating.toString()}`,
 	solved: ratio(round.solved, round.total),
-	result: ROUND_RESULT[round.outcome],
+	result: { key: ROUND_RESULT[round.outcome] },
+	resultDetail: '',
 });
 
 /** A cycle is long enough that how far into it you are matters as much as how it went. */
 const toCycleRow = (cycle: CycleProgress): ProgramSummaryRow => ({
 	key: `cycle-${cycle.uuid}`,
-	stage: `Cycle ${cycle.index.toString()}`,
+	stage: { key: I18n.common.CYCLE, params: { index: cycle.index } },
+	stageDetail: '',
 	solved: ratio(cycle.solved, cycle.total),
-	result:
-		'running' === cycle.status
-			? `${CYCLE_RESULT[cycle.status]} · ${ratio(cycle.attempted, cycle.total)}`
-			: CYCLE_RESULT[cycle.status],
+	result: { key: CYCLE_RESULT[cycle.status] },
+	resultDetail: 'running' === cycle.status ? `· ${ratio(cycle.attempted, cycle.total)}` : '',
 });
 
 /**
@@ -121,7 +125,8 @@ const resolveCurrent = (progress: TrainingProgress): ProgramStageSummary | null 
 
 	if (undefined !== open) {
 		return toStageSummary(
-			PHASE_LABEL[open.kind],
+			PHASE_STAGE[open.kind],
+			{},
 			rounds.filter((round) => round.kind === open.kind),
 		);
 	}
@@ -130,14 +135,21 @@ const resolveCurrent = (progress: TrainingProgress): ProgramStageSummary | null 
 
 	return undefined === running
 		? null
-		: toStageSummary(`cycle ${running.index.toString()}`, [running]);
+		: toStageSummary(I18n.dashboard.PROGRAM_CURRENT_CYCLE, { index: running.index }, [running]);
 };
 
-const toStageSummary = (label: string, stages: readonly ProgramStage[]): ProgramStageSummary => {
+const toStageSummary = (
+	key: string,
+	params: Record<string, unknown>,
+	stages: readonly ProgramStage[],
+): ProgramStageSummary => {
 	const solved = sumSolved(stages);
 	const total = sumTotal(stages);
 
-	return { label, solved, total, percentage: percentage(solved, total) };
+	return {
+		total,
+		text: { key, params: { ...params, solved, total, percentage: percentage(solved, total) } },
+	};
 };
 
 const sumSolved = (stages: readonly ProgramStage[]): number =>

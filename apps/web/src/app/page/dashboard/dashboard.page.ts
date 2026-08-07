@@ -1,8 +1,11 @@
 import { Component, computed, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslocoPipe, provideTranslocoScope } from '@jsverse/transloco';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
+import { I18n } from '@app/i18n';
 import { toProgramSummary } from '@app/page/dashboard/program-summary';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
@@ -10,25 +13,28 @@ import { TrainingStore } from '@app/store/training.store';
 @Component({
 	templateUrl: './dashboard.page.html',
 	styleUrl: './dashboard.page.scss',
-	imports: [ButtonDirective, RouterLinkDirective],
+	imports: [ButtonDirective, RouterLinkDirective, TranslocoPipe],
+	providers: [provideTranslocoScope('dashboard')],
 })
 export class DashboardPage {
+	protected readonly I18n = I18n;
+
 	readonly session = inject(SessionStore);
 	readonly training = inject(TrainingStore);
 
 	readonly summary = computed(() => toProgramSummary(this.training.progress()));
 
 	/** What the one button on the program does, so the state is read before it is opened. */
-	readonly programLabel = computed(() => {
+	readonly programLabel = computed<TranslationRef>(() => {
 		const runningCycle = this.training.runningCycle();
 
 		if ('calibrating' === this.training.active()?.status) {
-			return 'Refine the calibration';
+			return { key: I18n.dashboard.PROGRAM_REFINE };
 		}
 
 		return undefined === runningCycle
-			? 'Start a new block of exercises'
-			: `Continue cycle ${runningCycle.index.toString()}`;
+			? { key: I18n.dashboard.PROGRAM_START }
+			: { key: I18n.dashboard.PROGRAM_CONTINUE, params: { index: runningCycle.index } };
 	});
 
 	/** Anything already in progress goes straight to the board; the rest needs the forms. */

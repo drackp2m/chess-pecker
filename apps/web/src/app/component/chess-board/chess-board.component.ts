@@ -7,7 +7,7 @@ import {
 	indexAtOrder,
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
-import { createBoardSlide } from '@app/component/chess-board/board-slide';
+import { createBoardPlayback } from '@app/component/chess-board/board-playback';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import {
@@ -51,12 +51,19 @@ export class ChessBoardComponent {
 
 	readonly promotionChoices = buildPromotionChoices(PROMOTION_PIECES);
 
-	/** Settled per move, so changing the setting never replays one already on screen. */
-	private readonly boardSlide = createBoardSlide({
+	/** Settled per beat, so changing the setting never replays one already on screen. */
+	private readonly playback = createBoardPlayback({
 		transition: this.store.transition,
 		animation: this.preference.moveAnimation,
 		orientation: this.store.orientation,
+		speed: this.preference.moveSpeed,
 	});
+
+	/**
+	 * What the board draws. A move of more than one beat runs a board of its own in
+	 * between, which no store ever holds: everywhere else this is the real position.
+	 */
+	readonly position = computed(() => this.playback.board() ?? this.store.position());
 
 	// Read as signals, so changing the preference takes effect on a board already
 	// on screen rather than only on the next one.
@@ -172,7 +179,7 @@ export class ChessBoardComponent {
 
 		return {
 			square,
-			piece: this.store.position().board[index],
+			piece: this.position().board[index],
 			isLight: ChessSquare.isLight(index),
 			isSelected: square === this.store.selected(),
 			isTarget: undefined !== target,
@@ -187,10 +194,8 @@ export class ChessBoardComponent {
 		};
 	}
 
-	/** Only the square the move landed on has anything to slide. */
+	/** Only the squares the beat landed on have anything to slide. */
 	private describeSlide(square: Square): PieceSlide | undefined {
-		const pending = this.boardSlide();
-
-		return square === pending?.to ? pending.slide : undefined;
+		return this.playback.slides().find((pending) => square === pending.to)?.slide;
 	}
 }

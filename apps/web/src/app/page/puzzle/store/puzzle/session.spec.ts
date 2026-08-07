@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { nextTransition } from '@app/definition/board-animation.type';
 import { ChessMove } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
 import {
@@ -13,6 +12,7 @@ import {
 	restoreFreePlayPatch,
 	toRecord,
 } from '@app/page/puzzle/store/puzzle/session';
+import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessNotation } from '@app/util/chess/chess-notation';
@@ -146,7 +146,7 @@ describe('the free play anchor', () => {
 
 	it('keeps the slide that lands on the cursor it restores, and drops any other', () => {
 		const anchor = anchorFreePlay(LINE, undefined);
-		const slide = nextTransition(move(MATE_IN_3, 'f1f8'), 'played');
+		const slide = nextTransition(ChessFen.parse(MATE_IN_3), move(MATE_IN_3, 'f1f8'), 'played');
 
 		expect(restoreFreePlayPatch({ cursor: 4, transition: slide }, anchor).transition).toBe(slide);
 		expect(

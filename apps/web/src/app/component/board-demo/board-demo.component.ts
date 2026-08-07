@@ -2,7 +2,7 @@ import { Component, ElementRef, computed, inject, signal, viewChild } from '@ang
 
 import { BoardDragGesture } from '@app/component/chess-board/board-drag';
 import { Point } from '@app/component/chess-board/board-geometry';
-import { createBoardSlide } from '@app/component/chess-board/board-slide';
+import { createBoardPlayback } from '@app/component/chess-board/board-playback';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_SIZE, FILES, RANKS, SQUARE_COUNT } from '@app/definition/chess.constant';
 import { Piece, PieceColor, Square } from '@app/definition/chess.type';
@@ -65,12 +65,16 @@ export class BoardDemoComponent {
 	/** The strip always reads a1 to h1, so its slides are measured unflipped. */
 	private readonly stripOrientation = signal<PieceColor>('white');
 
-	/** Settled per move, so changing the setting never replays one already on screen. */
-	private readonly boardSlide = createBoardSlide({
+	/** Settled per beat, so changing the setting never replays one already on screen. */
+	private readonly playback = createBoardPlayback({
 		transition: this.store.transition,
 		animation: this.preference.moveAnimation,
 		orientation: this.stripOrientation,
+		speed: this.preference.moveSpeed,
 	});
+
+	/** The board on screen: a beat of its own while a move takes more than one. */
+	readonly position = computed(() => this.playback.board() ?? this.store.position());
 
 	readonly isClickEnabled = computed(() => this.preference.moveInputMethods().includes('click'));
 	readonly isDragEnabled = computed(() => this.preference.moveInputMethods().includes('drag'));
@@ -177,7 +181,7 @@ export class BoardDemoComponent {
 
 		return {
 			square,
-			piece: this.store.position().board[index],
+			piece: this.position().board[index],
 			isLight: ChessSquare.isLight(index),
 			isSelected: square === this.store.selected(),
 			isTarget: undefined !== target,
@@ -193,11 +197,9 @@ export class BoardDemoComponent {
 		};
 	}
 
-	/** Only the square the move landed on has anything to slide. */
+	/** Only the squares the beat landed on have anything to slide. */
 	private describeSlide(square: Square): PieceSlide | undefined {
-		const pending = this.boardSlide();
-
-		return square === pending?.to ? pending.slide : undefined;
+		return this.playback.slides().find((pending) => square === pending.to)?.slide;
 	}
 
 	private describe(): string {

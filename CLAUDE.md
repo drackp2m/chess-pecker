@@ -79,7 +79,7 @@ Root:
 
 `start:safari` (both packages) — plain HTTP with TLS terminated in front, because neither server's own TLS works in Safari. Generic script: `sh tools/scripts/start-safari.sh --source <port> [--target <port>] [--host <name>] [--env KEY=VALUE]... -- <command…>`.
 
-pnpm version: `packageManager`, the `pnpm/action-setup` steps and the installed pnpm must agree. Bump with `pnpm self-update` then `pnpm pnpm:match --fix` — never edit one place by hand; the `pre-commit` hook checks it.
+pnpm version: `packageManager`, the `pnpm/action-setup` steps and the installed pnpm must agree. `packageManager` is the source of truth — the Dockerfile only bootstraps a floating `pnpm@11` via npm, and pnpm's `managePackageManagerVersions` downloads and delegates to the pinned version inside the repo. Bump by editing `packageManager` (or `pnpm self-update`, which writes the same field) then `pnpm pnpm:match --fix` — never edit the workflows by hand; the `pre-commit` hook checks it.
 
 ## CI and hooks
 

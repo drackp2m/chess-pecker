@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
-import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
 import {
@@ -33,7 +32,7 @@ import {
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle/session';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
-import { SoundService } from '@app/service/sound.service';
+import { nextTransition } from '@app/util/chess/board-transition';
 
 @Injectable()
 export class PuzzleStore
@@ -48,8 +47,6 @@ export class PuzzleStore
 {
 	/** The loaded set and the cursor over it; the template reads it directly. */
 	readonly library = inject(PuzzleLibraryStore);
-
-	private readonly sound = inject(SoundService);
 
 	/** Imports exercises from raw CSV text and opens the first one. */
 	loadCsv(text: string, name: string): boolean {
@@ -283,9 +280,11 @@ export class PuzzleStore
 		kind: 'backward' | 'forward',
 	): void {
 		const outcome = this.outcomeAt(cursor);
-		const previous = this.position();
 		// What the cursor really did, which the clamped callers may have cut short.
 		const step = cursor - this.cursor();
+		// The board the stepped move was played on, whichever way it is travelled: it
+		// is the lower of the two cursors the move sits between.
+		const played = this.positions()[Math.min(cursor, this.cursor())];
 
 		patchState(this, (state) => recordStep(state, step), {
 			cursor,
@@ -294,14 +293,10 @@ export class PuzzleStore
 			result: settleResult(this.result(), outcome),
 			// Nothing to step over means the cursor stayed put, so whatever the board is
 			// showing still stands and must not be cleared out from under it.
-			...(undefined === stepped ? {} : { transition: nextTransition(stepped, kind) }),
+			...(undefined === stepped || undefined === played
+				? {}
+				: { transition: nextTransition(played, stepped, kind) }),
 		});
-
-		if (undefined !== stepped) {
-			// The move is judged from the position that has it on the board: stepping
-			// forward lands on it, stepping back is leaving it behind.
-			this.sound.playMove('backward' === kind ? previous : this.position(), stepped, kind);
-		}
 	}
 
 	/**

@@ -23,7 +23,6 @@ import {
 	describeOutcome,
 } from '@app/page/puzzle/store/puzzle/session';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { SoundService } from '@app/service/sound.service';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
@@ -46,7 +45,6 @@ type PlaybackStore = StateSignals<PuzzleStoreProps> &
 
 interface PlaybackContext {
 	readonly store: PlaybackStore;
-	readonly sound: SoundService;
 	readonly scheduled: ScheduledAction;
 	readonly speed: Signal<MoveSpeed>;
 }
@@ -76,12 +74,7 @@ function landedClosure(
 	return isFound ? settleClosure(store.closure(), 'found') : store.closure();
 }
 
-function commit(
-	store: PlaybackStore,
-	sound: SoundService,
-	move: ChessMove,
-	isOpponent: boolean,
-): void {
+function commit(store: PlaybackStore, move: ChessMove, isOpponent: boolean): void {
 	const position = store.position();
 
 	patchState(
@@ -89,9 +82,6 @@ function commit(
 		(state) => commitPatch(state, position, move, isOpponent),
 		(state) => recordMove(state, move),
 	);
-
-	// Read after the patch, so it is the position the move produced that is judged.
-	sound.playMove(store.position(), move);
 }
 
 /**
@@ -129,12 +119,12 @@ function playScripted(context: PlaybackContext): void {
  * left to parse.
  */
 function land(context: PlaybackContext, move: ChessMove | undefined): void {
-	const { store, sound } = context;
+	const { store } = context;
 
 	patchState(store, { announced: undefined });
 
 	if (undefined !== move) {
-		commit(store, sound, move, store.position().turn !== store.playerColor());
+		commit(store, move, store.position().turn !== store.playerColor());
 	}
 
 	const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
@@ -180,19 +170,18 @@ function createContext(store: PlaybackStore): PlaybackContext {
 	return {
 		store,
 		scheduled,
-		sound: inject(SoundService),
 		speed: inject(BoardPreferenceService).moveSpeed,
 	};
 }
 
 function buildMethods(context: PlaybackContext) {
-	const { store, sound, scheduled } = context;
+	const { store, scheduled } = context;
 
 	return {
 		outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
 
 		commit: (move: ChessMove, isOpponent: boolean): void => {
-			commit(store, sound, move, isOpponent);
+			commit(store, move, isOpponent);
 		},
 
 		playScripted: (): void => {

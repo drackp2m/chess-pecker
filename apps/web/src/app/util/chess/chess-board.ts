@@ -1,11 +1,13 @@
 import { BOARD_SIZE } from '@app/definition/chess.constant';
 import {
 	CastlingRights,
+	CastlingSide,
 	ChessMove,
 	ChessPosition,
 	Piece,
 	Square,
 } from '@app/definition/chess.type';
+import { ChessCastling } from '@app/util/chess/chess-castling';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessSquare } from '@app/util/chess/chess-square';
 
@@ -112,14 +114,12 @@ export abstract class ChessBoard {
 	private static moveCastlingRook(
 		board: (Piece | undefined)[],
 		kingTo: number,
-		side: 'king' | 'queen',
+		side: CastlingSide,
 	): void {
-		const row = ChessSquare.rowOf(kingTo);
-		const rookFrom = row * BOARD_SIZE + ('king' === side ? 7 : 0);
-		const rookTo = row * BOARD_SIZE + ('king' === side ? 5 : 3);
+		const rook = ChessCastling.rookMove(kingTo, side);
 
-		board[rookTo] = board[rookFrom];
-		board[rookFrom] = undefined;
+		board[rook.to] = board[rook.from];
+		board[rook.from] = undefined;
 	}
 
 	/** A right disappears as soon as its king or rook leaves — or its rook is captured. */

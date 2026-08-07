@@ -5,10 +5,13 @@
 /.husky
 /.pnpm-store
 /.vscode
+/coverage
 /dist
 /node_modules
+/apps/api/coverage
 /apps/api/dist
 /apps/api/node_modules
 /apps/web/.angular
+/apps/web/coverage
 /apps/web/dist
 /apps/web/node_modules

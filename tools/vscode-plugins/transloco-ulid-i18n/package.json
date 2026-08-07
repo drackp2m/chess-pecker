@@ -1,0 +1,62 @@
+{
+	"name": "transloco-ulid-i18n",
+	"displayName": "Transloco ULID i18n",
+	"description": "Inline translations, hover, go-to-definition and diagnostics for the ULID-based transloco keys",
+	"version": "0.1.1",
+	"private": true,
+	"publisher": "drackp2m",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.90.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"main": "./src/extension.js",
+	"activationEvents": [
+		"onLanguage:typescript",
+		"onLanguage:html"
+	],
+	"contributes": {
+		"commands": [
+			{
+				"command": "translocoUlidI18n.createKey",
+				"title": "i18n: Create translation key",
+				"category": "Transloco ULID i18n"
+			},
+			{
+				"command": "translocoUlidI18n.reload",
+				"title": "i18n: Reload translation index",
+				"category": "Transloco ULID i18n"
+			},
+			{
+				"command": "translocoUlidI18n.toggleInlineText",
+				"title": "i18n: Toggle inline translations",
+				"category": "Transloco ULID i18n"
+			}
+		],
+		"configuration": {
+			"title": "Transloco ULID i18n",
+			"properties": {
+				"translocoUlidI18n.langs": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [],
+					"description": "Languages to resolve. Empty means the defaults from tools/scripts/i18n/config.mjs."
+				},
+				"translocoUlidI18n.inlineText": {
+					"type": "boolean",
+					"default": true,
+					"description": "Render the default language translation in place of every key usage."
+				},
+				"translocoUlidI18n.inlineTextMaxLength": {
+					"type": "number",
+					"default": 60,
+					"description": "Characters shown before the inline translation is ellipsised."
+				}
+			}
+		}
+	}
+}

@@ -1,4 +1,5 @@
-import { ChessMove, Square } from '@app/definition/chess.type';
+import { ChessPosition, Square } from '@app/definition/chess.type';
+import { MoveSound } from '@app/definition/sound.type';
 
 /**
  * How much of the board's movement to animate, from most to least. Each level is a
@@ -23,43 +24,46 @@ export type BoardTransitionKind =
 	| 'played'
 	/** An already played move was replayed by stepping forward. */
 	| 'forward'
-	/** A move was taken back; `from` and `to` are reversed. */
+	/** A move was taken back; its beats run in reverse, and so does each slide. */
 	| 'backward';
 
-/** What the board just did, so it can be animated — or deliberately not. */
-export interface BoardTransition {
+/** One piece on its way across the board. */
+export interface BoardSlideStep {
 	readonly from: Square;
 	/** The square that receives the slide. */
 	readonly to: Square;
-	readonly kind: BoardTransitionKind;
-	/** Identifies this board event, so the same slide never runs twice. */
-	readonly tick: number;
 }
 
 /**
- * Board events so far, counted here rather than in any store on purpose. A slide is
- * keyed by its tick, and a piece that is handed the key of a slide it has already run
- * will not run it again — so a tick may never come round a second time. Every store
- * clears its transition when the board jumps rather than moves (a restart, a rewind,
- * a new game), and a count kept alongside it would be cleared with it: the next move
- * would then be handed tick 1 again, and a piece still standing where an earlier
- * tick 1 had landed would sit there refusing to slide.
+ * One beat of a board event. An ordinary move takes one; the two that move a second
+ * piece take two, castling because the king and the rook travel one after the other,
+ * en passant because the square captured on has to be stepped onto first.
  */
-let lastTick = 0;
+export interface BoardStage {
+	/** Everything that travels together, so a stage of two moves two pieces at once. */
+	readonly slides: readonly BoardSlideStep[];
+	/**
+	 * The board this beat lands on, carried only while another beat follows it. It
+	 * lives no longer than the animation does and reaches neither `positions` nor the
+	 * record; the last beat lands on the position the state itself moved to, which is
+	 * what `undefined` says.
+	 */
+	readonly board: ChessPosition | undefined;
+	/**
+	 * What this beat sounds like as it sets off, so a move that travels two pieces is
+	 * heard twice — the plain clip for the piece that only travels, and what the move
+	 * itself came to for the one that lands it.
+	 */
+	readonly sound: MoveSound;
+	/** Identifies this beat, so the same slide never runs twice. */
+	readonly tick: number;
+}
 
-/** Builds the transition for a board event, under a tick nothing else can hold. */
-export function nextTransition(move: ChessMove, kind: BoardTransitionKind): BoardTransition {
-	// A move being taken back travels the other way, so the squares swap.
-	const isReversed = 'backward' === kind;
-
-	lastTick += 1;
-
-	return {
-		from: isReversed ? move.to : move.from,
-		to: isReversed ? move.from : move.to,
-		kind,
-		tick: lastTick,
-	};
+/** What the board just did, so it can be animated — or deliberately not. */
+export interface BoardTransition {
+	readonly kind: BoardTransitionKind;
+	/** The beats it takes, in the order they are to run. */
+	readonly stages: readonly BoardStage[];
 }
 
 export function shouldAnimate(kind: BoardTransitionKind, setting: MoveAnimation): boolean {
