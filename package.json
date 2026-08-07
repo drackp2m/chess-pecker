@@ -3,8 +3,10 @@
 	"version": "1.6.1",
 	"author": "Marc Jovaní González",
 	"private": true,
-	"packageManager": "pnpm@11.17.0",
+	"packageManager": "pnpm@11.20.0",
 	"scripts": {
+		"dev:api": "pnpm --filter @chesspecker/api start:safari",
+		"dev:web": "pnpm --filter @chesspecker/web start:safari",
 		"lint": "node tools/scripts/lint/lint.mjs --max-warnings 0",
 		"lint:fix": "node tools/scripts/lint/lint.mjs --fix --max-warnings 0 --verbose",
 		"i18n:check": "node tools/scripts/i18n/index.mjs",

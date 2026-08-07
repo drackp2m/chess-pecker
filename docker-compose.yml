@@ -44,6 +44,7 @@ services:
       - api_node_modules:/usr/src/app/apps/api/node_modules
     environment:
       MIKRO_ORM_CLI_CONFIG: src/shared/module/config/mikro-orm.config.ts
+      PNPM_CONFIG_STORE_DIR: /usr/src/app/node_modules/.pnpm-store
       NODE_EXTRA_CA_CERTS: /usr/src/app/.cert/rootCA.pem
       PATH: $PATH:/usr/src/app/node_modules/.bin
       NG_HMR_TEMPLATES: 1
