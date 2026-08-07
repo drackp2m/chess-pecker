@@ -13,7 +13,6 @@ import { AttemptRepository } from '@app/repository/attempt.repository';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { SoundService } from '@app/service/sound.service';
 import { TrainingStore } from '@app/store/training.store';
 import { SOLVE_FLUSH_INTERVAL_MS } from '@app/util/solve-timer';
 
@@ -108,7 +107,6 @@ function configure(
 			{ provide: TrainingRunRepository, useValue: repository },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
-			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
 		],
 	});
 

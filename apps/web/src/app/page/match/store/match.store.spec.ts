@@ -103,7 +103,8 @@ describe('MatchStore', () => {
 
 		store.playNotation('e4');
 
-		expect(store.transition()).toMatchObject({ from: 'e2', to: 'e4', kind: 'played' });
+		expect(store.transition()?.kind).toBe('played');
+		expect(store.transition()?.stages[0]?.slides).toEqual([{ from: 'e2', to: 'e4' }]);
 
 		vi.advanceTimersByTime(OPPONENT_DELAY);
 		store.undoLastMove();

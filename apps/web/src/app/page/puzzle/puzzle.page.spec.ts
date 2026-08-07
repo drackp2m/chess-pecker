@@ -30,7 +30,7 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 					moveInputMethods: signal(MOVE_INPUT_METHODS_ALL),
 				},
 			},
-			{ provide: SoundService, useValue: { playMove: (): void => undefined } },
+			{ provide: SoundService, useValue: { play: (): void => undefined } },
 			{
 				provide: PuzzleImportUseCase,
 				useValue: {

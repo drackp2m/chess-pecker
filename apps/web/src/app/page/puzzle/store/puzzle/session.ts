@@ -1,4 +1,4 @@
-import { BoardTransition, nextTransition } from '@app/definition/board-animation.type';
+import { BoardTransition } from '@app/definition/board-animation.type';
 import { PendingPromotion } from '@app/definition/board-presenter.interface';
 import {
 	ChessMove,
@@ -18,6 +18,7 @@ import {
 	settleClosure,
 } from '@app/definition/puzzle.type';
 import { RecordState, blankRecord, recordStep } from '@app/page/puzzle/store/puzzle/record';
+import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
@@ -265,7 +266,7 @@ export function commitPatch(
 		...extendLine(state, toRecord(position, move, isOpponent), ChessBoard.apply(position, move)),
 		selected: undefined,
 		pendingPromotion: undefined,
-		transition: nextTransition(move, 'played'),
+		transition: nextTransition(position, move, 'played'),
 	};
 }
 

@@ -1,7 +1,6 @@
 import { DestroyRef, Injectable, computed, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
-import { nextTransition } from '@app/definition/board-animation.type';
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { PIECE_LETTER } from '@app/definition/chess.constant';
 import {
@@ -16,6 +15,7 @@ import { ANNOUNCE_DELAY, THINK_DELAY, scaleForSpeed } from '@app/definition/move
 import { ChessOpponentService } from '@app/page/match/service/chess-opponent.service';
 import { buildInitialState, rewindToPlayerTurn } from '@app/page/match/store/match-state';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
@@ -222,7 +222,7 @@ export class MatchStore
 			selected: undefined,
 			pendingPromotion: undefined,
 			notationError: undefined,
-			transition: nextTransition(move, 'played'),
+			transition: nextTransition(position, move, 'played'),
 		});
 
 		this.scheduleOpponentMove();

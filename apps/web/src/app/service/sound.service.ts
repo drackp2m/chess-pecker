@@ -1,6 +1,5 @@
 import { DestroyRef, Injectable, effect, inject, signal } from '@angular/core';
 
-import { ChessMove, ChessPosition } from '@app/definition/chess.type';
 import {
 	DEFAULT_SOUND_ENABLED,
 	MoveSound,
@@ -10,7 +9,6 @@ import {
 } from '@app/definition/sound.type';
 import { Setting } from '@app/model/setting.model';
 import { SettingStore } from '@app/store/setting.store';
-import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 
 /** Gestures that count as permission to start playing audio. */
 const UNLOCK_EVENTS: readonly string[] = ['pointerdown', 'keydown'];
@@ -82,14 +80,10 @@ export class SoundService {
 	}
 
 	/**
-	 * Plays what `move` calls for. `position` is the one where the move is *on* the
-	 * board — after it going forward, before it when a step back takes it off — so
-	 * `position.turn` is the side that received it either way.
+	 * Plays one clip. What a move sounds like is decided where its beats are planned —
+	 * `nextTransition` — because a move that travels two pieces is heard twice, and only
+	 * the board running those beats knows when each of them sets off.
 	 */
-	playMove(position: ChessPosition, move: ChessMove, direction: SoundDirection = 'forward'): void {
-		this.play(SoundService.describe(position, move), direction);
-	}
-
 	play(sound: MoveSound, direction: SoundDirection = 'forward'): void {
 		if (!this.current()) {
 			return;
@@ -100,19 +94,6 @@ export class SoundService {
 		if (undefined !== picked) {
 			this.playSource(picked);
 		}
-	}
-
-	/** Mate outranks check, which outranks a capture; a plain move is what is left. */
-	private static describe(position: ChessPosition, move: ChessMove): MoveSound {
-		if ('checkmate' === ChessMoveGenerator.status(position, [])) {
-			return 'checkmate';
-		}
-
-		if (ChessMoveGenerator.isInCheck(position, position.turn)) {
-			return 'check';
-		}
-
-		return undefined === move.captured ? 'move' : 'capture';
 	}
 
 	/** Fires one decoded clip, once it is known which one. */
