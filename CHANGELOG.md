@@ -1,3 +1,33 @@
+# v1.12.0 (2026-08-07)
+
+## What's Changed
+
+### ✨ Features
+
+- translate dashboard, create script and plugin for i18n with Transloco 🤪 ([8be069d](https://github.com/drackp2m/chess-pecker/commit/8be069d59cdf054de608c6fd81cc574ac81bb7be)) by Marc Jovaní González
+
+### 🎨 Styles
+
+- add two new icons ([cf40ae9](https://github.com/drackp2m/chess-pecker/commit/cf40ae963c0eaaa4a4c05e2bdbc9d457b56657ea)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- rename plugin to transloco-ulid-i18n ([ff13401](https://github.com/drackp2m/chess-pecker/commit/ff1340141c8256a810bfa3c2e886f469b197570c)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- castling and eating on the go have multiple animations ([60c5182](https://github.com/drackp2m/chess-pecker/commit/60c5182880b6d455f1f39afdf149af85170a0993)) by Marc Jovaní González
+
+### 🏗️‍ Build System
+
+- prevent loss progress when puzzle when it is half-closed ([f04e2ca](https://github.com/drackp2m/chess-pecker/commit/f04e2ca36dc074bcad71de4369fd380ba9a9930c)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- fix pnpm store path for devcontainer ([327acd0](https://github.com/drackp2m/chess-pecker/commit/327acd00089dee13ec92cc2ad3537f7a9752ea42)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.11.1...v1.12.0
+
 # v1.11.1 (2026-08-06)
 
 ## What's Changed
