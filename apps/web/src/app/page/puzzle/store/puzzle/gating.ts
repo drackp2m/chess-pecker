@@ -8,7 +8,6 @@ interface PuzzleGatingInput {
 	readonly puzzle: Signal<Puzzle | undefined>;
 	readonly isFreePlay: Signal<boolean>;
 	readonly isBehindLine: Signal<boolean>;
-	readonly isOffScript: Signal<boolean>;
 	readonly isPlayerTurn: Signal<boolean>;
 }
 
@@ -40,13 +39,16 @@ function canGiveUp(store: GatingStore): boolean {
 
 /**
  * What the board still accepts. Nothing here is a preference any more: a miss can
- * always be tried again, off the script both sides are yours, the themes are yours to
- * ask for, and so is the answer once the exercise has been missed.
+ * always be tried again, the themes are yours to ask for, and so is the answer once the
+ * exercise has been missed.
  *
- * The one thing it refuses is a move played into the middle of the line. Stepping back
- * through the exercise is reading it, not resuming it: the plies ahead of the cursor
- * were reached once and are not on offer to be reached differently. Free play is where
- * that is allowed, and it is entered on purpose.
+ * Two things it refuses. A move played into the middle of the line: stepping back
+ * through the exercise is reading it, not resuming it, and the plies ahead of the cursor
+ * were reached once and are not on offer to be reached differently. And a move played
+ * from a position the line has already been refuted on: the wrong move is standing on
+ * the board to be seen and taken back, and the exercise goes on from where it broke,
+ * not from where it strayed to. Free play is where either is allowed, and it is entered
+ * on purpose.
  */
 export function withPuzzleGating() {
 	return signalStoreFeature(
@@ -67,7 +69,7 @@ export function withPuzzleGating() {
 					return true;
 				}
 
-				return !store.isBehindLine() && (store.isOffScript() || store.isPlayerTurn());
+				return !store.isBehindLine() && store.isPlayerTurn();
 			});
 
 			return {

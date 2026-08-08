@@ -313,15 +313,16 @@ export class PuzzleStore
 
 	/**
 	 * Grades the player's move, then lets the opponent answer if it was right. Only a
-	 * move played against the script is graded at all: off it, and in free play, the
-	 * board is a sandbox and nothing there may reach `result`.
+	 * move played against the script is graded at all: in free play the board is a
+	 * sandbox and nothing there may reach `result`, which is also the only place both
+	 * sides are the player's to move.
 	 *
 	 * The move that completes the line is also the one that ends the exercise, whether
 	 * it was found first time or after any number of misses.
 	 */
 	private attemptMove(move: ChessMove): void {
-		if (this.isFreePlay() || this.isOffScript()) {
-			this.playFreely(move);
+		if (this.isFreePlay()) {
+			this.commit(move, this.position().turn !== this.playerColor());
 
 			return;
 		}
@@ -346,16 +347,6 @@ export class PuzzleStore
 		if ('solved' !== outcome) {
 			this.playScripted();
 		}
-	}
-
-	private playFreely(move: ChessMove): void {
-		const isOpponent = this.position().turn !== this.playerColor();
-
-		if (!this.isFreePlay()) {
-			this.enterFreePlay();
-		}
-
-		this.commit(move, isOpponent);
 	}
 
 	/**

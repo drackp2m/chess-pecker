@@ -220,35 +220,30 @@ describe('PuzzleStore', () => {
 		expect(store.isPractice()).toBe(true);
 	});
 
-	it('plays on from a miss as free play, instead of taking the move back', () => {
+	it('locks the board on a miss, instead of playing on from it', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		miss(store);
 
-		// The board is now the opponent's to move, and it is the player who moves it.
-		expect(store.isLocked()).toBe(false);
+		// The board is the opponent's to move, and nobody moves it: the wrong move is
+		// standing there to be seen, and the take-back is what happens next.
+		expect(store.isLocked()).toBe(true);
+		expect(store.canPlay()).toBe(false);
 		expect(store.isPlayerTurn()).toBe(false);
 		expect(store.position().turn).toBe('white');
 
 		store.selectSquare('a2');
 		store.selectSquare('a3');
 
-		expect(store.isFreePlay()).toBe(true);
-		expect(store.history()).toHaveLength(3);
-		expect(store.history().at(-1)?.isOpponent).toBe(true);
-		expect(store.position().turn).toBe('black');
+		expect(store.isFreePlay()).toBe(false);
+		expect(store.history()).toHaveLength(2);
 		expect(store.outcome()).toBe('failed');
 
-		// Illegal moves are still refused: the rook on c2 cannot jump to c8 through c6.
-		store.selectSquare('c2');
-		store.selectSquare('c8');
-
-		expect(store.history()).toHaveLength(3);
-
-		// And the take-back never fires, because the move it was waiting on is buried.
 		vi.advanceTimersByTime(UNDO_TOTAL);
 
-		expect(store.cursor()).toBe(3);
+		expect(store.cursor()).toBe(1);
+		expect(store.mistake()).toBeUndefined();
+		expect(store.canPlay()).toBe(true);
 	});
 
 	it('leaves the exercise exactly as free play found it', () => {
@@ -300,8 +295,8 @@ describe('PuzzleStore', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		miss(store);
-		store.selectSquare('a2');
-		store.selectSquare('a3');
+		store.toggleFreePlay();
+		play(store, 'a2', 'a3');
 
 		expect(store.cursor()).toBe(3);
 
@@ -926,7 +921,13 @@ describe('PuzzleStore', () => {
 			expect(store.result()).toBe('failed');
 			expect(store.isFreePlay()).toBe(false);
 
+			// The refuted move locks the board, so playing on is no way in either.
 			play(store, 'a2', 'a3');
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(store.line()).toHaveLength(6);
+
+			store.toggleFreePlay();
 
 			expect(store.isFreePlay()).toBe(true);
 		});
