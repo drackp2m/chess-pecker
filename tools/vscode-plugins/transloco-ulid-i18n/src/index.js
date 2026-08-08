@@ -13,6 +13,7 @@ class I18nIndex {
 		this.i18nDir = '';
 		this.scopes = new Map();
 		this.patterns = [];
+		this.declaredParams = new Map();
 		this.error = null;
 	}
 
@@ -37,6 +38,13 @@ class I18nIndex {
 		}
 
 		return usages.sort((left, right) => left.start - right.start);
+	}
+
+	paramsOf(scopeName, keyName) {
+		const entry = this.entry(scopeName, keyName);
+		const declared = this.declaredParams.get(entry?.value);
+
+		return undefined === declared ? [] : [...declared].map(([name, type]) => ({ name, type }));
 	}
 
 	keysOf(scopeName) {
@@ -78,6 +86,7 @@ class I18nIndex {
 	async readWorkspace(langsOverride) {
 		const config = await loadModule(this.root, 'config.mjs');
 		const collect = await loadModule(this.root, 'collect.mjs');
+		const params = await loadModule(this.root, 'params.mjs');
 
 		this.toKebabCase = config.toKebabCase;
 		this.patterns = collect.USAGE_PATTERNS;
@@ -88,6 +97,19 @@ class I18nIndex {
 		const scopes = collect.readScopes({ i18nDir: this.i18nDir, langs: this.langs });
 
 		this.scopes = new Map(scopes.map((scope) => [scope.name, this.toScope(scope)]));
+		this.declaredParams = this.readParams(params, scopes);
+	}
+
+	readParams(params, scopes) {
+		const declared = new Map();
+
+		for (const scope of scopes) {
+			for (const [key, fields] of params.readDeclaredParams(params.paramsFile(scope.dir))) {
+				declared.set(key, fields);
+			}
+		}
+
+		return declared;
 	}
 
 	toScope(scope) {

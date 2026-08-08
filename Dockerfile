@@ -55,7 +55,11 @@ RUN git config --global --add safe.directory /usr/src/app
 RUN mkdir /home/node/.gnupg \
 			&& chmod 700 /home/node/.gnupg
 
-CMD ["sh", "-c", "tail -f /dev/null"]
+CMD mkdir -p ~/.vscode-server/extensions \
+			&& rm -f ~/.vscode-server/extensions/drackp2m.transloco-ulid-i18n-* \
+			&& ver=$(node -p "require('./tools/vscode-plugins/transloco-ulid-i18n/package.json').version") \
+			&& ln -sfn "$PWD/tools/vscode-plugins/transloco-ulid-i18n" ~/.vscode-server/extensions/drackp2m.transloco-ulid-i18n-$ver \
+			&& tail -f /dev/null
 
 
 

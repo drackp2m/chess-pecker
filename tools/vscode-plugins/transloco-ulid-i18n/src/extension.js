@@ -3,6 +3,7 @@ const vscode = require('vscode');
 const { Annotations } = require('./annotations');
 const { createKey } = require('./create-key');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
+const { ensureTemplateSetup } = require('./setup');
 
 const { I18nIndex } = require('./index');
 
@@ -73,6 +74,9 @@ function registerCommands(index, annotations) {
 		vscode.commands.registerCommand(
 			'translocoUlidI18n.toggleInlineText',
 			run(() => toggleInlineText(annotations)),
+		),
+		vscode.commands.registerCommand('translocoUlidI18n.ensureTemplateSetup', (uri) =>
+			run(() => ensureTemplateSetup(uri))(),
 		),
 	];
 }

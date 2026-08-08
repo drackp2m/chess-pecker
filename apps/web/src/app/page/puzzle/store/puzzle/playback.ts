@@ -13,6 +13,7 @@ import {
 	ANNOUNCE_DELAY,
 	MoveSpeed,
 	REPLAY_DELAY,
+	RESUME_DELAY,
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
 import { Puzzle, PuzzleClosure, PuzzleOutcome, settleClosure } from '@app/definition/puzzle.type';
@@ -23,6 +24,7 @@ import {
 	describeOutcome,
 } from '@app/page/puzzle/store/puzzle/session';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
@@ -145,6 +147,127 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 	patchState(store, { outcome, closure: landedClosure(store, outcome, wasRevealing) });
 }
 
+/**
+ * Whether a board being come back to has anything of its own to replay. A playback still
+ * in flight is about to paint it, and so is the take-back a refuted move is waiting for:
+ * both are answers to something the player did, and neither may be cut short.
+ */
+function isSettled(store: PlaybackStore): boolean {
+	return !store.isReplaying() && undefined === store.mistake();
+}
+
+/** The move a board picked up again replays, and the line it puts back once it has. */
+interface ReplayBeat {
+	readonly cursor: number;
+	readonly move: ChessMove;
+	readonly played: ChessPosition;
+}
+
+/** The piece that was named sets off, and the line is left exactly where it was found. */
+function landReplay(store: PlaybackStore, beat: ReplayBeat): void {
+	patchState(store, {
+		cursor: beat.cursor,
+		announced: undefined,
+		isReplaying: false,
+		transition: nextTransition(beat.played, beat.move, 'forward'),
+	});
+
+	patchState(store, { outcome: outcomeAt(store, beat.cursor) });
+}
+
+/**
+ * A move the line already holds, shown again: the position is left up long enough to be
+ * read, then the piece lights up on the square it is about to leave, then it travels.
+ * Nothing is committed and nothing is recorded — the move happened once already.
+ */
+function replayBeat(context: PlaybackContext, beat: ReplayBeat): void {
+	const { store, scheduled, speed } = context;
+
+	patchState(store, { isReplaying: true });
+
+	scheduled.run(
+		() => {
+			patchState(store, { announced: beat.move });
+			scheduled.run(
+				() => {
+					landReplay(store, beat);
+				},
+				scaleForSpeed(ANNOUNCE_DELAY, speed()),
+			);
+		},
+		scaleForSpeed(RESUME_DELAY, speed()),
+	);
+}
+
+/**
+ * The restart button. It takes the board back to the position the exercise opened on
+ * and replays the opponent's first move onto it, and that is all it does: the line is
+ * left standing to its full length, so everything that was solved is still there to be
+ * stepped back up to. Nothing may be played until the cursor gets there.
+ *
+ * A line with no opening move in it yet is one the exercise has not begun on, so there
+ * the first move is played for real instead of shown again.
+ */
+function rewindToStart(context: PlaybackContext): void {
+	const { store, scheduled } = context;
+	const move = store.line()[0];
+	const played = store.positions()[0];
+
+	scheduled.cancel();
+	patchState(store, {
+		cursor: 0,
+		announced: undefined,
+		selected: undefined,
+		pendingPromotion: undefined,
+		transition: undefined,
+		isRevealing: false,
+	});
+
+	if (undefined === move || undefined === played) {
+		playScripted(context);
+
+		return;
+	}
+
+	replayBeat(context, { cursor: 1, move, played });
+}
+
+/**
+ * Plays the last move of the visible line over again, for a board that is being come back
+ * to rather than played on — the line as the cursor leaves it, never whatever the last
+ * thing done to the board happened to be. A rewind is a way of looking at the line, not a
+ * move in it, and looking at it is not something to be shown a second time.
+ *
+ * Nothing moved on the player's account here, so it is played the way the opponent's own
+ * moves are: the position is left up long enough to be read, then the piece lights up on
+ * the square it is about to leave, then it travels.
+ *
+ * Standing the line back on the board that move was played from is a beat of the
+ * animation and nothing else — the cursor ends exactly where it was found, and the record
+ * never hears about it.
+ */
+function replayLastMove(context: PlaybackContext): void {
+	const { store, scheduled } = context;
+	const cursor = store.cursor();
+	const move = store.line()[cursor - 1];
+	const played = store.positions()[cursor - 1];
+
+	// The beat the board was left standing on is dropped either way: it is over, and a
+	// board coming back must not run it again on its way in.
+	if (undefined === move || undefined === played || !isSettled(store)) {
+		patchState(store, { transition: undefined });
+
+		return;
+	}
+
+	// Stand the line back on the board the move was played from, so the piece that is
+	// named is still on the square it is about to leave.
+	scheduled.cancel();
+	patchState(store, { cursor: cursor - 1, announced: undefined, transition: undefined });
+
+	replayBeat(context, { cursor, move, played });
+}
+
 /** Leaves the refuted move up long enough to be seen, then takes it back. */
 function scheduleUndo(context: PlaybackContext, undo: () => void): void {
 	const { store, scheduled, speed } = context;
@@ -174,8 +297,8 @@ function createContext(store: PlaybackStore): PlaybackContext {
 	};
 }
 
-function buildMethods(context: PlaybackContext) {
-	const { store, scheduled } = context;
+function buildCoreMethods(context: PlaybackContext) {
+	const { store } = context;
 
 	return {
 		outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
@@ -188,6 +311,20 @@ function buildMethods(context: PlaybackContext) {
 			playScripted(context);
 		},
 
+		replayLastMove: (): void => {
+			replayLastMove(context);
+		},
+
+		rewindToStart: (): void => {
+			rewindToStart(context);
+		},
+	};
+}
+
+function buildTimerMethods(context: PlaybackContext) {
+	const { store, scheduled } = context;
+
+	return {
 		settleScripted: (): void => {
 			if (store.isReplaying()) {
 				scheduled.flush();
@@ -210,10 +347,18 @@ function buildMethods(context: PlaybackContext) {
 	};
 }
 
+function buildMethods(context: PlaybackContext) {
+	return {
+		...buildCoreMethods(context),
+		...buildTimerMethods(context),
+	};
+}
+
 /**
  * Everything the board plays by itself, on a timer: the opponent's scripted replies,
- * the solution when it is asked for, and the take-back of a refuted move. The store
- * decides *when* any of it happens; this decides how it looks while it does.
+ * the solution when it is asked for, the take-back of a refuted move, and the move the
+ * line is standing on when an exercise is picked up again. The store decides *when* any
+ * of it happens; this decides how it looks while it does.
  */
 export function withPuzzlePlayback() {
 	return signalStoreFeature(

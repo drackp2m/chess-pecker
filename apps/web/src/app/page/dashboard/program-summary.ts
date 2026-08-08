@@ -5,7 +5,7 @@ import type {
 } from '@chesspecker/api-definitions';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
-import { I18n } from '@app/i18n';
+import { I18n, i18nRef } from '@app/i18n';
 
 export interface ProgramSummaryRow {
 	readonly key: string;
@@ -68,6 +68,10 @@ interface ProgramStageSummary {
 	readonly text: TranslationRef;
 }
 
+// FixMe => Record<…, string> widens every value to string, so these four maps bypass I18nParamsArg
+// and the keys they hold can drift out of params.ts unnoticed. Needs `satisfies` instead of the type
+// annotation, which then exposes toStageSummary's partial params (it fills solved/total/percentage
+// itself) — that call needs its own signature first.
 const ROUND_STAGE: Record<CalibrationRoundProgress['kind'], string> = {
 	scan: I18n.common.SCAN,
 	refine: I18n.common.REFINE,
@@ -108,7 +112,7 @@ const toRoundRow = (round: CalibrationRoundProgress): ProgramSummaryRow => ({
 /** A cycle is long enough that how far into it you are matters as much as how it went. */
 const toCycleRow = (cycle: CycleProgress): ProgramSummaryRow => ({
 	key: `cycle-${cycle.uuid}`,
-	stage: { key: I18n.common.CYCLE, params: { index: cycle.index } },
+	stage: i18nRef(I18n.common.CYCLE, { index: cycle.index }),
 	stageDetail: '',
 	solved: ratio(cycle.solved, cycle.total),
 	result: { key: CYCLE_RESULT[cycle.status] },

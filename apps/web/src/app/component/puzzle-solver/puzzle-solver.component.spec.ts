@@ -12,6 +12,7 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
+import { NAV_LABELS, NAV_ORDER, NavControl, navControls } from '@app/testing/puzzle-store.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 const PUZZLE: Puzzle = {
@@ -101,6 +102,22 @@ function createHost() {
 		themes(): string[] {
 			return [...element.querySelectorAll('.theme')].map((item) => item.textContent);
 		},
+
+		advance(duration: number): void {
+			vi.advanceTimersByTime(duration);
+			fixture.detectChanges();
+		},
+
+		/** The line controls the player can actually press, read off the rendered row. */
+		enabledNav(): NavControl[] {
+			fixture.detectChanges();
+
+			return NAV_ORDER.filter((control) => {
+				const selector = `[aria-label="${NAV_LABELS[control]}"]`;
+
+				return false === element.querySelector<HTMLButtonElement>(selector)?.disabled;
+			});
+		},
 	};
 }
 
@@ -168,6 +185,47 @@ describe('PuzzleSolverComponent', () => {
 		host.click('Next exercise');
 
 		expect(host.stepped).toEqual(['previous', 'next']);
+	});
+
+	/**
+	 * The store decides what may be pressed; the row only paints it. Every state here is
+	 * checked twice — against the buttons and against `navControls`, which is what the
+	 * store's own specs read — so neither side can drift away from the other.
+	 */
+	it('gates the line controls on what the store says, and only on that', () => {
+		const host = createHost();
+
+		host.open();
+
+		expect(host.enabledNav()).toEqual(['restart', 'back']);
+		expect(navControls(host.store)).toEqual(['restart', 'back']);
+
+		host.click('Step back one move');
+
+		// The opening position: there is nowhere to go back to, and no line to restart.
+		expect(host.enabledNav()).toEqual(['forward']);
+		expect(navControls(host.store)).toEqual(['forward']);
+
+		host.click('Step forward one move');
+		host.store.selectSquare('b2');
+		host.store.selectSquare('b1');
+		host.advance(1500);
+
+		expect(host.store.cursor()).toBe(3);
+		expect(host.enabledNav()).toEqual(['restart', 'back']);
+
+		host.click('Restart exercise');
+
+		// Mid-replay nothing is pressable, and the cursor is on the opening position.
+		expect(host.enabledNav()).toEqual([]);
+		expect(navControls(host.store)).toEqual([]);
+
+		host.advance(1500);
+
+		// And the line the restart left standing is there to be walked back up.
+		expect(host.store.cursor()).toBe(1);
+		expect(host.enabledNav()).toEqual(['restart', 'back', 'forward']);
+		expect(navControls(host.store)).toEqual(['restart', 'back', 'forward']);
 	});
 
 	it('drives the shared store from the line controls', () => {

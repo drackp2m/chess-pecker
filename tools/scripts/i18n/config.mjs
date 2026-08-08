@@ -32,6 +32,5 @@ export function parseArgs(argv) {
 		...(value('--source') ? { sourceDirs: value('--source').split(',').filter(Boolean) } : {}),
 		...(langs?.length ? { langs, defaultLang: langs[0] } : {}),
 		fix: argv.includes('--fix'),
-		prune: argv.includes('--prune'),
 	};
 }

@@ -50,9 +50,17 @@ export class TrainingSolveSession {
 		});
 	}
 
+	/**
+	 * The board outlives the page it is drawn on, so an exercise picked up again is the
+	 * one that was left — cursor, line and all. What it must not be is the beat it was
+	 * left mid-way through: the board is redrawn from scratch here, and a rewind still
+	 * standing in it would be run again as if it had just been asked for. It is replayed
+	 * from the line instead, which is what the position on screen was arrived at by.
+	 */
 	async open(): Promise<void> {
 		if (undefined !== this.slot && !this.run.isDone()) {
 			this.resume();
+			this.board.replayLastMove();
 
 			return;
 		}

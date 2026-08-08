@@ -1,8 +1,20 @@
+import { readBarrel } from './collect.mjs';
 import { isUlid, toPascalCase } from './config.mjs';
+import { buildScopeParams, entryLineOf, paramsName } from './params.mjs';
 
 const PARAM_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
+const PARAMS = 'params';
 
-const finding = (type, scope, file, message, line = null) => ({ type, scope, file, message, line });
+const finding = (type, scope, file, message, where = {}) => ({
+	type,
+	scope,
+	file,
+	message,
+	line: where.line ?? null,
+	col: where.col ?? null,
+	lang: where.lang ?? null,
+	column: where.column ?? null,
+});
 
 const paramsOf = (value) => new Set([...String(value).matchAll(PARAM_PATTERN)].map(([, n]) => n));
 
@@ -15,9 +27,9 @@ function checkLangFiles(scope, langs) {
 		const { file, exists, error } = scope.translations.get(lang);
 
 		if (!exists) {
-			findings.push(finding('missing-lang-file', scope.name, file, 'file not found'));
+			findings.push(finding('missing-lang-file', scope.name, file, 'file not found', { lang }));
 		} else if (error) {
-			findings.push(finding('invalid-json', scope.name, file, error));
+			findings.push(finding('invalid-json', scope.name, file, error, { lang }));
 		}
 	}
 
@@ -47,21 +59,22 @@ function checkStructure(scope, langs) {
 function checkKeys(scope, seenUlids) {
 	const findings = [];
 
-	for (const { name, value, ulid, line } of scope.keys.entries) {
+	for (const { name, value, ulid, line, col } of scope.keys.entries) {
 		const previous = seenUlids.get(ulid);
+		const at = { line, col };
 
 		if (!isUlid(ulid)) {
 			findings.push(
-				finding('invalid-ulid', scope.name, scope.keysFile, `${name} = "${value}"`, line),
+				finding('invalid-ulid', scope.name, scope.keysFile, `${name} = "${value}"`, at),
 			);
 		} else if (value !== expectedValue(scope, ulid)) {
 			const message = `${name} = "${value}", expected "${expectedValue(scope, ulid)}"`;
 
-			findings.push(finding('bad-scope-prefix', scope.name, scope.keysFile, message, line));
+			findings.push(finding('bad-scope-prefix', scope.name, scope.keysFile, message, at));
 		} else if (previous) {
 			const message = `${name} reuses the ULID of ${previous}`;
 
-			findings.push(finding('duplicate-ulid', scope.name, scope.keysFile, message, line));
+			findings.push(finding('duplicate-ulid', scope.name, scope.keysFile, message, at));
 		} else {
 			seenUlids.set(ulid, `${scope.name}.${name}`);
 		}
@@ -70,72 +83,135 @@ function checkKeys(scope, seenUlids) {
 	return findings;
 }
 
-function checkDeclared(declared, file, data, scopeName) {
+function positionOf(text, ulid) {
+	const lines = String(text ?? '').split('\n');
+	const line = lines.findIndex((content) => content.includes(`"${ulid}"`));
+
+	return -1 === line ? {} : { line: line + 1, col: lines[line].indexOf(`"${ulid}"`) + 1 };
+}
+
+// Nothing to point at in the file that lacks the entry, so the location is the
+// one the check read it from: the default language, or keys.ts when that one is
+// missing it too.
+function missingAt(scope, entry, source) {
+	if (source?.data && entry.ulid in source.data) {
+		return { file: source.file, ...positionOf(source.text, entry.ulid) };
+	}
+
+	return { file: scope.keysFile, line: entry.line, col: entry.col };
+}
+
+function checkDeclared(scope, translation, lang, source) {
 	const findings = [];
 
-	for (const [ulid, name] of declared) {
-		if (!(ulid in data)) {
-			findings.push(finding('missing-translation', scopeName, file, `${name} (${ulid})`));
-		} else if ('' === String(data[ulid]).trim()) {
-			findings.push(finding('empty-translation', scopeName, file, `${name} (${ulid})`));
+	for (const entry of scope.keys.entries) {
+		const label = `${entry.name} (${entry.ulid})`;
+		const value = translation.data[entry.ulid];
+
+		if (undefined === value) {
+			const at = missingAt(scope, entry, source);
+			const message = `${label} has no "${lang}" entry`;
+
+			findings.push(finding('missing-translation', scope.name, at.file, message, { ...at, lang }));
+		} else if ('' === String(value).trim()) {
+			const at = { ...positionOf(translation.text, entry.ulid), lang };
+
+			findings.push(finding('empty-translation', scope.name, translation.file, label, at));
 		}
 	}
 
 	return findings;
 }
 
-function checkOrphans(declared, file, data, scopeName) {
+function checkOrphans(declared, { file, data, text }, lang, scopeName) {
 	return Object.keys(data)
 		.filter((ulid) => !declared.has(ulid))
-		.map((ulid) => finding('orphan-translation', scopeName, file, `${ulid} is not declared`));
-}
-
-function checkTranslations(scope, langs) {
-	const declared = new Map(scope.keys.entries.map(({ ulid, name }) => [ulid, name]));
-	const findings = [];
-
-	for (const lang of langs) {
-		const { file, data } = scope.translations.get(lang);
-
-		if (data) {
-			findings.push(...checkDeclared(declared, file, data, scope.name));
-			findings.push(...checkOrphans(declared, file, data, scope.name));
-		}
-	}
-
-	return findings;
-}
-
-function checkUsage(scope, usages) {
-	return scope.keys.entries
-		.filter(({ name }) => !usages.has(`${scope.name}:${name}`))
-		.map(({ name, line }) =>
-			finding('unused-key', scope.name, scope.keysFile, `${name} is never referenced`, line),
+		.map((ulid) =>
+			finding('orphan-translation', scopeName, file, `${ulid} is not declared`, {
+				...positionOf(text, ulid),
+				lang,
+			}),
 		);
 }
 
-function comparePairs(base, data, file, scopeName) {
+function checkTranslations(scope, langs, defaultLang) {
+	const declared = new Set(scope.keys.entries.map(({ ulid }) => ulid));
+	const source = scope.translations.get(defaultLang);
 	const findings = [];
 
-	for (const [ulid, value] of Object.entries(data)) {
+	for (const lang of langs) {
+		const translation = scope.translations.get(lang);
+		const origin = lang === defaultLang ? null : source;
+
+		if (translation.data) {
+			findings.push(...checkDeclared(scope, translation, lang, origin));
+			findings.push(...checkOrphans(declared, translation, lang, scope.name));
+		}
+	}
+
+	return findings;
+}
+
+function checkUsage(scope, usages, commented) {
+	return scope.keys.entries
+		.filter(({ name }) => !usages.has(`${scope.name}:${name}`))
+		.map(({ name, line, col }) => {
+			const at = { line, col };
+
+			if (commented.has(`${scope.name}:${name}`)) {
+				const message = `${name} is only referenced from a comment`;
+
+				return finding('commented-usage', scope.name, scope.keysFile, message, at);
+			}
+
+			return finding('unused-key', scope.name, scope.keysFile, `${name} is never referenced`, at);
+		});
+}
+
+const listOf = (names) => `{{ ${names.join(' }}, {{ ')} }}`;
+
+function comparePair(base, value, ulid) {
+	const expected = paramsOf(base);
+	const actual = paramsOf(value);
+	const dropped = [...expected].filter((name) => !actual.has(name));
+	const added = [...actual].filter((name) => !expected.has(name));
+
+	return [
+		...(dropped.length ? [`${ulid} drops ${listOf(dropped)}`] : []),
+		...(added.length ? [`${ulid} adds ${listOf(added)}`] : []),
+	];
+}
+
+// The declaration of that key when there is one; the translation that diverges
+// when the scope has no params file to point at.
+function mismatchAt(scope, params, translation, ulid) {
+	if (params.exists) {
+		return { file: params.file, ...entryLineOf(params.current, expectedValue(scope, ulid)) };
+	}
+
+	return { file: translation.file, ...positionOf(translation.text, ulid) };
+}
+
+function comparePairs(base, translation, lang, { scope, params }) {
+	const findings = [];
+
+	for (const [ulid, value] of Object.entries(translation.data)) {
 		if (!(ulid in base)) {
 			continue;
 		}
 
-		const actual = paramsOf(value);
-		const missing = [...paramsOf(base[ulid])].filter((name) => !actual.has(name));
+		for (const message of comparePair(base[ulid], value, ulid)) {
+			const { file, ...at } = mismatchAt(scope, params, translation, ulid);
+			const where = { ...at, lang, column: PARAMS };
 
-		if (missing.length) {
-			const message = `${ulid} drops {{ ${missing.join(' }}, {{ ')} }}`;
-
-			findings.push(finding('param-mismatch', scopeName, file, message));
+			findings.push(finding('param-mismatch', scope.name, file, `${message} in "${lang}"`, where));
 		}
 	}
 
 	return findings;
 }
 
-function checkParams(scope, langs, defaultLang) {
+function checkParams(scope, langs, defaultLang, params) {
 	const base = scope.translations.get(defaultLang)?.data;
 	const findings = [];
 
@@ -144,19 +220,87 @@ function checkParams(scope, langs, defaultLang) {
 	}
 
 	for (const lang of langs.filter((entry) => entry !== defaultLang)) {
-		const { file, data } = scope.translations.get(lang);
+		const translation = scope.translations.get(lang);
 
-		if (data) {
-			findings.push(...comparePairs(base, data, file, scope.name));
+		if (translation.data) {
+			findings.push(...comparePairs(base, translation, lang, { scope, params }));
 		}
 	}
 
 	return findings;
 }
 
-export function buildFindings({ scopes, usages, langs, defaultLang }) {
-	const seenUlids = new Map();
+function driftFinding(scope, params, { key, removed }) {
+	const entry = scope.keys.entries.find((item) => item.value === key);
+	const message = removed
+		? `${key} is no longer declared`
+		: `${entry?.name ?? key} (${key}) does not match the default language`;
+	const at = { ...entryLineOf(params.current, key), column: PARAMS };
+
+	return finding('stale-params', scope.name, params.file, message, at);
+}
+
+function checkParamsFile(scope, params) {
+	if (!params.exists) {
+		const message = `params.ts not found, ${paramsName(scope.name)} is not generated yet`;
+
+		return params.required
+			? [finding('missing-params-file', scope.name, params.file, message, { column: PARAMS })]
+			: [];
+	}
+
+	if (!params.stale) {
+		return [];
+	}
+
+	if (0 === params.drift.length) {
+		const message = `${paramsName(scope.name)} needs regenerating`;
+
+		return [finding('stale-params', scope.name, params.file, message, { column: PARAMS })];
+	}
+
+	return params.drift.map((item) => driftFinding(scope, params, item));
+}
+
+// Only what the barrel itself can be blamed for: a params file that is not there
+// yet is reported where it is missing, not as an import nobody could have written.
+function barrelFindings(scope, barrel, params) {
 	const findings = [];
+
+	if (!barrel.scopes.has(scope.name)) {
+		const message = `${toPascalCase(scope.name)}I18n is never added to the I18n barrel`;
+
+		findings.push(finding('unregistered-scope', scope.name, barrel.file, message, barrel));
+	}
+
+	if (params.exists && !barrel.params.has(paramsName(scope.name))) {
+		const message = `${paramsName(scope.name)} is never added to the I18nParams union`;
+		const at = { ...barrel.paramsAt, column: PARAMS };
+
+		findings.push(finding('unregistered-params', scope.name, barrel.file, message, at));
+	}
+
+	return findings;
+}
+
+function checkBarrel(scopes, barrel, paramsOfScope) {
+	if (!barrel.exists) {
+		return [finding('missing-barrel', 'all', barrel.file, 'index.ts not found')];
+	}
+
+	return scopes
+		.filter((scope) => scope.keys)
+		.flatMap((scope) => barrelFindings(scope, barrel, paramsOfScope.get(scope.name)));
+}
+
+export function buildFindings({ scopes, usages, commented, langs, defaultLang, i18nDir }) {
+	const seenUlids = new Map();
+	const paramsOfScope = new Map(
+		scopes
+			.filter((scope) => scope.keys)
+			.map((scope) => [scope.name, buildScopeParams(scope, defaultLang)]),
+	);
+	const findings = checkBarrel(scopes, readBarrel(i18nDir), paramsOfScope);
 
 	for (const scope of scopes) {
 		findings.push(...checkStructure(scope, langs));
@@ -165,10 +309,13 @@ export function buildFindings({ scopes, usages, langs, defaultLang }) {
 			continue;
 		}
 
+		const params = paramsOfScope.get(scope.name);
+
 		findings.push(...checkKeys(scope, seenUlids));
-		findings.push(...checkTranslations(scope, langs));
-		findings.push(...checkUsage(scope, usages));
-		findings.push(...checkParams(scope, langs, defaultLang));
+		findings.push(...checkTranslations(scope, langs, defaultLang));
+		findings.push(...checkUsage(scope, usages, commented));
+		findings.push(...checkParams(scope, langs, defaultLang, params));
+		findings.push(...checkParamsFile(scope, params));
 	}
 
 	return findings;

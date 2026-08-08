@@ -1,132 +1,34 @@
-import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BoardTransition, BoardTransitionKind } from '@app/definition/board-animation.type';
-import { ChessPosition, Square } from '@app/definition/chess.type';
-import { DEFAULT_MOVE_SPEED, MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
-import { PuzzleEvent } from '@app/definition/puzzle.type';
+import { Square } from '@app/definition/chess.type';
+import {
+	ANNOUNCE_DELAY,
+	DEFAULT_MOVE_SPEED,
+	RESUME_DELAY,
+	scaleForSpeed,
+} from '@app/definition/move-speed.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
-import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
-import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
-import { ChessBoard } from '@app/util/chess/chess-board';
+import {
+	ALT_MATE,
+	FIVE_PLY,
+	HEADER,
+	MATE_IN_3,
+	MATE_IN_3_FEN,
+	REPLAY_PLY,
+	REPLAY_TOTAL,
+	SHORT,
+	UNDO_TOTAL,
+	configure,
+	createStore,
+	miss,
+	play,
+	playFivePlyLine,
+	replayRecord,
+	snapshot,
+} from '@app/testing/puzzle-store.harness';
 import { ChessFen } from '@app/util/chess/chess-fen';
-import { ChessNotation } from '@app/util/chess/chess-notation';
-
-const HEADER = 'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor';
-const MATE_IN_3 =
-	'JOGv3,5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27,f1f8 b2b1 b3d1 b1d1 f8f1 d1f1,536,100,2178,backRankMate endgame long mate mateIn3,https://lichess.org/fFWULcre#53,500-599';
-const MATE_IN_3_FEN = '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27';
-const SHORT =
-	'ABC12,4k3/8/8/8/8/8/R7/4K2R w - - 0 1,h1h5 e8d8 a2a8,900,90,10,mate mateIn1,https://example.org,900-999';
-/** The script walks to mate with Qg4 first, but Qg7 mates straight away. */
-const ALT_MATE =
-	'ALT99,7k/p7/7K/8/8/8/8/R5Q1 b - - 0 1,a7a6 g1g4 a6a5 g4g7,700,80,50,mate mateIn2,https://example.org,700-799';
-
-/** Long enough for both beats of the replay: the piece lights up, then it moves. */
-const REPLAY_TOTAL = 1500;
-/** One ply of it, so a reveal can be watched a move at a time. */
-const REPLAY_PLY = 800;
-/** Long enough for the refuted move to be taken back on its own. */
-const UNDO_TOTAL = 1000;
-
-/** Imports go nowhere here: persistence is the library store's own concern. */
-function createImportStub(): Partial<PuzzleImportUseCase> {
-	return {
-		import: (name, puzzles) => Promise.resolve({ uuid: name, name, puzzles }),
-		findLast: () => Promise.resolve(undefined),
-	};
-}
-
-/**
- * Every settings-backed service is stubbed whole, so the store is tested against fixed
- * preferences rather than against IndexedDB — and so no test needs an `AudioContext`.
- */
-function configure(speed: MoveSpeed = DEFAULT_MOVE_SPEED): PuzzleStore {
-	TestBed.configureTestingModule({
-		providers: [
-			PuzzleLibraryStore,
-			PuzzleStore,
-			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(speed) } },
-			{ provide: PuzzleImportUseCase, useValue: createImportStub() },
-		],
-	});
-
-	return TestBed.inject(PuzzleStore);
-}
-
-function createStore(csv: string, speed: MoveSpeed = DEFAULT_MOVE_SPEED): PuzzleStore {
-	const store = configure(speed);
-
-	store.loadCsv(csv, 'Spec set');
-	vi.advanceTimersByTime(REPLAY_TOTAL * 2);
-
-	return store;
-}
-
-function play(store: PuzzleStore, from: Square, to: Square): void {
-	store.selectSquare(from);
-	store.selectSquare(to);
-}
-
-/** The first solving move of `MATE_IN_3` is Rb1+; Rc2 is a legal move that is not it. */
-function miss(store: PuzzleStore): void {
-	play(store, 'b2', 'c2');
-}
-
-function playFivePlyLine(store: PuzzleStore): void {
-	play(store, 'b2', 'b1');
-	vi.advanceTimersByTime(REPLAY_TOTAL);
-	play(store, 'b1', 'd1');
-	vi.advanceTimersByTime(REPLAY_TOTAL);
-}
-
-function snapshot(store: PuzzleStore) {
-	return { positions: store.positions(), line: store.line(), cursor: store.cursor() };
-}
-
-function describeLine(state: ReturnType<typeof snapshot>) {
-	return {
-		fens: state.positions.map((position) => ChessFen.serialize(position)),
-		line: state.line.map((move) => ChessNotation.describeLong(move)),
-		cursor: state.cursor,
-	};
-}
-
-function replayRecord(fen: string, events: readonly PuzzleEvent[]) {
-	const start = ChessFen.parse(fen);
-	let positions: ChessPosition[] = [start];
-	let line: string[] = [];
-	let cursor = 0;
-
-	for (const event of events) {
-		if ('number' === typeof event) {
-			if (0 === event) {
-				positions = [start];
-				line = [];
-				cursor = 0;
-			} else {
-				cursor += event;
-			}
-
-			continue;
-		}
-
-		const position = positions[cursor];
-		const move = undefined === position ? undefined : ChessNotation.parse(position, event);
-
-		if (undefined === position || undefined === move) {
-			throw new Error(`the record does not replay: ${event} at ply ${cursor.toString()}`);
-		}
-
-		positions = [...positions.slice(0, cursor + 1), ChessBoard.apply(position, move)];
-		line = [...line.slice(0, cursor), event];
-		cursor = line.length;
-	}
-
-	return { fens: positions.map((position) => ChessFen.serialize(position)), line, cursor };
-}
 
 /** What the board is about to slide, flattened to the one beat a plain move takes. */
 interface FlatSlide {
@@ -523,6 +425,84 @@ describe('PuzzleStore', () => {
 		expect(slideOf(store.transition())).toMatchObject({ from: 'b3', to: 'd1', kind: 'forward' });
 	});
 
+	/**
+	 * The board is redrawn from scratch when the exercise is picked up again, so what it
+	 * shows is the line it was left on — and a rewind is how that line came to be looked
+	 * at from there, not something to be watched happening a second time.
+	 */
+	it('replays the move the line stands on, not the last thing done to the board', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		playFivePlyLine(store);
+		store.stepBackward();
+
+		expect(slideOf(store.transition())).toMatchObject({ kind: 'backward' });
+
+		const recorded = store.record();
+
+		store.replayLastMove();
+
+		// The take-back is off the board at once, and the line stands where the move it
+		// is about to run was played from.
+		expect(store.transition()).toBeUndefined();
+		expect(store.announcedMove()).toBeUndefined();
+		expect(store.cursor()).toBe(3);
+
+		vi.advanceTimersByTime(scaleForSpeed(RESUME_DELAY, DEFAULT_MOVE_SPEED));
+
+		// Nothing here was asked for just now, so the piece is named before it travels.
+		expect(store.announcedMove()).toMatchObject({ from: 'b1', to: 'd1' });
+		expect(store.cursor()).toBe(3);
+
+		vi.advanceTimersByTime(scaleForSpeed(ANNOUNCE_DELAY, DEFAULT_MOVE_SPEED));
+
+		expect(store.announcedMove()).toBeUndefined();
+		expect(store.cursor()).toBe(4);
+		expect(slideOf(store.transition())).toMatchObject({ from: 'b1', to: 'd1', kind: 'forward' });
+		// None of it happened to the line, so none of it is in the record.
+		expect(store.record()).toEqual(recorded);
+	});
+
+	it('takes no input while it replays the move the exercise was left on', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		playFivePlyLine(store);
+		store.replayLastMove();
+
+		expect(store.isBusy()).toBe(true);
+
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.isBusy()).toBe(false);
+		expect(store.cursor()).toBe(5);
+	});
+
+	it('leaves a refuted move to the take-back it is already waiting for', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
+		store.replayLastMove();
+
+		// Dropped all the same: the move is on screen already and the board comes back
+		// to it standing there.
+		expect(store.transition()).toBeUndefined();
+
+		vi.advanceTimersByTime(UNDO_TOTAL);
+
+		expect(store.mistake()).toBeUndefined();
+		expect(store.cursor()).toBe(1);
+	});
+
+	it('has nothing to replay before the exercise has moved at all', () => {
+		const store = configure();
+
+		store.replayLastMove();
+		vi.advanceTimersByTime(REPLAY_TOTAL);
+
+		expect(store.transition()).toBeUndefined();
+		expect(store.cursor()).toBe(0);
+	});
+
 	it('gives every board event a tick of its own, whatever the exercise did before', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 		const log = createSlideLog(store);
@@ -552,14 +532,20 @@ describe('PuzzleStore', () => {
 				store.restart();
 				vi.advanceTimersByTime(REPLAY_TOTAL);
 			},
+			// The restart left the line standing, so the board has to be walked back up
+			// to it before a piece can be moved again.
 			(): void => {
-				miss(store);
+				store.stepForward();
+				store.stepForward();
+			},
+			(): void => {
+				play(store, 'b1', 'c1');
 			},
 			(): void => {
 				vi.advanceTimersByTime(UNDO_TOTAL);
 			},
 			(): void => {
-				miss(store);
+				play(store, 'b1', 'c1');
 			},
 			(): void => {
 				vi.advanceTimersByTime(UNDO_TOTAL);
@@ -601,8 +587,9 @@ describe('PuzzleStore', () => {
 		const reopened = slideOf(store.transition());
 
 		// The same move onto the same square as before, so only the tick tells the two
-		// slides apart — and the miss in between must not have rewound it.
-		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'played' });
+		// slides apart — and the miss in between must not have rewound it. It travels as
+		// a replay and not as a move: the line already had it, and still does.
+		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'forward' });
 		expect(reopened.tick).toBeGreaterThan(opening.tick ?? 0);
 	});
 
@@ -660,31 +647,6 @@ describe('PuzzleStore', () => {
 		expect(store.transition()).toBeUndefined();
 	});
 
-	it('steps backward and forward through the played line', () => {
-		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
-
-		store.selectSquare('b2');
-		store.selectSquare('b1');
-		vi.advanceTimersByTime(REPLAY_TOTAL);
-
-		expect(store.cursor()).toBe(3);
-
-		store.stepBackward();
-		store.stepBackward();
-
-		expect(store.cursor()).toBe(1);
-		expect(store.history()).toHaveLength(1);
-		expect(store.canStepForward()).toBe(true);
-
-		store.stepForward();
-
-		expect(store.cursor()).toBe(2);
-		expect(store.history()).toHaveLength(2);
-
-		// Rewinding never destroys the line.
-		expect(store.line()).toHaveLength(3);
-	});
-
 	it('navigates between exercises and restarts them', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`);
 
@@ -710,8 +672,9 @@ describe('PuzzleStore', () => {
 		store.restart();
 		vi.advanceTimersByTime(REPLAY_TOTAL);
 
+		// Back to the opening move, with everything that was played still standing.
 		expect(store.cursor()).toBe(1);
-		expect(store.line()).toHaveLength(1);
+		expect(store.line()).toHaveLength(3);
 	});
 
 	it('reports an unreadable import', () => {
@@ -950,11 +913,15 @@ describe('PuzzleStore', () => {
 			store.stepForward();
 			store.restart();
 			vi.advanceTimersByTime(REPLAY_TOTAL);
+			store.stepForward();
+			store.stepForward();
+			store.stepForward();
+			store.stepForward();
 
 			expect(store.result()).toBeUndefined();
 			expect(store.isFreePlay()).toBe(false);
 
-			miss(store);
+			play(store, 'd1', 'd2');
 
 			expect(store.result()).toBe('failed');
 			expect(store.isFreePlay()).toBe(false);
@@ -1196,9 +1163,6 @@ describe('PuzzleStore', () => {
 	});
 
 	describe('the solve record', () => {
-		/** The five plies `playFivePlyLine` leaves behind, as the record writes them. */
-		const FIVE_PLY = ['f1f8', 'b2b1', 'b3d1', 'b1d1', 'f8f1'];
-
 		it('is the script and nothing else for a clean solve', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
@@ -1264,36 +1228,6 @@ describe('PuzzleStore', () => {
 			expect(replayRecord(MATE_IN_3_FEN, store.record()).cursor).toBe(1);
 		});
 
-		it('collapses a run of steps only while it keeps going the same way', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
-
-			playFivePlyLine(store);
-			store.stepBackward();
-			store.stepBackward();
-
-			expect(store.record()).toEqual([...FIVE_PLY, -2]);
-
-			// Turning round starts a new run: adding through it would land on a `0`, and
-			// a `0` is a restart.
-			store.stepForward();
-
-			expect(store.record()).toEqual([...FIVE_PLY, -2, 1]);
-		});
-
-		it('tells the restart button apart from stepping all the way back', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
-
-			playFivePlyLine(store);
-			store.restart();
-
-			expect(store.record()).toEqual([...FIVE_PLY, 0]);
-
-			vi.advanceTimersByTime(REPLAY_TOTAL);
-
-			// Reopening replays the opening move, which is a move like any other.
-			expect(store.record()).toEqual([...FIVE_PLY, 0, 'f1f8']);
-		});
-
 		it('keeps a restart made inside an exploration out of the main line', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
@@ -1327,42 +1261,6 @@ describe('PuzzleStore', () => {
 				{ at: 6, events: ['f8f1', -1] },
 				{ at: 6, events: [] },
 			]);
-		});
-
-		it('replays the main line back into the board each exploration started from', () => {
-			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
-			const entries: ReturnType<typeof snapshot>[] = [];
-
-			playFivePlyLine(store);
-			store.stepBackward();
-			store.stepBackward();
-
-			entries.push(snapshot(store));
-			store.toggleFreePlay();
-			play(store, 'a7', 'a6');
-			store.toggleFreePlay();
-
-			store.stepForward();
-			store.restart();
-			vi.advanceTimersByTime(REPLAY_TOTAL);
-
-			entries.push(snapshot(store));
-			store.toggleFreePlay();
-			store.toggleFreePlay();
-
-			const anchors = store.explorations().map((run) => run.at);
-
-			expect(store.record()).toEqual([...FIVE_PLY, -2, 1, 0, 'f1f8']);
-			expect(store.explorations()).toEqual([
-				{ at: 6, events: ['a7a6'] },
-				{ at: 9, events: [] },
-			]);
-
-			for (const [index, entry] of entries.entries()) {
-				expect(replayRecord(MATE_IN_3_FEN, store.record().slice(0, anchors[index]))).toEqual(
-					describeLine(entry),
-				);
-			}
 		});
 	});
 });
