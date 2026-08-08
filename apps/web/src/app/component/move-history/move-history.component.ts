@@ -57,8 +57,9 @@ export class MoveHistoryComponent {
 
 			const element = this.line()?.nativeElement;
 
-			// FixMe => some tests show errors on this line
-			element?.scrollTo({ left: element.scrollWidth });
+			if ('function' === typeof element?.scrollTo) {
+				element.scrollTo({ left: element.scrollWidth });
+			}
 		});
 	}
 }
