@@ -69,6 +69,15 @@ function scriptComputed(store: ScriptInput, puzzle: Signal<Puzzle | undefined>) 
 
 		isFreePlay: computed(() => undefined !== store.freePlay()),
 
+		/**
+		 * The cursor is standing behind everything the exercise has reached, which is the
+		 * solved line and, if there is one, the last move that was tried on the end of it.
+		 * The line from here on is a record of what happened and is not writable: a move
+		 * played into it would drop the plies ahead of the cursor, and those are the ones
+		 * that must never be taken away from the player again.
+		 */
+		isBehindLine: computed(() => store.cursor() < (deviation() ?? store.line().length)),
+
 		/** The position on screen is one the script has nothing to say about. */
 		isOffScript: computed(() => isPastDeviation(deviation(), store.cursor())),
 

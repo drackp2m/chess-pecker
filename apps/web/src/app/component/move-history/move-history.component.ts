@@ -57,6 +57,7 @@ export class MoveHistoryComponent {
 
 			const element = this.line()?.nativeElement;
 
+			// FixMe => some tests show errors on this line
 			element?.scrollTo({ left: element.scrollWidth });
 		});
 	}

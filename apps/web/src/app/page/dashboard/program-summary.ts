@@ -68,6 +68,10 @@ interface ProgramStageSummary {
 	readonly text: TranslationRef;
 }
 
+// FixMe => Record<…, string> widens every value to string, so these four maps bypass I18nParamsArg
+// and the keys they hold can drift out of params.ts unnoticed. Needs `satisfies` instead of the type
+// annotation, which then exposes toStageSummary's partial params (it fills solved/total/percentage
+// itself) — that call needs its own signature first.
 const ROUND_STAGE: Record<CalibrationRoundProgress['kind'], string> = {
 	scan: I18n.common.SCAN,
 	refine: I18n.common.REFINE,

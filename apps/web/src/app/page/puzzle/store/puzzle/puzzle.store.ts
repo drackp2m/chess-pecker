@@ -90,15 +90,27 @@ export class PuzzleStore
 		}
 	}
 
-	/** Same exercise, so what it was graded and closed on survives the reopening. */
+	/**
+	 * Back to the board the exercise opened on. On the main line that is a way of looking
+	 * at it and nothing more — the line is left whole, and the exercise is picked up again
+	 * by stepping forward to where it had got to. An exploration is a sandbox and has
+	 * nothing to protect, so there it still starts the line over.
+	 */
 	restart(): void {
 		const puzzle = this.puzzle();
 		// Read before anything moves, so the restart is written into the record the
 		// exercise already had instead of the blank one reopening it would hand out.
 		const recorded = recordRestart(this.recordState());
 
-		if (undefined === this.freePlay() || undefined === puzzle) {
+		if (undefined === puzzle) {
 			this.open(this.verdict(), recorded);
+
+			return;
+		}
+
+		if (undefined === this.freePlay()) {
+			patchState(this, recorded);
+			this.rewindToStart();
 
 			return;
 		}

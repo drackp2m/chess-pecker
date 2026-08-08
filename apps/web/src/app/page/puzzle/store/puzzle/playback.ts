@@ -171,6 +171,65 @@ function landReplay(store: PlaybackStore, beat: ReplayBeat): void {
 		isReplaying: false,
 		transition: nextTransition(beat.played, beat.move, 'forward'),
 	});
+
+	patchState(store, { outcome: outcomeAt(store, beat.cursor) });
+}
+
+/**
+ * A move the line already holds, shown again: the position is left up long enough to be
+ * read, then the piece lights up on the square it is about to leave, then it travels.
+ * Nothing is committed and nothing is recorded — the move happened once already.
+ */
+function replayBeat(context: PlaybackContext, beat: ReplayBeat): void {
+	const { store, scheduled, speed } = context;
+
+	patchState(store, { isReplaying: true });
+
+	scheduled.run(
+		() => {
+			patchState(store, { announced: beat.move });
+			scheduled.run(
+				() => {
+					landReplay(store, beat);
+				},
+				scaleForSpeed(ANNOUNCE_DELAY, speed()),
+			);
+		},
+		scaleForSpeed(RESUME_DELAY, speed()),
+	);
+}
+
+/**
+ * The restart button. It takes the board back to the position the exercise opened on
+ * and replays the opponent's first move onto it, and that is all it does: the line is
+ * left standing to its full length, so everything that was solved is still there to be
+ * stepped back up to. Nothing may be played until the cursor gets there.
+ *
+ * A line with no opening move in it yet is one the exercise has not begun on, so there
+ * the first move is played for real instead of shown again.
+ */
+function rewindToStart(context: PlaybackContext): void {
+	const { store, scheduled } = context;
+	const move = store.line()[0];
+	const played = store.positions()[0];
+
+	scheduled.cancel();
+	patchState(store, {
+		cursor: 0,
+		announced: undefined,
+		selected: undefined,
+		pendingPromotion: undefined,
+		transition: undefined,
+		isRevealing: false,
+	});
+
+	if (undefined === move || undefined === played) {
+		playScripted(context);
+
+		return;
+	}
+
+	replayBeat(context, { cursor: 1, move, played });
 }
 
 /**
@@ -188,7 +247,7 @@ function landReplay(store: PlaybackStore, beat: ReplayBeat): void {
  * never hears about it.
  */
 function replayLastMove(context: PlaybackContext): void {
-	const { store, scheduled, speed } = context;
+	const { store, scheduled } = context;
 	const cursor = store.cursor();
 	const move = store.line()[cursor - 1];
 	const played = store.positions()[cursor - 1];
@@ -204,25 +263,9 @@ function replayLastMove(context: PlaybackContext): void {
 	// Stand the line back on the board the move was played from, so the piece that is
 	// named is still on the square it is about to leave.
 	scheduled.cancel();
-	patchState(store, {
-		cursor: cursor - 1,
-		announced: undefined,
-		transition: undefined,
-		isReplaying: true,
-	});
+	patchState(store, { cursor: cursor - 1, announced: undefined, transition: undefined });
 
-	scheduled.run(
-		() => {
-			patchState(store, { announced: move });
-			scheduled.run(
-				() => {
-					landReplay(store, { cursor, move, played });
-				},
-				scaleForSpeed(ANNOUNCE_DELAY, speed()),
-			);
-		},
-		scaleForSpeed(RESUME_DELAY, speed()),
-	);
+	replayBeat(context, { cursor, move, played });
 }
 
 /** Leaves the refuted move up long enough to be seen, then takes it back. */
@@ -270,6 +313,10 @@ function buildCoreMethods(context: PlaybackContext) {
 
 		replayLastMove: (): void => {
 			replayLastMove(context);
+		},
+
+		rewindToStart: (): void => {
+			rewindToStart(context);
 		},
 	};
 }
