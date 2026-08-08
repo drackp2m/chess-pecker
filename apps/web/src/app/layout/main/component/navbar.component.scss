@@ -1,11 +1,14 @@
 $items: 5;
 
-.nav {
+.navbar {
 	--items: #{$items};
 	--icon-size: 28px;
-	--indicator-size: 40px;
+	--indicator-size: 54px;
 	--glass-opacity: 45%;
+	--glass-blur: 6px;
+	--glass-blur-active: 12px;
 	--edge-inset: var(--spacing-4);
+	--slot-width: calc((100% - var(--edge-inset) * 2) / var(--items));
 
 	position: relative;
 	flex-shrink: 0;
@@ -19,9 +22,25 @@ $items: 5;
 	}
 
 	.glass {
-		inset-inline: 0;
+		left: calc(var(--edge-inset) + var(--index, 0) * var(--slot-width));
+
+		width: var(--slot-width);
+
 		background-color: rgb(from var(--color-contrast-mid-dark) r g b / var(--glass-opacity));
-		backdrop-filter: blur(6px);
+		backdrop-filter: blur(var(--glass-blur));
+
+		transition:
+			background-color var(--transition-duration) var(--transition-easing),
+			backdrop-filter var(--transition-duration) var(--transition-easing);
+
+		&:nth-of-type(2) {
+			left: 0;
+			width: calc(var(--slot-width) + var(--edge-inset));
+		}
+
+		&:nth-of-type(#{$items + 1}) {
+			width: calc(var(--slot-width) + var(--edge-inset));
+		}
 	}
 
 	.indicator {
@@ -32,7 +51,7 @@ $items: 5;
 		align-items: center;
 		justify-content: center;
 
-		width: calc((100% - var(--edge-inset) * 2) / var(--items));
+		width: var(--slot-width);
 
 		opacity: 1;
 
@@ -42,8 +61,11 @@ $items: 5;
 
 		&::before {
 			content: '';
+
 			aspect-ratio: 1;
 			width: var(--indicator-size);
+			border-radius: 50%;
+
 			background-color: var(--color-accent);
 		}
 	}
@@ -102,8 +124,15 @@ $items: 5;
 	}
 
 	@for $index from 1 through $items {
-		&:has(.item:nth-of-type(#{$index}).active) .indicator {
-			--index: #{$index - 1};
+		&:has(.item:nth-of-type(#{$index}).active) {
+			.indicator {
+				--index: #{$index - 1};
+			}
+
+			.glass:nth-of-type(#{$index + 1}) {
+				background-color: transparent;
+				backdrop-filter: blur(var(--glass-blur-active));
+			}
 		}
 	}
 }
