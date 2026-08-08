@@ -1,3 +1,27 @@
+# v1.13.0 (2026-08-08)
+
+## What's Changed
+
+### ✨ Features
+
+- i18n plugin now support typed params ([b0e339a](https://github.com/drackp2m/chess-pecker/commit/b0e339ae72465a10b3dea450451ac317ea227472)) by Marc Jovaní González
+- improve i18n checker ([71b7be2](https://github.com/drackp2m/chess-pecker/commit/71b7be2efb9a65826b94c5f9265bd07630a7ea4e)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- strong tests for puzzle navigation constraints ([fa8fe36](https://github.com/drackp2m/chess-pecker/commit/fa8fe36f4b2c1baeedb0ff876429777b1ce658b6)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- Plays the correct animation when resuming a game with the cursor back ([3b17f14](https://github.com/drackp2m/chess-pecker/commit/3b17f14c3cbc11866edd975ff69d01fc1bed3b7f)) by Marc Jovaní González
+- trying to fix the audio loss errors for the third time... ([e5c48be](https://github.com/drackp2m/chess-pecker/commit/e5c48be2a9536a3a2396b020af51a4751478c050)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- auto load i18n plugin ([9814981](https://github.com/drackp2m/chess-pecker/commit/98149811b62d22d79722d9e6e14bb2773e493eb6)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.12.0...v1.13.0
+
 # v1.12.0 (2026-08-07)
 
 ## What's Changed
