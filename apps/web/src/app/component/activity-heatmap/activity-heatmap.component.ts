@@ -34,6 +34,11 @@ import {
 	rovingIndex,
 } from '@app/util/roving-focus';
 
+interface MonthMarker {
+	readonly label: string | null;
+	readonly span: string | null;
+}
+
 const DEFAULT_TOTAL_DAYS = 365;
 const DEFAULT_CELL_SIZE = 14;
 const LEGEND_LEVELS = [0, 1, 2, 3, 4] as const;
@@ -68,9 +73,16 @@ export class ActivityHeatmapComponent {
 		monthAbbreviations(this.weekColumns(), this.languageService.selectedLanguage()),
 	);
 
-	readonly lastMonthIndex = computed(() =>
-		this.monthLabels().findLastIndex((label) => null !== label),
-	);
+	readonly monthMarkers = computed<readonly MonthMarker[]>(() => {
+		const labels = this.monthLabels();
+		const last = labels.findLastIndex((label) => null !== label);
+		const trailing = this.weekColumns().length - last;
+
+		return labels.slice(0, last + 1).map((label, index) => ({
+			label,
+			span: index === last ? `span ${trailing.toString()}` : null,
+		}));
+	});
 
 	readonly weekdayLabels = computed<readonly (string | null)[]>(() =>
 		weekdayAbbreviations(this.languageService.selectedLanguage()),

@@ -14,6 +14,8 @@ export class LanguageService {
 
 	private readonly language = signal<Language>(DEFAULT_LANGUAGE);
 
+	private settle!: () => void;
+
 	readonly selectedLanguage = computed(() => this.language());
 
 	/** Resolves once the stored setting decided the language the user actually reads in. */
@@ -51,8 +53,6 @@ export class LanguageService {
 			);
 		}
 	}
-
-	private settle = (): void => undefined;
 
 	private applyLanguage(): void {
 		const language = this.language();

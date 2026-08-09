@@ -20,12 +20,10 @@
 		(touchScrubPin)="onPin($event)"
 	>
 		<div class="heatmap-months">
-			@for (label of monthLabels(); track $index) {
-				<span
-					class="heatmap-month fs-sm color-contrast-mid"
-					[class.is-last]="$index === lastMonthIndex()"
-					>{{ label }}</span
-				>
+			@for (marker of monthMarkers(); track $index) {
+				<span class="heatmap-month fs-sm color-contrast-mid" [style.gridColumnEnd]="marker.span">{{
+					marker.label
+				}}</span>
 			}
 		</div>
 
