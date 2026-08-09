@@ -16,6 +16,7 @@ import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
 import {
 	RecordState,
 	recordEntry,
+	recordHint,
 	recordRestart,
 	recordStep,
 } from '@app/page/puzzle/store/puzzle/record';
@@ -27,7 +28,7 @@ import {
 	isSolution,
 	nextSelection,
 	openPuzzle,
-	restartLinePatch,
+	restartExplorationPatch,
 	restoreFreePlayPatch,
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle/session';
@@ -91,16 +92,20 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Back to the board the exercise opened on. On the main line that is a way of looking
-	 * at it and nothing more — the line is left whole, and the exercise is picked up again
-	 * by stepping forward to where it had got to. An exploration is a sandbox and has
-	 * nothing to protect, so there it still starts the line over.
+	 * Back to the board the exercise opened on. It is a way of looking at the line and
+	 * nothing more — the line is left whole, and the exercise is picked up again by
+	 * stepping forward to where it had got to.
+	 *
+	 * Inside an exploration the line left standing is the main one it was entered from,
+	 * so the sandbox is thrown away and the exercise really does start over; what is put
+	 * back is only what was visible of it, never the actions that got there.
 	 */
 	restart(): void {
 		const puzzle = this.puzzle();
 		// Read before anything moves, so the restart is written into the record the
 		// exercise already had instead of the blank one reopening it would hand out.
 		const recorded = recordRestart(this.recordState());
+		const anchor = this.freePlay();
 
 		if (undefined === puzzle) {
 			this.open(this.verdict(), recorded);
@@ -108,15 +113,12 @@ export class PuzzleStore
 			return;
 		}
 
-		if (undefined === this.freePlay()) {
-			patchState(this, recorded);
-			this.rewindToStart();
-
-			return;
+		if (undefined !== anchor) {
+			patchState(this, restartExplorationPatch(anchor));
 		}
 
-		patchState(this, restartLinePatch(puzzle), recorded);
-		this.playScripted();
+		patchState(this, recorded);
+		this.rewindToStart();
 	}
 
 	/**
@@ -136,13 +138,18 @@ export class PuzzleStore
 		this.playScripted();
 	}
 
-	/** Uncovers the themes. It is help, so it is remembered, but it closes nothing. */
+	/**
+	 * Uncovers the themes. It is help, so it is remembered and written down where it was
+	 * asked for — the main line, or the exploration that was open at the time — but it
+	 * closes nothing. It cannot be asked for at all until the exercise has been looked at
+	 * for `HINT_DELAY_MS`.
+	 */
 	useHint(): void {
 		if (!this.canUseHint()) {
 			return;
 		}
 
-		patchState(this, { hintUsed: true });
+		patchState(this, recordHint(this.recordState()), { hintUsed: true });
 	}
 
 	toggleFreePlay(): void {
@@ -242,6 +249,7 @@ export class PuzzleStore
 		}
 
 		patchState(this, { ...openPuzzle(puzzle), ...recorded, ...verdict });
+		this.armHintGate();
 		this.playScripted();
 	}
 

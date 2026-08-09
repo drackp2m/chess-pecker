@@ -5,6 +5,13 @@ import { ChessNotation } from '@app/util/chess/chess-notation';
 /** What a restart looks like in the record, wherever the board was when it happened. */
 const RESTART = 0;
 
+/**
+ * What asking for the themes looks like. A UCI move is two squares and maybe a promotion
+ * piece, so this can never be read for one, and replaying a record only has to know that
+ * it moves nothing.
+ */
+export const HINT = '?';
+
 /** What a writer reads: the record so far, where it writes, and whether it still may. */
 export interface RecordState extends PuzzleRecord {
 	/** The free-play anchor; while one is standing the exploration is the target. */
@@ -89,6 +96,15 @@ export function recordStep(state: RecordState, step: number): PuzzleRecord {
 
 export function recordRestart(state: RecordState): PuzzleRecord {
 	return record(state, (events) => extend(events, RESTART));
+}
+
+/**
+ * The themes, asked for. It goes wherever the exercise is recording at that moment, so
+ * where it lands is the answer to whether the help was taken on the main line or inside
+ * an exploration — there is nothing else to store.
+ */
+export function recordHint(state: RecordState): PuzzleRecord {
+	return record(state, (events) => extend(events, HINT));
 }
 
 /**

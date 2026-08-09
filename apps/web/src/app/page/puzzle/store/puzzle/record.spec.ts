@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { blankRecord, isUntouchedRecord } from '@app/page/puzzle/store/puzzle/record';
+import { HINT, blankRecord, isUntouchedRecord } from '@app/page/puzzle/store/puzzle/record';
 
 describe('isUntouchedRecord', () => {
 	it('holds for a record nothing has been written into yet', () => {
@@ -17,6 +17,10 @@ describe('isUntouchedRecord', () => {
 
 	it('fails once the cursor has been moved', () => {
 		expect(isUntouchedRecord({ record: ['g8h8', -1], explorations: [] })).toBe(false);
+	});
+
+	it('fails once the hint has been asked for, which is work like any other', () => {
+		expect(isUntouchedRecord({ record: ['g8h8', HINT], explorations: [] })).toBe(false);
 	});
 
 	it('fails once free play has been entered', () => {

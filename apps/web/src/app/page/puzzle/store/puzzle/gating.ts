@@ -13,10 +13,16 @@ interface PuzzleGatingInput {
 
 type GatingStore = StateSignals<PuzzleStoreProps> & PuzzleGatingInput;
 
-/** The hint: whether it is still there to be taken, and what taking it uncovers. */
+/**
+ * The hint: whether it is still there to be taken, and what taking it uncovers. It is
+ * not on offer from the first second — the exercise has to have been looked at for
+ * `HINT_DELAY_MS` before the button does anything at all.
+ */
 function hintComputed(store: GatingStore, isOpen: Signal<boolean>) {
 	return {
-		canUseHint: computed(() => undefined !== store.puzzle() && isOpen() && !store.hintUsed()),
+		canUseHint: computed(
+			() => undefined !== store.puzzle() && isOpen() && !store.hintUsed() && store.hintUnlocked(),
+		),
 
 		/** The themes are the hint, and the exercise ending hands them over anyway. */
 		areThemesShown: computed(() => store.hintUsed() || !isOpen()),

@@ -2,10 +2,12 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { HINT } from '@app/page/puzzle/store/puzzle/record';
 import {
 	BoardReading,
 	FIVE_PLY,
 	HEADER,
+	HINT_TOTAL,
 	LineSnapshot,
 	MATE_IN_3,
 	MATE_IN_3_FEN,
@@ -25,7 +27,11 @@ import {
 const SOLUTION = ['Rxf8', 'Rb1+', 'Bd1', 'Rxd1+', 'Rf1', 'Rxf1#'];
 
 const OPENING = ['f1f8'];
-const LOOKED_BACK = [...FIVE_PLY, -1];
+/** The opening, plus the hint the player takes before touching a piece. */
+const ASKED = [...OPENING, HINT];
+/** The five plies of the script as the record writes them, with the hint inside. */
+const PLAYED = [...ASKED, 'b2b1', 'b3d1', 'b1d1', 'f8f1'];
+const LOOKED_BACK = [...PLAYED, -1];
 const RESTARTED = [...LOOKED_BACK, 0];
 const REJOINED = [...RESTARTED, 4];
 const TRIED_TWICE = [...REJOINED, 'd1d2', -1, 'd1d2', -1];
@@ -59,13 +65,18 @@ interface Beat {
 	readonly reads: BoardReading;
 }
 
-const OPEN: Pick<BoardReading, 'mistakes' | 'result' | 'closure'> = {
+const OPEN: Pick<BoardReading, 'mistakes' | 'result' | 'closure' | 'hint'> = {
 	mistakes: 0,
 	result: undefined,
 	closure: 'open',
+	hint: 'spent',
 };
 
-const MISSED: Pick<BoardReading, 'result' | 'closure'> = { result: 'failed', closure: 'open' };
+const MISSED: Pick<BoardReading, 'result' | 'closure' | 'hint'> = {
+	result: 'failed',
+	closure: 'open',
+	hint: 'spent',
+};
 
 const WALK: readonly Beat[] = [
 	{
@@ -74,6 +85,44 @@ const WALK: readonly Beat[] = [
 		reads: {
 			...OPEN,
 			record: OPENING,
+			cursor: 1,
+			move: 'f1f8',
+			canPlay: true,
+			mistake: undefined,
+			visible: seen(1),
+			nav: NO_FORWARD,
+			// Help asked for on sight is not help: the button does nothing for half a
+			// minute, and pressing it in that time leaves no trace at all.
+			hint: 'locked',
+		},
+	},
+	{
+		press: 'the half minute the hint is kept behind',
+		act: (): void => {
+			vi.advanceTimersByTime(HINT_TOTAL);
+		},
+		reads: {
+			...OPEN,
+			record: OPENING,
+			cursor: 1,
+			move: 'f1f8',
+			canPlay: true,
+			mistake: undefined,
+			visible: seen(1),
+			nav: NO_FORWARD,
+			hint: 'offered',
+		},
+	},
+	{
+		press: 'the hint, taken before anything is played',
+		act: (store): void => {
+			store.useHint();
+		},
+		reads: {
+			...OPEN,
+			// It moves nothing, so the board reads exactly as it did — but it is written
+			// down, and every index after it counts it.
+			record: ASKED,
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -89,7 +138,7 @@ const WALK: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			record: [...OPENING, 'b2b1'],
+			record: [...ASKED, 'b2b1'],
 			cursor: 2,
 			move: 'b2b1',
 			canPlay: false,
@@ -105,7 +154,7 @@ const WALK: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			record: [...OPENING, 'b2b1', 'b3d1'],
+			record: [...ASKED, 'b2b1', 'b3d1'],
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -121,7 +170,7 @@ const WALK: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			record: [...OPENING, 'b2b1', 'b3d1', 'b1d1'],
+			record: [...ASKED, 'b2b1', 'b3d1', 'b1d1'],
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: false,
@@ -137,7 +186,7 @@ const WALK: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			record: FIVE_PLY,
+			record: PLAYED,
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -560,6 +609,7 @@ const WALK: readonly Beat[] = [
 			mistake: undefined,
 			visible: seen(6),
 			nav: NO_FORWARD,
+			hint: 'spent',
 			mistakes: 3,
 			result: 'failed',
 			closure: 'found',
@@ -652,7 +702,8 @@ describe('the main line', () => {
 		it('does not reopen the exercise it takes back to the start', () => {
 			const store = board();
 
-			store.useHint();
+			// The walk takes the hint on its way through, and a restart is the same
+			// exercise being worked on: what was spent stays spent.
 			walkTo(store, WALK.length - 2);
 			store.restart();
 			vi.advanceTimersByTime(REPLAY_TOTAL);

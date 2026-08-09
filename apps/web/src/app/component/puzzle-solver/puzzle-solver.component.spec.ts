@@ -12,7 +12,13 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
-import { NAV_LABELS, NAV_ORDER, NavControl, navControls } from '@app/testing/puzzle-store.harness';
+import {
+	HINT_TOTAL,
+	NAV_LABELS,
+	NAV_ORDER,
+	NavControl,
+	navControls,
+} from '@app/testing/puzzle-store.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 const PUZZLE: Puzzle = {
@@ -155,6 +161,12 @@ describe('PuzzleSolverComponent', () => {
 		expect(host.themes()).toEqual([]);
 		expect(host.element.querySelector('.themes')).toBeNull();
 
+		host.click('Hint');
+
+		expect(host.themes()).toEqual([]);
+		expect(host.store.hintUsed()).toBe(false);
+
+		host.advance(HINT_TOTAL);
 		host.click('Hint');
 
 		expect(host.themes()).toEqual(['backRankMate', 'mateIn3']);

@@ -90,7 +90,7 @@ function scriptComputed(store: ScriptInput, puzzle: Signal<Puzzle | undefined>) 
 function lineComputed(
 	line: Signal<PuzzleMove[]>,
 	cursor: Signal<number>,
-	deviation: Signal<number | undefined>,
+	script: { deviation: Signal<number | undefined>; isFreePlay: Signal<boolean> },
 ) {
 	return {
 		/** Only the moves up to the cursor, so stepping back shortens the scoresheet. */
@@ -98,7 +98,15 @@ function lineComputed(
 
 		lastMove: computed<ChessMove | undefined>(() => line()[cursor() - 1]),
 
-		mistake: computed<ChessMove | undefined>(() => mistakeAt(line(), cursor(), deviation())),
+		/**
+		 * The move that broke the script, while it is still the last one on the board.
+		 * An exploration has no script to break — either side may be played there, and
+		 * changing the line is what it is for — so nothing inside one is ever a mistake.
+		 * Check and mate go on showing: those are the board's own and not the exercise's.
+		 */
+		mistake: computed<ChessMove | undefined>(() =>
+			script.isFreePlay() ? undefined : mistakeAt(line(), cursor(), script.deviation()),
+		),
 
 		canStepBackward: computed(() => 0 < cursor()),
 		canStepForward: computed(() => cursor() < line().length),
@@ -169,7 +177,7 @@ export function withPuzzleComputed() {
 
 				...script,
 				...boardComputed(position, store.selected),
-				...lineComputed(store.line, store.cursor, script.deviation),
+				...lineComputed(store.line, store.cursor, script),
 				...sessionComputed(puzzle, store, { ...script, scriptCursor }),
 			};
 		}),

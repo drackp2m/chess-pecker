@@ -85,9 +85,19 @@ export function settleResult(
 }
 
 /**
+ * How long the exercise has to have been open before the hint is offered. Help taken on
+ * sight is not help: the themes stay covered until the position has really been looked
+ * at. It is the exercise's own clock — no move speed scales it, and no restart winds it
+ * back, because the position has been on screen for as long as it has been.
+ */
+export const HINT_DELAY_MS = 30_000;
+
+/**
  * One thing that happened while the exercise was being solved: a move in UCI, a run
- * of cursor steps as a signed count, or `0` for a restart. Replaying a prefix of them
- * rebuilds one and only one board, which is what the whole format rests on.
+ * of cursor steps as a signed count, `0` for a restart, or the marker for the hint.
+ * Replaying a prefix of them rebuilds one and only one board, which is what the whole
+ * format rests on — the marker is the one event that moves nothing, and says only that
+ * help was taken, and exactly when.
  */
 export type PuzzleEvent = string | number;
 
