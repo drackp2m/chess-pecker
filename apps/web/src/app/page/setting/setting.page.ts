@@ -78,7 +78,7 @@ export class SettingPage {
 
 	constructor() {
 		bindSetting(this.form.controls.language, this.languageService.selectedLanguage, (language) => {
-			this.languageService.updateSelectedLanguage(language);
+			void this.languageService.updateSelectedLanguage(language);
 		});
 
 		bindSetting(this.form.controls.appearance, this.themeService.selectedTheme, (theme) => {

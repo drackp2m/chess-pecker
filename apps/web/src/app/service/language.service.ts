@@ -1,5 +1,6 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
+import { firstValueFrom, forkJoin } from 'rxjs';
 
 import { DEFAULT_LANGUAGE, Language, normalizeLanguage } from '@app/definition/language.type';
 import { Setting } from '@app/model/setting.model';
@@ -15,6 +16,8 @@ export class LanguageService {
 	private readonly language = signal<Language>(DEFAULT_LANGUAGE);
 
 	private settle!: () => void;
+
+	private requestedLanguage: Language = DEFAULT_LANGUAGE;
 
 	readonly selectedLanguage = computed(() => this.language());
 
@@ -38,10 +41,16 @@ export class LanguageService {
 		});
 	}
 
-	updateSelectedLanguage(language: Language, saveSetting = true): void {
-		this.language.set(language);
+	async updateSelectedLanguage(language: Language, saveSetting = true): Promise<void> {
+		this.requestedLanguage = language;
 
-		this.applyLanguage();
+		await this.loadActiveScopes(language);
+
+		if (this.requestedLanguage !== language) {
+			return;
+		}
+
+		this.setLanguage(language);
 
 		if (saveSetting) {
 			const stored = this.settingStore
@@ -54,6 +63,14 @@ export class LanguageService {
 		}
 	}
 
+	private setLanguage(language: Language): void {
+		this.requestedLanguage = language;
+
+		this.language.set(language);
+
+		this.applyLanguage();
+	}
+
 	private applyLanguage(): void {
 		const language = this.language();
 
@@ -62,16 +79,32 @@ export class LanguageService {
 		document.documentElement.setAttribute('lang', language);
 	}
 
+	private async loadActiveScopes(language: Language): Promise<void> {
+		const current = this.language();
+		const paths = [...this.transloco.getTranslation().keys()]
+			.filter((path) => path === current || path.endsWith(`/${current}`))
+			.map((path) => `${path.slice(0, path.length - current.length)}${language}`);
+
+		if (0 === paths.length) {
+			return;
+		}
+
+		try {
+			await firstValueFrom(forkJoin(paths.map((path) => this.transloco.load(path))));
+		} catch (error: unknown) {
+			console.error(`Could not load the translations for \`${paths.join('`, `')}\``, error);
+		}
+	}
+
 	private setLanguageFromSettings(): void {
 		const setting = this.settingStore
 			.settingEntities()
 			.find((setting) => 'LANGUAGE' === setting.type);
 
-		this.updateSelectedLanguage(
+		this.setLanguage(
 			undefined === setting?.payload
 				? normalizeLanguage(navigator.language)
 				: normalizeLanguage(setting.payload),
-			false,
 		);
 	}
 }
