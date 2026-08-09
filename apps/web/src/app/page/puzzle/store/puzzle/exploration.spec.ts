@@ -7,6 +7,7 @@ import { HINT } from '@app/page/puzzle/store/puzzle/record';
 import {
 	BoardReading,
 	HEADER,
+	HINT_REMAINING,
 	HINT_TOTAL,
 	MATE_IN_3,
 	MATE_IN_3_FEN,
@@ -15,6 +16,7 @@ import {
 	createStore,
 	describeBoard,
 	describeLine,
+	lookAway,
 	miss,
 	play,
 	playFivePlyLine,
@@ -128,6 +130,27 @@ const APPROACH: readonly Beat[] = [
 			mistake: undefined,
 			visible: seen(1),
 			nav: NO_FORWARD,
+			hint: 'locked',
+		},
+	},
+	{
+		press: 'a long while spent looking at something else',
+		act: (store): void => {
+			lookAway(store, HINT_TOTAL * 4);
+		},
+		reads: {
+			...OPEN,
+			record: OPENING,
+			exploring: false,
+			explorations: runs(),
+			cursor: 1,
+			move: 'f1f8',
+			canPlay: true,
+			mistake: undefined,
+			visible: seen(1),
+			nav: NO_FORWARD,
+			// The clock is the one the attempt's own duration is measured on, and it
+			// only runs while the exercise is being looked at.
 			hint: 'locked',
 		},
 	},
@@ -1368,6 +1391,32 @@ describe('the exploration mode', () => {
 			store.toggleFreePlay();
 
 			// Where it was written is the whole answer to where it was asked for.
+			expect(store.hintUsed()).toBe(true);
+			expect(store.record()).toEqual(OPENING);
+			expect(store.explorations()).toEqual([{ at: 1, events: [HINT] }]);
+		});
+
+		/**
+		 * A sandbox is the exercise being worked on, so the clock behind the hint goes on
+		 * running inside one — and stops there for the same reason it stops anywhere else:
+		 * a tab in the background is nobody looking at the position.
+		 */
+		it('runs on inside an exploration, and stops with the tab there too', () => {
+			const store = board();
+
+			store.toggleFreePlay();
+			vi.advanceTimersByTime(HINT_REMAINING - 1000);
+			lookAway(store, HINT_TOTAL * 10);
+
+			expect(store.canUseHint()).toBe(false);
+
+			vi.advanceTimersByTime(1000);
+
+			expect(store.canUseHint()).toBe(true);
+
+			store.useHint();
+			store.toggleFreePlay();
+
 			expect(store.hintUsed()).toBe(true);
 			expect(store.record()).toEqual(OPENING);
 			expect(store.explorations()).toEqual([{ at: 1, events: [HINT] }]);

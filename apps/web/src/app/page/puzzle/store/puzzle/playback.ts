@@ -33,6 +33,7 @@ import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
+import { WatchedDelay } from '@app/util/watched-delay';
 
 /**
  * How long a refuted move is left on the board before it is taken back for you. Like
@@ -55,7 +56,7 @@ interface PlaybackContext {
 	readonly store: PlaybackStore;
 	readonly scheduled: ScheduledAction;
 	/** Kept apart from the board's own timer: nothing the player does may cut it short. */
-	readonly hintGate: ScheduledAction;
+	readonly hintGate: WatchedDelay;
 	readonly speed: Signal<MoveSpeed>;
 }
 
@@ -286,9 +287,9 @@ function armHintGate(context: PlaybackContext): void {
 
 	patchState(store, { hintUnlocked: false });
 
-	hintGate.run(() => {
+	hintGate.start(HINT_DELAY_MS, () => {
 		patchState(store, { hintUnlocked: true });
-	}, HINT_DELAY_MS);
+	});
 }
 
 /**
@@ -314,7 +315,7 @@ function scheduleUndo(context: PlaybackContext, undo: () => void): void {
 /** Timers outlive the store they were started from, so they are stopped with it. */
 function createContext(store: PlaybackStore): PlaybackContext {
 	const scheduled = new ScheduledAction();
-	const hintGate = new ScheduledAction();
+	const hintGate = new WatchedDelay();
 
 	inject(DestroyRef).onDestroy(() => {
 		scheduled.cancel();
@@ -357,10 +358,6 @@ function buildTimerMethods(context: PlaybackContext) {
 	const { store, scheduled } = context;
 
 	return {
-		armHintGate: (): void => {
-			armHintGate(context);
-		},
-
 		settleScripted: (): void => {
 			if (store.isReplaying()) {
 				scheduled.flush();
@@ -383,10 +380,33 @@ function buildTimerMethods(context: PlaybackContext) {
 	};
 }
 
+/**
+ * The clock the hint waits on: armed by the exercise opening, and told when the exercise
+ * stopped being looked at and was picked up again. Nothing else on this board hears about
+ * that — everything else here is an answer to something the player did, and none of it is
+ * owed the time the tab spent in the background.
+ */
+function buildClockMethods(context: PlaybackContext) {
+	return {
+		armHintGate: (): void => {
+			armHintGate(context);
+		},
+
+		pauseClock: (): void => {
+			context.hintGate.pause();
+		},
+
+		resumeClock: (): void => {
+			context.hintGate.resume();
+		},
+	};
+}
+
 function buildMethods(context: PlaybackContext) {
 	return {
 		...buildCoreMethods(context),
 		...buildTimerMethods(context),
+		...buildClockMethods(context),
 	};
 }
 

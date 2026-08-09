@@ -91,6 +91,17 @@ export function miss(store: PuzzleStore): void {
 	play(store, 'b2', 'c2');
 }
 
+/**
+ * The tab left for `duration` and then come back to, which is what the page's own
+ * visibility handler does to the board. The clock behind the hint is the only thing that
+ * hears about it, and time spent away is not time spent looking at the exercise.
+ */
+export function lookAway(store: PuzzleStore, duration: number): void {
+	store.pauseClock();
+	vi.advanceTimersByTime(duration);
+	store.resumeClock();
+}
+
 export function playFivePlyLine(store: PuzzleStore): void {
 	play(store, 'b2', 'b1');
 	vi.advanceTimersByTime(REPLAY_TOTAL);

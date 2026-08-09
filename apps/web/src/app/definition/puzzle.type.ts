@@ -85,10 +85,13 @@ export function settleResult(
 }
 
 /**
- * How long the exercise has to have been open before the hint is offered. Help taken on
- * sight is not help: the themes stay covered until the position has really been looked
- * at. It is the exercise's own clock — no move speed scales it, and no restart winds it
- * back, because the position has been on screen for as long as it has been.
+ * How long the exercise has to have been looked at before the hint is offered. Help taken
+ * on sight is not help: the themes stay covered until the position has really been read.
+ *
+ * It is measured the same way the attempt's own duration is — watched time, so a tab left
+ * in the background waits for nothing and the themes are not there on coming back. No move
+ * speed scales it either, and no restart winds it back: the position has been on screen
+ * for as long as it has been.
  */
 export const HINT_DELAY_MS = 30_000;
 

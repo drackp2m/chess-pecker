@@ -81,11 +81,13 @@ export class TrainingSolveSession {
 	resume(): void {
 		if (undefined !== this.slot && this.gradedUuid !== this.slot.puzzle.uuid) {
 			this.timer.resume();
+			this.board.resumeClock();
 		}
 	}
 
 	pause(): void {
 		this.timer.pause();
+		this.board.pauseClock();
 
 		void this.flush();
 	}

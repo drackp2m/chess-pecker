@@ -7,6 +7,7 @@ import {
 	BoardReading,
 	FIVE_PLY,
 	HEADER,
+	HINT_REMAINING,
 	HINT_TOTAL,
 	LineSnapshot,
 	MATE_IN_3,
@@ -16,6 +17,7 @@ import {
 	createStore,
 	describeBoard,
 	describeLine,
+	lookAway,
 	play,
 	playFivePlyLine,
 	replayRecord,
@@ -93,6 +95,26 @@ const WALK: readonly Beat[] = [
 			nav: NO_FORWARD,
 			// Help asked for on sight is not help: the button does nothing for half a
 			// minute, and pressing it in that time leaves no trace at all.
+			hint: 'locked',
+		},
+	},
+	{
+		press: 'a long while spent looking at something else',
+		act: (store): void => {
+			lookAway(store, HINT_TOTAL * 4);
+		},
+		reads: {
+			...OPEN,
+			record: OPENING,
+			cursor: 1,
+			move: 'f1f8',
+			canPlay: true,
+			mistake: undefined,
+			visible: seen(1),
+			nav: NO_FORWARD,
+			// The clock is the one the attempt's own duration is measured on, and it
+			// only runs while the exercise is being looked at. Coming back to a board
+			// left in the background finds the hint exactly where it was left.
 			hint: 'locked',
 		},
 	},
@@ -695,6 +717,60 @@ describe('the main line', () => {
 
 			expect(store.cursor()).toBe(5);
 			expect(store.canPlay()).toBe(true);
+		});
+	});
+
+	/**
+	 * The wait behind the hint is measured the way the attempt's own duration is: only
+	 * while the exercise is on screen. Anything else would hand the themes over to a
+	 * player who opened the exercise, walked off and came back — which is the one case
+	 * the wait exists for.
+	 */
+	describe('the clock the hint waits on', () => {
+		it('counts what was watched, in as many sittings as it takes', () => {
+			const store = board();
+
+			vi.advanceTimersByTime(HINT_REMAINING - 1000);
+
+			expect(store.canUseHint()).toBe(false);
+
+			lookAway(store, HINT_TOTAL * 10);
+
+			expect(store.canUseHint()).toBe(false);
+
+			vi.advanceTimersByTime(999);
+
+			expect(store.canUseHint()).toBe(false);
+
+			vi.advanceTimersByTime(1);
+
+			expect(store.canUseHint()).toBe(true);
+		});
+
+		it('never runs down on a tab that is never come back to', () => {
+			const store = board();
+
+			store.pauseClock();
+			vi.advanceTimersByTime(HINT_TOTAL * 100);
+
+			expect(store.canUseHint()).toBe(false);
+		});
+
+		it('is not wound back by a tab that says it went away twice over', () => {
+			const store = board();
+
+			vi.advanceTimersByTime(HINT_REMAINING - 1);
+			store.pauseClock();
+			store.pauseClock();
+			vi.advanceTimersByTime(HINT_TOTAL);
+			store.resumeClock();
+			store.resumeClock();
+
+			expect(store.canUseHint()).toBe(false);
+
+			vi.advanceTimersByTime(1);
+
+			expect(store.canUseHint()).toBe(true);
 		});
 	});
 

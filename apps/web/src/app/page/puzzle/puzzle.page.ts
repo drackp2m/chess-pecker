@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzzle-difficulty.component';
@@ -38,6 +38,24 @@ export class PuzzlePage implements OnInit {
 	});
 
 	private readonly isSample = true === inject(ActivatedRoute).snapshot.data['sample'];
+
+	/**
+	 * A backgrounded tab is not an exercise being looked at, so the hint's clock stops
+	 * with it — the same rule the training page's attempt duration is measured under.
+	 */
+	@HostListener('document:visibilitychange')
+	onVisibilityChange(): void {
+		if (document.hidden) {
+			this.store.pauseClock();
+		} else {
+			this.store.resumeClock();
+		}
+	}
+
+	@HostListener('window:pagehide')
+	onPageHide(): void {
+		this.store.pauseClock();
+	}
 
 	/** The sample route never touches the database; every other one reopens the last set. */
 	ngOnInit(): void {

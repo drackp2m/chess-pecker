@@ -5,6 +5,7 @@ import { patchState } from '@ngrx/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
+import { HINT_DELAY_MS } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
@@ -230,6 +231,27 @@ describe('TrainingSolveSession', () => {
 				solved: true,
 			}),
 		);
+	});
+
+	/**
+	 * The wait behind the hint is the same measure as the duration above, so the board's
+	 * clock is paused and picked up by the very calls that pause and pick up the attempt's.
+	 */
+	it('keeps the hint on the clock the duration is measured by', async () => {
+		const { session, board } = configure(createRepository());
+
+		await enter(session);
+		vi.advanceTimersByTime(HINT_DELAY_MS - OPENING - 1000);
+
+		session.pause();
+		vi.advanceTimersByTime(60_000);
+		session.resume();
+
+		expect(board.canUseHint()).toBe(false);
+
+		vi.advanceTimersByTime(1000);
+
+		expect(board.canUseHint()).toBe(true);
 	});
 
 	it('stamps the attempt with when the exercise opened and when it settled', async () => {
