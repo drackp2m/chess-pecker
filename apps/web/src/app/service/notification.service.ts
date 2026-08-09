@@ -1,9 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
 import {
 	AppNotification,
 	NotificationAction,
 } from '@app/definition/service/notification.interface';
+import { I18nService } from '@app/service/i18n.service';
 
 interface NotifyOptions {
 	action?: NotificationAction;
@@ -22,7 +24,9 @@ export class NotificationService {
 
 	readonly notifications = this.notificationList.asReadonly();
 
-	notify(message: string, options: NotifyOptions = {}): string {
+	private readonly i18n = inject(I18nService);
+
+	notify(message: TranslationRef, options: NotifyOptions = {}): string {
 		const duration =
 			undefined === options.timeout ? this.getReadingDuration(message) : options.timeout;
 
@@ -50,8 +54,8 @@ export class NotificationService {
 		);
 	}
 
-	private getReadingDuration(message: string): number {
-		const wordCount = message.trim().split(/\s+/u).length;
+	private getReadingDuration(message: TranslationRef): number {
+		const wordCount = this.i18n.resolve(message).trim().split(/\s+/u).length;
 
 		return Math.max(
 			MIN_READING_DURATION,

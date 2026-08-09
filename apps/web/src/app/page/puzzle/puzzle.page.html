@@ -2,7 +2,7 @@
 	@if (store.puzzle(); as puzzle) {
 		<header class="flex-col gap-1">
 			<h4 class="title color-contrast-mid">
-				Solving
+				{{ I18n.common.SOLVING | i18n }}
 
 				<span class="color-contrast">{{ puzzle.id }}</span> · {{ counter() }}
 			</h4>
@@ -13,7 +13,7 @@
 					[class.failed]="'failed' === store.outcome()"
 					[class.solved]="'solved' === store.outcome()"
 				>
-					{{ headline() }}
+					{{ headline() | i18n }}
 				</p>
 
 				<app-puzzle-difficulty />
@@ -22,8 +22,8 @@
 	}
 
 	<app-puzzle-solver
-		previousLabel="Previous exercise"
-		nextLabel="Next exercise"
+		[previousLabel]="I18n.puzzle.PREVIOUS_EXERCISE"
+		[nextLabel]="I18n.puzzle.NEXT_EXERCISE"
 		[isPreviousDisabled]="!store.library.hasPrevious()"
 		[isNextDisabled]="!store.library.hasNext()"
 		(previous)="store.previousPuzzle()"
@@ -31,10 +31,10 @@
 	/>
 
 	<details class="import p-3 br-2" [open]="0 === store.library.puzzles().length">
-		<summary class="fw-xl">Load exercises</summary>
+		<summary class="fw-xl">{{ I18n.puzzle.LOAD_EXERCISES | i18n }}</summary>
 
 		<div class="flex-col gap-2 mt-3">
-			<label class="fs-sm" for="puzzle-csv">Paste CSV rows</label>
+			<label class="fs-sm" for="puzzle-csv">{{ I18n.puzzle.PASTE_CSV_ROWS | i18n }}</label>
 
 			<textarea
 				id="puzzle-csv"
@@ -53,15 +53,15 @@
 					[disabled]="'' === csvDraft().trim()"
 					(click)="loadDraft()"
 				>
-					Load CSV
+					{{ I18n.puzzle.LOAD_CSV | i18n }}
 				</button>
 
-				<button appThemed (click)="loadSample()">Use sample row</button>
+				<button appThemed (click)="loadSample()">{{ I18n.puzzle.USE_SAMPLE_ROW | i18n }}</button>
 
 				<label
 					class="file-button align-center py-2 px-4 br-1 fw-lg color-contrast"
 					for="puzzle-file"
-					>Choose a .csv file</label
+					>{{ I18n.puzzle.CHOOSE_CSV_FILE | i18n }}</label
 				>
 
 				<input
@@ -74,11 +74,11 @@
 			</div>
 
 			@if (store.library.importError(); as error) {
-				<p class="error fs-sm" role="alert">{{ error }}</p>
+				<p class="error fs-sm" role="alert">{{ error.key | i18n: error.params }}</p>
 			}
 
 			@if (store.library.importNotice(); as notice) {
-				<p class="fs-sm">{{ notice }}</p>
+				<p class="fs-sm">{{ notice.key | i18n: notice.params }}</p>
 			}
 		</div>
 	</details>

@@ -1,43 +1,81 @@
 <section class="flex-col gap-6">
 	<div class="flex-col gap-2">
-		<h4>Appearance</h4>
+		<h4>{{ I18n.setting.LANGUAGE | i18n }}</h4>
 
-		<p class="fs-sm color-contrast-mid">The only setting that is not about the board.</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.setting.LANGUAGE_INTRO | i18n }}</p>
 
 		<form [formGroup]="form" class="flex-col gap-1">
-			<input appThemed type="radio" label="System" value="system" formControlName="appearance" />
-			<input appThemed type="radio" label="Light" value="light" formControlName="appearance" />
-			<input appThemed type="radio" label="Dark" value="dark" formControlName="appearance" />
+			<ng-template #spanishLabel>
+				<span class="language">
+					<img class="flag" [src]="languageFlag.es" alt="" />
+
+					<span class="label">{{ languageName.es }}</span>
+				</span>
+			</ng-template>
+
+			<ng-template #englishLabel>
+				<span class="language">
+					<img class="flag" [src]="languageFlag.en" alt="" />
+
+					<span class="label">{{ languageName.en }}</span>
+				</span>
+			</ng-template>
+
+			<input appThemed type="radio" [label]="spanishLabel" value="es" formControlName="language" />
+			<input appThemed type="radio" [label]="englishLabel" value="en" formControlName="language" />
+		</form>
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.setting.APPEARANCE | i18n }}</h4>
+
+		<p class="fs-sm color-contrast-mid">{{ I18n.setting.APPEARANCE_INTRO | i18n }}</p>
+
+		<form [formGroup]="form" class="flex-col gap-1">
+			<input
+				appThemed
+				type="radio"
+				[label]="I18n.setting.APPEARANCE_SYSTEM | i18n"
+				value="system"
+				formControlName="appearance"
+			/>
+			<input
+				appThemed
+				type="radio"
+				[label]="I18n.setting.APPEARANCE_LIGHT | i18n"
+				value="light"
+				formControlName="appearance"
+			/>
+			<input
+				appThemed
+				type="radio"
+				[label]="I18n.setting.APPEARANCE_DARK | i18n"
+				value="dark"
+				formControlName="appearance"
+			/>
 		</form>
 	</div>
 
 	<div class="flex-col gap-4">
 		<div class="flex-col gap-2">
-			<h4>Board</h4>
+			<h4>{{ I18n.setting.BOARD | i18n }}</h4>
 
-			<p class="fs-sm color-contrast-mid">
-				How the board plays. The strip below is a real exercise — take the black rook — so every
-				setting here can be tried where it is chosen: miss on purpose and it takes your move back,
-				miss it often enough and it plays the answer.
-			</p>
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.BOARD_INTRO | i18n }}</p>
 		</div>
 
 		<app-board-demo />
 
 		<div class="flex-col gap-2">
-			<h5>Move speed</h5>
+			<h5>{{ I18n.setting.MOVE_SPEED | i18n }}</h5>
 
-			<p class="fs-sm color-contrast-mid">
-				The pace of everything the board plays by itself: the pause before a piece lights up, how
-				long it stays lit, and how fast it then travels.
-			</p>
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_SPEED_INTRO | i18n }}</p>
 
 			<form [formGroup]="form" class="flex-col gap-1">
 				@for (speed of moveSpeeds; track speed) {
 					<input
 						appThemed
 						type="radio"
-						[label]="speedLabel[speed]"
+						[label]="speedLabel[speed] | i18n"
 						[value]="speed"
 						formControlName="moveSpeed"
 					/>
@@ -46,16 +84,16 @@
 		</div>
 
 		<div class="flex-col gap-2">
-			<h5>Move animation</h5>
+			<h5>{{ I18n.setting.MOVE_ANIMATION | i18n }}</h5>
 
-			<p class="fs-sm color-contrast-mid">How much of the board's movement slides into place.</p>
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_ANIMATION_INTRO | i18n }}</p>
 
 			<form [formGroup]="form" class="flex-col gap-1">
 				@for (animation of moveAnimations; track animation) {
 					<input
 						appThemed
 						type="radio"
-						[label]="animationLabel[animation]"
+						[label]="animationLabel[animation] | i18n"
 						[value]="animation"
 						formControlName="moveAnimation"
 					/>
@@ -64,37 +102,39 @@
 		</div>
 
 		<div class="flex-col gap-2">
-			<h5>Move input</h5>
+			<h5>{{ I18n.setting.MOVE_INPUT | i18n }}</h5>
 
-			<p class="fs-sm color-contrast-mid">
-				How you enter a move. Turning both off keeps clicking, so the board stays playable.
-			</p>
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_INPUT_INTRO | i18n }}</p>
 
 			<form [formGroup]="form.controls.moveInput" class="flex-col gap-1">
-				<input appThemed type="checkbox" [label]="inputLabel.click" formControlName="click" />
+				<input
+					appThemed
+					type="checkbox"
+					[label]="inputLabel.click | i18n"
+					formControlName="click"
+				/>
 
-				<input appThemed type="checkbox" [label]="inputLabel.drag" formControlName="drag" />
+				<input appThemed type="checkbox" [label]="inputLabel.drag | i18n" formControlName="drag" />
 			</form>
 		</div>
 
 		<div class="flex-col gap-2">
-			<h5>Sound</h5>
+			<h5>{{ I18n.setting.SOUND | i18n }}</h5>
 
-			<p class="fs-sm color-contrast-mid">
-				A piece landing picks a sound at random, never the one before it. Captures, check and mate
-				have their own. Stepping back through a line plays them reversed.
-			</p>
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.SOUND_INTRO | i18n }}</p>
 
 			<form [formGroup]="form" class="flex-col gap-1">
 				<input
 					appThemed
 					type="checkbox"
-					label="Play a sound on every move"
+					[label]="I18n.setting.SOUND_TOGGLE | i18n"
 					formControlName="sound"
 				/>
 			</form>
 		</div>
 	</div>
 
-	<p class="flex-row flex-grow justify-center align-end mono fs-sm">version {{ VERSION }}</p>
+	<p class="flex-row flex-grow justify-center align-end mono fs-sm">
+		{{ I18n.setting.VERSION | i18n: { version: VERSION } }}
+	</p>
 </section>

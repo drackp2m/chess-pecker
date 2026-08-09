@@ -8,11 +8,15 @@ import {
 	MoveAnimation,
 } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_LABEL, buildMoveInputMethods } from '@app/definition/board-input.type';
+import { LANGUAGE_FLAG, LANGUAGE_NAME, Language } from '@app/definition/language.type';
 import { MOVE_SPEEDS, MOVE_SPEED_LABEL, MoveSpeed } from '@app/definition/move-speed.type';
 import { Theme } from '@app/definition/service/theme.type';
 import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
+import { I18n, provideI18nScope } from '@app/i18n';
 import { version } from '@app/package';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { LanguageService } from '@app/service/language.service';
 import { SoundService } from '@app/service/sound.service';
 import { ThemeService } from '@app/service/theme.service';
 import { bindSetting } from '@app/util/setting-binding';
@@ -20,10 +24,12 @@ import { bindSetting } from '@app/util/setting-binding';
 @Component({
 	templateUrl: './setting.page.html',
 	styleUrl: './setting.page.scss',
-	imports: [ReactiveFormsModule, RadioCheckboxDirective, BoardDemoComponent],
-	providers: [],
+	imports: [ReactiveFormsModule, RadioCheckboxDirective, BoardDemoComponent, I18nPipe],
+	providers: [provideI18nScope('setting')],
 })
 export class SettingPage {
+	protected readonly I18n = I18n;
+
 	readonly VERSION = version;
 
 	readonly moveSpeeds = MOVE_SPEEDS;
@@ -31,12 +37,19 @@ export class SettingPage {
 	readonly moveAnimations = MOVE_ANIMATIONS;
 	readonly animationLabel = MOVE_ANIMATION_LABEL;
 	readonly inputLabel = MOVE_INPUT_LABEL;
+	readonly languageName = LANGUAGE_NAME;
+	readonly languageFlag = LANGUAGE_FLAG;
 
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
 	private readonly sound = inject(SoundService);
+	private readonly languageService = inject(LanguageService);
 
 	readonly form = new FormGroup({
+		language: new FormControl<Language>(this.languageService.selectedLanguage(), {
+			nonNullable: true,
+			validators: [Validators.required],
+		}),
 		appearance: new FormControl<Theme | 'system'>(this.themeService.selectedTheme(), {
 			nonNullable: true,
 			validators: [Validators.required],
@@ -64,6 +77,10 @@ export class SettingPage {
 	}));
 
 	constructor() {
+		bindSetting(this.form.controls.language, this.languageService.selectedLanguage, (language) => {
+			this.languageService.updateSelectedLanguage(language);
+		});
+
 		bindSetting(this.form.controls.appearance, this.themeService.selectedTheme, (theme) => {
 			this.themeService.updateSelectedTheme(theme);
 		});

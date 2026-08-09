@@ -7,9 +7,11 @@ import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { Puzzle } from '@app/definition/puzzle.type';
+import { I18n } from '@app/i18n';
 import { PuzzlePage } from '@app/page/puzzle/puzzle.page';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
+import { provideTestingI18n } from '@app/testing/i18n.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 /**
@@ -21,6 +23,7 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 	TestBed.configureTestingModule({
 		imports: [PuzzlePage],
 		providers: [
+			provideTestingI18n(),
 			{ provide: ActivatedRoute, useValue: { snapshot: { data } } },
 			{
 				provide: BoardPreferenceService,
@@ -87,7 +90,7 @@ describe('PuzzlePage', () => {
 		expect(page.store.history()[0]?.san).toBe('Rxf8');
 		expect(page.store.playerColor()).toBe('black');
 		expect(page.store.isPlayerTurn()).toBe(true);
-		expect(page.headline()).toBe('Find the move for black');
+		expect(page.headline()).toBe(I18n.common.FIND_MOVE_BLACK);
 
 		// And the first solving move is accepted.
 		page.store.selectSquare('b2');
@@ -102,7 +105,10 @@ describe('PuzzlePage', () => {
 
 		await page.loadFile(event);
 
-		expect(page.store.library.importError()).toBe('Could not read set.csv.');
+		expect(page.store.library.importError()).toEqual({
+			key: I18n.puzzle.FILE_UNREADABLE,
+			params: { name: 'set.csv' },
+		});
 		expect(page.store.library.puzzles()).toHaveLength(0);
 		// Cleared even on failure, so picking the same file again still fires `change`.
 		expect((event.target as HTMLInputElement).value).toBe('');

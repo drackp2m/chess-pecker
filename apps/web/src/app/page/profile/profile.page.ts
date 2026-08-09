@@ -4,7 +4,8 @@ import type { FriendUser } from '@chesspecker/api-definitions';
 
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
-import { I18n } from '@app/i18n';
+import { RouterLinkDirective } from '@app/directive/router-link.directive';
+import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { ProfileStore } from '@app/store/profile.store';
 import { SessionStore } from '@app/store/session.store';
@@ -12,7 +13,8 @@ import { SessionStore } from '@app/store/session.store';
 @Component({
 	templateUrl: './profile.page.html',
 	styleUrl: './profile.page.scss',
-	imports: [ReactiveFormsModule, InputDirective, ButtonDirective, I18nPipe],
+	imports: [RouterLinkDirective, ReactiveFormsModule, InputDirective, ButtonDirective, I18nPipe],
+	providers: [provideI18nScope('profile')],
 })
 export class ProfilePage implements OnInit {
 	protected readonly I18n = I18n;

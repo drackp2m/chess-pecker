@@ -1,12 +1,17 @@
-<nav class="nav force-light px-4 flex-row" aria-label="Main">
-	<span class="glass" aria-hidden="true"></span>
+<nav class="navbar force-light px-4 flex-row" [attr.aria-label]="I18n.common.NAV_MAIN | i18n">
 	<span class="indicator" aria-hidden="true"></span>
+
+	<span class="glass" style="--index: 0" aria-hidden="true"></span>
+	<span class="glass" style="--index: 1" aria-hidden="true"></span>
+	<span class="glass" style="--index: 2" aria-hidden="true"></span>
+	<span class="glass" style="--index: 3" aria-hidden="true"></span>
+	<span class="glass" style="--index: 4" aria-hidden="true"></span>
 
 	<button
 		class="item"
 		style="--icon: url('/svg/icon/house.svg')"
 		appRouterLink="/"
-		aria-label="Home"
+		[attr.aria-label]="I18n.common.HOME | i18n"
 	>
 		<span class="hit" aria-hidden="true"></span>
 	</button>
@@ -15,7 +20,7 @@
 		class="item"
 		style="--icon: url('/svg/icon/chess-board.svg')"
 		appRouterLink="/match"
-		aria-label="Play"
+		[attr.aria-label]="I18n.common.PLAY | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"
 	>
 		<span class="hit" aria-hidden="true"></span>
@@ -25,7 +30,7 @@
 		class="item"
 		style="--icon: url('/svg/icon/timer.svg')"
 		appRouterLink="/training"
-		aria-label="Training"
+		[attr.aria-label]="I18n.common.TRAINING | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"
 	>
 		<span class="hit" aria-hidden="true"></span>
@@ -35,7 +40,7 @@
 		class="item"
 		style="--icon: url('/svg/icon/circle-user.svg')"
 		appRouterLink="/profile"
-		aria-label="Profile"
+		[attr.aria-label]="I18n.common.PROFILE | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"
 	>
 		<span class="hit" aria-hidden="true"></span>
@@ -45,7 +50,7 @@
 		class="item"
 		style="--icon: url('/svg/icon/gear.svg')"
 		appRouterLink="/settings"
-		aria-label="Settings"
+		[attr.aria-label]="I18n.common.SETTINGS | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"
 	>
 		<span class="hit" aria-hidden="true"></span>

@@ -20,6 +20,9 @@ import { SelectDropdownScroller } from '@app/directive/select/component/select-d
 import { SelectShellGestures } from '@app/directive/select/component/select-shell-gestures';
 import { SelectShellLayout } from '@app/directive/select/component/select-shell-layout';
 import { SelectOptionViewModel, SelectStore } from '@app/directive/select/select.store';
+import { I18n } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { I18nService } from '@app/service/i18n.service';
 import { ViewportService } from '@app/service/viewport.service';
 
 /**
@@ -36,9 +39,11 @@ import { ViewportService } from '@app/service/viewport.service';
 @Component({
 	selector: 'app-select-shell',
 	templateUrl: './select-shell.component.html',
-	imports: [SvgComponent, NgTemplateOutlet],
+	imports: [SvgComponent, NgTemplateOutlet, I18nPipe],
 })
 export class SelectShellComponent {
+	protected readonly I18n = I18n;
+
 	readonly label = input.required<string>();
 	readonly selectId = input.required<string>();
 	readonly placeholder = input.required<string>();
@@ -51,6 +56,7 @@ export class SelectShellComponent {
 	readonly searchKeydown = output<KeyboardEvent>();
 
 	protected readonly store = inject(SelectStore);
+	private readonly i18n = inject(I18nService);
 	protected readonly positionTop = signal(false);
 	protected readonly searchInputId = computed<string>(() => `${this.selectId()}-search`);
 	protected readonly listboxId = computed<string>(() => `${this.selectId()}-listbox`);
@@ -85,14 +91,18 @@ export class SelectShellComponent {
 		const highlighted = options[highlightedIndex];
 
 		if (0 === options.length) {
-			return 'No matches found';
+			return this.i18n.translate(I18n.common.SELECT_NO_MATCHES);
 		}
 
 		if (undefined === highlighted) {
 			return '';
 		}
 
-		return `${highlighted.label}, ${(highlightedIndex + 1).toString()} of ${options.length.toString()}`;
+		return this.i18n.translate(I18n.common.SELECT_OPTION_POSITION, {
+			option: highlighted.label,
+			position: highlightedIndex + 1,
+			total: options.length,
+		});
 	});
 
 	private readonly viewportService = inject(ViewportService);

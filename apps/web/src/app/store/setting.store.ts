@@ -2,13 +2,15 @@ import { Injectable, effect, inject } from '@angular/core';
 import { patchState, signalStore, type, withState } from '@ngrx/signals';
 import { entityConfig, setAllEntities, setEntity, withEntities } from '@ngrx/signals/entities';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n, i18nRef } from '@app/i18n';
 import { Setting } from '@app/model/setting.model';
 import { SettingRepository } from '@app/repository/setting.repository';
 import { NotificationService } from '@app/service/notification.service';
 
 interface SettingStoreProps {
 	isLoading: boolean;
-	error: string | null;
+	error: TranslationRef | null;
 }
 
 const initialState: SettingStoreProps = {
@@ -16,10 +18,9 @@ const initialState: SettingStoreProps = {
 	error: null,
 };
 
-const LOAD_ERROR_MESSAGE = 'Your settings could not be loaded, so the defaults are in use.';
-const SAVE_ERROR_MESSAGE = 'The setting could not be saved.';
-const BLOCKED_UPGRADE_MESSAGE =
-	'Close the other tabs of this app to finish updating its local database.';
+const LOAD_ERROR_MESSAGE = i18nRef(I18n.common.SETTINGS_LOAD_ERROR);
+const SAVE_ERROR_MESSAGE = i18nRef(I18n.common.SETTINGS_SAVE_ERROR);
+const BLOCKED_UPGRADE_MESSAGE = i18nRef(I18n.common.SETTINGS_BLOCKED_UPGRADE);
 
 const settingConfig = entityConfig({
 	entity: type<Setting>(),

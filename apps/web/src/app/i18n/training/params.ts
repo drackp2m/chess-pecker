@@ -1,0 +1,44 @@
+export interface TrainingI18nParams {
+	'training.01KZJ895MCGYKV57R35G6309FN': {
+		rounds: number;
+		rating: string | number;
+		average: string;
+	};
+	'training.01KZJ895MCRNQSEG1HA48F37VM': {
+		size: number;
+		pace: string | number;
+	};
+	'training.01KZJ895MC9ERRWZMF2WZF5138': {
+		days: number;
+	};
+	'training.01KZJ895MC1C5VZ1E3FZ1P1HZ7': {
+		size: number;
+	};
+	'training.01KZJ895MCES8B5ZMR3HTB09M0': {
+		index: number;
+		status: string;
+	};
+	'training.01KZJ895MCHQN00YRMTF73ZS5Q': {
+		total: string;
+		average: string;
+	};
+	'training.01KZJ895MC8GSX8477RQTK02D8': {
+		target: string;
+	};
+	'training.01KZJ895MCEVE3KVD55495064J': {
+		index: number;
+	};
+	'training.01KZJ895MC4PRBR9FYQY8TQZ03': {
+		round: number;
+		rating: number;
+	};
+	'training.01KZJ895MC0TCT6MDA60JZDWGQ': {
+		round: number;
+		position: number;
+		total: number;
+		rating: number;
+	};
+	'training.01KZJ895MCZ12A1D454Q37V6D0': {
+		position: number;
+	};
+}

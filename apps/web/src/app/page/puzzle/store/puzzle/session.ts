@@ -49,6 +49,8 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 	closure: PuzzleClosure;
 	/** The themes have been looked at, which is help and is kept as such. */
 	hintUsed: boolean;
+	/** The exercise has been open long enough for the hint to be on offer at all. */
+	hintUnlocked: boolean;
 	/** Where free play started, or `undefined` while it is off. */
 	freePlay: FreePlayAnchor | undefined;
 	/** Wrong moves in this exercise, counted from the moment it was opened. */
@@ -91,6 +93,7 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		result: undefined,
 		closure: 'open',
 		hintUsed: false,
+		hintUnlocked: false,
 		freePlay: undefined,
 		mistakeCount: 0,
 		isReplaying: false,
@@ -108,10 +111,6 @@ function startLine(position: ChessPosition): Partial<PuzzleStoreProps> {
 		selected: undefined,
 		pendingPromotion: undefined,
 	};
-}
-
-export function restartLinePatch(puzzle: Puzzle): Partial<PuzzleStoreProps> {
-	return startLine(ChessFen.parse(puzzle.fen));
 }
 
 /**
@@ -134,6 +133,7 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		result: undefined,
 		closure: 'open',
 		hintUsed: false,
+		hintUnlocked: false,
 		freePlay: undefined,
 		mistakeCount: 0,
 		isReplaying: true,
@@ -174,6 +174,22 @@ export function restoreFreePlayPatch(
 		pendingPromotion: undefined,
 		isReplaying: false,
 		transition: keptTransition(state, anchor.cursor),
+	};
+}
+
+/**
+ * The line a restart inside an exploration stands back up. Starting over is starting the
+ * *exercise* over, so what comes back is the main line the exploration was entered from
+ * and not the sandbox that grew out of it — and only what was visible of it: a wrong move
+ * the main line was left standing on is not part of the exercise and is dropped with the
+ * rest. None of its recorded actions come along; only the moves themselves.
+ */
+export function restartExplorationPatch(anchor: FreePlayAnchor): Partial<PuzzleStoreProps> {
+	const plies = anchor.deviation ?? anchor.line.length;
+
+	return {
+		positions: anchor.positions.slice(0, plies + 1),
+		line: anchor.line.slice(0, plies),
 	};
 }
 

@@ -16,7 +16,13 @@ import {
 	RESUME_DELAY,
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
-import { Puzzle, PuzzleClosure, PuzzleOutcome, settleClosure } from '@app/definition/puzzle.type';
+import {
+	HINT_DELAY_MS,
+	Puzzle,
+	PuzzleClosure,
+	PuzzleOutcome,
+	settleClosure,
+} from '@app/definition/puzzle.type';
 import { recordMove } from '@app/page/puzzle/store/puzzle/record';
 import {
 	PuzzleStoreProps,
@@ -27,6 +33,7 @@ import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
+import { WatchedDelay } from '@app/util/watched-delay';
 
 /**
  * How long a refuted move is left on the board before it is taken back for you. Like
@@ -48,6 +55,8 @@ type PlaybackStore = StateSignals<PuzzleStoreProps> &
 interface PlaybackContext {
 	readonly store: PlaybackStore;
 	readonly scheduled: ScheduledAction;
+	/** Kept apart from the board's own timer: nothing the player does may cut it short. */
+	readonly hintGate: WatchedDelay;
 	readonly speed: Signal<MoveSpeed>;
 }
 
@@ -268,7 +277,28 @@ function replayLastMove(context: PlaybackContext): void {
 	replayBeat(context, { cursor, move, played });
 }
 
-/** Leaves the refuted move up long enough to be seen, then takes it back. */
+/**
+ * Locks the hint and starts the clock that puts it on offer. Only opening an exercise
+ * arms it: a restart is the same exercise being worked on, and the position has been
+ * looked at for as long as it has been.
+ */
+function armHintGate(context: PlaybackContext): void {
+	const { store, hintGate } = context;
+
+	patchState(store, { hintUnlocked: false });
+
+	hintGate.start(HINT_DELAY_MS, () => {
+		patchState(store, { hintUnlocked: true });
+	});
+}
+
+/**
+ * Leaves the refuted move up long enough to be seen, then takes it back — unless there
+ * is no longer a refuted move to take back. Opening an exploration is one of the ways
+ * that happens: nothing in a sandbox is graded, so a take-back still pending when one is
+ * opened is dropped rather than rewinding a line it has nothing to do with. The wrong
+ * move is left standing on the main line for the player to step off.
+ */
 function scheduleUndo(context: PlaybackContext, undo: () => void): void {
 	const { store, scheduled, speed } = context;
 
@@ -285,14 +315,17 @@ function scheduleUndo(context: PlaybackContext, undo: () => void): void {
 /** Timers outlive the store they were started from, so they are stopped with it. */
 function createContext(store: PlaybackStore): PlaybackContext {
 	const scheduled = new ScheduledAction();
+	const hintGate = new WatchedDelay();
 
 	inject(DestroyRef).onDestroy(() => {
 		scheduled.cancel();
+		hintGate.cancel();
 	});
 
 	return {
 		store,
 		scheduled,
+		hintGate,
 		speed: inject(BoardPreferenceService).moveSpeed,
 	};
 }
@@ -347,10 +380,33 @@ function buildTimerMethods(context: PlaybackContext) {
 	};
 }
 
+/**
+ * The clock the hint waits on: armed by the exercise opening, and told when the exercise
+ * stopped being looked at and was picked up again. Nothing else on this board hears about
+ * that — everything else here is an answer to something the player did, and none of it is
+ * owed the time the tab spent in the background.
+ */
+function buildClockMethods(context: PlaybackContext) {
+	return {
+		armHintGate: (): void => {
+			armHintGate(context);
+		},
+
+		pauseClock: (): void => {
+			context.hintGate.pause();
+		},
+
+		resumeClock: (): void => {
+			context.hintGate.resume();
+		},
+	};
+}
+
 function buildMethods(context: PlaybackContext) {
 	return {
 		...buildCoreMethods(context),
 		...buildTimerMethods(context),
+		...buildClockMethods(context),
 	};
 }
 

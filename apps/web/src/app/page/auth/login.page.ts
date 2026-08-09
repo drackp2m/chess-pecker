@@ -5,14 +5,19 @@ import { Router } from '@angular/router';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
+import { I18n, provideI18nScope } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { SessionStore } from '@app/store/session.store';
 
 @Component({
 	templateUrl: './login.page.html',
 	styleUrl: './auth.page.scss',
-	imports: [ReactiveFormsModule, InputDirective, ButtonDirective, RouterLinkDirective],
+	imports: [ReactiveFormsModule, InputDirective, ButtonDirective, RouterLinkDirective, I18nPipe],
+	providers: [provideI18nScope('auth')],
 })
 export class LoginPage {
+	protected readonly I18n = I18n;
+
 	readonly form = new FormGroup({
 		username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 		password: new FormControl('', { nonNullable: true, validators: [Validators.required] }),

@@ -68,33 +68,35 @@ interface ProgramStageSummary {
 	readonly text: TranslationRef;
 }
 
-// FixMe => Record<…, string> widens every value to string, so these four maps bypass I18nParamsArg
-// and the keys they hold can drift out of params.ts unnoticed. Needs `satisfies` instead of the type
-// annotation, which then exposes toStageSummary's partial params (it fills solved/total/percentage
-// itself) — that call needs its own signature first.
-const ROUND_STAGE: Record<CalibrationRoundProgress['kind'], string> = {
+interface StageCounts {
+	readonly solved: number;
+	readonly total: number;
+	readonly percentage: string;
+}
+
+const ROUND_STAGE = {
 	scan: I18n.common.SCAN,
 	refine: I18n.common.REFINE,
-};
+} as const satisfies Record<CalibrationRoundProgress['kind'], string>;
 
 /** How the phase is named when it is the one being played, not a row of the log. */
-const PHASE_STAGE: Record<CalibrationRoundProgress['kind'], string> = {
+const PHASE_STAGE = {
 	scan: I18n.dashboard.PROGRAM_CURRENT_SCANS,
 	refine: I18n.dashboard.PROGRAM_CURRENT_REFINE,
-};
+} as const satisfies Record<CalibrationRoundProgress['kind'], string>;
 
-const ROUND_RESULT: Record<CalibrationRoundProgress['outcome'], string> = {
+const ROUND_RESULT = {
 	pending: I18n.common.IN_PROGRESS,
 	raise: I18n.common.PROBES_HIGHER,
 	lower: I18n.common.PROBES_LOWER,
 	accept: I18n.common.LEVEL_FOUND,
-};
+} as const satisfies Record<CalibrationRoundProgress['outcome'], string>;
 
-const CYCLE_RESULT: Record<CycleProgress['status'], string> = {
+const CYCLE_RESULT = {
 	running: I18n.common.RUNNING,
 	finished: I18n.common.FINISHED,
 	abandoned: I18n.common.CANCELLED,
-};
+} as const satisfies Record<CycleProgress['status'], string>;
 
 /**
  * An open round counts against everything it dealt, not against what has been answered so
@@ -102,10 +104,10 @@ const CYCLE_RESULT: Record<CycleProgress['status'], string> = {
  */
 const toRoundRow = (round: CalibrationRoundProgress): ProgramSummaryRow => ({
 	key: `round-${round.uuid}`,
-	stage: { key: ROUND_STAGE[round.kind] },
+	stage: i18nRef(ROUND_STAGE[round.kind]),
 	stageDetail: `· ELO ${round.rating.toString()}`,
 	solved: ratio(round.solved, round.total),
-	result: { key: ROUND_RESULT[round.outcome] },
+	result: i18nRef(ROUND_RESULT[round.outcome]),
 	resultDetail: '',
 });
 
@@ -115,7 +117,7 @@ const toCycleRow = (cycle: CycleProgress): ProgramSummaryRow => ({
 	stage: i18nRef(I18n.common.CYCLE, { index: cycle.index }),
 	stageDetail: '',
 	solved: ratio(cycle.solved, cycle.total),
-	result: { key: CYCLE_RESULT[cycle.status] },
+	result: i18nRef(CYCLE_RESULT[cycle.status]),
 	resultDetail: 'running' === cycle.status ? `· ${ratio(cycle.attempted, cycle.total)}` : '',
 });
 
@@ -128,32 +130,30 @@ const resolveCurrent = (progress: TrainingProgress): ProgramStageSummary | null 
 	const open = rounds.find((round) => 'pending' === round.outcome);
 
 	if (undefined !== open) {
-		return toStageSummary(
-			PHASE_STAGE[open.kind],
-			{},
-			rounds.filter((round) => round.kind === open.kind),
-		);
+		const counts = toStageCounts(rounds.filter((round) => round.kind === open.kind));
+
+		return { total: counts.total, text: i18nRef(PHASE_STAGE[open.kind], counts) };
 	}
 
 	const running = progress.cycles.find((cycle) => 'running' === cycle.status);
 
-	return undefined === running
-		? null
-		: toStageSummary(I18n.dashboard.PROGRAM_CURRENT_CYCLE, { index: running.index }, [running]);
+	if (undefined === running) {
+		return null;
+	}
+
+	const counts = toStageCounts([running]);
+
+	return {
+		total: counts.total,
+		text: i18nRef(I18n.dashboard.PROGRAM_CURRENT_CYCLE, { ...counts, index: running.index }),
+	};
 };
 
-const toStageSummary = (
-	key: string,
-	params: Record<string, unknown>,
-	stages: readonly ProgramStage[],
-): ProgramStageSummary => {
+const toStageCounts = (stages: readonly ProgramStage[]): StageCounts => {
 	const solved = sumSolved(stages);
 	const total = sumTotal(stages);
 
-	return {
-		total,
-		text: { key, params: { ...params, solved, total, percentage: percentage(solved, total) } },
-	};
+	return { solved, total, percentage: percentage(solved, total) };
 };
 
 const sumSolved = (stages: readonly ProgramStage[]): number =>

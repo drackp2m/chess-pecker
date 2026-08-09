@@ -14,7 +14,7 @@ export interface DashboardI18nParams {
 	};
 	'dashboard.01KZCNHDHAM05M1YA40RNG7T52': {
 		solved: number;
-		total: string;
+		total: number;
 		percentage: string;
 	};
 	'dashboard.01KZCNHDHAJTH4D61NJZFAWE9J': {

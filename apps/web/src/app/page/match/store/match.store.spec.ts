@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
+import { I18n } from '@app/i18n';
 import { MatchStore } from '@app/page/match/store/match.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 
@@ -117,7 +118,10 @@ describe('MatchStore', () => {
 		const store = createStore();
 
 		expect(store.playNotation('e5')).toBe(false);
-		expect(store.notationError()).toContain('e5');
+		expect(store.notationError()).toEqual({
+			key: I18n.match.ILLEGAL_MOVE,
+			params: { notation: 'e5' },
+		});
 		expect(store.history()).toHaveLength(0);
 
 		store.dismissError();

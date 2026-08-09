@@ -57,9 +57,9 @@
 		<div
 			class="promotion flex-col gap-3 align-center justify-center"
 			role="dialog"
-			aria-label="Choose a promotion piece"
+			[attr.aria-label]="I18n.common.PROMOTION_DIALOG | i18n"
 		>
-			<p class="promotion-title fw-xl">Promote to</p>
+			<p class="promotion-title fw-xl">{{ I18n.common.PROMOTE_TO | i18n }}</p>
 
 			<div class="promotion-board br-2">
 				@for (choice of promotionChoices; track choice.piece) {
@@ -68,7 +68,7 @@
 						class="promotion-square flex-row align-center justify-center"
 						[class.light]="choice.isLight"
 						[class.dark]="!choice.isLight"
-						[attr.aria-label]="'Promote to ' + choice.piece"
+						[attr.aria-label]="promotionLabel(choice.piece)"
 						(click)="promote(choice.piece)"
 					>
 						<app-chess-piece [type]="choice.piece" [color]="promotionColor()" />
@@ -85,7 +85,7 @@
 			</div>
 
 			<button type="button" class="promotion-cancel fs-sm" (click)="store.cancelPromotion()">
-				Cancel
+				{{ I18n.common.CANCEL | i18n }}
 			</button>
 		</div>
 	}

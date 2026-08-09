@@ -3,12 +3,19 @@ main {
 	height: 100dvh;
 
 	#router-outlet {
+		scroll-padding-bottom: var(--nav-height);
 		overflow: scroll;
 		flex: 1;
 		min-height: 0;
+
+		&::after {
+			content: '';
+			display: block;
+			height: var(--nav-height);
+		}
 	}
 
-	app-nav {
+	app-navbar {
 		position: absolute;
 		inset-inline: 0;
 		bottom: 0;

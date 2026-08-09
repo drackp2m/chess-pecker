@@ -2,7 +2,11 @@
 	class="header force-light pb-2 px-4 surface-contrast color-primary flex-row align-center justify-between"
 >
 	<button appRouterLink="/" class="logo flex-row gap-2 align-center color-primary">
-		<h3>{{ title() }}</h3>
+		@if (titleKey(); as key) {
+			<h3>{{ key | i18n }}</h3>
+		} @else {
+			<h3>Chess Pecker</h3>
+		}
 	</button>
 
 	<span class="session flex-row gap-2 align-center">
@@ -12,7 +16,9 @@
 			<app-save-indicator />
 			<span class="fs-md">{{ session.username() }}</span>
 		} @else if (session.isAnonymous()) {
-			<button appRouterLink="/login" class="log-in fs-md color-primary">Log in</button>
+			<button appRouterLink="/login" class="log-in fs-md color-primary">
+				{{ I18n.common.LOG_IN | i18n }}
+			</button>
 		}
 	</span>
 </section>

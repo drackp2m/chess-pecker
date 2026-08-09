@@ -12,6 +12,7 @@ import {
 	Square,
 } from '@app/definition/chess.type';
 import { ANNOUNCE_DELAY, THINK_DELAY, scaleForSpeed } from '@app/definition/move-speed.type';
+import { I18n, i18nRef } from '@app/i18n';
 import { ChessOpponentService } from '@app/page/match/service/chess-opponent.service';
 import { buildInitialState, rewindToPlayerTurn } from '@app/page/match/store/match-state';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
@@ -79,7 +80,7 @@ export class MatchStore
 	/** Loads an exercise position; the side to move in the FEN becomes the player. */
 	loadPosition(fen: string): boolean {
 		if (!ChessFen.isValid(fen)) {
-			patchState(this, { notationError: 'That FEN could not be read.' });
+			patchState(this, { notationError: i18nRef(I18n.match.FEN_UNREADABLE) });
 
 			return false;
 		}
@@ -125,7 +126,7 @@ export class MatchStore
 		const move = ChessNotation.parse(position, notation);
 
 		if (undefined === move) {
-			patchState(this, { notationError: `"${notation}" is not a legal move here.` });
+			patchState(this, { notationError: i18nRef(I18n.match.ILLEGAL_MOVE, { notation }) });
 
 			return false;
 		}

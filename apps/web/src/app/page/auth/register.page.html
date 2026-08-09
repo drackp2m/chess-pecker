@@ -1,18 +1,15 @@
 <section class="flex-col gap-4">
 	<header class="flex-col gap-1">
-		<h4>Create an account</h4>
+		<h4>{{ I18n.common.CREATE_ACCOUNT | i18n }}</h4>
 
-		<p class="fs-sm color-contrast-mid">
-			A username and a password are enough. The email is optional and only used to get the account
-			back if you lose the password.
-		</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.auth.REGISTER_INTRO | i18n }}</p>
 	</header>
 
 	<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
 		<input
 			appThemed
 			type="text"
-			label="Username"
+			[label]="I18n.auth.USERNAME | i18n"
 			autocomplete="username"
 			formControlName="username"
 		/>
@@ -20,7 +17,7 @@
 		<input
 			appThemed
 			type="email"
-			label="Email (optional)"
+			[label]="I18n.auth.EMAIL_OPTIONAL | i18n"
 			autocomplete="email"
 			formControlName="email"
 		/>
@@ -28,25 +25,27 @@
 		<input
 			appThemed
 			type="password"
-			label="Password"
+			[label]="I18n.auth.PASSWORD | i18n"
 			autocomplete="new-password"
 			formControlName="password"
 		/>
 
-		<p class="fs-sm color-contrast-mid">At least {{ minPasswordLength }} characters.</p>
+		<p class="fs-sm color-contrast-mid">
+			{{ I18n.auth.PASSWORD_MIN_LENGTH | i18n: { length: minPasswordLength } }}
+		</p>
 
 		@if (error(); as message) {
-			<p class="error fs-sm" role="alert">{{ message }}</p>
+			<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 		}
 
 		<button appThemed type="submit" color="accent" [disabled]="isSubmitting()">
-			{{ isSubmitting() ? 'Creating the account…' : 'Create account' }}
+			{{ (isSubmitting() ? I18n.auth.CREATING_ACCOUNT : I18n.common.CREATE_ACCOUNT) | i18n }}
 		</button>
 	</form>
 
 	<div class="flex-row flex-wrap gap-2 align-center">
-		<p class="fs-sm color-contrast-mid">Already registered?</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.auth.ALREADY_REGISTERED | i18n }}</p>
 
-		<button appThemed appRouterLink="/login">Log in</button>
+		<button appThemed appRouterLink="/login">{{ I18n.common.LOG_IN | i18n }}</button>
 	</div>
 </section>

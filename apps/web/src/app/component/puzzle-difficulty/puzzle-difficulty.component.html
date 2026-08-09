@@ -1,9 +1,5 @@
 @if (difficulty(); as difficulty) {
-	<ul
-		class="difficulty flex-row gap-1"
-		[class]="difficulty"
-		[attr.aria-label]="'Difficulty: ' + difficulty"
-	>
+	<ul class="difficulty flex-row gap-1" [class]="difficulty" [attr.aria-label]="label()">
 		@for (bar of bars; track bar) {
 			<li class="difficulty-bar" [class.filled]="bar <= level()"></li>
 		}

@@ -10,10 +10,13 @@ import {
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { HINT } from '@app/page/puzzle/store/puzzle/record';
 import {
 	ALT_MATE,
 	FIVE_PLY,
 	HEADER,
+	HINT_REMAINING,
+	HINT_TOTAL,
 	MATE_IN_3,
 	MATE_IN_3_FEN,
 	REPLAY_PLY,
@@ -220,35 +223,30 @@ describe('PuzzleStore', () => {
 		expect(store.isPractice()).toBe(true);
 	});
 
-	it('plays on from a miss as free play, instead of taking the move back', () => {
+	it('locks the board on a miss, instead of playing on from it', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		miss(store);
 
-		// The board is now the opponent's to move, and it is the player who moves it.
-		expect(store.isLocked()).toBe(false);
+		// The board is the opponent's to move, and nobody moves it: the wrong move is
+		// standing there to be seen, and the take-back is what happens next.
+		expect(store.isLocked()).toBe(true);
+		expect(store.canPlay()).toBe(false);
 		expect(store.isPlayerTurn()).toBe(false);
 		expect(store.position().turn).toBe('white');
 
 		store.selectSquare('a2');
 		store.selectSquare('a3');
 
-		expect(store.isFreePlay()).toBe(true);
-		expect(store.history()).toHaveLength(3);
-		expect(store.history().at(-1)?.isOpponent).toBe(true);
-		expect(store.position().turn).toBe('black');
+		expect(store.isFreePlay()).toBe(false);
+		expect(store.history()).toHaveLength(2);
 		expect(store.outcome()).toBe('failed');
 
-		// Illegal moves are still refused: the rook on c2 cannot jump to c8 through c6.
-		store.selectSquare('c2');
-		store.selectSquare('c8');
-
-		expect(store.history()).toHaveLength(3);
-
-		// And the take-back never fires, because the move it was waiting on is buried.
 		vi.advanceTimersByTime(UNDO_TOTAL);
 
-		expect(store.cursor()).toBe(3);
+		expect(store.cursor()).toBe(1);
+		expect(store.mistake()).toBeUndefined();
+		expect(store.canPlay()).toBe(true);
 	});
 
 	it('leaves the exercise exactly as free play found it', () => {
@@ -300,8 +298,8 @@ describe('PuzzleStore', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		miss(store);
-		store.selectSquare('a2');
-		store.selectSquare('a3');
+		store.toggleFreePlay();
+		play(store, 'a2', 'a3');
 
 		expect(store.cursor()).toBe(3);
 
@@ -766,7 +764,7 @@ describe('PuzzleStore', () => {
 			});
 		}
 
-		it('restarts the exercise inside free play, opponent reply and all', () => {
+		it('restarts the exercise inside free play, opening move and all', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.toggleFreePlay();
@@ -779,7 +777,9 @@ describe('PuzzleStore', () => {
 
 			expect(store.isFreePlay()).toBe(true);
 			expect(store.cursor()).toBe(0);
-			expect(store.line()).toHaveLength(0);
+			// The sandbox is gone; what is left standing is the main line it was entered
+			// from, which by now is the opening move and nothing else.
+			expect(store.line()).toHaveLength(1);
 			expect(ChessFen.serialize(store.position())).toBe(MATE_IN_3_FEN);
 			expect(store.isBusy()).toBe(true);
 
@@ -821,7 +821,8 @@ describe('PuzzleStore', () => {
 
 			expect(store.isFreePlay()).toBe(true);
 			expect(store.cursor()).toBe(1);
-			expect(store.line()).toHaveLength(1);
+			// The five plies the main line had reached are all still there to be walked.
+			expect(store.line()).toHaveLength(5);
 
 			play(store, 'b2', 'c2');
 
@@ -846,7 +847,7 @@ describe('PuzzleStore', () => {
 			const entry = snapshot(store);
 
 			store.restart();
-			vi.advanceTimersByTime(400);
+			vi.advanceTimersByTime(800);
 
 			expect(store.announcedMove()?.to).toBe('f8');
 
@@ -926,7 +927,13 @@ describe('PuzzleStore', () => {
 			expect(store.result()).toBe('failed');
 			expect(store.isFreePlay()).toBe(false);
 
+			// The refuted move locks the board, so playing on is no way in either.
 			play(store, 'a2', 'a3');
+
+			expect(store.isFreePlay()).toBe(false);
+			expect(store.line()).toHaveLength(6);
+
+			store.toggleFreePlay();
 
 			expect(store.isFreePlay()).toBe(true);
 		});
@@ -1100,6 +1107,7 @@ describe('PuzzleStore', () => {
 		it('survives a restart, along with the verdict, the misses and the hint', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
+			vi.advanceTimersByTime(HINT_TOTAL);
 			store.useHint();
 			miss(store);
 			vi.advanceTimersByTime(UNDO_TOTAL);
@@ -1118,6 +1126,7 @@ describe('PuzzleStore', () => {
 		it('opens the next exercise on a clean slate', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`);
 
+			vi.advanceTimersByTime(HINT_TOTAL);
 			store.useHint();
 			miss(store);
 			store.revealSolution();
@@ -1129,12 +1138,42 @@ describe('PuzzleStore', () => {
 			expect(store.result()).toBeUndefined();
 			expect(store.mistakeCount()).toBe(0);
 			expect(store.hintUsed()).toBe(false);
+			expect(store.record()).toEqual(['h1h5']);
+			// A new exercise is a new clock: the hint goes back behind it.
+			expect(store.canUseHint()).toBe(false);
+
+			vi.advanceTimersByTime(HINT_TOTAL);
+
+			expect(store.canUseHint()).toBe(true);
 		});
 	});
 
 	describe('the hint', () => {
-		it('uncovers the themes and closes nothing', () => {
+		it('is not on offer until the exercise has been looked at for a while', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			expect(store.canUseHint()).toBe(false);
+
+			// Pressed early it does nothing at all, and leaves nothing behind to say so.
+			store.useHint();
+
+			expect(store.hintUsed()).toBe(false);
+			expect(store.areThemesShown()).toBe(false);
+			expect(store.record()).toEqual(['f1f8']);
+
+			vi.advanceTimersByTime(HINT_REMAINING - 1);
+
+			expect(store.canUseHint()).toBe(false);
+
+			vi.advanceTimersByTime(1);
+
+			expect(store.canUseHint()).toBe(true);
+		});
+
+		it('uncovers the themes, writes itself down and closes nothing', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			vi.advanceTimersByTime(HINT_TOTAL);
 
 			expect(store.canUseHint()).toBe(true);
 			expect(store.areThemesShown()).toBe(false);
@@ -1147,6 +1186,17 @@ describe('PuzzleStore', () => {
 			expect(store.closure()).toBe('open');
 			expect(store.result()).toBeUndefined();
 			expect(store.isPlayerTurn()).toBe(true);
+			expect(store.record()).toEqual(['f1f8', HINT]);
+		});
+
+		it('is asked for once, so a second press writes nothing more', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			vi.advanceTimersByTime(HINT_TOTAL);
+			store.useHint();
+			store.useHint();
+
+			expect(store.record()).toEqual(['f1f8', HINT]);
 		});
 
 		it('is spent once the exercise is over, which hands the themes over anyway', () => {
@@ -1155,7 +1205,9 @@ describe('PuzzleStore', () => {
 			miss(store);
 			store.revealSolution();
 			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+			vi.advanceTimersByTime(HINT_TOTAL);
 
+			// The clock has run out by now, so what refuses it is the exercise being over.
 			expect(store.canUseHint()).toBe(false);
 			expect(store.hintUsed()).toBe(false);
 			expect(store.areThemesShown()).toBe(true);
@@ -1237,7 +1289,9 @@ describe('PuzzleStore', () => {
 			vi.advanceTimersByTime(REPLAY_TOTAL);
 
 			expect(store.record()).toEqual(['f1f8']);
-			expect(store.explorations()).toEqual([{ at: 1, events: ['a7a6', 0, 'f1f8'] }]);
+			// The opening move is shown again rather than played again, so the restart is
+			// the only thing the exploration has to write down about it.
+			expect(store.explorations()).toEqual([{ at: 1, events: ['a7a6', 0] }]);
 		});
 
 		it('anchors an exploration to the length the main line had reached', () => {

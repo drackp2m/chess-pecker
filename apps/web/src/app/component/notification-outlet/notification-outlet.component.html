@@ -12,11 +12,13 @@
 					[class.paused]="isPaused(notification)"
 					(pointerdown)="onNotificationPointerDown(notification, $event)"
 				>
-					<p class="flex-grow fs-sm color-primary">{{ notification.message }}</p>
+					<p class="flex-grow fs-sm color-primary">
+						{{ notification.message.key | i18n: notification.message.params }}
+					</p>
 
 					@if (notification.action; as action) {
 						<button appThemed color="accent" (click)="runAction(notification)">
-							{{ action.label }}
+							{{ action.label.key | i18n: action.label.params }}
 						</button>
 					}
 

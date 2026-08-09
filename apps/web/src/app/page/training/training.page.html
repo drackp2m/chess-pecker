@@ -1,32 +1,42 @@
 <section class="flex-col gap-6">
 	<header class="flex-col gap-1">
-		<p class="fs-sm color-contrast-mid">
-			One program: the calibration finds your level, the set is fixed once, and every cycle runs
-			over that same set faster than the one before.
-		</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.training.INTRO | i18n }}</p>
 	</header>
 
 	@if (store.error(); as message) {
-		<p class="error fs-sm" role="alert">{{ message }}</p>
+		<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 	}
 
 	@if (store.isLoading()) {
-		<p class="empty fs-sm color-contrast-mid">Loading…</p>
+		<p class="empty fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
 	} @else if (store.active(); as active) {
 		<div class="flex-col gap-2">
-			<h5>{{ phaseLabel() }}</h5>
+			<h5>{{ phaseLabel() | i18n }}</h5>
 
 			@if (store.progress(); as progress) {
 				<p class="fs-sm color-contrast-mid">
-					Calibration rounds: {{ progress.calibration.rounds.length }} · rating
-					{{ progress.calibration.rating ?? '—' }} · average
-					{{ formatDuration(progress.calibration.averageDurationMs) }}
+					{{
+						I18n.training.CALIBRATION_SUMMARY
+							| i18n
+								: {
+										rounds: progress.calibration.rounds.length,
+										rating: progress.calibration.rating ?? '—',
+										average: formatDuration(progress.calibration.averageDurationMs),
+								  }
+					}}
 				</p>
 
 				<p class="fs-sm color-contrast-mid">
-					Set: {{ progress.setSize }} exercises · pace {{ progress.goal?.puzzlesPerDay ?? '—' }}/day
+					{{
+						I18n.training.SET_SUMMARY
+							| i18n
+								: {
+										size: progress.setSize,
+										pace: progress.goal?.puzzlesPerDay ?? '—',
+								  }
+					}}
 					@if (progress.estimatedFirstCycleDays; as days) {
-						· first cycle ≈ {{ days }} days
+						{{ I18n.training.FIRST_CYCLE_ESTIMATE | i18n: { days } }}
 					}
 				</p>
 			}
@@ -34,48 +44,52 @@
 
 		@if ('calibrating' === active.status) {
 			<div class="flex-col gap-2">
-				<p class="fs-sm color-contrast-mid">
-					A scan is a single exercise, a refine is ten of them. Each round decides whether the next
-					one probes higher or lower.
-				</p>
+				<p class="fs-sm color-contrast-mid">{{ I18n.training.CALIBRATION_INTRO | i18n }}</p>
 
 				<button appThemed color="accent" appRouterLink="/training/solve">
-					Open the next round
+					{{ I18n.training.OPEN_NEXT_ROUND | i18n }}
 				</button>
 			</div>
 		}
 
 		@if ('planning' === active.status) {
 			<div class="flex-col gap-3">
-				<h5>Pick the set</h5>
+				<h5>{{ I18n.training.PICK_THE_SET | i18n }}</h5>
 
 				@if (store.progress(); as progress) {
 					@if (0 === progress.setSize) {
 						<form [formGroup]="setForm" class="flex-col gap-3" (ngSubmit)="selectSet()">
-							<input appThemed type="number" label="Exercises" formControlName="size" />
+							<input
+								appThemed
+								type="number"
+								[label]="I18n.training.SET_SIZE_LABEL | i18n"
+								formControlName="size"
+							/>
 
 							<button appThemed color="accent" type="submit" [disabled]="store.isSubmitting()">
-								Fix the set
+								{{ I18n.training.FIX_THE_SET | i18n }}
 							</button>
 						</form>
 					} @else {
 						<p class="fs-sm color-contrast-mid">
-							{{ progress.setSize }} exercises are already fixed for every cycle.
+							{{ I18n.training.SET_ALREADY_FIXED | i18n: { size: progress.setSize } }}
 						</p>
 					}
 				}
 
-				<h5>Commit to a pace</h5>
+				<h5>{{ I18n.training.COMMIT_TO_A_PACE | i18n }}</h5>
 
 				<form [formGroup]="goalForm" class="flex-col gap-3" (ngSubmit)="saveGoal()">
 					<input
 						appThemed
 						type="number"
-						label="Exercises per day"
+						[label]="I18n.training.PACE_LABEL | i18n"
 						formControlName="puzzlesPerDay"
 					/>
 
-					<button appThemed type="submit" [disabled]="store.isSubmitting()">Save the pace</button>
+					<button appThemed type="submit" [disabled]="store.isSubmitting()">
+						{{ I18n.training.SAVE_THE_PACE | i18n }}
+					</button>
 				</form>
 			</div>
 		}
@@ -83,20 +97,31 @@
 		@if (store.progress(); as progress) {
 			@if (0 < progress.cycles.length) {
 				<div class="flex-col gap-2">
-					<h5>Cycles</h5>
+					<h5>{{ I18n.training.CYCLES | i18n }}</h5>
 
 					<ul class="flex-col gap-2">
 						@for (cycle of progress.cycles; track cycle.uuid) {
 							<li class="row flex-col gap-1 p-2 br-1">
-								<span class="fw-lg">Cycle {{ cycle.index }} · {{ cycle.status }}</span>
+								<span class="fw-lg">
+									{{
+										I18n.training.CYCLE_HEADING
+											| i18n: { index: cycle.index, status: cycleStatus(cycle) }
+									}}
+								</span>
 
 								<span class="fs-sm color-contrast-mid">{{ describeCycle(cycle) }}</span>
 
 								<span class="fs-sm color-contrast-mid">
-									Total {{ formatDuration(cycle.totalDurationMs) }} · average
-									{{ formatDuration(cycle.averageDurationMs) }}
+									{{
+										I18n.training.CYCLE_TIMES
+											| i18n
+												: {
+														total: formatDuration(cycle.totalDurationMs),
+														average: formatDuration(cycle.averageDurationMs),
+												  }
+									}}
 									@if (cycle.targetDurationMs; as target) {
-										· target {{ formatDuration(target) }}
+										{{ I18n.training.CYCLE_TARGET | i18n: { target: formatDuration(target) } }}
 									}
 								</span>
 							</li>
@@ -108,50 +133,45 @@
 			<div class="flex-col gap-2">
 				@if (store.runningCycle()) {
 					<button appThemed color="accent" appRouterLink="/training/solve">
-						Continue the cycle
+						{{ I18n.training.CONTINUE_CYCLE | i18n }}
 					</button>
 				} @else if (store.canStartCycle()) {
 					<button appThemed color="accent" [disabled]="store.isSubmitting()" (click)="startCycle()">
-						Start cycle {{ progress.cycles.length + 1 }}
+						{{ I18n.training.START_CYCLE | i18n: { index: progress.cycles.length + 1 } }}
 					</button>
 				}
 
 				@if (progress.suggestFinish) {
-					<p class="fs-sm color-contrast-mid">
-						The minimum number of passes is done and the times have stopped dropping.
-					</p>
+					<p class="fs-sm color-contrast-mid">{{ I18n.training.SUGGEST_FINISH | i18n }}</p>
 
 					<button appThemed [disabled]="store.isSubmitting()" (click)="finish()">
-						Close the training
+						{{ I18n.training.CLOSE_TRAINING | i18n }}
 					</button>
 				}
 
 				<button appThemed [disabled]="store.isSubmitting()" (click)="cancel()">
-					Cancel the training
+					{{ I18n.training.CANCEL_TRAINING | i18n }}
 				</button>
 			</div>
 		}
 	} @else {
 		<div class="flex-col gap-2">
-			<p class="fs-sm color-contrast-mid">
-				Nothing in progress. Starting one opens the calibration, which is where your working rating
-				comes from — you are not asked for it.
-			</p>
+			<p class="fs-sm color-contrast-mid">{{ I18n.training.NOTHING_IN_PROGRESS | i18n }}</p>
 
 			<button appThemed color="accent" [disabled]="store.isSubmitting()" (click)="start()">
-				Start a training
+				{{ I18n.training.START_TRAINING | i18n }}
 			</button>
 		</div>
 	}
 
 	@if (0 < store.trainings().length) {
 		<div class="flex-col gap-2">
-			<h5>History</h5>
+			<h5>{{ I18n.training.HISTORY | i18n }}</h5>
 
 			<ul class="flex-col gap-2">
 				@for (training of store.trainings(); track training.uuid) {
 					<li class="row flex-col gap-1 p-2 br-1">
-						<span class="fw-lg">{{ training.status }}</span>
+						<span class="fw-lg">{{ trainingStatus(training) | i18n }}</span>
 
 						<span class="mono fs-sm color-contrast-mid">{{ training.createdAt }}</span>
 					</li>

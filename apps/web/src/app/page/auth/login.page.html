@@ -1,18 +1,15 @@
 <section class="flex-col gap-4">
 	<header class="flex-col gap-1">
-		<h4>Log in</h4>
+		<h4>{{ I18n.common.LOG_IN | i18n }}</h4>
 
-		<p class="fs-sm color-contrast-mid">
-			The session is opened against the Chess Pecker API and kept in a cookie, so it survives a
-			reload.
-		</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.auth.LOG_IN_INTRO | i18n }}</p>
 	</header>
 
 	<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
 		<input
 			appThemed
 			type="text"
-			label="Username"
+			[label]="I18n.auth.USERNAME | i18n"
 			autocomplete="username"
 			formControlName="username"
 		/>
@@ -20,23 +17,23 @@
 		<input
 			appThemed
 			type="password"
-			label="Password"
+			[label]="I18n.auth.PASSWORD | i18n"
 			autocomplete="current-password"
 			formControlName="password"
 		/>
 
 		@if (error(); as message) {
-			<p class="error fs-sm" role="alert">{{ message }}</p>
+			<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 		}
 
 		<button appThemed type="submit" color="accent" [disabled]="isSubmitting()">
-			{{ isSubmitting() ? 'Logging in…' : 'Log in' }}
+			{{ (isSubmitting() ? I18n.auth.LOGGING_IN : I18n.common.LOG_IN) | i18n }}
 		</button>
 	</form>
 
 	<div class="flex-row flex-wrap gap-2 align-center">
-		<p class="fs-sm color-contrast-mid">No account yet?</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.auth.NO_ACCOUNT_YET | i18n }}</p>
 
-		<button appThemed appRouterLink="/register">Create one</button>
+		<button appThemed appRouterLink="/register">{{ I18n.auth.CREATE_ONE | i18n }}</button>
 	</div>
 </section>

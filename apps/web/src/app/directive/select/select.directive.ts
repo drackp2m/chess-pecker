@@ -19,6 +19,7 @@ import { SelectInteractionHandler } from '@app/directive/select/select-interacti
 import { SelectNativeAdapter } from '@app/directive/select/select-native-adapter';
 import { SelectOutsideDismissal } from '@app/directive/select/select-outside-dismissal';
 import { SelectOptionViewModel, SelectStore } from '@app/directive/select/select.store';
+import { I18n } from '@app/i18n';
 
 let nextSelectId = 0;
 
@@ -35,7 +36,7 @@ let nextSelectId = 0;
 })
 export class SelectDirective implements AfterViewInit, OnDestroy {
 	readonly label = input.required<string>();
-	readonly placeholder = input('Choose an option');
+	readonly placeholder = input<string>(I18n.common.SELECT_PLACEHOLDER);
 	readonly searchable = input<boolean | null, unknown>(null, { transform: booleanAttribute });
 	readonly maxVisibleOptions = input(9);
 	readonly optionTemplate = input<TemplateRef<{ $implicit: SelectOptionViewModel }>>();

@@ -11,16 +11,16 @@ import { SessionStore } from '@app/store/session.store';
  */
 const PHASE_MESSAGES = {
 	idle: null,
-	connecting: 'Connecting…',
-	waking: 'Waking the server up…',
-	unreachable: 'No connection',
+	connecting: I18n.common.CONNECTING,
+	waking: I18n.common.WAKING,
+	unreachable: I18n.common.NO_CONNECTION,
 } as const;
 
 const PHASE_DETAILS = {
 	idle: '',
-	connecting: 'Talking to the server.',
-	waking: 'The server was asleep. Waking it up takes up to a minute.',
-	unreachable: 'The server did not answer. The board, free play and your settings still work.',
+	connecting: I18n.common.CONNECTING_DETAIL,
+	waking: I18n.common.WAKING_DETAIL,
+	unreachable: I18n.common.NO_CONNECTION_DETAIL,
 } as const;
 
 @Component({

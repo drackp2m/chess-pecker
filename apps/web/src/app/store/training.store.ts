@@ -6,6 +6,8 @@ import type {
 } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n, i18nRef } from '@app/i18n';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
@@ -19,7 +21,7 @@ interface TrainingStoreProps {
 	progress: TrainingProgress | null;
 	isLoading: boolean;
 	isSubmitting: boolean;
-	error: string | null;
+	error: TranslationRef | null;
 }
 
 const initialState: TrainingStoreProps = {
@@ -74,7 +76,7 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 				isLoading: false,
 				...(ApiCancelledError.is(error)
 					? {}
-					: { error: HttpError.toMessage(error, 'Could not load your trainings.') }),
+					: { error: HttpError.toRef(error, i18nRef(I18n.training.LOAD_ERROR)) }),
 			});
 		}
 	}
@@ -82,41 +84,41 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 	async start(): Promise<boolean> {
 		return this.mutate(async () => {
 			await this.trainingRepository.start();
-		}, 'The training could not be started.');
+		}, i18nRef(I18n.training.START_ERROR));
 	}
 
 	async selectSet(size: number): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.trainingRepository.selectSet(uuid, size),
-			'The set could not be selected.',
+			i18nRef(I18n.training.SELECT_SET_ERROR),
 		);
 	}
 
 	async setGoal(goal: SetTrainingGoalRequest): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.trainingRepository.setGoal(uuid, goal),
-			'The goal could not be saved.',
+			i18nRef(I18n.training.SET_GOAL_ERROR),
 		);
 	}
 
 	async startCycle(): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.trainingRunRepository.startCycle(uuid),
-			'The cycle could not be started.',
+			i18nRef(I18n.training.START_CYCLE_ERROR),
 		);
 	}
 
 	async finish(): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.trainingRepository.finish(uuid),
-			'The training could not be closed.',
+			i18nRef(I18n.training.FINISH_ERROR),
 		);
 	}
 
 	async cancel(): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.trainingRepository.cancel(uuid),
-			'The training could not be cancelled.',
+			i18nRef(I18n.training.CANCEL_ERROR),
 		);
 	}
 
@@ -126,12 +128,12 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 
 	private async withActive(
 		action: (uuid: string) => Promise<unknown>,
-		fallback: string,
+		fallback: TranslationRef,
 	): Promise<boolean> {
 		const active = this.active();
 
 		if (null === active) {
-			patchState(this, { error: 'There is no training in progress.' });
+			patchState(this, { error: i18nRef(I18n.training.NONE_IN_PROGRESS) });
 
 			return false;
 		}
@@ -142,7 +144,7 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 	}
 
 	/** Every write reloads: status, set size and cycles all move together. */
-	private async mutate(action: () => Promise<void>, fallback: string): Promise<boolean> {
+	private async mutate(action: () => Promise<void>, fallback: TranslationRef): Promise<boolean> {
 		patchState(this, { isSubmitting: true, error: null });
 
 		try {
@@ -152,7 +154,7 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 				await this.load();
 			}
 
-			patchState(this, { isSubmitting: false, error: HttpError.toMessage(error, fallback) });
+			patchState(this, { isSubmitting: false, error: HttpError.toRef(error, fallback) });
 
 			return false;
 		}

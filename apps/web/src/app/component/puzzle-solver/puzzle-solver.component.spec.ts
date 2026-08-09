@@ -8,11 +8,19 @@ import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { Puzzle } from '@app/definition/puzzle.type';
+import { I18n } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
-import { NAV_LABELS, NAV_ORDER, NavControl, navControls } from '@app/testing/puzzle-store.harness';
+import { provideTestingI18n } from '@app/testing/i18n.harness';
+import {
+	HINT_TOTAL,
+	NAV_LABELS,
+	NAV_ORDER,
+	NavControl,
+	navControls,
+} from '@app/testing/puzzle-store.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 const PUZZLE: Puzzle = {
@@ -32,8 +40,8 @@ const PUZZLE: Puzzle = {
 	selector: 'app-solver-host',
 	imports: [PuzzleSolverComponent],
 	template: `<app-puzzle-solver
-		previousLabel="Previous exercise"
-		nextLabel="Next exercise"
+		[previousLabel]="I18n.puzzle.PREVIOUS_EXERCISE"
+		[nextLabel]="I18n.puzzle.NEXT_EXERCISE"
 		(previous)="stepped.push('previous')"
 		(next)="stepped.push('next')"
 	/>`,
@@ -44,6 +52,8 @@ const PUZZLE: Puzzle = {
 	],
 })
 class SolverHostComponent {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(PuzzleStore);
 
 	readonly stepped: string[] = [];
@@ -52,6 +62,7 @@ class SolverHostComponent {
 function createHost() {
 	TestBed.configureTestingModule({
 		providers: [
+			provideTestingI18n(),
 			{
 				provide: BoardPreferenceService,
 				useValue: {
@@ -155,7 +166,13 @@ describe('PuzzleSolverComponent', () => {
 		expect(host.themes()).toEqual([]);
 		expect(host.element.querySelector('.themes')).toBeNull();
 
-		host.click('Hint');
+		host.click(I18n.common.BOARD_HINT);
+
+		expect(host.themes()).toEqual([]);
+		expect(host.store.hintUsed()).toBe(false);
+
+		host.advance(HINT_TOTAL);
+		host.click(I18n.common.BOARD_HINT);
 
 		expect(host.themes()).toEqual(['backRankMate', 'mateIn3']);
 		expect(host.store.hintUsed()).toBe(true);
@@ -165,14 +182,14 @@ describe('PuzzleSolverComponent', () => {
 		const host = createHost();
 
 		host.open();
-		host.click('Give up');
+		host.click(I18n.common.BOARD_GIVE_UP);
 
 		expect(host.store.closure()).toBe('open');
 
 		// The move to find is Rb1+; Rc2 is legal and is not it.
 		host.store.selectSquare('b2');
 		host.store.selectSquare('c2');
-		host.click('Give up');
+		host.click(I18n.common.BOARD_GIVE_UP);
 
 		expect(host.store.closure()).toBe('revealed');
 	});
@@ -181,8 +198,8 @@ describe('PuzzleSolverComponent', () => {
 		const host = createHost();
 
 		host.open();
-		host.click('Previous exercise');
-		host.click('Next exercise');
+		host.click(I18n.puzzle.PREVIOUS_EXERCISE);
+		host.click(I18n.puzzle.NEXT_EXERCISE);
 
 		expect(host.stepped).toEqual(['previous', 'next']);
 	});
@@ -200,13 +217,13 @@ describe('PuzzleSolverComponent', () => {
 		expect(host.enabledNav()).toEqual(['restart', 'back']);
 		expect(navControls(host.store)).toEqual(['restart', 'back']);
 
-		host.click('Step back one move');
+		host.click(I18n.common.BOARD_STEP_BACKWARD);
 
 		// The opening position: there is nowhere to go back to, and no line to restart.
 		expect(host.enabledNav()).toEqual(['forward']);
 		expect(navControls(host.store)).toEqual(['forward']);
 
-		host.click('Step forward one move');
+		host.click(I18n.common.BOARD_STEP_FORWARD);
 		host.store.selectSquare('b2');
 		host.store.selectSquare('b1');
 		host.advance(1500);
@@ -214,7 +231,7 @@ describe('PuzzleSolverComponent', () => {
 		expect(host.store.cursor()).toBe(3);
 		expect(host.enabledNav()).toEqual(['restart', 'back']);
 
-		host.click('Restart exercise');
+		host.click(I18n.common.BOARD_RESTART);
 
 		// Mid-replay nothing is pressable, and the cursor is on the opening position.
 		expect(host.enabledNav()).toEqual([]);
@@ -236,11 +253,11 @@ describe('PuzzleSolverComponent', () => {
 		// The opponent's opening move has been replayed, so the line can be rewound.
 		expect(host.store.cursor()).toBe(1);
 
-		host.click('Step back one move');
+		host.click(I18n.common.BOARD_STEP_BACKWARD);
 
 		expect(host.store.cursor()).toBe(0);
 
-		host.click('Flip board');
+		host.click(I18n.common.BOARD_FLIP);
 
 		expect(host.store.orientation()).toBe('white');
 	});

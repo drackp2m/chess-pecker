@@ -6,15 +6,23 @@ import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { PieceColor } from '@app/definition/chess.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
+import { I18n, provideI18nScope } from '@app/i18n';
 import { MatchStore } from '@app/page/match/store/match.store';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 
 @Component({
 	templateUrl: './match.page.html',
 	styleUrl: './match.page.scss',
-	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective, InputDirective],
-	providers: [MatchStore, { provide: BOARD_PRESENTER, useExisting: MatchStore }],
+	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective, InputDirective, I18nPipe],
+	providers: [
+		provideI18nScope('match'),
+		MatchStore,
+		{ provide: BOARD_PRESENTER, useExisting: MatchStore },
+	],
 })
 export class MatchPage {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(MatchStore);
 
 	readonly fenDraft = signal('');
@@ -25,19 +33,19 @@ export class MatchPage {
 
 		if ('checkmate' === status) {
 			return this.store.position().turn === this.store.playerColor()
-				? 'Checkmate — you lost'
-				: 'Checkmate — you won';
+				? I18n.match.CHECKMATE_LOST
+				: I18n.match.CHECKMATE_WON;
 		}
 
 		if ('stalemate' === status) {
-			return 'Stalemate — it is a draw';
+			return I18n.common.STALEMATE;
 		}
 
 		if ('draw' === status) {
-			return 'Drawn position';
+			return I18n.common.DRAWN_POSITION;
 		}
 
-		return this.store.isPlayerTurn() ? 'Your move' : 'The machine is thinking…';
+		return this.store.isPlayerTurn() ? I18n.match.YOUR_MOVE : I18n.match.MACHINE_THINKING;
 	});
 
 	readonly isCheck = computed(() => undefined !== this.store.checkedSquare());

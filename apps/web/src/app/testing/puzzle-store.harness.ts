@@ -4,8 +4,15 @@ import { vi } from 'vitest';
 
 import { ChessPosition, Square } from '@app/definition/chess.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed } from '@app/definition/move-speed.type';
-import { PuzzleClosure, PuzzleEvent, PuzzleResult } from '@app/definition/puzzle.type';
+import {
+	HINT_DELAY_MS,
+	PuzzleClosure,
+	PuzzleEvent,
+	PuzzleResult,
+} from '@app/definition/puzzle.type';
+import { I18n } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { HINT } from '@app/page/puzzle/store/puzzle/record';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
@@ -29,6 +36,14 @@ export const REPLAY_TOTAL = 1500;
 export const REPLAY_PLY = 800;
 /** Long enough for the refuted move to be taken back on its own. */
 export const UNDO_TOTAL = 1000;
+/** Long enough for the exercise to count as looked at, which is what offers the hint. */
+export const HINT_TOTAL = HINT_DELAY_MS;
+/**
+ * What is left of that clock once `createStore` has returned. The clock starts when the
+ * exercise opens, which is inside it, so the opening move it waits out has already been
+ * spent — only a test reading the exact moment the hint appears has to care.
+ */
+export const HINT_REMAINING = HINT_TOTAL - REPLAY_TOTAL * 2;
 
 /** The five plies `playFivePlyLine` leaves behind, as the record writes them. */
 export const FIVE_PLY = ['f1f8', 'b2b1', 'b3d1', 'b1d1', 'f8f1'];
@@ -77,6 +92,17 @@ export function miss(store: PuzzleStore): void {
 	play(store, 'b2', 'c2');
 }
 
+/**
+ * The tab left for `duration` and then come back to, which is what the page's own
+ * visibility handler does to the board. The clock behind the hint is the only thing that
+ * hears about it, and time spent away is not time spent looking at the exercise.
+ */
+export function lookAway(store: PuzzleStore, duration: number): void {
+	store.pauseClock();
+	vi.advanceTimersByTime(duration);
+	store.resumeClock();
+}
+
 export function playFivePlyLine(store: PuzzleStore): void {
 	play(store, 'b2', 'b1');
 	vi.advanceTimersByTime(REPLAY_TOTAL);
@@ -107,9 +133,9 @@ export function sanHistory(store: PuzzleStore): string[] {
 export type NavControl = 'restart' | 'back' | 'forward';
 
 export const NAV_LABELS: Record<NavControl, string> = {
-	restart: 'Restart exercise',
-	back: 'Step back one move',
-	forward: 'Step forward one move',
+	restart: I18n.common.BOARD_RESTART,
+	back: I18n.common.BOARD_STEP_BACKWARD,
+	forward: I18n.common.BOARD_STEP_FORWARD,
 };
 
 export const NAV_ORDER: readonly NavControl[] = ['restart', 'back', 'forward'];
@@ -137,6 +163,20 @@ export function navControls(store: PuzzleStore): NavControl[] {
 	return enabled;
 }
 
+/**
+ * What the hint button is doing: still behind its clock, on offer, or already taken.
+ * `spent` covers the exercise being over too, since the themes are handed over anyway.
+ */
+export type HintReading = 'locked' | 'offered' | 'spent';
+
+function readHint(store: PuzzleStore): HintReading {
+	if (store.hintUsed()) {
+		return 'spent';
+	}
+
+	return store.canUseHint() ? 'offered' : 'locked';
+}
+
 /** Everything the player can tell about the board at one moment, in one object. */
 export interface BoardReading {
 	readonly record: readonly PuzzleEvent[];
@@ -146,6 +186,7 @@ export interface BoardReading {
 	readonly mistake: string | undefined;
 	readonly visible: readonly string[];
 	readonly nav: readonly NavControl[];
+	readonly hint: HintReading;
 	readonly mistakes: number;
 	readonly result: PuzzleResult | undefined;
 	readonly closure: PuzzleClosure;
@@ -163,6 +204,7 @@ export function describeBoard(store: PuzzleStore): BoardReading {
 		mistake: undefined === mistake ? undefined : ChessNotation.describeLong(mistake),
 		visible: sanHistory(store),
 		nav: navControls(store),
+		hint: readHint(store),
 		mistakes: store.mistakeCount(),
 		result: store.result(),
 		closure: store.closure(),
@@ -179,9 +221,13 @@ interface ReplayState {
  * One event of a main-line record played back onto a board. A `0` is the restart
  * button, which walks the cursor back to the opening move the board plays for itself
  * — it never unwrites the line, so the plies ahead of the cursor are still there to
- * be stepped through.
+ * be stepped through. The hint marker moves nothing at all.
  */
 function replayStep(state: ReplayState, event: PuzzleEvent): ReplayState {
+	if (HINT === event) {
+		return state;
+	}
+
 	if ('number' === typeof event) {
 		const cursor = 0 === event ? Math.min(1, state.line.length) : state.cursor + event;
 

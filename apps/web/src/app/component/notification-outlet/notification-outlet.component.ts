@@ -2,13 +2,14 @@ import { Component, ElementRef, inject, signal } from '@angular/core';
 
 import { AppNotification } from '@app/definition/service/notification.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { NotificationService } from '@app/service/notification.service';
 
 @Component({
 	selector: 'app-notification-outlet',
 	templateUrl: './notification-outlet.component.html',
 	styleUrl: './notification-outlet.component.scss',
-	imports: [ButtonDirective],
+	imports: [ButtonDirective, I18nPipe],
 	host: {
 		'(document:pointerdown)': 'onDocumentPointerDown($event)',
 	},

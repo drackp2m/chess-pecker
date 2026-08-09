@@ -2,6 +2,7 @@ import { ApplicationRef, Injectable, effect, inject } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { concat, filter, from, interval } from 'rxjs';
 
+import { I18n, i18nRef } from '@app/i18n';
 import { Setting } from '@app/model/setting.model';
 import { version } from '@app/package';
 import { NotificationService } from '@app/service/notification.service';
@@ -66,7 +67,7 @@ export class UpdateService {
 		}
 
 		this.settingStore.save(setting.with({ payload: version }));
-		this.notificationService.notify(`App updated to v${version}`);
+		this.notificationService.notify(i18nRef(I18n.common.APP_UPDATED, { version }));
 	}
 
 	private watchForNewVersions(): void {
@@ -86,9 +87,7 @@ export class UpdateService {
 	}
 
 	private syncUpdateSilently(): void {
-		this.notificationService.notify('Syncing app update, the page will reload shortly', {
-			timeout: null,
-		});
+		this.notificationService.notify(i18nRef(I18n.common.UPDATE_SYNCING), { timeout: null });
 
 		void this.swUpdate
 			.activateUpdate()
@@ -106,12 +105,14 @@ export class UpdateService {
 		}
 
 		const message =
-			null === newVersion ? 'A new version is available' : `Version ${newVersion} is available`;
+			null === newVersion
+				? i18nRef(I18n.common.UPDATE_AVAILABLE)
+				: i18nRef(I18n.common.UPDATE_AVAILABLE_VERSION, { version: newVersion });
 
 		this.updateNotificationUuid = this.notificationService.notify(message, {
 			timeout: null,
 			action: {
-				label: 'Update',
+				label: i18nRef(I18n.common.UPDATE_ACTION),
 				callback: () => void this.applyUpdate(),
 			},
 		});

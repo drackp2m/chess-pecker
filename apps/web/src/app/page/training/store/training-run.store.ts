@@ -8,6 +8,8 @@ import type {
 } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n, i18nRef } from '@app/i18n';
 import {
 	TrainingAttemptRecord,
 	TrainingRunSlot,
@@ -63,7 +65,7 @@ export class TrainingRunStore extends signalStore(
 
 			patchState(this, { isLoading: false, isDone: null === this.current() });
 		} catch (error) {
-			this.fail(error, 'The exercise could not be loaded.');
+			this.fail(error, i18nRef(I18n.training.EXERCISE_LOAD_ERROR));
 		}
 	}
 
@@ -94,7 +96,7 @@ export class TrainingRunStore extends signalStore(
 
 			patchState(this, { isSubmitting: false, isDone: isClosed });
 		} catch (error) {
-			this.fail(error, 'The attempt could not be recorded.');
+			this.fail(error, i18nRef(I18n.training.ATTEMPT_RECORD_ERROR));
 		}
 	}
 
@@ -117,7 +119,7 @@ export class TrainingRunStore extends signalStore(
 
 			patchState(this, { isLoading: false, isDone: null === this.current() });
 		} catch (error) {
-			this.fail(error, 'The next round could not be opened.');
+			this.fail(error, i18nRef(I18n.training.NEXT_ROUND_ERROR));
 		}
 	}
 
@@ -174,7 +176,7 @@ export class TrainingRunStore extends signalStore(
 			roundTotal: dealt.total,
 			current: undefined === first ? null : toSlot(first),
 			queue: rest,
-			notice: undefined === first ? 'The catalog has no exercises in that rating band.' : null,
+			notice: undefined === first ? i18nRef(I18n.training.EMPTY_BAND) : null,
 		});
 	}
 
@@ -209,7 +211,7 @@ export class TrainingRunStore extends signalStore(
 		patchState(this, {
 			pending: undefined === next ? null : toSlot(next),
 			queue: rest,
-			notice: undefined === next ? 'The round ran out of exercises. Open it again.' : null,
+			notice: undefined === next ? i18nRef(I18n.training.ROUND_OUT_OF_EXERCISES) : null,
 		});
 
 		return undefined === next;
@@ -232,14 +234,17 @@ export class TrainingRunStore extends signalStore(
 		});
 
 		if (cycleFinished) {
-			patchState(this, { notice: 'Cycle complete.' });
+			patchState(this, { notice: i18nRef(I18n.training.CYCLE_COMPLETE) });
 
 			return true;
 		}
 
 		const next = await this.fetchNextSlot(uuid);
 
-		patchState(this, { pending: next, notice: null === next ? 'Cycle complete.' : null });
+		patchState(this, {
+			pending: next,
+			notice: null === next ? i18nRef(I18n.training.CYCLE_COMPLETE) : null,
+		});
 
 		return null === next;
 	}
@@ -263,7 +268,7 @@ export class TrainingRunStore extends signalStore(
 		}
 	}
 
-	private fail(error: unknown, fallback: string): void {
+	private fail(error: unknown, fallback: TranslationRef): void {
 		if (ApiCancelledError.is(error)) {
 			patchState(this, { isLoading: false, isSubmitting: false });
 
@@ -274,7 +279,7 @@ export class TrainingRunStore extends signalStore(
 			isLoading: false,
 			isSubmitting: false,
 			isDone: true,
-			error: HttpError.toMessage(error, fallback),
+			error: HttpError.toRef(error, fallback),
 		});
 	}
 }

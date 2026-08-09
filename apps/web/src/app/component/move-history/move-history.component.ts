@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
+import { I18n } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 
 interface HistoryTurn {
 	readonly number: number;
@@ -16,13 +18,15 @@ interface HistoryTurn {
 	readonly black: string | undefined;
 }
 
-/** The scoresheet: played moves paired up by turn, written in algebraic notation. */
 @Component({
 	selector: 'app-move-history',
 	templateUrl: './move-history.component.html',
 	styleUrl: './move-history.component.scss',
+	imports: [I18nPipe],
 })
 export class MoveHistoryComponent {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(BOARD_PRESENTER);
 
 	readonly title = input<string>();
@@ -50,15 +54,14 @@ export class MoveHistoryComponent {
 	private readonly line = viewChild<ElementRef<HTMLElement>>('line');
 
 	constructor() {
-		// The line runs off the right edge, so whatever was just written has to be pulled
-		// back into view — after the render that put it there, never before.
 		afterRenderEffect(() => {
 			this.turns();
 
 			const element = this.line()?.nativeElement;
 
-			// FixMe => some tests show errors on this line
-			element?.scrollTo({ left: element.scrollWidth });
+			if ('function' === typeof element?.scrollTo) {
+				element.scrollTo({ left: element.scrollWidth });
+			}
 		});
 	}
 }

@@ -1,5 +1,6 @@
 import { ChessPosition, Square } from '@app/definition/chess.type';
 import { MoveSound } from '@app/definition/sound.type';
+import { I18n } from '@app/i18n';
 
 /**
  * How much of the board's movement to animate, from most to least. Each level is a
@@ -80,9 +81,9 @@ export function shouldAnimate(kind: BoardTransitionKind, setting: MoveAnimation)
 }
 
 /** Human-readable name of each level, for the settings screen. */
-export const MOVE_ANIMATION_LABEL: Record<MoveAnimation, string> = {
-	always: 'Always',
-	forward: 'Only going forward',
-	first: 'Only when first played',
-	never: 'Never',
-};
+export const MOVE_ANIMATION_LABEL = {
+	always: I18n.setting.ANIMATION_ALWAYS,
+	forward: I18n.setting.ANIMATION_FORWARD,
+	first: I18n.setting.ANIMATION_FIRST,
+	never: I18n.setting.ANIMATION_NEVER,
+} as const satisfies Record<MoveAnimation, string>;

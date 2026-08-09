@@ -3,7 +3,9 @@ import { Injectable, computed, inject } from '@angular/core';
 import type { AuthUser, LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
 import { ConnectionPhase, SessionStatus } from '@app/definition/session-status.type';
+import { I18n, i18nRef } from '@app/i18n';
 import { AuthRepository } from '@app/repository/auth.repository';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
@@ -17,7 +19,7 @@ interface SessionStoreProps {
 	user: AuthUser | null;
 	waiting: Exclude<ConnectionPhase, 'unreachable'>;
 	isSubmitting: boolean;
-	error: string | null;
+	error: TranslationRef | null;
 }
 
 const initialState: SessionStoreProps = {
@@ -114,7 +116,7 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		} catch (error) {
 			patchState(this, {
 				isSubmitting: false,
-				error: HttpError.toMessage(error, 'The account could not be created. Try again.'),
+				error: HttpError.toRef(error, i18nRef(I18n.common.REGISTER_FAILED)),
 			});
 
 			return false;
@@ -137,7 +139,7 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		} catch (error) {
 			patchState(this, {
 				isSubmitting: false,
-				error: HttpError.toMessage(error, 'Could not log out. Try again.'),
+				error: HttpError.toRef(error, i18nRef(I18n.common.LOG_OUT_FAILED)),
 			});
 
 			return false;
@@ -188,16 +190,16 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 			: 'unreachable';
 	}
 
-	private static logInError(error: unknown): string {
+	private static logInError(error: unknown): TranslationRef {
 		if (HttpError.hasStatus(error, HttpStatusCode.Unauthorized)) {
-			return 'Wrong username or password.';
+			return i18nRef(I18n.common.WRONG_CREDENTIALS);
 		}
 
 		if (HttpError.hasStatus(error, HttpStatusCode.NotFound)) {
-			return 'There is no account with that username.';
+			return i18nRef(I18n.common.NO_SUCH_ACCOUNT);
 		}
 
-		return HttpError.toMessage(error, 'Could not log in. Try again.');
+		return HttpError.toRef(error, i18nRef(I18n.common.LOG_IN_FAILED));
 	}
 
 	/**

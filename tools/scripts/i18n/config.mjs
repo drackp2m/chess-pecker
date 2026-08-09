@@ -3,8 +3,8 @@ import path from 'node:path';
 export const DEFAULTS = {
 	i18nDir: path.join('apps', 'web', 'src', 'app', 'i18n'),
 	sourceDirs: [path.join('apps', 'web', 'src')],
-	langs: ['en', 'es'],
-	defaultLang: 'en',
+	langs: ['es', 'en'],
+	defaultLang: 'es',
 	rootScope: 'common',
 };
 

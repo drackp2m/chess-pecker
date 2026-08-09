@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import type { AuthUser } from '@chesspecker/api-definitions';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { I18n } from '@app/i18n';
 import { AuthRepository } from '@app/repository/auth.repository';
 import { SessionStore } from '@app/store/session.store';
 
@@ -218,7 +219,7 @@ describe('SessionStore', () => {
 
 		expect(succeeded).toBe(false);
 		expect(store.isAuthenticated()).toBe(false);
-		expect(store.error()).toBe('Wrong username or password.');
+		expect(store.error()).toEqual({ key: I18n.common.WRONG_CREDENTIALS });
 	});
 
 	it('logs in with the credentials it just registered', async () => {
@@ -242,7 +243,10 @@ describe('SessionStore', () => {
 		const succeeded = await store.register(credentials);
 
 		expect(succeeded).toBe(false);
-		expect(store.error()).toBe('username already exists.');
+		expect(store.error()).toEqual({
+			key: I18n.common.SERVER_DETAIL,
+			params: { detail: 'username already exists.' },
+		});
 	});
 
 	it('drops the session on log out', async () => {
@@ -264,6 +268,6 @@ describe('SessionStore', () => {
 
 		expect(await store.logOut()).toBe(false);
 		expect(store.isAuthenticated()).toBe(true);
-		expect(store.error()).toBe('Could not log out. Try again.');
+		expect(store.error()).toEqual({ key: I18n.common.LOG_OUT_FAILED });
 	});
 });

@@ -1,0 +1,20 @@
+{
+	"01KZJ895MBDHHY35NSG66Z2CX2": "Jugando",
+	"01KZJ895MB287JNKG3AQK0QE05": "Jaque",
+	"01KZJ895MBCKSTCBV7GV3PTNAN": "Jaque mate: has perdido",
+	"01KZJ895MB538DDEFCNEEXPJQS": "Jaque mate: has ganado",
+	"01KZJ895MB206DWDB9Y66T782Z": "Te toca",
+	"01KZJ895MBE0KR3D5T14ATFHHK": "La máquina está pensando…",
+	"01KZJ895MBVY40YKSMFMFPEN6Q": "Bando",
+	"01KZJ895MBBTMX8RM0R5A9PGTE": "Jugar con blancas",
+	"01KZJ895MB768FTTZ24MSP7YYG": "Jugar con negras",
+	"01KZJ895MB22G1RVE5CE1152JQ": "Elegir bando empieza una partida nueva.",
+	"01KZJ895MBXCGP8VSGTC89J2AK": "Tablero",
+	"01KZJ895MBQFFM0M25P885PECC": "Girar el tablero",
+	"01KZJ895MBE3WQTRW8GC3NAVYD": "Deshacer jugada",
+	"01KZJ895MB9V885BMCY675C79A": "Posición del ejercicio",
+	"01KZJ895MBQKSC9YNYJ0BW24Q8": "Cargar la posición",
+	"01KZJ895MBS2HDHRSR83E1EN5M": "Descartar",
+	"01KZJ895MBQ7F44AZ9DTZ2RNRS": "No se ha podido leer ese FEN.",
+	"01KZJ93GA1JB7TQ9Z498HP9W55": "«{{ notation }}» no es una jugada legal aquí."
+}

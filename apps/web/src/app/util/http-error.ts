@@ -1,37 +1,40 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n, i18nRef } from '@app/i18n';
+
 export const API_FAILURE = {
 	emptyCatalog: 'rating/not enough puzzles',
 	staleTrainingList: 'training/already in progress',
 	missingGoal: 'goal/goal is required',
 } as const;
 
-const FAILURE_MESSAGES: Readonly<Record<string, string>> = {
-	[API_FAILURE.emptyCatalog]:
-		'The catalog has no exercises in that rating band, so there is nothing to deal. An administrator has to import more puzzles.',
-	[API_FAILURE.staleTrainingList]:
-		'You already have a training in progress. The list has just been reloaded — carry on with that one, or cancel it first.',
-	[API_FAILURE.missingGoal]:
-		'Set how many exercises a day you are aiming for before opening the first cycle.',
+const FAILURE_KEYS: Readonly<Record<string, string>> = {
+	[API_FAILURE.emptyCatalog]: I18n.common.CATALOG_EMPTY,
+	[API_FAILURE.staleTrainingList]: I18n.common.TRAINING_ALREADY_RUNNING,
+	[API_FAILURE.missingGoal]: I18n.common.GOAL_REQUIRED,
 };
 
 export abstract class HttpError {
-	static toMessage(error: unknown, fallback: string): string {
+	static toRef(error: unknown, fallback: TranslationRef): TranslationRef {
 		if (!(error instanceof HttpErrorResponse)) {
 			return fallback;
 		}
 
 		if (0 === error.status) {
-			return 'The server is unreachable. Check that the API is running.';
+			return i18nRef(I18n.common.SERVER_UNREACHABLE);
 		}
 
 		const failure = HttpError.toFailure(error);
+		const key = undefined === failure ? undefined : FAILURE_KEYS[failure];
 
-		return (
-			(undefined === failure ? undefined : FAILURE_MESSAGES[failure]) ??
-			HttpError.readDetail(error.error) ??
-			fallback
-		);
+		if (undefined !== key) {
+			return { key };
+		}
+
+		const detail = HttpError.readDetail(error.error);
+
+		return undefined === detail ? fallback : i18nRef(I18n.common.SERVER_DETAIL, { detail });
 	}
 
 	static hasStatus(error: unknown, status: number): boolean {

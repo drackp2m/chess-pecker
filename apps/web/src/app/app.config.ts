@@ -7,6 +7,7 @@ import { provideTransloco } from '@jsverse/transloco';
 import { APP_ROUTES } from '@app/app.routes';
 import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SettingRepository } from '@app/repository/setting.repository';
+import { LanguageService } from '@app/service/language.service';
 import { ThemeService } from '@app/service/theme.service';
 import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
@@ -19,6 +20,7 @@ export const appConfig: ApplicationConfig = {
 		provideHttpClient(withInterceptors([authInterceptor])),
 		provideAppInitializer(() => {
 			const _themeService = inject(ThemeService);
+			const _languageService = inject(LanguageService);
 			const _updateService = inject(UpdateService);
 
 			// The session restore is a background refresh, not a boot gate: the app

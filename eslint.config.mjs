@@ -336,6 +336,20 @@ export default typescriptEslint.config(
 		},
 	},
 
+	// ── i18n keys ──────────────────────────────────────────────────────────────
+	{
+		name: 'i18n keys',
+		files: ['apps/web/src/app/i18n/**/keys.ts'],
+		rules: {
+			// Generated maps of translation keys: the name says what the string labels
+			// (`PASSWORD`), and the value is a ULID pointing at a message. Nothing here is
+			// a credential, but the heuristics read every one of them as one.
+			'sonarjs/no-hardcoded-credentials': 'off',
+			'sonarjs/no-hardcoded-passwords': 'off',
+			'sonarjs/no-hardcoded-secrets': 'off',
+		},
+	},
+
 	// ── Complexity ─────────────────────────────────────────────────────────────
 	{
 		name: 'Complexity',
