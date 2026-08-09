@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import type { FriendUser, Friendship, UserBlock, UserSummary } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n, i18nRef } from '@app/i18n';
 import { FriendshipRepository } from '@app/repository/friendship.repository';
 import { UserRepository } from '@app/repository/user.repository';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
@@ -18,8 +20,8 @@ interface ProfileStoreProps {
 	isLoading: boolean;
 	isSearching: boolean;
 	isSubmitting: boolean;
-	error: string | null;
-	notice: string | null;
+	error: TranslationRef | null;
+	notice: TranslationRef | null;
 }
 
 const initialState: ProfileStoreProps = {
@@ -65,7 +67,7 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 				isLoading: false,
 				...(ApiCancelledError.is(error)
 					? {}
-					: { error: HttpError.toMessage(error, 'Could not load your friends.') }),
+					: { error: HttpError.toRef(error, i18nRef(I18n.profile.LOAD_ERROR)) }),
 			});
 		}
 	}
@@ -97,7 +99,7 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 				isSearching: false,
 				...(ApiCancelledError.is(error)
 					? {}
-					: { error: HttpError.toMessage(error, 'The search could not be run.') }),
+					: { error: HttpError.toRef(error, i18nRef(I18n.profile.SEARCH_ERROR)) }),
 			});
 		}
 	}
@@ -111,8 +113,8 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 			async () => {
 				await this.friendshipRepository.sendRequest(username);
 			},
-			`Request sent to ${username}.`,
-			'The request could not be sent.',
+			i18nRef(I18n.profile.REQUEST_SENT_TO, { username }),
+			i18nRef(I18n.profile.SEND_ERROR),
 		);
 
 		if (sent) {
@@ -127,8 +129,8 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 			async () => {
 				await this.friendshipRepository.accept(uuid);
 			},
-			'Request accepted.',
-			'The request could not be accepted.',
+			i18nRef(I18n.profile.REQUEST_ACCEPTED),
+			i18nRef(I18n.profile.ACCEPT_ERROR),
 		);
 	}
 
@@ -137,8 +139,8 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 			async () => {
 				await this.friendshipRepository.decline(uuid);
 			},
-			'Request declined.',
-			'The request could not be declined.',
+			i18nRef(I18n.profile.REQUEST_DECLINED),
+			i18nRef(I18n.profile.DECLINE_ERROR),
 		);
 	}
 
@@ -148,8 +150,8 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 			async () => {
 				await this.friendshipRepository.remove(uuid);
 			},
-			'Removed.',
-			'It could not be removed.',
+			i18nRef(I18n.profile.REMOVED),
+			i18nRef(I18n.profile.REMOVE_ERROR),
 		);
 	}
 
@@ -159,8 +161,8 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 			async () => {
 				await this.friendshipRepository.removeByUser(user.uuid);
 			},
-			`${user.username} is no longer a friend.`,
-			'The friendship could not be undone.',
+			i18nRef(I18n.profile.NO_LONGER_FRIEND, { username: user.username }),
+			i18nRef(I18n.profile.UNFRIEND_ERROR),
 		);
 	}
 
@@ -169,8 +171,8 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 			async () => {
 				await this.friendshipRepository.block(username);
 			},
-			`${username} is blocked.`,
-			'The user could not be blocked.',
+			i18nRef(I18n.profile.USER_BLOCKED, { username }),
+			i18nRef(I18n.profile.BLOCK_ERROR),
 		);
 	}
 
@@ -179,8 +181,8 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 			async () => {
 				await this.friendshipRepository.unblock(uuid);
 			},
-			'Unblocked.',
-			'The block could not be lifted.',
+			i18nRef(I18n.profile.UNBLOCKED),
+			i18nRef(I18n.profile.UNBLOCK_ERROR),
 		);
 	}
 
@@ -194,15 +196,15 @@ export class ProfileStore extends signalStore({ protectedState: false }, withSta
 	 */
 	private async mutate(
 		action: () => Promise<void>,
-		notice: string,
-		fallback: string,
+		notice: TranslationRef,
+		fallback: TranslationRef,
 	): Promise<boolean> {
 		patchState(this, { isSubmitting: true, error: null, notice: null });
 
 		try {
 			await action();
 		} catch (error) {
-			patchState(this, { isSubmitting: false, error: HttpError.toMessage(error, fallback) });
+			patchState(this, { isSubmitting: false, error: HttpError.toRef(error, fallback) });
 
 			return false;
 		}

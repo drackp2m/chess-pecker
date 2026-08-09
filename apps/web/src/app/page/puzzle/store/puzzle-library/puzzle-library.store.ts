@@ -1,7 +1,9 @@
 import { Injectable, computed, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
 import { Puzzle } from '@app/definition/puzzle.type';
+import { I18n, i18nRef } from '@app/i18n';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 import { PuzzleCsv } from '@app/util/puzzle-csv';
 
@@ -10,8 +12,8 @@ interface PuzzleLibraryProps {
 	index: number;
 	setUuid: string | undefined;
 	setName: string | undefined;
-	importError: string | undefined;
-	importNotice: string | undefined;
+	importError: TranslationRef | undefined;
+	importNotice: TranslationRef | undefined;
 }
 
 function buildLibraryState(): PuzzleLibraryProps {
@@ -48,7 +50,7 @@ export class PuzzleLibraryStore extends signalStore(
 		const { puzzles, skipped } = PuzzleCsv.parse(text);
 
 		if (0 === puzzles.length) {
-			this.failImport('No readable exercises in that CSV.');
+			this.failImport(i18nRef(I18n.puzzle.NO_READABLE_ROWS));
 
 			return false;
 		}
@@ -81,7 +83,7 @@ export class PuzzleLibraryStore extends signalStore(
 	 * Reports an import that never got as far as CSV text — an unreadable file, say —
 	 * through the same channel the caller already watches.
 	 */
-	failImport(message: string): void {
+	failImport(message: TranslationRef): void {
 		patchState(this, { importError: message, importNotice: undefined });
 	}
 
@@ -119,15 +121,15 @@ export class PuzzleLibraryStore extends signalStore(
 
 			patchState(this, { setUuid: stored.uuid, setName: stored.name });
 		} catch {
-			patchState(this, { importError: 'Imported, but the set could not be saved for next time.' });
+			patchState(this, { importError: i18nRef(I18n.puzzle.IMPORT_NOT_SAVED) });
 		}
 	}
 
-	private describeImport(puzzles: readonly Puzzle[], skipped: number): string {
-		const loaded = `Loaded ${puzzles.length.toString()} exercises`;
+	private describeImport(puzzles: readonly Puzzle[], skipped: number): TranslationRef {
+		const loaded = puzzles.length;
 
 		return 0 === skipped
-			? `${loaded}.`
-			: `${loaded}, skipped ${skipped.toString()} unreadable rows.`;
+			? i18nRef(I18n.puzzle.IMPORTED, { loaded })
+			: i18nRef(I18n.puzzle.IMPORTED_WITH_SKIPPED, { loaded, skipped });
 	}
 }

@@ -1,10 +1,13 @@
 import { Component, OnInit, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import type { CycleProgress, TrainingStatus } from '@chesspecker/api-definitions';
+import type { CycleProgress, Training, TrainingStatus } from '@chesspecker/api-definitions';
 
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
+import { I18n } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { I18nService } from '@app/service/i18n.service';
 import { TrainingStore } from '@app/store/training.store';
 
 const DEFAULT_SET_SIZE = 1000;
@@ -13,21 +16,39 @@ const MAX_SET_SIZE = 5000;
 const MS_PER_MINUTE = 60_000;
 const MS_PER_SECOND = 1000;
 
-const PHASE_LABEL: Record<TrainingStatus, string> = {
-	calibrating: 'Finding your level',
-	planning: 'Choosing the set and the pace',
-	running: 'Running the cycles',
-	finished: 'Finished',
-	abandoned: 'Cancelled',
-};
+const PHASE_LABEL = {
+	calibrating: I18n.training.PHASE_CALIBRATING,
+	planning: I18n.training.PHASE_PLANNING,
+	running: I18n.training.PHASE_RUNNING,
+	finished: I18n.training.PHASE_FINISHED,
+	abandoned: I18n.training.PHASE_ABANDONED,
+} as const satisfies Record<TrainingStatus, string>;
+
+const STATUS_LABEL = {
+	calibrating: I18n.training.STATUS_CALIBRATING,
+	planning: I18n.training.STATUS_PLANNING,
+	running: I18n.training.STATUS_RUNNING,
+	finished: I18n.training.STATUS_FINISHED,
+	abandoned: I18n.training.STATUS_ABANDONED,
+} as const satisfies Record<TrainingStatus, string>;
+
+const CYCLE_STATUS_LABEL = {
+	running: I18n.common.RUNNING,
+	finished: I18n.common.FINISHED,
+	abandoned: I18n.common.CANCELLED,
+} as const satisfies Record<CycleProgress['status'], string>;
 
 @Component({
 	templateUrl: './training.page.html',
 	styleUrl: './training.page.scss',
-	imports: [ReactiveFormsModule, InputDirective, ButtonDirective, RouterLinkDirective],
+	imports: [ReactiveFormsModule, InputDirective, ButtonDirective, RouterLinkDirective, I18nPipe],
 })
 export class TrainingPage implements OnInit {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(TrainingStore);
+
+	private readonly i18n = inject(I18nService);
 
 	readonly phaseLabel = computed(() => {
 		const status = this.store.active()?.status;
@@ -96,6 +117,14 @@ export class TrainingPage implements OnInit {
 		const seconds = Math.round((milliseconds % MS_PER_MINUTE) / MS_PER_SECOND);
 
 		return `${minutes.toString()}m ${seconds.toString().padStart(2, '0')}s`;
+	}
+
+	trainingStatus(training: Training): string {
+		return STATUS_LABEL[training.status];
+	}
+
+	cycleStatus(cycle: CycleProgress): string {
+		return this.i18n.translate(CYCLE_STATUS_LABEL[cycle.status]);
 	}
 
 	formatAccuracy(accuracy: number): string {

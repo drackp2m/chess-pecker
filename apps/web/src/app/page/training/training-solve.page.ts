@@ -12,23 +12,30 @@ import { Router } from '@angular/router';
 
 import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzzle-difficulty.component';
 import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n, i18nRef } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 
 @Component({
 	templateUrl: './training-solve.page.html',
 	styleUrl: './training-solve.page.scss',
-	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent],
+	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent, I18nPipe],
 })
 export class TrainingSolvePage implements OnInit, OnDestroy {
+	protected readonly I18n = I18n;
+
 	readonly run = inject(TrainingRunStore);
 	readonly board = inject(PuzzleStore);
 
 	readonly headline = computed(() => this.describe());
 
 	readonly nextLabel = computed(() =>
-		!this.run.hasNext() && this.run.hasNextRound() ? 'Next round' : 'Next exercise',
+		!this.run.hasNext() && this.run.hasNextRound()
+			? I18n.training.NEXT_ROUND
+			: I18n.training.NEXT_EXERCISE,
 	);
 
 	/**
@@ -42,28 +49,21 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 		}
 
 		return 'calibration' === this.run.mode()
-			? 'The miss is recorded. Anything from here on is practice and does not count towards the calibration.'
-			: 'The miss is recorded. Anything from here on is practice and does not change the result.';
+			? I18n.training.PRACTICE_NOTICE_CALIBRATION
+			: I18n.training.PRACTICE_NOTICE_CYCLE;
 	});
 
-	readonly label = computed(() => {
+	readonly label = computed<TranslationRef>(() => {
 		const round = this.run.round();
 		const position = this.run.current()?.position;
 
 		if (null !== round) {
-			const roundPosition = this.run.roundPosition();
-			const roundTotal = this.run.roundTotal();
-			const progress =
-				null === roundPosition || null === roundTotal
-					? ''
-					: ` (${roundPosition.toString()} / ${roundTotal.toString()})`;
-
-			return `Calibration · round ${round.index.toString()}${progress} · ELO ${round.rating.toString()}`;
+			return this.describeRound(round.index, round.rating);
 		}
 
 		return null === position || undefined === position
-			? 'Cycle'
-			: `Cycle · exercise ${(position + 1).toString()}`;
+			? i18nRef(I18n.training.CYCLE_LABEL)
+			: i18nRef(I18n.training.CYCLE_LABEL_POSITION, { position: position + 1 });
 	});
 
 	private readonly location = inject(Location);
@@ -124,7 +124,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 
 	private describe(): string {
 		if (this.board.isFreePlay()) {
-			return 'Free play — both sides are yours.';
+			return I18n.common.FREE_PLAY_HEADLINE;
 		}
 
 		if (!this.board.isOpen()) {
@@ -133,30 +133,26 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 
 		switch (this.board.outcome()) {
 			case 'idle':
-				return 'Loading the exercise…';
+				return I18n.training.LOADING_EXERCISE;
 			case 'opening':
 			case 'replying':
-				return 'Opponent is moving…';
+				return I18n.common.OPPONENT_MOVING;
 			case 'failed':
-				return 'Nope!';
+				return I18n.training.NOPE;
 			case 'solving':
 				return this.describeSolving();
 			case 'solved':
-				return 'Recording the attempt…';
+				return I18n.training.RECORDING_ATTEMPT;
 		}
 	}
 
 	/** The exercise is over, so this only says how it ended. */
 	private describeClosed(): string {
 		if ('revealed' === this.board.closure()) {
-			return this.board.isRevealing()
-				? 'Gave up. Watch how it went.'
-				: 'Gave up. That was the line.';
+			return this.board.isRevealing() ? I18n.training.GAVE_UP_WATCHING : I18n.training.GAVE_UP_LINE;
 		}
 
-		return 'failed' === this.board.result()
-			? 'Found it, after the miss, which leaves the attempt as it was.'
-			: 'Solved.';
+		return 'failed' === this.board.result() ? I18n.training.FOUND_AFTER_MISS : I18n.training.SOLVED;
 	}
 
 	/**
@@ -166,9 +162,20 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	private describeSolving(): string {
 		// ToDo => why "is Practice" is true when make a mistake?
 		if (this.board.isPractice()) {
-			return 'Missed. Try it again, or give up to see the line.';
+			return I18n.training.MISSED_RETRY;
 		}
 
-		return `Find the move for ${this.board.playerColor()}`;
+		return 'white' === this.board.playerColor()
+			? I18n.common.FIND_MOVE_WHITE
+			: I18n.common.FIND_MOVE_BLACK;
+	}
+
+	private describeRound(round: number, rating: number): TranslationRef {
+		const position = this.run.roundPosition();
+		const total = this.run.roundTotal();
+
+		return null === position || null === total
+			? i18nRef(I18n.training.CALIBRATION_LABEL, { round, rating })
+			: i18nRef(I18n.training.CALIBRATION_LABEL_PROGRESS, { round, rating, position, total });
 	}
 }

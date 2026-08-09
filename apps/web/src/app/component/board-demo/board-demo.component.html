@@ -51,14 +51,14 @@
 	}
 </div>
 
-<p class="fs-sm color-contrast-mid" role="status">{{ hint() }}</p>
+<p class="fs-sm color-contrast-mid" role="status">{{ hint() | i18n }}</p>
 
 <div class="flex-row gap-2 justify-center">
 	<button
 		appThemed
 		icon="backward-fast"
 		iconSquared
-		aria-label="Start the demo over"
+		[attr.aria-label]="I18n.common.BOARD_DEMO_RESTART | i18n"
 		(click)="reset()"
 		class="px-2"
 	></button>
@@ -67,7 +67,7 @@
 		appThemed
 		icon="backward-step"
 		iconSquared
-		aria-label="Step back one move"
+		[attr.aria-label]="I18n.common.BOARD_STEP_BACKWARD | i18n"
 		[disabled]="store.isBusy() || !store.canStepBackward()"
 		(click)="store.stepBackward()"
 		class="px-2"
@@ -77,7 +77,7 @@
 		appThemed
 		icon="forward-step"
 		iconSquared
-		aria-label="Step forward one move"
+		[attr.aria-label]="I18n.common.BOARD_STEP_FORWARD | i18n"
 		[disabled]="store.isBusy() || !store.canStepForward()"
 		(click)="store.stepForward()"
 		class="px-2"

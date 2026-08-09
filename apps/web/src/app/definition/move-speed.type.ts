@@ -1,14 +1,16 @@
+import { I18n } from '@app/i18n';
+
 export type MoveSpeed = 'slow' | 'normal' | 'fast';
 
 export const MOVE_SPEEDS: readonly MoveSpeed[] = ['slow', 'normal', 'fast'];
 
 export const DEFAULT_MOVE_SPEED: MoveSpeed = 'normal';
 
-export const MOVE_SPEED_LABEL: Record<MoveSpeed, string> = {
-	slow: 'Slow',
-	normal: 'Normal',
-	fast: 'Fast',
-};
+export const MOVE_SPEED_LABEL = {
+	slow: I18n.setting.SPEED_SLOW,
+	normal: I18n.setting.SPEED_NORMAL,
+	fast: I18n.setting.SPEED_FAST,
+} as const satisfies Record<MoveSpeed, string>;
 
 /** Pause before the piece lights up. */
 export const REPLAY_DELAY = 300;

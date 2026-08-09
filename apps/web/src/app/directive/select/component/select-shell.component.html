@@ -13,7 +13,7 @@
 	is the decorative sibling `.label` element. The projected native select
 	only carries the form value. -->
 	<label [attr.for]="searchInputId()">
-		<span #labelText class="label-measure" aria-hidden="true">{{ label() }}</span>
+		<span #labelText class="label-measure" aria-hidden="true">{{ label() | i18n }}</span>
 		<input
 			#searchInput
 			class="search-input"
@@ -25,8 +25,8 @@
 			[id]="searchInputId()"
 			[attr.aria-controls]="listboxId()"
 			[attr.aria-expanded]="store.isOpen()"
-			[attr.aria-label]="label()"
-			[placeholder]="placeholder()"
+			[attr.aria-label]="label() | i18n"
+			[placeholder]="placeholder() | i18n"
 			[value]="displayText()"
 			[disabled]="store.disabled()"
 			(focus)="onSearchFocus()"
@@ -41,7 +41,7 @@
 		<app-svg icon="chevron-down" [size]="18" />
 	</div>
 
-	<p class="label" aria-hidden="true">{{ label() }}</p>
+	<p class="label" aria-hidden="true">{{ label() | i18n }}</p>
 
 	<div class="sr-status" aria-live="polite">{{ announcement() }}</div>
 
@@ -71,7 +71,7 @@
 					}
 				</div>
 			} @empty {
-				<div class="no-matches">No matches found</div>
+				<div class="no-matches">{{ I18n.common.SELECT_NO_MATCHES | i18n }}</div>
 			}
 		</div>
 	</div>

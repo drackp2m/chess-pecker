@@ -1,12 +1,16 @@
 <section class="flex-col gap-4">
 	<header class="flex-col gap-1">
-		<h4 class="title color-contrast-mid">Playing <span class="color-contrast">match</span></h4>
+		<h4 class="title color-contrast-mid">
+			{{ I18n.match.PLAYING | i18n }}
+
+			<span class="color-contrast">{{ I18n.common.MATCH | i18n }}</span>
+		</h4>
 
 		<p class="headline flex-row gap-2 align-center fs-lg fw-lg" [class.check]="isCheck()">
-			{{ headline() }}
+			{{ headline() | i18n }}
 
 			@if (isCheck() && !store.isFinished()) {
-				<span class="badge py-1 px-2 br-1 fs-sm fw-xl">Check</span>
+				<span class="badge py-1 px-2 br-1 fs-sm fw-xl">{{ I18n.match.CHECK | i18n }}</span>
 			}
 		</p>
 	</header>
@@ -16,7 +20,7 @@
 
 		<aside class="panel flex-col gap-4">
 			<div class="flex-col gap-2">
-				<h5>Side</h5>
+				<h5>{{ I18n.match.SIDE | i18n }}</h5>
 
 				<div class="flex-row gap-2">
 					<button
@@ -24,7 +28,7 @@
 						[color]="'white' === store.playerColor() ? 'accent' : 'primary-mid'"
 						(click)="playAs('white')"
 					>
-						Play as white
+						{{ I18n.match.PLAY_AS_WHITE | i18n }}
 					</button>
 
 					<button
@@ -32,33 +36,35 @@
 						[color]="'black' === store.playerColor() ? 'accent' : 'primary-mid'"
 						(click)="playAs('black')"
 					>
-						Play as black
+						{{ I18n.match.PLAY_AS_BLACK | i18n }}
 					</button>
 				</div>
 
-				<p class="fs-sm color-contrast-mid">Choosing a side starts a new match.</p>
+				<p class="fs-sm color-contrast-mid">{{ I18n.match.SIDE_HINT | i18n }}</p>
 			</div>
 
-			<app-move-history title="Moves" class="flex-grow" />
+			<app-move-history [title]="I18n.common.MOVES" class="flex-grow" />
 
 			<div class="flex-col gap-2">
-				<h5>Board</h5>
+				<h5>{{ I18n.match.BOARD | i18n }}</h5>
 
 				<div class="flex-row gap-2">
-					<button appThemed (click)="store.flipBoard()">Flip board</button>
+					<button appThemed (click)="store.flipBoard()">
+						{{ I18n.match.FLIP_BOARD | i18n }}
+					</button>
 
 					<button
 						appThemed
 						[disabled]="0 === store.history().length"
 						(click)="store.undoLastMove()"
 					>
-						Undo move
+						{{ I18n.match.UNDO_MOVE | i18n }}
 					</button>
 				</div>
 			</div>
 
 			<div class="flex-col gap-2">
-				<h5>Exercise position</h5>
+				<h5>{{ I18n.match.EXERCISE_POSITION | i18n }}</h5>
 
 				<input
 					appThemed
@@ -70,7 +76,7 @@
 				/>
 
 				<button appThemed color="accent" [disabled]="'' === fenDraft().trim()" (click)="loadFen()">
-					Load position
+					{{ I18n.match.LOAD_POSITION | i18n }}
 				</button>
 
 				<p class="fen mono fs-sm color-contrast-mid">{{ store.fen() }}</p>
@@ -80,9 +86,11 @@
 
 	@if (store.notationError(); as error) {
 		<p class="error flex-row gap-3 align-center py-2 px-3 br-1" role="alert">
-			{{ error }}
+			{{ error.key | i18n: error.params }}
 
-			<button type="button" class="dismiss fs-sm" (click)="store.dismissError()">Dismiss</button>
+			<button type="button" class="dismiss fs-sm" (click)="store.dismissError()">
+				{{ I18n.match.DISMISS | i18n }}
+			</button>
 		</p>
 	}
 </section>

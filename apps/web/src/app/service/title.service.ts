@@ -4,11 +4,11 @@ import { Injectable, computed, signal } from '@angular/core';
 	providedIn: 'root',
 })
 export class TitleService {
-	private readonly _title = signal('Chess Pecker');
+	private readonly _titleKey = signal('');
 
-	readonly title = computed(() => this._title());
+	readonly titleKey = computed(() => this._titleKey());
 
-	setTitle(title: string) {
-		this._title.set('' !== title ? title : 'Chess Pecker');
+	setTitleKey(key: string) {
+		this._titleKey.set(key);
 	}
 }

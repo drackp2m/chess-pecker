@@ -1,64 +1,72 @@
 <section class="flex-col gap-6">
 	<div class="flex-col gap-2">
-		<h4>Your account</h4>
+		<h4>{{ I18n.profile.YOUR_ACCOUNT | i18n }}</h4>
 
 		@if (session.isAuthenticated()) {
 			<p class="fs-sm color-contrast-mid">
 				@if (session.username(); as username) {
-					Logged in as {{ username }}.
+					{{ I18n.profile.LOGGED_IN_AS | i18n: { username } }}
 				} @else {
-					Your session is open.
+					{{ I18n.profile.SESSION_OPEN | i18n }}
 				}
 			</p>
 
-			<button appThemed [disabled]="session.isSubmitting()" (click)="logOut()">Log out</button>
+			<button appThemed [disabled]="session.isSubmitting()" (click)="logOut()">
+				{{ I18n.profile.LOG_OUT | i18n }}
+			</button>
 
 			@if (session.error(); as message) {
-				<p class="error fs-sm" role="alert">{{ message }}</p>
+				<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 			}
 		} @else if (session.isUnreachable()) {
 			<p class="fs-sm color-contrast-mid">
-				The server is not answering, so there is no way to tell whether your session is open. It may
-				be waking up, which takes up to a minute on the free tier. Meanwhile the board, free play,
-				an imported set and your settings work as usual — they never leave this device.
+				{{ I18n.profile.UNREACHABLE_EXPLANATION | i18n }}
 			</p>
 
 			<!-- No disabled state: the retry sets the status back to `unknown`, which takes
 			this whole branch off the screen until the server answers one way or the other. -->
-			<button appThemed (click)="retryConnection()">Try again</button>
+			<button appThemed (click)="retryConnection()">{{ I18n.profile.TRY_AGAIN | i18n }}</button>
 		} @else if (session.isAnonymous()) {
 			<p class="fs-sm color-contrast-mid">
-				An account opens a session against the Chess Pecker API. Your program, its cycles and every
-				exercise you solve are stored there, so they carry between devices.
+				{{ I18n.profile.ANONYMOUS_EXPLANATION | i18n }}
 			</p>
 
 			<div class="flex-col gap-2">
-				<button appThemed color="primary-mid" appRouterLink="/login">Log in</button>
+				<button appThemed color="primary-mid" appRouterLink="/login">
+					{{ I18n.common.LOG_IN | i18n }}
+				</button>
 
-				<button appThemed appRouterLink="/register">Create an account</button>
+				<button appThemed appRouterLink="/register">
+					{{ I18n.common.CREATE_ACCOUNT | i18n }}
+				</button>
 			</div>
 		}
 	</div>
 
 	<div class="flex-col gap-2">
-		<h4>Add a friend</h4>
+		<h4>{{ I18n.profile.ADD_FRIEND | i18n }}</h4>
 
-		<p class="fs-sm color-contrast-mid">
-			People are found by the start of their username. Nothing is sent until you pick one of the
-			results.
-		</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.profile.ADD_FRIEND_INTRO | i18n }}</p>
 
 		<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
-			<input appThemed type="text" label="Username" autocomplete="off" formControlName="username" />
+			<input
+				appThemed
+				type="text"
+				[label]="I18n.profile.USERNAME | i18n"
+				autocomplete="off"
+				formControlName="username"
+			/>
 
 			<button appThemed type="submit" color="accent" [disabled]="store.isSearching()">
-				{{ store.isSearching() ? 'Searching…' : 'Search' }}
+				{{ (store.isSearching() ? I18n.profile.SEARCHING : I18n.profile.SEARCH) | i18n }}
 			</button>
 		</form>
 
 		@if (store.searchTerm(); as term) {
 			@if (0 === store.matches().length) {
-				<p class="empty fs-sm color-contrast-mid">No account starts with “{{ term }}”.</p>
+				<p class="empty fs-sm color-contrast-mid">
+					{{ I18n.profile.NO_MATCH_FOR | i18n: { term } }}
+				</p>
 			} @else {
 				<ul class="flex-col gap-2">
 					@for (match of store.matches(); track match.uuid) {
@@ -72,10 +80,12 @@
 									[disabled]="store.isSubmitting()"
 									(click)="sendRequest(match.username)"
 								>
-									Send request
+									{{ I18n.profile.SEND_REQUEST | i18n }}
 								</button>
 
-								<button appThemed (click)="block(match.username)">Block</button>
+								<button appThemed (click)="block(match.username)">
+									{{ I18n.profile.BLOCK | i18n }}
+								</button>
 							</span>
 						</li>
 					}
@@ -84,19 +94,19 @@
 		}
 
 		@if (store.error(); as message) {
-			<p class="error fs-sm" role="alert">{{ message }}</p>
+			<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 		}
 
 		@if (store.notice(); as message) {
-			<p class="fs-sm" role="status">{{ message }}</p>
+			<p class="fs-sm" role="status">{{ message.key | i18n: message.params }}</p>
 		}
 	</div>
 
 	<div class="flex-col gap-2">
-		<h4>Requests received</h4>
+		<h4>{{ I18n.profile.REQUESTS_RECEIVED | i18n }}</h4>
 
 		@if (0 === store.received().length) {
-			<p class="empty fs-sm color-contrast-mid">Nothing waiting for an answer.</p>
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NOTHING_WAITING | i18n }}</p>
 		} @else {
 			<ul class="flex-col gap-2">
 				@for (request of store.received(); track request.uuid) {
@@ -104,9 +114,17 @@
 						<span class="fw-lg">{{ request.requester.username }}</span>
 
 						<span class="flex-row gap-2">
-							<button appThemed color="accent" (click)="accept(request.uuid)">Accept</button>
-							<button appThemed (click)="decline(request.uuid)">Decline</button>
-							<button appThemed (click)="block(request.requester.username)">Block</button>
+							<button appThemed color="accent" (click)="accept(request.uuid)">
+								{{ I18n.profile.ACCEPT | i18n }}
+							</button>
+
+							<button appThemed (click)="decline(request.uuid)">
+								{{ I18n.profile.DECLINE | i18n }}
+							</button>
+
+							<button appThemed (click)="block(request.requester.username)">
+								{{ I18n.profile.BLOCK | i18n }}
+							</button>
 						</span>
 					</li>
 				}
@@ -115,10 +133,10 @@
 	</div>
 
 	<div class="flex-col gap-2">
-		<h4>Requests sent</h4>
+		<h4>{{ I18n.profile.REQUESTS_SENT | i18n }}</h4>
 
 		@if (0 === store.sent().length) {
-			<p class="empty fs-sm color-contrast-mid">You have not asked anyone yet.</p>
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NONE_SENT | i18n }}</p>
 		} @else {
 			<ul class="flex-col gap-2">
 				@for (request of store.sent(); track request.uuid) {
@@ -135,12 +153,12 @@
 	</div>
 
 	<div class="flex-col gap-2">
-		<h4>Friends</h4>
+		<h4>{{ I18n.profile.FRIENDS | i18n }}</h4>
 
 		@if (store.isLoading()) {
-			<p class="empty fs-sm color-contrast-mid">Loading…</p>
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
 		} @else if (0 === store.friends().length) {
-			<p class="empty fs-sm color-contrast-mid">No friends yet.</p>
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NO_FRIENDS | i18n }}</p>
 		} @else {
 			<ul class="flex-col gap-2">
 				@for (friend of store.friends(); track friend.uuid) {
@@ -149,10 +167,12 @@
 
 						<span class="flex-row gap-2">
 							<button appThemed [disabled]="store.isSubmitting()" (click)="unfriend(friend)">
-								Unfriend
+								{{ I18n.profile.UNFRIEND | i18n }}
 							</button>
 
-							<button appThemed (click)="block(friend.username)">Block</button>
+							<button appThemed (click)="block(friend.username)">
+								{{ I18n.profile.BLOCK | i18n }}
+							</button>
 						</span>
 					</li>
 				}
@@ -161,17 +181,19 @@
 	</div>
 
 	<div class="flex-col gap-2">
-		<h4>Blocked</h4>
+		<h4>{{ I18n.profile.BLOCKED | i18n }}</h4>
 
 		@if (0 === store.blocked().length) {
-			<p class="empty fs-sm color-contrast-mid">Nobody is blocked.</p>
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NOBODY_BLOCKED | i18n }}</p>
 		} @else {
 			<ul class="flex-col gap-2">
 				@for (entry of store.blocked(); track entry.uuid) {
 					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
 						<span class="fw-lg">{{ entry.blocked.username }}</span>
 
-						<button appThemed (click)="unblock(entry.uuid)">Unblock</button>
+						<button appThemed (click)="unblock(entry.uuid)">
+							{{ I18n.profile.UNBLOCK | i18n }}
+						</button>
 					</li>
 				}
 			</ul>

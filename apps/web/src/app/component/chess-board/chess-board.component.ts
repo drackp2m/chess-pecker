@@ -18,8 +18,12 @@ import {
 	SQUARE_COUNT,
 } from '@app/definition/chess.constant';
 import { Piece, PromotionPieceType, Square } from '@app/definition/chess.type';
+import { I18n } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { I18nService } from '@app/service/i18n.service';
 import { ChessSquare } from '@app/util/chess/chess-square';
+import { PIECE_LABEL_KEY } from '@app/util/chess/piece-label';
 
 interface BoardSquare {
 	readonly square: Square;
@@ -42,12 +46,15 @@ interface BoardSquare {
 	selector: 'app-chess-board',
 	templateUrl: './chess-board.component.html',
 	styleUrl: './chess-board.component.scss',
-	imports: [ChessPieceComponent],
+	imports: [ChessPieceComponent, I18nPipe],
 })
 export class ChessBoardComponent {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(BOARD_PRESENTER);
 
 	private readonly preference = inject(BoardPreferenceService);
+	private readonly i18n = inject(I18nService);
 
 	readonly promotionChoices = buildPromotionChoices(PROMOTION_PIECES);
 
@@ -109,6 +116,12 @@ export class ChessBoardComponent {
 		}
 	}
 
+	promotionLabel(piece: PromotionPieceType): string {
+		return this.i18n.translate(I18n.common.PROMOTE_TO_PIECE, {
+			piece: this.i18n.translate(PIECE_LABEL_KEY[this.promotionColor()][piece]),
+		});
+	}
+
 	promote(piece: PromotionPieceType): void {
 		this.store.completePromotion(piece);
 	}
@@ -143,14 +156,18 @@ export class ChessBoardComponent {
 	/** Spoken description of a square, so the board is usable without sight of it. */
 	label(square: BoardSquare): string {
 		if (undefined === square.piece) {
-			return square.isTarget ? `Move to ${square.square}` : `Empty square ${square.square}`;
+			return this.i18n.translate(
+				square.isTarget ? I18n.common.SQUARE_MOVE_TO : I18n.common.SQUARE_EMPTY,
+				{ square: square.square },
+			);
 		}
 
-		const piece = `${square.piece.color} ${square.piece.type}`;
+		const piece = this.i18n.translate(PIECE_LABEL_KEY[square.piece.color][square.piece.type]);
 
-		return square.isTarget
-			? `Capture ${piece} on ${square.square}`
-			: `${piece} on ${square.square}`;
+		return this.i18n.translate(
+			square.isTarget ? I18n.common.SQUARE_CAPTURE : I18n.common.SQUARE_PIECE,
+			{ piece, square: square.square },
+		);
 	}
 
 	/** Feature-detected: not every test environment implements pointer capture. */

@@ -8,10 +8,14 @@ import { BOARD_SIZE, FILES, RANKS, SQUARE_COUNT } from '@app/definition/chess.co
 import { Piece, PieceColor, Square } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { ButtonDirective } from '@app/directive/button.directive';
+import { I18n } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { I18nService } from '@app/service/i18n.service';
 import { ChessSquare } from '@app/util/chess/chess-square';
+import { PIECE_LABEL_KEY } from '@app/util/chess/piece-label';
 
 /** Board index of a1: the strip draws the first rank, which is the last row of all. */
 const RANK_START = SQUARE_COUNT - BOARD_SIZE;
@@ -54,13 +58,16 @@ interface DemoSquare {
 	selector: 'app-board-demo',
 	templateUrl: './board-demo.component.html',
 	styleUrl: './board-demo.component.scss',
-	imports: [ChessPieceComponent, ButtonDirective],
+	imports: [ChessPieceComponent, ButtonDirective, I18nPipe],
 	providers: [PuzzleLibraryStore, PuzzleStore],
 })
 export class BoardDemoComponent {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(PuzzleStore);
 
 	private readonly preference = inject(BoardPreferenceService);
+	private readonly i18n = inject(I18nService);
 
 	/** The strip always reads a1 to h1, so its slides are measured unflipped. */
 	private readonly stripOrientation = signal<PieceColor>('white');
@@ -145,14 +152,18 @@ export class BoardDemoComponent {
 
 	label(square: DemoSquare): string {
 		if (undefined === square.piece) {
-			return square.isTarget ? `Move to ${square.square}` : `Empty square ${square.square}`;
+			return this.i18n.translate(
+				square.isTarget ? I18n.common.SQUARE_MOVE_TO : I18n.common.SQUARE_EMPTY,
+				{ square: square.square },
+			);
 		}
 
-		const piece = `${square.piece.color} ${square.piece.type}`;
+		const piece = this.i18n.translate(PIECE_LABEL_KEY[square.piece.color][square.piece.type]);
 
-		return square.isTarget
-			? `Capture ${piece} on ${square.square}`
-			: `${piece} on ${square.square}`;
+		return this.i18n.translate(
+			square.isTarget ? I18n.common.SQUARE_CAPTURE : I18n.common.SQUARE_PIECE,
+			{ piece, square: square.square },
+		);
 	}
 
 	/** Feature-detected: not every test environment implements pointer capture. */
@@ -204,20 +215,20 @@ export class BoardDemoComponent {
 
 	private describe(): string {
 		if (this.store.isRevealing()) {
-			return 'Playing the answer…';
+			return I18n.common.DEMO_PLAYING_ANSWER;
 		}
 
 		switch (this.store.outcome()) {
 			case 'idle':
 			case 'opening':
 			case 'replying':
-				return 'The rival is moving…';
+				return I18n.common.DEMO_RIVAL_MOVING;
 			case 'failed':
-				return 'Not the move — taking it back.';
+				return I18n.common.DEMO_WRONG_MOVE;
 			case 'solved':
-				return 'That was it.';
+				return I18n.common.DEMO_DONE;
 			case 'solving':
-				return 'Take the black rook.';
+				return I18n.common.DEMO_TASK;
 		}
 	}
 }

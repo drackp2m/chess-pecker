@@ -1,11 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
 import { AppComponent } from '@app/app.component';
+import { provideTestingI18n } from '@app/testing/i18n.harness';
 
 describe('AppComponent', () => {
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
 			imports: [AppComponent],
+			providers: [provideTestingI18n()],
 		}).compileComponents();
 	});
 

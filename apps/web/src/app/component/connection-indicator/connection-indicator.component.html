@@ -1,8 +1,12 @@
 @if (message(); as text) {
-	<span class="connection-indicator flex-row gap-2 align-center" role="status" [title]="detail()">
+	<span
+		class="connection-indicator flex-row gap-2 align-center"
+		role="status"
+		[title]="detail() | i18n"
+	>
 		<span class="dot" [attr.data-phase]="phase()"></span>
 
-		<span class="label fs-sm">{{ text }}</span>
+		<span class="label fs-sm">{{ text | i18n }}</span>
 
 		@if (canRetry()) {
 			<button appThemed color="accent" class="retry fs-sm p-0 px-2" (click)="retry()">

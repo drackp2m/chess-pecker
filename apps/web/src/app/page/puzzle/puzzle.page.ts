@@ -5,8 +5,10 @@ import { PuzzleDifficultyComponent } from '@app/component/puzzle-difficulty/puzz
 import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solver.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
+import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 
 const SAMPLE_CSV =
 	'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor\n' +
@@ -15,14 +17,17 @@ const SAMPLE_CSV =
 @Component({
 	templateUrl: './puzzle.page.html',
 	styleUrl: './puzzle.page.scss',
-	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent, ButtonDirective],
+	imports: [PuzzleDifficultyComponent, PuzzleSolverComponent, ButtonDirective, I18nPipe],
 	providers: [
+		provideI18nScope('puzzle'),
 		PuzzleLibraryStore,
 		PuzzleStore,
 		{ provide: BOARD_PRESENTER, useExisting: PuzzleStore },
 	],
 })
 export class PuzzlePage implements OnInit {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(PuzzleStore);
 
 	readonly csvDraft = signal('');
@@ -99,7 +104,7 @@ export class PuzzlePage implements OnInit {
 		try {
 			this.store.loadCsv(await file.text(), file.name);
 		} catch {
-			this.store.library.failImport(`Could not read ${file.name}.`);
+			this.store.library.failImport(i18nRef(I18n.puzzle.FILE_UNREADABLE, { name: file.name }));
 		} finally {
 			input.value = '';
 		}
@@ -111,21 +116,23 @@ export class PuzzlePage implements OnInit {
 		}
 
 		if (this.store.isRevealing()) {
-			return 'Playing the solution…';
+			return I18n.puzzle.PLAYING_SOLUTION;
 		}
 
 		switch (this.store.outcome()) {
 			case 'idle':
-				return 'Load a set of exercises to begin';
+				return I18n.puzzle.LOAD_TO_BEGIN;
 			case 'opening':
 			case 'replying':
-				return 'Opponent is moving…';
+				return I18n.common.OPPONENT_MOVING;
 			case 'failed':
-				return 'Not the move — taking it back so you can try again';
+				return I18n.puzzle.WRONG_MOVE;
 			case 'solved':
 				return this.describeSolved();
 			case 'solving':
-				return `Find the move for ${this.store.playerColor()}`;
+				return 'white' === this.store.playerColor()
+					? I18n.common.FIND_MOVE_WHITE
+					: I18n.common.FIND_MOVE_BLACK;
 		}
 	}
 
@@ -139,25 +146,27 @@ export class PuzzlePage implements OnInit {
 
 		if ('checkmate' === status) {
 			// Whoever is to move is the one who has been mated.
-			return `Checkmate — ${'white' === this.store.position().turn ? 'black' : 'white'} wins`;
+			return 'white' === this.store.position().turn
+				? I18n.common.CHECKMATE_BLACK_WINS
+				: I18n.common.CHECKMATE_WHITE_WINS;
 		}
 
 		if ('stalemate' === status) {
-			return 'Stalemate — it is a draw';
+			return I18n.common.STALEMATE;
 		}
 
 		if ('draw' === status) {
-			return 'Drawn position';
+			return I18n.common.DRAWN_POSITION;
 		}
 
-		return 'Free play — both sides are yours.';
+		return I18n.common.FREE_PLAY_HEADLINE;
 	}
 
 	private describeSolved(): string {
 		if ('revealed' === this.store.closure()) {
-			return 'That was the line';
+			return I18n.puzzle.THAT_WAS_THE_LINE;
 		}
 
-		return 'failed' === this.store.result() ? 'Solved, after the miss' : 'Solved';
+		return 'failed' === this.store.result() ? I18n.puzzle.SOLVED_AFTER_MISS : I18n.puzzle.SOLVED;
 	}
 }

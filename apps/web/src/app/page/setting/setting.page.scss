@@ -1,3 +1,15 @@
 section {
 	min-height: 100%;
+
+	.language {
+		display: flex;
+		flex-direction: row;
+		gap: var(--spacing-2);
+		align-items: center;
+
+		.flag {
+			height: 1em;
+			border-radius: var(--border-radius-1);
+		}
+	}
 }

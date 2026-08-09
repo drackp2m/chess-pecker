@@ -7,6 +7,7 @@ import {
 	PieceColor,
 	Square,
 } from '@app/definition/chess.type';
+import type { TranslationRef } from '@app/definition/i18n.type';
 import { ChessFen } from '@app/util/chess/chess-fen';
 
 export interface PendingPromotion {
@@ -29,7 +30,7 @@ export interface MatchStoreProps {
 	transition: BoardTransition | undefined;
 	status: MatchStatus;
 	isOpponentThinking: boolean;
-	notationError: string | undefined;
+	notationError: TranslationRef | undefined;
 }
 
 export interface Rewind {

@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
+import { I18n } from '@app/i18n';
+import { I18nPipe } from '@app/pipe/i18n.pipe';
 
 interface HistoryTurn {
 	readonly number: number;
@@ -20,8 +22,11 @@ interface HistoryTurn {
 	selector: 'app-move-history',
 	templateUrl: './move-history.component.html',
 	styleUrl: './move-history.component.scss',
+	imports: [I18nPipe],
 })
 export class MoveHistoryComponent {
+	protected readonly I18n = I18n;
+
 	readonly store = inject(BOARD_PRESENTER);
 
 	readonly title = input<string>();

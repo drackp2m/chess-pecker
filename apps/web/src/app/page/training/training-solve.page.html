@@ -1,6 +1,6 @@
 <section class="flex-col gap-4">
 	<header class="flex-col gap-1">
-		<h4 class="color-contrast-mid">{{ label() }}</h4>
+		<h4 class="color-contrast-mid">{{ label().key | i18n: label().params }}</h4>
 
 		<div class="flex-row justify-between align-center gap-2">
 			<p
@@ -8,7 +8,7 @@
 				[class.failed]="'failed' === board.result()"
 				[class.solved]="'solved' === board.result()"
 			>
-				{{ headline() }}
+				{{ headline() | i18n }}
 			</p>
 
 			<app-puzzle-difficulty />
@@ -16,20 +16,20 @@
 	</header>
 
 	<!-- @if (practiceNotice(); as message) {
-		<p class="fs-sm color-contrast-mid" role="status">{{ message }}</p>
+		<p class="fs-sm color-contrast-mid" role="status">{{ message | i18n }}</p>
 	} -->
 
 	@if (run.error(); as message) {
-		<p class="error fs-sm" role="alert">{{ message }}</p>
+		<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 	}
 
 	@if (run.notice(); as message) {
-		<p class="fs-sm" role="status">{{ message }}</p>
+		<p class="fs-sm" role="status">{{ message.key | i18n: message.params }}</p>
 	}
 
 	@if (null !== run.current()) {
 		<app-puzzle-solver
-			previousLabel="Back"
+			[previousLabel]="I18n.training.BACK"
 			[nextLabel]="nextLabel()"
 			[isNextDisabled]="run.isBusy() || (!run.hasNext() && !run.hasNextRound())"
 			(previous)="back()"

@@ -1,9 +1,9 @@
 @if (title(); as label) {
-	<h5>{{ label }}</h5>
+	<h5>{{ label | i18n }}</h5>
 }
 
 @if (0 === turns().length) {
-	<p class="fs-sm color-contrast-mid">No moves yet.</p>
+	<p class="fs-sm color-contrast-mid">{{ I18n.common.NO_MOVES_YET | i18n }}</p>
 } @else {
 	<ol #line class="line flex-row gap-3">
 		@for (turn of turns(); track turn.number) {

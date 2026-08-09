@@ -10,6 +10,7 @@ import {
 	PuzzleEvent,
 	PuzzleResult,
 } from '@app/definition/puzzle.type';
+import { I18n } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { HINT } from '@app/page/puzzle/store/puzzle/record';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
@@ -132,9 +133,9 @@ export function sanHistory(store: PuzzleStore): string[] {
 export type NavControl = 'restart' | 'back' | 'forward';
 
 export const NAV_LABELS: Record<NavControl, string> = {
-	restart: 'Restart exercise',
-	back: 'Step back one move',
-	forward: 'Step forward one move',
+	restart: I18n.common.BOARD_RESTART,
+	back: I18n.common.BOARD_STEP_BACKWARD,
+	forward: I18n.common.BOARD_STEP_FORWARD,
 };
 
 export const NAV_ORDER: readonly NavControl[] = ['restart', 'back', 'forward'];

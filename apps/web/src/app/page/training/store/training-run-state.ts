@@ -5,6 +5,9 @@ import type {
 	PuzzleAttemptRecord,
 } from '@chesspecker/api-definitions';
 
+import type { TranslationRef } from '@app/definition/i18n.type';
+import { I18n, i18nRef } from '@app/i18n';
+
 export type TrainingRunMode = 'calibration' | 'cycle';
 export type TrainingRunResult = 'solved' | 'failed';
 
@@ -35,8 +38,8 @@ export interface TrainingRunProps {
 	isDone: boolean;
 	isLoading: boolean;
 	isSubmitting: boolean;
-	error: string | null;
-	notice: string | null;
+	error: TranslationRef | null;
+	notice: TranslationRef | null;
 }
 
 export const initialState: TrainingRunProps = {
@@ -65,15 +68,15 @@ export function toSlot(puzzle: ApiPuzzle): TrainingRunSlot {
 	};
 }
 
-export function describeOutcome(outcome: CalibrationRoundOutcome): string {
+export function describeOutcome(outcome: CalibrationRoundOutcome): TranslationRef | null {
 	switch (outcome) {
 		case 'accept':
-			return 'Calibration done — that band is your level.';
+			return i18nRef(I18n.training.OUTCOME_ACCEPT);
 		case 'raise':
-			return 'Solved it. The next round probes higher.';
+			return i18nRef(I18n.training.OUTCOME_RAISE);
 		case 'lower':
-			return 'Missed it. The next round probes lower.';
+			return i18nRef(I18n.training.OUTCOME_LOWER);
 		case 'pending':
-			return '';
+			return null;
 	}
 }
