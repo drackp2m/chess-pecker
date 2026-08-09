@@ -1,3 +1,24 @@
+# v1.14.0 (2026-08-09)
+
+## What's Changed
+
+### ✨ Features
+
+- all app translated, new language setting ([b935443](https://github.com/drackp2m/chess-pecker/commit/b9354435af6f32126858c2a5d627696ed6e96f8d)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- create exploration spec, and fixe some bugs on this ([f1f1813](https://github.com/drackp2m/chess-pecker/commit/f1f18139a6187917d56fbc1838d61e44ea9ec166)) by Marc Jovaní González
+- remove `element?.scrollTo is not a function` error ([b9ed0a1](https://github.com/drackp2m/chess-pecker/commit/b9ed0a15fb54468cb5bf2db5d7ee27dd93b5cda5)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- can't move opponent on main line when have mistake ([510dbc8](https://github.com/drackp2m/chess-pecker/commit/510dbc88a27caa85b5601ab928b1bb8e23d58eee)) by Marc Jovaní González
+- recover navbar glass effect ([7ffe02e](https://github.com/drackp2m/chess-pecker/commit/7ffe02ecaa1161c09885d094b9874393aa0a74ab)) by Marc Jovaní González
+- the time that enables the aid is the time that kept the exercise visible ([a06964a](https://github.com/drackp2m/chess-pecker/commit/a06964ace1d37bcbc8197c6c09694ff62db5d930)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.13.0...v1.14.0
+
 # v1.13.0 (2026-08-08)
 
 ## What's Changed
