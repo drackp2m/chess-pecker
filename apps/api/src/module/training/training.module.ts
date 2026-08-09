@@ -21,6 +21,7 @@ import { FinishTrainingUseCase } from './use-case/finish-training.use-case';
 import { GetCalibrationRoundPuzzlesUseCase } from './use-case/get-calibration-round-puzzles.use-case';
 import { GetNextCycleItemUseCase } from './use-case/get-next-cycle-item.use-case';
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
+import { GetTrainingActivityUseCase } from './use-case/get-training-activity.use-case';
 import { GetTrainingProgressUseCase } from './use-case/get-training-progress.use-case';
 import { ListTrainingsUseCase } from './use-case/list-trainings.use-case';
 import { SelectTrainingSetUseCase } from './use-case/select-training-set.use-case';
@@ -58,6 +59,7 @@ import { SubmitCycleAttemptUseCase } from './use-case/submit-cycle-attempt.use-c
 		GetNextCycleItemUseCase,
 		SubmitCycleAttemptUseCase,
 		GetTrainingProgressUseCase,
+		GetTrainingActivityUseCase,
 		FinishTrainingUseCase,
 		ApplySyncTimestampsUseCase,
 	],

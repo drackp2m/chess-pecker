@@ -20,6 +20,7 @@ import {
 	SubmitCalibrationAttemptRequest,
 	SubmitCycleAttemptRequest,
 	Training,
+	TrainingActivityDay,
 	TrainingCycle,
 	TrainingCycleItem,
 	TrainingGoal,
@@ -88,6 +89,7 @@ export interface PuzzlePostRoutes {
 
 export interface TrainingGetRoutes {
 	'': { response: readonly Training[] };
+	'/activity': { response: readonly TrainingActivityDay[] };
 	'/:uuid': { path: { uuid: string }; response: Training };
 	'/:uuid/progress': { path: { uuid: string }; response: TrainingProgress };
 	'/:uuid/calibration/round': { path: { uuid: string }; response: readonly CalibrationRound[] };

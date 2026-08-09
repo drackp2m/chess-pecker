@@ -9,6 +9,39 @@
 <section class="flex-col gap-6">
 	@if (session.isAuthenticated()) {
 		<div class="flex-col gap-2">
+			<h4>{{ I18n.dashboard.ACTIVITY_TITLE | i18n }}</h4>
+
+			<!-- ToDo => create component for this -->
+			<div class="activity-ranges flex-row">
+				@for (months of activityRanges; track months) {
+					<button
+						appThemed
+						class="fs-sm br-0"
+						color="primary-mid"
+						[class.is-selected]="months === activityMonths()"
+						(click)="selectActivityRange(months)"
+					>
+						{{ I18n.dashboard.ACTIVITY_RANGE_MONTHS | i18n: { months } }}
+					</button>
+				}
+			</div>
+
+			<app-activity-heatmap
+				[days]="visibleActivity()"
+				[totalDays]="activityDays()"
+				(dayFocus)="onDayFocus($event)"
+			/>
+
+			<p class="fs-sm color-contrast-mid">
+				@if (hoveredDay(); as day) {
+					{{ I18n.dashboard.ACTIVITY_DAY_DETAIL | i18n: { count: day.count, date: day.date } }}
+				} @else {
+					{{ I18n.dashboard.ACTIVITY_TOTAL | i18n: { count: totalActivity() } }}
+				}
+			</p>
+		</div>
+
+		<div class="flex-col gap-2">
 			<h4>{{ I18n.dashboard.YOUR_PROGRAM | i18n }}</h4>
 
 			@if (summary(); as program) {

@@ -19,5 +19,11 @@
 	"01KZCGYE0JE6SM610A1R1NW8DT": "Each pass gets less time than the one before — about half by the second, a third by the third, and as fast as you can hold your accuracy after that.",
 	"01KZCGYE0JKE609YRS11X46DDA": "A missed exercise is marked and left behind: you see the solution, but there is no retry. Those misses are what measures the next pass.",
 	"01KZCGYE0JRZ1RCT2CT022DNBK": "Between passes the order is shuffled inside narrow rating bands, so what you recognise is the position and not the sequence.",
-	"01KZCGYE0JQK1C5ANCM4Y24T8X": "The whole program is meant to fit in weeks, not months — the effect comes from keeping the passes close together."
+	"01KZCGYE0JQK1C5ANCM4Y24T8X": "The whole program is meant to fit in weeks, not months — the effect comes from keeping the passes close together.",
+	"3QANR96FW2DBWT32T7AMQHRZA1": "Activity",
+	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ count }} exercises solved over the last year",
+	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ count }} exercises solved on {{ date }}",
+	"01KZKC6AF682V42Y8JEMP8XRNG": "Less",
+	"01KZKC6AF6ACN4CWMWHX9CYPVR": "More",
+	"01KZKC6AF6R3M9T0XVQD5HYBNE": "{{ months }}M"
 }

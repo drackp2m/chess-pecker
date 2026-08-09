@@ -164,3 +164,9 @@ export interface TrainingProgress {
 	readonly cycles: readonly CycleProgress[];
 	readonly suggestFinish: boolean;
 }
+
+/** Un día con al menos un ejercicio cerrado; los días sin actividad no viajan. */
+export interface TrainingActivityDay {
+	readonly date: string;
+	readonly count: number;
+}

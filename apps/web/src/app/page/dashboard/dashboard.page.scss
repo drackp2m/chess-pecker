@@ -26,6 +26,38 @@
 	}
 }
 
+.activity-ranges {
+	flex-wrap: wrap;
+
+	button {
+		padding: 0 var(--spacing-2);
+
+		&:not(:last-child) {
+			border-right: 1px solid color-mix(in oklab, var(--color-contrast-mid) 25%, transparent);
+		}
+
+		&:has(+ .is-selected) {
+			border-right-color: var(--color-primary-mid);
+		}
+
+		&:first-child {
+			border-radius: var(--spacing-1) 0 0 var(--spacing-1);
+		}
+
+		&:last-child {
+			border-radius: 0 var(--spacing-1) var(--spacing-1) 0;
+		}
+
+		&.is-selected {
+			--surface: var(--color-contrast-mid);
+			--surface-hover: var(--color-contrast-mid-hover);
+			--foreground: var(--color-primary-light);
+
+			border-right-color: var(--color-contrast-mid);
+		}
+	}
+}
+
 .method {
 	li {
 		text-indent: calc(var(--spacing-3) * -1);

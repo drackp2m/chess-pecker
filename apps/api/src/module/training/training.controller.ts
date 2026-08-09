@@ -3,6 +3,7 @@ import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
+import { TrainingActivityDay } from './definition/training-activity.interface';
 import { TrainingProgress } from './definition/training-progress.interface';
 import { SelectTrainingSetRequestDto } from './dto/request/select-training-set-request.dto';
 import { SetTrainingGoalRequestDto } from './dto/request/set-training-goal-request.dto';
@@ -10,6 +11,7 @@ import { TrainingGoal } from './training-goal.entity';
 import { Training } from './training.entity';
 import { FinishTrainingUseCase } from './use-case/finish-training.use-case';
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
+import { GetTrainingActivityUseCase } from './use-case/get-training-activity.use-case';
 import { GetTrainingProgressUseCase } from './use-case/get-training-progress.use-case';
 import { ListTrainingsUseCase } from './use-case/list-trainings.use-case';
 import { SelectTrainingSetUseCase } from './use-case/select-training-set.use-case';
@@ -25,12 +27,19 @@ export class TrainingController {
 		private readonly selectTrainingSetUseCase: SelectTrainingSetUseCase,
 		private readonly setTrainingGoalUseCase: SetTrainingGoalUseCase,
 		private readonly getTrainingProgressUseCase: GetTrainingProgressUseCase,
+		private readonly getTrainingActivityUseCase: GetTrainingActivityUseCase,
 		private readonly finishTrainingUseCase: FinishTrainingUseCase,
 	) {}
 
 	@Get()
 	async list(@CurrentUser() user: User): Promise<Training[]> {
 		return this.listTrainingsUseCase.execute(user);
+	}
+
+	/** Agregado sobre todos los entrenamientos del usuario, no de uno solo: va antes de `:uuid`. */
+	@Get('activity')
+	async getActivity(@CurrentUser() user: User): Promise<TrainingActivityDay[]> {
+		return this.getTrainingActivityUseCase.execute(user);
 	}
 
 	@Post()

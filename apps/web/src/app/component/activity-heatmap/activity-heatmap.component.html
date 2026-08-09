@@ -1,0 +1,50 @@
+<div class="heatmap-layout" #layout>
+	<div class="heatmap-weekdays" #weekdays>
+		<span class="heatmap-weekday-spacer"></span>
+
+		@for (label of weekdayLabels(); track $index) {
+			<span class="heatmap-weekday fs-sm color-contrast-mid">{{ label }}</span>
+		}
+	</div>
+
+	<div class="heatmap-scroll flex-col" #scroll [style.--heatmap-columns]="columnCount()">
+		<div class="heatmap-months">
+			@for (label of monthLabels(); track $index) {
+				<span
+					class="heatmap-month fs-sm color-contrast-mid"
+					[class.is-last]="$index === lastMonthIndex()"
+					>{{ label }}</span
+				>
+			}
+		</div>
+
+		<div class="heatmap">
+			@for (column of weekColumns(); track $index) {
+				<div class="heatmap-week" #week>
+					@for (cell of column; track $index) {
+						<div
+							class="heatmap-cell"
+							[class]="'level-' + (cell?.level ?? 'empty')"
+							[attr.tabindex]="cell ? 0 : -1"
+							[attr.aria-hidden]="!cell"
+							(mouseenter)="onFocus(cell)"
+							(mouseleave)="onFocus(null)"
+							(focus)="onFocus(cell)"
+							(blur)="onFocus(null)"
+						></div>
+					}
+				</div>
+			}
+		</div>
+	</div>
+</div>
+
+<div class="heatmap-legend flex-row">
+	<span class="fs-sm color-contrast-mid">{{ I18n.dashboard.ACTIVITY_LEGEND_LESS | i18n }}</span>
+
+	@for (level of legendLevels; track level) {
+		<div class="heatmap-cell" [class]="'level-' + level"></div>
+	}
+
+	<span class="fs-sm color-contrast-mid">{{ I18n.dashboard.ACTIVITY_LEGEND_MORE | i18n }}</span>
+</div>

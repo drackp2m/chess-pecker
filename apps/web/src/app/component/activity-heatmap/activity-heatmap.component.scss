@@ -1,0 +1,128 @@
+:host {
+	--heatmap-square: 0.65rem;
+	--heatmap-inset: 0.125rem;
+	--heatmap-cell: calc(var(--heatmap-square) + (var(--heatmap-inset) * 2));
+	--heatmap-months-height: 1rem;
+
+	overflow: hidden;
+	display: block;
+}
+
+.heatmap-layout {
+	display: grid;
+	grid-template-columns: max-content max-content;
+	align-items: start;
+	justify-content: end;
+}
+
+.heatmap-weekdays {
+	display: grid;
+	grid-template-rows: var(--heatmap-months-height) repeat(7, var(--heatmap-cell));
+}
+
+.heatmap-weekday {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+
+	padding-inline-end: var(--spacing-1);
+
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.heatmap-scroll {
+	scroll-snap-type: x mandatory;
+	overflow-x: auto;
+}
+
+.heatmap,
+.heatmap-months {
+	display: grid;
+	grid-auto-columns: var(--heatmap-cell);
+	grid-auto-flow: column;
+	grid-template-columns: repeat(var(--heatmap-columns, 1), var(--heatmap-cell));
+}
+
+.heatmap-week {
+	scroll-snap-align: start;
+	display: grid;
+	grid-template-rows: repeat(7, var(--heatmap-cell));
+}
+
+.heatmap-months {
+	position: relative;
+	width: max-content;
+	height: var(--heatmap-months-height);
+}
+
+.heatmap-month {
+	overflow: visible;
+	line-height: var(--heatmap-months-height);
+	white-space: nowrap;
+
+	&.is-last {
+		position: absolute;
+		inset-block-start: 0;
+		inset-inline-end: 0;
+	}
+}
+
+.heatmap-legend {
+	align-items: center;
+	justify-content: flex-end;
+	padding-block-start: var(--spacing-1);
+
+	> span {
+		margin-inline: var(--spacing-1);
+	}
+}
+
+.heatmap-cell {
+	box-sizing: border-box;
+	width: var(--heatmap-cell);
+	height: var(--heatmap-cell);
+	padding: var(--heatmap-inset);
+
+	&::before {
+		content: '';
+
+		display: block;
+
+		width: 100%;
+		height: 100%;
+		border: 1px solid color-mix(in oklab, var(--color-contrast) 6%, transparent);
+		border-radius: 2px;
+
+		background-color: color-mix(in oklab, var(--color-contrast) 10%, transparent);
+	}
+
+	&:hover::before,
+	&:focus-visible::before {
+		border-color: rgb(0 0 0);
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&.level-empty {
+		visibility: hidden;
+	}
+
+	&.level-1::before {
+		background-color: color-mix(in oklab, var(--color-accent) 25%, transparent);
+	}
+
+	&.level-2::before {
+		background-color: color-mix(in oklab, var(--color-accent) 50%, transparent);
+	}
+
+	&.level-3::before {
+		background-color: var(--color-accent);
+	}
+
+	&.level-4::before {
+		background-color: color-mix(in oklab, var(--color-accent) 75%, rgb(0 0 0) 25%);
+	}
+}
