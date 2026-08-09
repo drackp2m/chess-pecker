@@ -1,7 +1,7 @@
+@use '../../../scss/abstract/chart' as chart;
+
 :host {
-	--heatmap-square: 0.65rem;
-	--heatmap-inset: 0.125rem;
-	--heatmap-cell: calc(var(--heatmap-square) + (var(--heatmap-inset) * 2));
+	--chart-cell-inset: 0.125rem;
 	--heatmap-months-height: 1rem;
 
 	overflow: hidden;
@@ -41,7 +41,6 @@
 	display: grid;
 	grid-auto-columns: var(--heatmap-cell);
 	grid-auto-flow: column;
-	grid-template-columns: repeat(var(--heatmap-columns, 1), var(--heatmap-cell));
 }
 
 .heatmap-week {
@@ -79,50 +78,8 @@
 }
 
 .heatmap-cell {
-	box-sizing: border-box;
 	width: var(--heatmap-cell);
 	height: var(--heatmap-cell);
-	padding: var(--heatmap-inset);
 
-	&::before {
-		content: '';
-
-		display: block;
-
-		width: 100%;
-		height: 100%;
-		border: 1px solid color-mix(in oklab, var(--color-contrast) 6%, transparent);
-		border-radius: 2px;
-
-		background-color: color-mix(in oklab, var(--color-contrast) 10%, transparent);
-	}
-
-	&:hover::before,
-	&:focus-visible::before {
-		border-color: rgb(0 0 0);
-	}
-
-	&:focus-visible {
-		outline: none;
-	}
-
-	&.level-empty {
-		visibility: hidden;
-	}
-
-	&.level-1::before {
-		background-color: color-mix(in oklab, var(--color-accent) 25%, transparent);
-	}
-
-	&.level-2::before {
-		background-color: color-mix(in oklab, var(--color-accent) 50%, transparent);
-	}
-
-	&.level-3::before {
-		background-color: var(--color-accent);
-	}
-
-	&.level-4::before {
-		background-color: color-mix(in oklab, var(--color-accent) 75%, rgb(0 0 0) 25%);
-	}
+	@include chart.data-cell;
 }

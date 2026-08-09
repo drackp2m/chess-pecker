@@ -1,11 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
 	Component,
-	DestroyRef,
 	ElementRef,
 	HostListener,
 	TemplateRef,
-	afterNextRender,
+	afterRenderEffect,
 	computed,
 	effect,
 	inject,
@@ -24,6 +23,7 @@ import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { I18nService } from '@app/service/i18n.service';
 import { ViewportService } from '@app/service/viewport.service';
+import { elementOffsetHeight, elementOffsetWidth } from '@app/util/element-size';
 
 /**
  * Themed shell rendered around the native `<select>` (projected via
@@ -106,7 +106,6 @@ export class SelectShellComponent {
 	});
 
 	private readonly viewportService = inject(ViewportService);
-	private readonly destroyRef = inject(DestroyRef);
 	private readonly wrapper = viewChild<ElementRef<HTMLElement>>('wrapper');
 	private readonly labelText = viewChild<ElementRef<HTMLElement>>('labelText');
 	private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
@@ -121,16 +120,20 @@ export class SelectShellComponent {
 
 	private readonly layout = new SelectShellLayout(this.store, {
 		wrapper: () => this.wrapper()?.nativeElement,
-		labelText: () => this.labelText()?.nativeElement,
 	});
+
+	private readonly labelWidth = elementOffsetWidth(this.labelText);
+	private readonly wrapperHeight = elementOffsetHeight(this.wrapper);
 
 	private readonly dropdownScroller = new SelectDropdownScroller(
 		() => this.optionsScroller()?.nativeElement,
 	);
 
 	constructor() {
-		afterNextRender(() => {
-			this.destroyRef.onDestroy(this.layout.observeSizeChanges());
+		afterRenderEffect({
+			write: () => {
+				this.layout.applySizeVariables(this.labelWidth(), this.wrapperHeight());
+			},
 		});
 
 		effect(() => {

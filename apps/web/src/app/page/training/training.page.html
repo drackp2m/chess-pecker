@@ -3,6 +3,29 @@
 		<p class="fs-sm color-contrast-mid">{{ I18n.training.INTRO | i18n }}</p>
 	</header>
 
+	<div class="flex-col gap-2">
+		<h5>{{ I18n.training.DAILY_TITLE | i18n }}</h5>
+
+		<p class="mock fs-sm">{{ I18n.training.DAILY_MOCK_NOTICE | i18n }}</p>
+
+		<app-activity-chart
+			[points]="dailyPoints()"
+			[barLabels]="dailyBarLabels()"
+			[lineLabels]="dailyLineLabels()"
+			(pointFocus)="onDailyFocus($event)"
+		/>
+
+		<p class="fs-sm color-contrast-mid">
+			@if (hoveredDay(); as day) {
+				{{ day.description }}
+			} @else {
+				{{
+					I18n.training.DAILY_SUMMARY | i18n: { days: dailyPoints().length, solved: dailySolved() }
+				}}
+			}
+		</p>
+	</div>
+
 	@if (store.error(); as message) {
 		<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 	}

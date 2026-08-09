@@ -1,0 +1,120 @@
+:host {
+	overflow: hidden;
+	display: block;
+}
+
+.chart-plot {
+	position: relative;
+	width: 100%;
+}
+
+.chart-canvas {
+	overflow: visible;
+	display: block;
+}
+
+.chart-bar {
+	fill: var(--chart-level-0);
+
+	&.series-1 {
+		fill: var(--chart-bar-1);
+	}
+
+	&.series-2 {
+		fill: var(--chart-bar-2);
+	}
+
+	&.series-3 {
+		fill: var(--chart-bar-3);
+	}
+}
+
+.chart-line {
+	fill: none;
+	stroke: var(--chart-line-1);
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 1.5;
+
+	&.line-2 {
+		stroke: var(--chart-line-2);
+		stroke-dasharray: 3 3;
+	}
+}
+
+.chart-slots {
+	position: absolute;
+	inset: 0;
+}
+
+.chart-slot {
+	position: absolute;
+	inset-block: 0;
+
+	padding: 0;
+	border: none;
+	border-radius: 0;
+
+	background-color: transparent;
+
+	&:hover,
+	&.is-active:focus-visible {
+		background-color: color-mix(in oklab, var(--color-contrast) 8%, transparent);
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+}
+
+.chart-labels {
+	position: relative;
+	height: 1.25rem;
+}
+
+.chart-label {
+	position: absolute;
+	inset-block-start: 0;
+	transform: translateX(-50%);
+
+	line-height: 1.25rem;
+	white-space: nowrap;
+}
+
+.chart-legend {
+	flex-wrap: wrap;
+	gap: var(--spacing-1) var(--spacing-3);
+	padding-block-start: var(--spacing-1);
+}
+
+.chart-key {
+	display: inline-flex;
+	gap: var(--spacing-1);
+	align-items: center;
+}
+
+.chart-swatch {
+	width: 0.65rem;
+	height: 0.65rem;
+	border-radius: 2px;
+	background-color: var(--chart-bar-1);
+
+	&.series-2 {
+		background-color: var(--chart-bar-2);
+	}
+
+	&.series-3 {
+		background-color: var(--chart-bar-3);
+	}
+}
+
+.chart-stroke {
+	width: 0.9rem;
+	height: 0;
+	border-block-start: 1.5px solid var(--chart-line-1);
+
+	&.line-2 {
+		border-block-start-color: var(--chart-line-2);
+		border-block-start-style: dashed;
+	}
+}

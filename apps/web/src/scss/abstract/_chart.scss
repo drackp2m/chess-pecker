@@ -1,0 +1,38 @@
+$levels: 4 !default;
+
+@mixin data-cell {
+	box-sizing: border-box;
+	padding: var(--chart-cell-inset, 0);
+
+	&::before {
+		content: '';
+
+		display: block;
+
+		width: 100%;
+		height: 100%;
+		border: 1px solid var(--chart-cell-border);
+		border-radius: 2px;
+
+		background-color: var(--chart-level-0);
+	}
+
+	&:hover::before,
+	&:focus-visible::before {
+		border-color: var(--chart-cell-focus);
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+
+	&.level-empty {
+		visibility: hidden;
+	}
+
+	@for $level from 1 through $levels {
+		&.level-#{$level}::before {
+			background-color: var(--chart-level-#{$level});
+		}
+	}
+}

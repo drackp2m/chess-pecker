@@ -1,4 +1,4 @@
-<div class="heatmap-layout" #layout>
+<div class="heatmap-layout">
 	<div class="heatmap-weekdays" #weekdays>
 		<span class="heatmap-weekday-spacer"></span>
 
@@ -7,7 +7,11 @@
 		}
 	</div>
 
-	<div class="heatmap-scroll flex-col" #scroll [style.--heatmap-columns]="columnCount()">
+	<div
+		class="heatmap-scroll flex-col"
+		[appPinScrollEnd]="weekColumns()"
+		[style.maxWidth.px]="visibleWidth()"
+	>
 		<div class="heatmap-months">
 			@for (label of monthLabels(); track $index) {
 				<span
@@ -19,18 +23,26 @@
 		</div>
 
 		<div class="heatmap">
-			@for (column of weekColumns(); track $index) {
-				<div class="heatmap-week" #week>
-					@for (cell of column; track $index) {
+			@for (column of weekColumns(); track $index; let columnIndex = $index) {
+				<div class="heatmap-week">
+					@for (cell of column; track $index; let rowIndex = $index) {
 						<div
+							#cell
 							class="heatmap-cell"
 							[class]="'level-' + (cell?.level ?? 'empty')"
-							[attr.tabindex]="cell ? 0 : -1"
+							[attr.tabindex]="isActive({ column: columnIndex, row: rowIndex }) ? 0 : -1"
 							[attr.aria-hidden]="!cell"
+							[attr.aria-label]="
+								cell
+									? (I18n.dashboard.ACTIVITY_DAY_DETAIL
+										| i18n: { count: cell.count, date: cell.date })
+									: null
+							"
 							(mouseenter)="onFocus(cell)"
 							(mouseleave)="onFocus(null)"
-							(focus)="onFocus(cell)"
+							(focus)="onCellFocus(cell, { column: columnIndex, row: rowIndex })"
 							(blur)="onFocus(null)"
+							(keydown)="onKeydown($event, { column: columnIndex, row: rowIndex })"
 						></div>
 					}
 				</div>
