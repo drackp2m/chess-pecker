@@ -203,7 +203,7 @@ export class TrainingPage implements OnInit {
 				hints: day.hints,
 				minutes: Math.round(day.durationMs / MS_PER_MINUTE),
 			}),
-			stack: [day.resigned, day.failed, day.solved],
+			stack: [day.solved, day.failed, day.resigned],
 			lines: [day.mistakes, day.hints],
 		};
 	}
