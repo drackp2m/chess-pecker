@@ -4,9 +4,9 @@ $items: 5;
 	--items: #{$items};
 	--icon-size: 28px;
 	--indicator-size: 54px;
-	--glass-opacity: 45%;
-	--glass-blur: 6px;
-	--glass-blur-active: 12px;
+	--glass-opacity: 75%;
+	--glass-blur: 4px;
+	--glass-blur-active: 8px;
 	--edge-inset: var(--spacing-4);
 	--slot-width: calc((100% - var(--edge-inset) * 2) / var(--items));
 

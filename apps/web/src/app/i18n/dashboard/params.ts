@@ -26,4 +26,14 @@ export interface DashboardI18nParams {
 	'dashboard.01KZCGYE0JFXCS76Z2J4EF34WZ': {
 		index: number;
 	};
+	'dashboard.450807Y5ZBDPF1ARZJCTNNMHEM': {
+		count: number;
+	};
+	'dashboard.62FBJMQVTVSE1N6D6QAJ53Y3E6': {
+		count: number;
+		date: string;
+	};
+	'dashboard.01KZKC6AF6R3M9T0XVQD5HYBNE': {
+		months: number;
+	};
 }

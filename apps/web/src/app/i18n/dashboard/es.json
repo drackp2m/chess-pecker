@@ -19,5 +19,11 @@
 	"01KZCGYE0JE6SM610A1R1NW8DT": "Cada pasada dispone de menos tiempo que la anterior — alrededor de la mitad en la segunda, un tercio en la tercera, y tan rápido como puedas manteniendo la precisión a partir de ahí.",
 	"01KZCGYE0JKE609YRS11X46DDA": "Un ejercicio fallado se marca y se deja atrás: ves la solución, pero no hay reintento. Esos fallos son los que miden la siguiente pasada.",
 	"01KZCGYE0JRZ1RCT2CT022DNBK": "Entre pasadas el orden se baraja dentro de bandas estrechas de rating, de modo que lo que reconoces es la posición y no la secuencia.",
-	"01KZCGYE0JQK1C5ANCM4Y24T8X": "El programa entero está pensado para caber en semanas, no en meses — el efecto viene de mantener las pasadas juntas."
+	"01KZCGYE0JQK1C5ANCM4Y24T8X": "El programa entero está pensado para caber en semanas, no en meses — el efecto viene de mantener las pasadas juntas.",
+	"3QANR96FW2DBWT32T7AMQHRZA1": "Actividad",
+	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ count }} ejercicios completados en el tramo elegido",
+	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ count }} ejercicios completados el {{ date }}",
+	"01KZKC6AF682V42Y8JEMP8XRNG": "Menos",
+	"01KZKC6AF6ACN4CWMWHX9CYPVR": "Más",
+	"01KZKC6AF6R3M9T0XVQD5HYBNE": "{{ months }}M"
 }

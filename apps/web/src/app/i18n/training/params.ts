@@ -41,4 +41,17 @@ export interface TrainingI18nParams {
 	'training.01KZJ895MCZ12A1D454Q37V6D0': {
 		position: number;
 	};
+	'training.01M2K7B4X0NTWEBKKW6K0ZAZ0R': {
+		date: string;
+		solved: number;
+		failed: number;
+		resigned: number;
+		mistakes: number;
+		hints: number;
+		minutes: number;
+	};
+	'training.01M2K7B4X0B4GWJVX17EFKMFCF': {
+		days: number;
+		solved: number;
+	};
 }

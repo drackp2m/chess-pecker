@@ -2,7 +2,6 @@ import { SelectStore } from '@app/directive/select/select.store';
 
 export interface SelectShellLayoutElements {
 	wrapper: () => HTMLElement | undefined;
-	labelText: () => HTMLElement | undefined;
 }
 
 /**
@@ -21,29 +20,17 @@ export class SelectShellLayout {
 	/**
 	 * The label width is not static: translations resolve asynchronously, the
 	 * language can change at runtime and web fonts reflow the text once they
-	 * load. A ResizeObserver on the hidden measure span (and on the wrapper,
-	 * for the height) re-measures on every such change — including the
-	 * initial layout, since observers fire once on `observe()`. Returns the
-	 * cleanup that disconnects the observer.
+	 * load, so both sizes arrive as signals the shell keeps re-applying.
 	 */
-	observeSizeChanges(): () => void {
+	applySizeVariables(labelWidth: number, wrapperHeight: number): void {
 		const wrapperElement = this.elements.wrapper();
-		const labelElement = this.elements.labelText();
 
-		if (undefined === wrapperElement || undefined === labelElement) {
-			return () => undefined;
+		if (undefined === wrapperElement) {
+			return;
 		}
 
-		const observer = new ResizeObserver(() => {
-			this.applySizeVariables();
-		});
-
-		observer.observe(labelElement);
-		observer.observe(wrapperElement);
-
-		return () => {
-			observer.disconnect();
-		};
+		wrapperElement.style.setProperty('--label-width', `${labelWidth.toString()}px`);
+		wrapperElement.style.setProperty('--input-height', `${wrapperHeight.toString()}px`);
 	}
 
 	/**
@@ -69,21 +56,5 @@ export class SelectShellLayout {
 		const elementMidpoint = rect.top + rect.height / 2;
 
 		return elementMidpoint >= viewportMidpoint;
-	}
-
-	private applySizeVariables(): void {
-		const wrapperElement = this.elements.wrapper();
-
-		if (undefined === wrapperElement) {
-			return;
-		}
-
-		const labelWidth = this.elements.labelText()?.offsetWidth ?? 0;
-
-		wrapperElement.style.setProperty('--label-width', `${labelWidth.toString()}px`);
-		wrapperElement.style.setProperty(
-			'--input-height',
-			`${wrapperElement.offsetHeight.toString()}px`,
-		);
 	}
 }

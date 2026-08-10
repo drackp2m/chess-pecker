@@ -6,11 +6,13 @@ import {
 	HostListener,
 	OnInit,
 	Renderer2,
+	afterRenderEffect,
 	effect,
 	inject,
 	input,
 } from '@angular/core';
 
+import { elementOffsetHeight, elementOffsetWidth } from '@app/util/element-size';
 import { createTypedElement } from '@app/util/renderer';
 
 // ToDo => no `date`, which is why the training goal can only be expressed as exercises
@@ -47,7 +49,24 @@ export class InputDirective implements OnInit, AfterViewInit {
 	private readonly fakeLabelElement: HTMLSpanElement = this.createFakeLabel();
 	private readonly borderContainerElement: HTMLDivElement = this.createBorderContainer();
 
+	/**
+	 * Same rationale as the select shell: the label width is not static
+	 * (async translations, runtime language changes, late-loading web fonts),
+	 * so the hidden measure span and the wrapper are re-measured on every
+	 * size change — including the initial layout, since observers fire once
+	 * on `observe()`.
+	 */
+	private readonly labelWidth = elementOffsetWidth(() => this.labelSpanElement);
+	private readonly wrapperHeight = elementOffsetHeight(() => this.wrapperElement);
+
 	constructor() {
+		afterRenderEffect({
+			write: () => {
+				this.setCSSVariable('--label-width', `${this.labelWidth().toString()}px`);
+				this.setCSSVariable('--input-height', `${this.wrapperHeight().toString()}px`);
+			},
+		});
+
 		effect(() => {
 			const label = this.label();
 			this.fillLabel(label);
@@ -86,34 +105,8 @@ export class InputDirective implements OnInit, AfterViewInit {
 	}
 
 	ngAfterViewInit() {
-		this.observeSizeChanges();
 		this.observeDisabledChanges();
 		this.onInput();
-	}
-
-	/**
-	 * Same rationale as the select shell: the label width is not static
-	 * (async translations, runtime language changes, late-loading web fonts),
-	 * so the hidden measure span and the wrapper are re-measured on every
-	 * size change — including the initial layout, since observers fire once
-	 * on `observe()`.
-	 */
-	private observeSizeChanges(): void {
-		const observer = new ResizeObserver(() => {
-			this.applySizeVariables();
-		});
-
-		observer.observe(this.labelSpanElement);
-		observer.observe(this.wrapperElement);
-
-		this.destroyRef.onDestroy(() => {
-			observer.disconnect();
-		});
-	}
-
-	private applySizeVariables(): void {
-		this.setCSSVariable('--label-width', `${this.labelSpanElement.offsetWidth.toString()}px`);
-		this.setCSSVariable('--input-height', `${this.wrapperElement.offsetHeight.toString()}px`);
 	}
 
 	/**

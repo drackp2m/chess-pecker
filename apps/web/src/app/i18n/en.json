@@ -103,5 +103,7 @@
 	"01KZJ8YH9E11WV4CQKQHWQSK5B": "{{ option }}, {{ position }} of {{ total }}",
 	"01KZJA7B2XVZDMMY3NQ789EV2K": "Choose a promotion piece",
 	"01KZJA7B2XSYA2JR3QZSHNM6YB": "Promote to",
-	"01KZJA7B2XY37MYRC4SMK9RXEA": "Promote to {{ piece }}"
+	"01KZJA7B2XY37MYRC4SMK9RXEA": "Promote to {{ piece }}",
+	"01M2K9V7Q0CHRTX7BARWD3TN0W": "The bars do not fit: lower the spacing or give the chart more room.",
+	"01M2K9V7Q0CHRTX7DRPPED3TN0": "Too much data falls off the chart: give it more room or lower the minimum slot width."
 }

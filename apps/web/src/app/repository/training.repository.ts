@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import type {
 	SetTrainingGoalRequest,
 	Training,
+	TrainingActivityDay,
 	TrainingProgress,
 } from '@chesspecker/api-definitions';
 
@@ -27,6 +28,10 @@ export class TrainingRepository {
 
 	async getProgress(uuid: string): Promise<TrainingProgress> {
 		return this.apiSdk.GET.training('/:uuid/progress', { path: { uuid } });
+	}
+
+	async getActivity(): Promise<readonly TrainingActivityDay[]> {
+		return this.apiSdk.GET.training('/activity');
 	}
 
 	/** Fixes the X exercises every cycle then runs over. Only possible once. */

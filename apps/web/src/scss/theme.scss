@@ -5,6 +5,19 @@
 		--color-overlay: rgb(0 0 0);
 		--color-shadow: rgb(0 0 0 / 35%);
 		--opacity-overlay: 30%;
+		--chart-level-0: color-mix(in oklab, var(--color-contrast) 10%, transparent);
+		--chart-level-1: color-mix(in oklab, var(--color-accent) 25%, transparent);
+		--chart-level-2: color-mix(in oklab, var(--color-accent) 50%, transparent);
+		--chart-level-3: var(--color-accent);
+		--chart-level-4: color-mix(in oklab, var(--color-accent) 75%, rgb(0 0 0) 25%);
+		--chart-cell-border: color-mix(in oklab, var(--color-contrast) 6%, transparent);
+		--chart-cell-focus: var(--color-contrast);
+		--chart-bar-1: var(--color-accent);
+		--chart-bar-2: var(--color-contrast);
+		--chart-bar-3: var(--color-contrast-mid);
+		--chart-line-1: var(--color-accent);
+		--chart-line-2: var(--color-contrast-mid);
+		--chart-grid: color-mix(in oklab, var(--color-contrast) 10%, transparent);
 	}
 
 	[data-theme='dark'] {
@@ -13,6 +26,7 @@
 		--color-overlay: rgb(255 255 255);
 		--color-shadow: rgb(255 255 255 / 15%);
 		--opacity-overlay: 10%;
+		--chart-level-4: color-mix(in oklab, var(--color-accent) 75%, rgb(255 255 255) 25%);
 	}
 
 	@media (prefers-color-scheme: dark) {
@@ -22,6 +36,7 @@
 			--color-overlay: rgb(255 255 255);
 			--color-shadow: rgb(255 255 255 / 15%);
 			--opacity-overlay: 10%;
+			--chart-level-4: color-mix(in oklab, var(--color-accent) 75%, rgb(255 255 255) 25%);
 		}
 	}
 }

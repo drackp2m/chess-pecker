@@ -67,5 +67,13 @@
 	"01KZJ895MC717EDNRY5MXRCY40": "No se ha podido abrir la siguiente ronda.",
 	"01KZJ895MCREYYMPQ480WQ8WR3": "El catálogo no tiene ejercicios en esa banda de rating.",
 	"01KZJ895MCX6J95JPWVARZ2R78": "La ronda se ha quedado sin ejercicios. Ábrela otra vez.",
-	"01KZJ895MCT6JZ3TSKY32HW4BR": "Ciclo completado."
+	"01KZJ895MCT6JZ3TSKY32HW4BR": "Ciclo completado.",
+	"01M2K7B4X0QD4X6SNNC3RVN00Y": "Desglose diario",
+	"01M2K7B4X0W7YKJ6GKH27163RZ": "Resueltos",
+	"01M2K7B4X0DG11H6RYWZTYKJ5G": "Fallados",
+	"01M2K7B4X00MZRZS3YJ612PS3H": "Rendidos",
+	"01M2K7B4X0R38PJDYSHMFA35W3": "Errores",
+	"01M2K7B4X04KBQBJ29EGR0QY3K": "Pistas",
+	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ solved }} resueltos, {{ failed }} fallados, {{ resigned }} rendidos · {{ mistakes }} errores, {{ hints }} pistas · {{ minutes }} min",
+	"01M2K7B4X0B4GWJVX17EFKMFCF": "Últimos {{ days }} días · {{ solved }} ejercicios resueltos"
 }

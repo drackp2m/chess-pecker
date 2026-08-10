@@ -1,0 +1,85 @@
+@use '../../../scss/abstract/chart' as chart;
+
+:host {
+	--chart-cell-inset: 0.125rem;
+	--heatmap-months-height: 1rem;
+
+	overflow: hidden;
+	display: block;
+}
+
+.heatmap-layout {
+	display: grid;
+	grid-template-columns: max-content max-content;
+	align-items: start;
+	justify-content: end;
+}
+
+.heatmap-weekdays {
+	display: grid;
+	grid-template-rows: var(--heatmap-months-height) repeat(7, var(--heatmap-cell));
+}
+
+.heatmap-weekday {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+
+	padding-inline-end: var(--spacing-1);
+
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.heatmap-scroll {
+	scroll-snap-type: x mandatory;
+	overflow-x: auto;
+}
+
+.heatmap,
+.heatmap-months {
+	display: grid;
+	grid-auto-columns: var(--heatmap-cell);
+	grid-auto-flow: column;
+}
+
+.heatmap-week {
+	scroll-snap-align: start;
+	display: grid;
+	grid-template-rows: repeat(7, var(--heatmap-cell));
+}
+
+.heatmap-months {
+	position: relative;
+	width: max-content;
+	height: var(--heatmap-months-height);
+}
+
+.heatmap-month {
+	overflow: visible;
+	line-height: var(--heatmap-months-height);
+	white-space: nowrap;
+
+	&.is-last {
+		position: absolute;
+		inset-block-start: 0;
+		inset-inline-end: 0;
+	}
+}
+
+.heatmap-legend {
+	align-items: center;
+	justify-content: flex-end;
+	padding-block-start: var(--spacing-1);
+
+	> span {
+		margin-inline: var(--spacing-1);
+	}
+}
+
+.heatmap-cell {
+	width: var(--heatmap-cell);
+	height: var(--heatmap-cell);
+
+	@include chart.data-cell;
+}
