@@ -1,3 +1,16 @@
+# v1.15.0 (2026-08-10)
+
+## What's Changed
+
+### ✨ Features
+
+- create activity component ([e5d2d46](https://github.com/drackp2m/chess-pecker/commit/e5d2d460edf3626705bcfd11c0e7ead6cafde424)) by Marc Jovaní González
+- first iteration of activity chart component ([215c96e](https://github.com/drackp2m/chess-pecker/commit/215c96ebffa07f03af60aa6f97f261b8f1477d37)) by Marc Jovaní González
+- gt data from backend for training chart ([206de64](https://github.com/drackp2m/chess-pecker/commit/206de64a1bc3c76692651fe434ece20d55d3c44b)) by Marc Jovaní González
+- sample chart on training page ([5894f94](https://github.com/drackp2m/chess-pecker/commit/5894f941dc65b7e050ff59b99194c31e6eb68a7b)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.14.0...v1.15.0
+
 # v1.14.0 (2026-08-09)
 
 ## What's Changed
