@@ -103,5 +103,7 @@
 	"01KZJ8YH9E11WV4CQKQHWQSK5B": "{{ option }}, {{ position }} de {{ total }}",
 	"01KZJA7B2XVZDMMY3NQ789EV2K": "Elige la pieza de coronación",
 	"01KZJA7B2XSYA2JR3QZSHNM6YB": "Coronar a",
-	"01KZJA7B2XY37MYRC4SMK9RXEA": "Coronar a {{ piece }}"
+	"01KZJA7B2XY37MYRC4SMK9RXEA": "Coronar a {{ piece }}",
+	"01M2K9V7Q0CHRTX7BARWD3TN0W": "Las barras no caben: reduce la separación o dale más espacio al gráfico.",
+	"01M2K9V7Q0CHRTX7DRPPED3TN0": "Se quedan fuera demasiados datos: dale más espacio al gráfico o baja el ancho mínimo de columna."
 }

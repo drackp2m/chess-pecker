@@ -17,6 +17,7 @@
 		--chart-bar-3: color-mix(in oklab, var(--color-contrast) 25%, transparent);
 		--chart-line-1: var(--color-contrast);
 		--chart-line-2: var(--color-contrast-mid);
+		--chart-grid: color-mix(in oklab, var(--color-contrast) 8%, transparent);
 	}
 
 	[data-theme='dark'] {

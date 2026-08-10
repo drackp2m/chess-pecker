@@ -3,7 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import type { CycleProgress, Training, TrainingStatus } from '@chesspecker/api-definitions';
 
 import { ActivityChartComponent } from '@app/component/activity-chart/activity-chart.component';
-import type { ChartPoint } from '@app/component/activity-chart/chart-geometry';
+import type { ChartLineStyle, ChartPoint } from '@app/component/activity-chart/chart-geometry';
 import type { TrainingDailyBreakdown } from '@app/definition/training-daily.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
@@ -90,6 +90,11 @@ export class TrainingPage implements OnInit {
 		this.i18n.translate(I18n.training.DAILY_SERIES_MISTAKES),
 		this.i18n.translate(I18n.training.DAILY_SERIES_HINTS),
 	]);
+
+	readonly dailyLineStyles: readonly ChartLineStyle[] = [
+		{ curve: 'smooth' },
+		{ curve: 'smooth', dash: '3 3' },
+	];
 
 	readonly setForm = new FormGroup({
 		size: new FormControl(DEFAULT_SET_SIZE, {

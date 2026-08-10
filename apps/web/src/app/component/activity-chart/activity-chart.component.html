@@ -1,53 +1,90 @@
-<div class="chart-plot" [style.height.px]="height()">
-	<svg class="chart-canvas" aria-hidden="true" [attr.width]="plotWidth()" [attr.height]="height()">
-		@for (bar of geometry().bars; track bar.key) {
-			@for (segment of bar.segments; track segment.index) {
-				<rect
-					class="chart-bar"
-					[class]="'series-' + (segment.index + 1)"
-					[attr.x]="bar.x"
-					[attr.y]="segment.y"
-					[attr.width]="bar.width"
-					[attr.height]="segment.height"
+@if (null !== geometry().issue) {
+	<p class="chart-issue fs-sm" role="alert">
+		{{ issueMessage() | i18n }}
+	</p>
+} @else {
+	<div class="chart-plot" [style.height.px]="height()">
+		@for (axis of geometry().axes; track axis.side) {
+			<div #axisElement class="chart-axis" [class]="'is-' + axis.side" aria-hidden="true">
+				@for (tick of axis.ticks; track tick.value) {
+					<span class="chart-tick fs-sm color-contrast-mid" [style.top.px]="tick.y">
+						{{ tick.value }}
+					</span>
+				}
+			</div>
+		}
+
+		<svg
+			class="chart-canvas"
+			aria-hidden="true"
+			[attr.width]="plotWidth()"
+			[attr.height]="height()"
+		>
+			@for (tick of gridTicks(); track tick.value) {
+				<line
+					class="chart-grid"
+					x1="0"
+					[attr.x2]="plotWidth()"
+					[attr.y1]="tick.y"
+					[attr.y2]="tick.y"
 				/>
 			}
-		}
 
-		@for (line of geometry().lines; track line.index) {
-			<polyline class="chart-line" [class]="'line-' + (line.index + 1)" [attr.points]="line.path" />
-		}
-	</svg>
+			@for (bar of geometry().bars; track bar.key) {
+				@for (segment of bar.segments; track segment.index) {
+					<rect
+						class="chart-bar"
+						[class]="'series-' + (segment.index + 1)"
+						[attr.x]="bar.x"
+						[attr.y]="segment.y"
+						[attr.width]="bar.width"
+						[attr.height]="segment.height"
+					/>
+				}
+			}
 
-	<div class="chart-slots">
+			@for (line of geometry().lines; track line.index) {
+				<path
+					class="chart-line"
+					[class]="'line-' + (line.index + 1)"
+					[attr.d]="line.path"
+					[attr.stroke-width]="line.width"
+					[attr.stroke-dasharray]="line.dash"
+				/>
+			}
+		</svg>
+
+		<div class="chart-slots">
+			@for (point of geometry().points; track point.key; let column = $index) {
+				<button
+					#slot
+					type="button"
+					class="chart-slot"
+					[class.is-active]="isActive(column)"
+					[style.left.px]="geometry().slots[column]?.x"
+					[style.width.px]="geometry().slots[column]?.width"
+					[attr.tabindex]="isActive(column) ? 0 : -1"
+					[attr.aria-label]="point.description"
+					(mouseenter)="onFocus(point)"
+					(mouseleave)="onFocus(null)"
+					(focus)="onSlotFocus(point, column)"
+					(blur)="onFocus(null)"
+					(keydown)="onKeydown($event, column)"
+				></button>
+			}
+		</div>
+	</div>
+
+	<div class="chart-labels" aria-hidden="true">
 		@for (point of geometry().points; track point.key; let column = $index) {
-			<button
-				#slot
-				type="button"
-				class="chart-slot"
-				[class.is-active]="isActive(column)"
-				[style.left.px]="geometry().slots[column]?.x"
-				[style.width.px]="geometry().slots[column]?.width"
-				[attr.tabindex]="isActive(column) ? 0 : -1"
-				[attr.aria-label]="point.description"
-				(mouseenter)="onFocus(point)"
-				(mouseleave)="onFocus(null)"
-				(focus)="onSlotFocus(point, column)"
-				(blur)="onFocus(null)"
-				(keydown)="onKeydown($event, column)"
-			></button>
+			<span
+				class="chart-label fs-sm color-contrast-mid"
+				[style.left.px]="geometry().slots[column]?.center"
+				>{{ showsLabel(column) ? point.label : '' }}</span
+			>
 		}
 	</div>
-</div>
-
-<div class="chart-labels" aria-hidden="true">
-	@for (point of geometry().points; track point.key; let column = $index) {
-		<span
-			class="chart-label fs-sm color-contrast-mid"
-			[style.left.px]="geometry().slots[column]?.center"
-			>{{ showsLabel(column) ? point.label : '' }}</span
-		>
-	}
-</div>
+}
 
 <div class="chart-legend flex-row fs-sm color-contrast-mid">
 	@for (label of barLabels(); track label; let index = $index) {
@@ -59,7 +96,12 @@
 
 	@for (label of lineLabels(); track label; let index = $index) {
 		<span class="chart-key">
-			<i class="chart-stroke" [class]="'line-' + (index + 1)"></i>
+			<i
+				class="chart-stroke"
+				[class]="'line-' + (index + 1)"
+				[style.border-block-start-width.px]="lineStyle(index).width"
+				[style.border-block-start-style]="null === lineStyle(index).dash ? 'solid' : 'dashed'"
+			></i>
 			{{ label }}
 		</span>
 	}

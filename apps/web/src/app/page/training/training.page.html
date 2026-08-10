@@ -12,7 +12,9 @@
 			[points]="dailyPoints()"
 			[barLabels]="dailyBarLabels()"
 			[lineLabels]="dailyLineLabels()"
+			[lineStyles]="dailyLineStyles"
 			(pointFocus)="onDailyFocus($event)"
+			[barSpacing]="{ mode: 'gap', size: 4 }"
 		/>
 
 		<p class="fs-sm color-contrast-mid">

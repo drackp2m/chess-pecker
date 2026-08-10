@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { linearScale, positiveBounds, toBucket } from '@app/util/scale';
+import { linearScale, niceMax, niceTicks, positiveBounds, toBucket } from '@app/util/scale';
 
 describe('positiveBounds', () => {
 	it('ignores anything that is not a positive count', () => {
@@ -44,5 +44,29 @@ describe('linearScale', () => {
 
 	it('fills the size when the range is flat', () => {
 		expect(linearScale(5, { min: 5, max: 5 }, 100)).toBe(100);
+	});
+});
+
+describe('niceTicks', () => {
+	it('steps on a round number that covers the maximum', () => {
+		expect(niceTicks(7, 4)).toEqual([0, 2, 4, 6, 8]);
+		expect(niceTicks(30, 4)).toEqual([0, 10, 20, 30]);
+	});
+
+	it('keeps the fractional steps free of float noise', () => {
+		expect(niceTicks(0.9, 4)).toEqual([0, 0.25, 0.5, 0.75, 1]);
+	});
+
+	it('has nothing but a baseline to show without data', () => {
+		expect(niceTicks(0, 4)).toEqual([0]);
+		expect(niceTicks(10, 0)).toEqual([0]);
+	});
+});
+
+describe('niceMax', () => {
+	it('rounds the maximum up to the top tick', () => {
+		expect(niceMax(7, 4)).toBe(8);
+		expect(niceMax(30, 4)).toBe(30);
+		expect(niceMax(0, 4)).toBe(0);
 	});
 });
