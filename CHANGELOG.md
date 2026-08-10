@@ -1,3 +1,13 @@
+# v1.15.1 (2026-08-10)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- chart legend with correct colors ([94d56b4](https://github.com/drackp2m/chess-pecker/commit/94d56b4560a9b371d9f39ad0d21718dc1f070524)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.15.0...v1.15.1
+
 # v1.15.0 (2026-08-10)
 
 ## What's Changed
