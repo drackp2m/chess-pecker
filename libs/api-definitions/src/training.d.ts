@@ -169,4 +169,10 @@ export interface TrainingProgress {
 export interface TrainingActivityDay {
 	readonly date: string;
 	readonly count: number;
+	readonly solved: number;
+	readonly failed: number;
+	readonly resigned: number;
+	readonly mistakes: number;
+	readonly hints: number;
+	readonly durationMs: number;
 }

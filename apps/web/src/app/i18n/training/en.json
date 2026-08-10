@@ -69,12 +69,11 @@
 	"01KZJ895MCX6J95JPWVARZ2R78": "The round ran out of exercises. Open it again.",
 	"01KZJ895MCT6JZ3TSKY32HW4BR": "Cycle complete.",
 	"01M2K7B4X0QD4X6SNNC3RVN00Y": "Daily breakdown",
-	"01M2K7B4X0E59GTKABWCF97YA8": "Mock data — the API does not aggregate this yet.",
 	"01M2K7B4X0W7YKJ6GKH27163RZ": "Solved",
 	"01M2K7B4X0DG11H6RYWZTYKJ5G": "Failed",
 	"01M2K7B4X00MZRZS3YJ612PS3H": "Resigned",
 	"01M2K7B4X0R38PJDYSHMFA35W3": "Mistakes",
 	"01M2K7B4X04KBQBJ29EGR0QY3K": "Hints",
-	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ solved }} solved, {{ failed }} failed, {{ resigned }} resigned · {{ mistakes }} mistakes, {{ hints }} hints",
+	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ solved }} solved, {{ failed }} failed, {{ resigned }} resigned · {{ mistakes }} mistakes, {{ hints }} hints · {{ minutes }} min",
 	"01M2K7B4X0B4GWJVX17EFKMFCF": "Last {{ days }} days · {{ solved }} exercises solved"
 }

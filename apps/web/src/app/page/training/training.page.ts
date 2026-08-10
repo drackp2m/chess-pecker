@@ -1,18 +1,23 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import type { CycleProgress, Training, TrainingStatus } from '@chesspecker/api-definitions';
+import type {
+	CycleProgress,
+	Training,
+	TrainingActivityDay,
+	TrainingStatus,
+} from '@chesspecker/api-definitions';
 
 import { ActivityChartComponent } from '@app/component/activity-chart/activity-chart.component';
 import type { ChartLineStyle, ChartPoint } from '@app/component/activity-chart/chart-geometry';
-import type { TrainingDailyBreakdown } from '@app/definition/training-daily.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { I18n } from '@app/i18n';
-import { mockTrainingDaily } from '@app/page/training/training-daily.mock';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { I18nService } from '@app/service/i18n.service';
+import { ActivityStore } from '@app/store/activity.store';
 import { TrainingStore } from '@app/store/training.store';
+import { activityDaySeries } from '@app/util/activity-grid';
 
 const DAILY_RANGE_DAYS = 45;
 const DEFAULT_SET_SIZE = 1000;
@@ -60,6 +65,7 @@ export class TrainingPage implements OnInit {
 
 	readonly store = inject(TrainingStore);
 
+	private readonly activity = inject(ActivityStore);
 	private readonly i18n = inject(I18nService);
 
 	readonly phaseLabel = computed(() => {
@@ -70,7 +76,9 @@ export class TrainingPage implements OnInit {
 
 	readonly hoveredDay = signal<ChartPoint | null>(null);
 
-	private readonly dailyBreakdown = computed(() => mockTrainingDaily(DAILY_RANGE_DAYS));
+	private readonly dailyBreakdown = computed(() =>
+		activityDaySeries(this.activity.days(), DAILY_RANGE_DAYS),
+	);
 
 	readonly dailyPoints = computed<readonly ChartPoint[]>(() =>
 		this.dailyBreakdown().map((day) => this.toChartPoint(day)),
@@ -117,6 +125,7 @@ export class TrainingPage implements OnInit {
 	ngOnInit(): void {
 		this.store.clearError();
 		void this.store.load();
+		void this.activity.load();
 	}
 
 	start(): void {
@@ -181,7 +190,7 @@ export class TrainingPage implements OnInit {
 		)}`;
 	}
 
-	private toChartPoint(day: TrainingDailyBreakdown): ChartPoint {
+	private toChartPoint(day: TrainingActivityDay): ChartPoint {
 		return {
 			key: day.date,
 			label: Number(day.date.slice(8)).toString(),
@@ -192,8 +201,9 @@ export class TrainingPage implements OnInit {
 				resigned: day.resigned,
 				mistakes: day.mistakes,
 				hints: day.hints,
+				minutes: Math.round(day.durationMs / MS_PER_MINUTE),
 			}),
-			stack: [day.solved, day.failed, day.resigned],
+			stack: [day.resigned, day.failed, day.solved],
 			lines: [day.mistakes, day.hints],
 		};
 	}

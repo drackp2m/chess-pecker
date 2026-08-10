@@ -6,15 +6,13 @@
 	<div class="flex-col gap-2">
 		<h5>{{ I18n.training.DAILY_TITLE | i18n }}</h5>
 
-		<p class="mock fs-sm">{{ I18n.training.DAILY_MOCK_NOTICE | i18n }}</p>
-
 		<app-activity-chart
 			[points]="dailyPoints()"
 			[barLabels]="dailyBarLabels()"
 			[lineLabels]="dailyLineLabels()"
 			[lineStyles]="dailyLineStyles"
-			(pointFocus)="onDailyFocus($event)"
 			[barSpacing]="{ mode: 'gap', size: 4 }"
+			(pointFocus)="onDailyFocus($event)"
 		/>
 
 		<p class="fs-sm color-contrast-mid">

@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 
 import { ActivityHeatmapComponent } from '@app/component/activity-heatmap/activity-heatmap.component';
 import type { TranslationRef } from '@app/definition/i18n.type';
@@ -12,7 +11,7 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { ActivityStore } from '@app/store/activity.store';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
-import { activityRangeDays, filterActivityDays } from '@app/util/activity-grid';
+import { ActivityCell, activityRangeDays, filterActivityDays } from '@app/util/activity-grid';
 
 const ACTIVITY_RANGES = [1, 2, 3, 6, 9, 12] as const;
 const DEFAULT_ACTIVITY_MONTHS = 6;
@@ -32,7 +31,7 @@ export class DashboardPage {
 
 	readonly summary = computed(() => toProgramSummary(this.training.progress()));
 
-	readonly hoveredDay = signal<TrainingActivityDay | null>(null);
+	readonly hoveredDay = signal<ActivityCell | null>(null);
 
 	readonly activityRanges = ACTIVITY_RANGES;
 	readonly activityMonths = signal<number>(DEFAULT_ACTIVITY_MONTHS);
@@ -88,7 +87,7 @@ export class DashboardPage {
 		void this.router.navigate([this.programLink()]);
 	}
 
-	onDayFocus(day: TrainingActivityDay | null): void {
+	onDayFocus(day: ActivityCell | null): void {
 		this.hoveredDay.set(day);
 	}
 

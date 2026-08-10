@@ -13,11 +13,11 @@
 		--chart-cell-border: color-mix(in oklab, var(--color-contrast) 6%, transparent);
 		--chart-cell-focus: var(--color-contrast);
 		--chart-bar-1: var(--color-accent);
-		--chart-bar-2: color-mix(in oklab, var(--color-accent) 40%, transparent);
-		--chart-bar-3: color-mix(in oklab, var(--color-contrast) 25%, transparent);
-		--chart-line-1: var(--color-contrast);
+		--chart-bar-2: var(--color-contrast);
+		--chart-bar-3: var(--color-contrast-mid);
+		--chart-line-1: var(--color-accent);
 		--chart-line-2: var(--color-contrast-mid);
-		--chart-grid: color-mix(in oklab, var(--color-contrast) 8%, transparent);
+		--chart-grid: color-mix(in oklab, var(--color-contrast) 10%, transparent);
 	}
 
 	[data-theme='dark'] {

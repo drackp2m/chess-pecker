@@ -25,13 +25,28 @@ export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
 		return this.getMany({ training: trainingUuid });
 	}
 
-	/** Un intento sólo pertenece a un entrenamiento, así que el usuario sale del join. */
+	/**
+	 * Un intento sólo pertenece a un entrenamiento, así que el usuario sale del join.
+	 *
+	 * ToDo => `failed` mira `closure <> 'revealed'` en vez de `= 'found'` para que los tres
+	 * repartos sumen siempre el total aunque llegue un `solved = false` con la solución
+	 * enseñada más tarde. Probablemente `settleClosure` haga eso imposible —fija el cierre al
+	 * primero que llega—, así que revisar si se puede dejar el `= 'found'`, que dice mejor lo
+	 * que cuenta.
+	 */
 	async countByDaySince(userUuid: string, since: Date): Promise<TrainingActivityDay[]> {
 		return (await this.entityManager
 			.fork()
 			.getConnection()
 			.execute<TrainingActivityDay[]>(
-				`select to_char(pa.updated_at, 'YYYY-MM-DD') as date, count(*)::int as count
+				`select to_char(pa.updated_at, 'YYYY-MM-DD') as date,
+				        count(*)::int as count,
+				        count(*) filter (where pa.solved)::int as solved,
+				        count(*) filter (where not pa.solved and pa.closure <> 'revealed')::int as failed,
+				        count(*) filter (where not pa.solved and pa.closure = 'revealed')::int as resigned,
+				        coalesce(sum(pa.mistake_count), 0)::int as mistakes,
+				        count(*) filter (where pa.hint_used)::int as hints,
+				        coalesce(sum(pa.duration_ms), 0)::int as "durationMs"
 				 from puzzle_attempt pa
 				 join training t on t.uuid = pa.training_uuid
 				 where t.user_uuid = ? and pa.updated_at >= ?

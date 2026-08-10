@@ -43,6 +43,21 @@ export function activityRangeDays(months: number, today: Date = new Date()): num
 	return diffUtcDays(start, end) + 1;
 }
 
+export function activityDaySeries(
+	days: readonly TrainingActivityDay[],
+	totalDays: number,
+	today: Date = new Date(),
+): readonly TrainingActivityDay[] {
+	const byDate = new Map(days.map((day) => [day.date, day]));
+	const end = utcMidnight(today);
+
+	return Array.from({ length: totalDays }, (_unused, index) => {
+		const date = toIsoDate(addUtcDays(end, index - (totalDays - 1)));
+
+		return byDate.get(date) ?? emptyActivityDay(date);
+	});
+}
+
 export function filterActivityDays(
 	days: readonly TrainingActivityDay[],
 	totalDays: number,
@@ -115,6 +130,19 @@ function toCell(
 		date: isoDate,
 		count,
 		level: toBucket(count, bounds, ACTIVITY_LEVELS) as ActivityCell['level'],
+	};
+}
+
+function emptyActivityDay(date: string): TrainingActivityDay {
+	return {
+		date,
+		count: 0,
+		solved: 0,
+		failed: 0,
+		resigned: 0,
+		mistakes: 0,
+		hints: 0,
+		durationMs: 0,
 	};
 }
 

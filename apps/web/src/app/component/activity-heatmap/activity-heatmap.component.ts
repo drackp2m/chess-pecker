@@ -53,7 +53,7 @@ export class ActivityHeatmapComponent {
 	readonly totalDays = input(DEFAULT_TOTAL_DAYS);
 	readonly cellSize = input(DEFAULT_CELL_SIZE);
 
-	readonly dayFocus = output<TrainingActivityDay | null>();
+	readonly dayFocus = output<ActivityCell | null>();
 
 	private readonly languageService = inject(LanguageService);
 

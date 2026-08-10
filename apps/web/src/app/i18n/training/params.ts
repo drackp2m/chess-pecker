@@ -48,6 +48,7 @@ export interface TrainingI18nParams {
 		resigned: number;
 		mistakes: number;
 		hints: number;
+		minutes: number;
 	};
 	'training.01M2K7B4X0B4GWJVX17EFKMFCF': {
 		days: number;
