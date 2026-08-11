@@ -54,4 +54,25 @@ export interface TrainingI18nParams {
 		days: number;
 		solved: number;
 	};
+	'training.01KZNRPGG0PJ1FZ6K0MNAYBNYB': {
+		date: string;
+		done: number;
+		expected: number;
+		delta: string;
+		drift: string;
+	};
+	'training.01KZNRPGG06B2CYTH98W052965': {
+		pace: number;
+	};
+	'training.01KZPVR0GSRSWVYG7FXA1TFHBJ': {
+		exercises: number;
+	};
+	'training.01KZPWVGSDGS53J80H7DYGWN3A': {
+		exercises: number;
+	};
+	'training.01KZQ04WTYZVJCVY0BGR68T4MZ': {
+		solved: number;
+		total: number;
+		percent: number;
+	};
 }

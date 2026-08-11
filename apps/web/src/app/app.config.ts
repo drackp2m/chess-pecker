@@ -26,7 +26,10 @@ export const appConfig: ApplicationConfig = {
 			// The session restore is a background refresh, not a boot gate: the app
 			// starts as `unknown` and whatever reads the store reacts when it settles,
 			// so the initializer fires it without awaiting the result.
-			void inject(SessionStore).restore();
+			const sessionStore = inject(SessionStore);
+
+			sessionStore.watch();
+			void sessionStore.restore();
 		}),
 		provideRouter(
 			APP_ROUTES,

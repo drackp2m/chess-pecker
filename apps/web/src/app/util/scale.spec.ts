@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { linearScale, niceMax, niceTicks, positiveBounds, toBucket } from '@app/util/scale';
+import { linearScale, niceScale, positiveBounds, scaleTicks, toBucket } from '@app/util/scale';
 
 describe('positiveBounds', () => {
 	it('ignores anything that is not a positive count', () => {
@@ -47,26 +47,40 @@ describe('linearScale', () => {
 	});
 });
 
-describe('niceTicks', () => {
-	it('steps on a round number that covers the maximum', () => {
-		expect(niceTicks(7, 4)).toEqual([0, 2, 4, 6, 8]);
-		expect(niceTicks(30, 4)).toEqual([0, 10, 20, 30]);
+describe('niceScale', () => {
+	it('rounds the maximum up to a round step', () => {
+		expect(niceScale({ min: 0, max: 7 }, 4)).toEqual({ min: 0, max: 8, step: 2 });
+		expect(niceScale({ min: 0, max: 30 }, 4)).toEqual({ min: 0, max: 30, step: 10 });
 	});
 
-	it('keeps the fractional steps free of float noise', () => {
-		expect(niceTicks(0.9, 4)).toEqual([0, 0.25, 0.5, 0.75, 1]);
+	it('grows on both sides when the values cross zero', () => {
+		expect(niceScale({ min: -3, max: 5 }, 4)).toEqual({ min: -4, max: 6, step: 2 });
 	});
 
-	it('has nothing but a baseline to show without data', () => {
-		expect(niceTicks(0, 4)).toEqual([0]);
-		expect(niceTicks(10, 0)).toEqual([0]);
+	it('hangs the whole domain below zero when nothing is positive', () => {
+		expect(niceScale({ min: -5, max: 0 }, 4)).toEqual({ min: -6, max: 0, step: 2 });
+	});
+
+	it('collapses to the baseline without data', () => {
+		expect(niceScale({ min: 0, max: 0 }, 4)).toEqual({ min: 0, max: 0, step: 0 });
+		expect(niceScale({ min: 0, max: 10 }, 0)).toEqual({ min: 0, max: 0, step: 0 });
 	});
 });
 
-describe('niceMax', () => {
-	it('rounds the maximum up to the top tick', () => {
-		expect(niceMax(7, 4)).toBe(8);
-		expect(niceMax(30, 4)).toBe(30);
-		expect(niceMax(0, 4)).toBe(0);
+describe('scaleTicks', () => {
+	it('walks the domain step by step', () => {
+		expect(scaleTicks(niceScale({ min: 0, max: 7 }, 4))).toEqual([0, 2, 4, 6, 8]);
+	});
+
+	it('puts the zero on a tick of its own when the domain crosses it', () => {
+		expect(scaleTicks(niceScale({ min: -3, max: 5 }, 4))).toEqual([-4, -2, 0, 2, 4, 6]);
+	});
+
+	it('keeps the fractional steps free of float noise', () => {
+		expect(scaleTicks(niceScale({ min: 0, max: 0.9 }, 4))).toEqual([0, 0.25, 0.5, 0.75, 1]);
+	});
+
+	it('has nothing but a baseline to show without data', () => {
+		expect(scaleTicks({ min: 0, max: 0, step: 0 })).toEqual([0]);
 	});
 });

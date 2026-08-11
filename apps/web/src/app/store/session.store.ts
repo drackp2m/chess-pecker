@@ -4,20 +4,22 @@ import type { AuthUser, LoginRequest, RegisterRequest } from '@chesspecker/api-d
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
-import { ConnectionPhase, SessionStatus } from '@app/definition/session-status.type';
+import { SessionStatus } from '@app/definition/session-status.type';
 import { I18n, i18nRef } from '@app/i18n';
 import { AuthRepository } from '@app/repository/auth.repository';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
-/** How long the wait is allowed to look normal, and when it starts looking like a cold start. */
-const CONNECTING_AFTER_MS = 2000;
-const WAKING_AFTER_MS = 10000;
+/**
+ * How long an answer stays good enough to skip asking again when the app comes back. Kept
+ * under the quarter of an hour of silence Render waits before putting the service to
+ * sleep, so a revalidation that finds the server awake is also what keeps it that way.
+ */
+const STALE_AFTER_MS = 10 * 60 * 1000;
 
 interface SessionStoreProps {
 	status: SessionStatus;
 	user: AuthUser | null;
-	waiting: Exclude<ConnectionPhase, 'unreachable'>;
 	isSubmitting: boolean;
 	error: TranslationRef | null;
 }
@@ -25,7 +27,6 @@ interface SessionStoreProps {
 const initialState: SessionStoreProps = {
 	status: 'unknown',
 	user: null,
-	waiting: 'idle',
 	isSubmitting: false,
 	error: null,
 };
@@ -39,38 +40,50 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	readonly isUnreachable = computed(() => 'unreachable' === this.status());
 	readonly username = computed(() => this.user()?.username ?? null);
 
-	/**
-	 * The one thing the interface can show while the session settles. A failed call wins
-	 * over the timers: once the API has answered badly there is nothing left to wait for.
-	 */
-	readonly connectionPhase = computed<ConnectionPhase>(() =>
-		'unreachable' === this.status() ? 'unreachable' : this.waiting(),
-	);
-
 	private readonly authRepository = inject(AuthRepository);
 	private refreshing: Promise<void> | null = null;
-	private waitTimers: ReturnType<typeof setTimeout>[] = [];
+	private probing: Promise<void> | null = null;
+	private checkedAt = 0;
 
 	// Called once from the app initializer (see app.config.ts) rather than from a
 	// constructor, so nothing that injects the store kicks off an HTTP request. A 401 is
 	// not the end of it either: `authInterceptor` renews the session and repeats the call
 	// before anything reaches this `catch`, which therefore does mean "there is no session".
+	// The clearing lives here and not inside `probe()`: a call that fails without ever
+	// suspending would finish before the assignment below, leaving a settled promise in
+	// place that every later restore would wait on instead of asking again.
 	async restore(): Promise<void> {
-		this.startWaiting();
+		this.probing ??= this.probe().finally(() => {
+			this.probing = null;
+		});
 
-		try {
-			const user = await this.authRepository.getCurrentUser();
+		return this.probing;
+	}
 
-			patchState(this, { status: 'authenticated', user });
-		} catch (error) {
-			if (ApiCancelledError.is(error)) {
-				return;
+	/**
+	 * A tab left open for hours boots its answer once and then believes it forever, while
+	 * the server behind it goes back to sleep and the session expires. Coming back to the
+	 * app, or getting the network back, is the moment to ask again — but only if the last
+	 * answer is old enough to be worth a round trip.
+	 */
+	watch(): void {
+		document.addEventListener('visibilitychange', () => {
+			if ('visible' === document.visibilityState) {
+				void this.revalidate();
 			}
+		});
 
-			patchState(this, { status: SessionStore.toFailedStatus(error), user: null });
-		} finally {
-			this.stopWaiting();
+		window.addEventListener('online', () => {
+			void this.revalidate();
+		});
+	}
+
+	async revalidate(): Promise<void> {
+		if (Date.now() - this.checkedAt < STALE_AFTER_MS) {
+			return;
 		}
+
+		return this.restore();
 	}
 
 	/**
@@ -99,6 +112,7 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 				user: await this.authRepository.getCurrentUser(),
 				isSubmitting: false,
 			});
+			this.checkedAt = Date.now();
 
 			return true;
 		} catch (error) {
@@ -146,6 +160,7 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		}
 
 		patchState(this, { status: 'anonymous', user: null, isSubmitting: false, error: null });
+		this.checkedAt = Date.now();
 
 		return true;
 	}
@@ -203,30 +218,25 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	}
 
 	/**
-	 * Two timers rather than a ticking interval: the phases only change twice, and a clock
-	 * running for the whole visit to report a call that lasted two seconds is waste.
+	 * Shared like the renewal above: a revalidation, a retry and the boot probe can all
+	 * land at once, and a cold start is expensive enough that they had better wait on the
+	 * same round trip. A cancelled call leaves the status untouched and the clock alone,
+	 * so the next chance to ask still asks.
 	 */
-	private startWaiting(): void {
-		this.stopWaiting();
-		patchState(this, { waiting: 'idle' });
+	private async probe(): Promise<void> {
+		try {
+			const user = await this.authRepository.getCurrentUser();
 
-		this.waitTimers = [
-			setTimeout(() => {
-				patchState(this, { waiting: 'connecting' });
-			}, CONNECTING_AFTER_MS),
-			setTimeout(() => {
-				patchState(this, { waiting: 'waking' });
-			}, WAKING_AFTER_MS),
-		];
-	}
+			patchState(this, { status: 'authenticated', user });
+			this.checkedAt = Date.now();
+		} catch (error) {
+			if (ApiCancelledError.is(error)) {
+				return;
+			}
 
-	private stopWaiting(): void {
-		for (const timer of this.waitTimers) {
-			clearTimeout(timer);
+			patchState(this, { status: SessionStore.toFailedStatus(error), user: null });
+			this.checkedAt = Date.now();
 		}
-
-		this.waitTimers = [];
-		patchState(this, { waiting: 'idle' });
 	}
 
 	private async renewSession(): Promise<void> {

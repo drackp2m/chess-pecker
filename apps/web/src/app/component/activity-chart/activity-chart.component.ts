@@ -7,29 +7,21 @@ import {
 	linkedSignal,
 	output,
 	signal,
+	viewChild,
 	viewChildren,
 } from '@angular/core';
 
+import { ChartAxis, ChartAxisSide, axisSides } from '@app/component/activity-chart/chart-axis';
+import { ChartConfig, resolveChartConfig } from '@app/component/activity-chart/chart-config';
 import {
-	ChartAxes,
-	ChartAxis,
-	ChartAxisSide,
-	axisSides,
-} from '@app/component/activity-chart/chart-axis';
-import {
-	ChartBarSpacing,
-	ChartLineStyle,
-	ChartLineStyleResolved,
+	ChartData,
 	ChartPoint,
-	ChartStackMode,
-	ChartStackOrder,
-	DEFAULT_BAR_SPACING,
-	DEFAULT_MAX_DROP_RATIO,
-	DEFAULT_MIN_BAR_WIDTH,
-	DEFAULT_TICK_COUNT,
-	buildChartGeometry,
-	resolveLineStyle,
-} from '@app/component/activity-chart/chart-geometry';
+	ChartSeriesResolved,
+	seriesValue,
+	toBarSeries,
+	toLineSeries,
+} from '@app/component/activity-chart/chart-data';
+import { buildChartGeometry } from '@app/component/activity-chart/chart-geometry';
 import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { hostWidth } from '@app/util/element-size';
@@ -41,9 +33,22 @@ import {
 	rovingIndex,
 } from '@app/util/roving-focus';
 
-const DEFAULT_MIN_SLOT = 14;
-const DEFAULT_HEIGHT = 160;
 const DEFAULT_AXIS_WIDTH = 36;
+const LEGEND_STROKE_WIDTH = 24;
+const LEGEND_STROKE_HEIGHT = 8;
+const LEGEND_DASH_CYCLES = 2;
+
+interface LegendLine {
+	readonly label: string;
+	readonly color: string;
+	readonly width: number;
+	readonly dash: string | null;
+}
+
+const MIRRORED_KEYS: Record<string, string> = {
+	ArrowLeft: 'ArrowRight',
+	ArrowRight: 'ArrowLeft',
+};
 
 @Component({
 	selector: 'app-activity-chart',
@@ -56,27 +61,24 @@ const DEFAULT_AXIS_WIDTH = 36;
 	},
 })
 export class ActivityChartComponent {
-	readonly points = input<readonly ChartPoint[]>([]);
-	readonly barLabels = input<readonly string[]>([]);
-	readonly lineLabels = input<readonly string[]>([]);
-	readonly minSlot = input(DEFAULT_MIN_SLOT);
-	readonly height = input(DEFAULT_HEIGHT);
-	readonly barSpacing = input<ChartBarSpacing>(DEFAULT_BAR_SPACING);
-	readonly minBarWidth = input(DEFAULT_MIN_BAR_WIDTH);
-	readonly maxDropRatio = input(DEFAULT_MAX_DROP_RATIO);
-	readonly lineStyles = input<readonly ChartLineStyle[]>([]);
-	readonly stackMode = input<ChartStackMode>('stacked');
-	readonly stackOrder = input<ChartStackOrder>('input');
-	readonly axes = input<ChartAxes>('bars');
-	readonly sharedScale = input(true);
-	readonly tickCount = input(DEFAULT_TICK_COUNT);
-	readonly axisWidth = input<number | null>(null);
+	readonly data = input.required<ChartData>();
+	readonly config = input<ChartConfig>({});
 
 	readonly pointFocus = output<ChartPoint | null>();
 
 	protected readonly plotWidth = hostWidth();
 
-	private readonly sides = computed(() => axisSides(this.axes(), this.sharedScale()));
+	protected readonly settings = computed(() => resolveChartConfig(this.config()));
+	protected readonly barSeries = computed(() => toBarSeries(this.data()));
+	protected readonly lineSeries = computed(() => toLineSeries(this.data()));
+
+	protected readonly geometry = computed(() =>
+		buildChartGeometry(this.data(), this.settings(), this.plotWidth()),
+	);
+
+	private readonly sides = computed(() =>
+		axisSides(this.settings().axes.mode, this.settings().axes.shared),
+	);
 
 	private readonly axisElements = viewChildren<ElementRef<HTMLElement>>('axisElement');
 	private readonly measured = signal<Record<ChartAxisSide, number>>({
@@ -87,21 +89,11 @@ export class ActivityChartComponent {
 	protected readonly startAxisPx = computed(() => this.gutter('start', this.sides().start));
 	protected readonly endAxisPx = computed(() => this.gutter('end', this.sides().end));
 
-	protected readonly geometry = computed(() =>
-		buildChartGeometry(this.points(), {
-			width: this.plotWidth(),
-			height: this.height(),
-			minSlot: this.minSlot(),
-			barSpacing: this.barSpacing(),
-			minBarWidth: this.minBarWidth(),
-			maxDropRatio: this.maxDropRatio(),
-			lineStyles: this.lineStyles(),
-			stackMode: this.stackMode(),
-			stackOrder: this.stackOrder(),
-			axes: this.axes(),
-			sharedScale: this.sharedScale(),
-			tickCount: this.tickCount(),
-		}),
+	protected readonly scrolls = computed(() => null !== this.geometry().viewport);
+
+	/** The snap stops sit side by side, so they follow the plot and not the reading order. */
+	protected readonly snapSlots = computed(() =>
+		[...this.geometry().slots].sort((left, right) => left.x - right.x),
 	);
 
 	protected readonly issueMessage = computed(() =>
@@ -110,7 +102,29 @@ export class ActivityChartComponent {
 			: I18n.common.CHART_BARS_DO_NOT_FIT,
 	);
 
-	protected readonly gridTicks = computed(() => this.axis('start')?.ticks ?? []);
+	protected readonly legendWidth = LEGEND_STROKE_WIDTH;
+	protected readonly legendHeight = LEGEND_STROKE_HEIGHT;
+	protected readonly legendCenter = LEGEND_STROKE_HEIGHT / 2;
+
+	protected readonly legendLines = computed<readonly LegendLine[]>(() =>
+		this.lineSeries().map((series) => ({
+			label: series.label,
+			color: series.color,
+			width: Math.min(series.line.width, LEGEND_STROKE_HEIGHT),
+			dash: legendDash(series.line.dash),
+		})),
+	);
+
+	protected readonly gridTicks = computed(() =>
+		this.settings().guides.grid ? (this.axis('start')?.ticks ?? []) : [],
+	);
+
+	protected readonly baselineY = computed(() => {
+		const { points, zeroY } = this.geometry();
+		const shown = this.settings().guides.baseline.show && zeroY < this.settings().layout.height;
+
+		return 0 < points.length && shown ? zeroY : null;
+	});
 
 	protected readonly gridSize = computed<RovingGridSize>(() => ({
 		columns: this.geometry().points.length,
@@ -130,10 +144,17 @@ export class ActivityChartComponent {
 	});
 
 	private readonly slots = viewChildren<ElementRef<HTMLElement>>('slot');
+	private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
 	constructor() {
 		afterRenderEffect(() => {
 			this.measureAxes();
+		});
+
+		afterRenderEffect({
+			write: () => {
+				this.pinScroll();
+			},
 		});
 	}
 
@@ -141,8 +162,20 @@ export class ActivityChartComponent {
 		return this.geometry().axes.find((axis) => side === axis.side);
 	}
 
-	lineStyle(index: number): ChartLineStyleResolved {
-		return resolveLineStyle(this.lineStyles()[index]);
+	formatTick(value: number): string {
+		return this.settings().axes.format(value);
+	}
+
+	barColor(index: number): string {
+		return this.barSeries()[index]?.color ?? '';
+	}
+
+	lineColor(index: number): string {
+		return this.lineSeries()[index]?.color ?? '';
+	}
+
+	describe(point: ChartPoint, column: number): string {
+		return point.description ?? this.compose(point, column);
 	}
 
 	isActive(column: number): boolean {
@@ -150,9 +183,7 @@ export class ActivityChartComponent {
 	}
 
 	showsLabel(column: number): boolean {
-		const { points, labelStep } = this.geometry();
-
-		return 0 === (points.length - 1 - column) % labelStep;
+		return 0 === column % this.geometry().labelStep;
 	}
 
 	onFocus(point: ChartPoint | null): void {
@@ -166,7 +197,9 @@ export class ActivityChartComponent {
 
 	onKeydown(event: KeyboardEvent, column: number): void {
 		const size = this.gridSize();
-		const next = moveRovingFocus(event.key, { column, row: 0 }, size, () => true);
+		const rtl = 'rtl' === this.settings().layout.direction;
+		const key = rtl ? (MIRRORED_KEYS[event.key] ?? event.key) : event.key;
+		const next = moveRovingFocus(key, { column, row: 0 }, size, () => true);
 
 		if (null === next) {
 			return;
@@ -177,12 +210,41 @@ export class ActivityChartComponent {
 		this.slots()[rovingIndex(next, size)]?.nativeElement.focus();
 	}
 
+	private compose(point: ChartPoint, column: number): string {
+		const series = [...this.barSeries(), ...this.lineSeries()];
+		const values = series.map((entry) => this.valueLabel(entry, column));
+
+		return [point.label, ...values].join(' · ');
+	}
+
+	private valueLabel(series: ChartSeriesResolved, column: number): string {
+		return `${series.label} ${seriesValue(series, column).toString()}`;
+	}
+
 	private gutter(side: ChartAxisSide, shown: boolean): string {
 		if (!shown) {
 			return '0px';
 		}
 
-		return `${(this.axisWidth() ?? this.measured()[side]).toString()}px`;
+		const width = this.settings().axes.width;
+
+		return `${('auto' === width ? this.measured()[side] : width).toString()}px`;
+	}
+
+	/**
+	 * A plot read backwards opens on its first point, the way the heatmap opens on today. The
+	 * strip is re-pinned whenever it is re-measured — the axis gutters land after the first
+	 * paint, and a viewport that moves under a scroll left where it was hides the opening point.
+	 */
+	private pinScroll(): void {
+		const element = this.scroller()?.nativeElement;
+		const { width, viewport } = this.geometry();
+
+		if (undefined === element || null === viewport || 0 === width) {
+			return;
+		}
+
+		element.scrollLeft = 'rtl' === this.settings().layout.direction ? element.scrollWidth : 0;
 	}
 
 	private measureAxes(): void {
@@ -197,6 +259,27 @@ export class ActivityChartComponent {
 			previous.start === widths.start && previous.end === widths.end ? previous : widths,
 		);
 	}
+}
+
+function legendDash(dash: string | null): string | null {
+	if (null === dash) {
+		return null;
+	}
+
+	const pattern = dash
+		.split(/[\s,]+/)
+		.map(Number)
+		.filter((value) => Number.isFinite(value) && 0 <= value);
+
+	if (0 === pattern.length) {
+		return null;
+	}
+
+	const total = pattern.reduce((sum, value) => sum + value, 0);
+	const period = 1 === pattern.length ? total * 2 : total;
+	const scale = Math.min(1, LEGEND_STROKE_WIDTH / (LEGEND_DASH_CYCLES * period));
+
+	return pattern.map((value) => Math.round(value * scale * 100) / 100).join(' ');
 }
 
 function tickWidth(axis: HTMLElement | undefined): number {

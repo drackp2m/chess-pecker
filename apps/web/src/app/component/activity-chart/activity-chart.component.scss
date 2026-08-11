@@ -5,9 +5,35 @@
 	padding-inline: var(--chart-axis-start, 0) var(--chart-axis-end, 0);
 }
 
+.chart-frame {
+	position: relative;
+	width: max-content;
+	max-width: 100%;
+
+	&.is-rtl {
+		margin-inline-start: auto;
+	}
+
+	&.is-scrolling .chart-scroll {
+		scroll-snap-type: x mandatory;
+		overflow: auto hidden;
+	}
+}
+
 .chart-plot {
 	position: relative;
-	width: 100%;
+}
+
+.chart-snap {
+	pointer-events: none;
+	position: absolute;
+	inset: 0;
+	display: flex;
+}
+
+.chart-snap-stop {
+	scroll-snap-align: start;
+	flex: none;
 }
 
 .chart-axis {
@@ -50,6 +76,10 @@
 	stroke-width: 0.5;
 }
 
+.chart-baseline {
+	stroke: var(--chart-grid);
+}
+
 .chart-issue {
 	padding-block: var(--spacing-2);
 	color: var(--color-accent);
@@ -61,31 +91,14 @@
 }
 
 .chart-bar {
-	fill: var(--chart-level-0);
+	fill: var(--series-color, var(--chart-bar-1));
 	shape-rendering: crispedges;
-
-	&.series-1 {
-		fill: var(--chart-bar-1);
-	}
-
-	&.series-2 {
-		fill: var(--chart-bar-2);
-	}
-
-	&.series-3 {
-		fill: var(--chart-bar-3);
-	}
 }
 
 .chart-line {
 	fill: none;
-	stroke: var(--chart-line-1);
-	stroke-linecap: round;
+	stroke: var(--series-color, var(--chart-line-1));
 	stroke-linejoin: round;
-
-	&.line-2 {
-		stroke: var(--chart-line-2);
-	}
 }
 
 .chart-slots {
@@ -140,26 +153,20 @@
 }
 
 .chart-swatch {
+	flex: none;
+
 	width: 0.65rem;
 	height: 0.65rem;
 	border-radius: 2px;
-	background-color: var(--chart-bar-1);
 
-	&.series-2 {
-		background-color: var(--chart-bar-2);
-	}
-
-	&.series-3 {
-		background-color: var(--chart-bar-3);
-	}
+	background-color: var(--series-color, var(--chart-bar-1));
 }
 
 .chart-stroke {
-	width: 0.9rem;
-	height: 0;
-	border-block-start: 1.5px solid var(--chart-line-1);
+	overflow: visible;
+	display: block;
+	flex: none;
 
-	&.line-2 {
-		border-block-start-color: var(--chart-line-2);
-	}
+	stroke: var(--series-color, var(--chart-line-1));
+	stroke-linejoin: round;
 }

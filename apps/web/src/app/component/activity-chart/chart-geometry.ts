@@ -1,57 +1,27 @@
 import {
-	ChartAxes,
 	ChartAxis,
 	ChartScaleOptions,
+	ChartScales,
 	buildAxes,
 	resolveScales,
+	toChartY,
 } from '@app/component/activity-chart/chart-axis';
-import { fitSlots } from '@app/util/fit-slots';
-import { linearScale } from '@app/util/scale';
+import { ChartConfigResolved, ChartStackMode } from '@app/component/activity-chart/chart-config';
+import {
+	ChartData,
+	ChartPoint,
+	ChartSeriesResolved,
+	seriesValue,
+	toBarSeries,
+	toLineSeries,
+} from '@app/component/activity-chart/chart-data';
+import { ChartBarLayout, fitBars } from '@app/component/activity-chart/chart-layout';
+import { toPath } from '@app/component/activity-chart/chart-path';
+import { NiceScale, ScaleBounds } from '@app/util/scale';
 
 const LABEL_MIN_WIDTH = 28;
 
-export const DEFAULT_MIN_BAR_WIDTH = 12;
-export const DEFAULT_TICK_COUNT = 4;
-export const DEFAULT_MAX_DROP_RATIO = 1;
-
-export type ChartStackMode = 'stacked' | 'overlay';
-export type ChartStackOrder = 'input' | 'ascending' | 'descending' | readonly number[];
 export type ChartIssue = 'bar-too-narrow' | 'too-many-points';
-export type ChartLineCurve = 'linear' | 'smooth';
-
-export type ChartBarSpacingMode = 'gap' | 'ratio' | 'fixed';
-
-export interface ChartLineStyle {
-	readonly curve?: ChartLineCurve;
-	readonly width?: number;
-	readonly dash?: string | null;
-}
-
-export interface ChartBarSpacing {
-	readonly mode: ChartBarSpacingMode;
-	readonly size: number;
-}
-
-export type ChartLineStyleResolved = Required<ChartLineStyle>;
-
-export const DEFAULT_LINE_STYLE: ChartLineStyleResolved = {
-	curve: 'linear',
-	width: 1.5,
-	dash: null,
-};
-export const DEFAULT_BAR_SPACING: ChartBarSpacing = { mode: 'ratio', size: 0.68 };
-
-export function resolveLineStyle(style: ChartLineStyle | undefined): ChartLineStyleResolved {
-	return { ...DEFAULT_LINE_STYLE, ...style };
-}
-
-export interface ChartPoint {
-	readonly key: string;
-	readonly label: string;
-	readonly description: string;
-	readonly stack: readonly number[];
-	readonly lines: readonly number[];
-}
 
 export interface ChartSegment {
 	readonly index: number;
@@ -86,38 +56,39 @@ export interface ChartGeometry {
 	readonly bars: readonly ChartBar[];
 	readonly lines: readonly ChartLine[];
 	readonly axes: readonly ChartAxis[];
-	readonly barMax: number;
-	readonly lineMax: number;
+	readonly barScale: NiceScale;
+	readonly lineScale: NiceScale;
+	readonly zeroY: number;
 	readonly labelStep: number;
 	readonly dropped: number;
+	readonly width: number;
+	readonly viewport: number | null;
 	readonly issue: ChartIssue | null;
 }
 
-export interface ChartGeometryOptions {
-	readonly width: number;
-	readonly height: number;
-	readonly minSlot: number;
-	readonly barSpacing?: ChartBarSpacing;
-	readonly minBarWidth?: number;
-	readonly maxDropRatio?: number;
-	readonly stackMode?: ChartStackMode;
-	readonly stackOrder?: ChartStackOrder;
-	readonly axes?: ChartAxes;
-	readonly sharedScale?: boolean;
-	readonly tickCount?: number;
-	readonly lineStyles?: readonly ChartLineStyle[];
-}
+type StackOrder = 'input' | 'ascending' | 'descending' | readonly number[];
 
-interface Vertex {
-	readonly x: number;
-	readonly y: number;
+interface SegmentEdges {
+	readonly start: number;
+	readonly end: number;
 }
 
 interface BarOptions {
 	readonly height: number;
+	readonly bar: number;
+	readonly gap: number;
 	readonly stackMode: ChartStackMode;
-	readonly stackOrder: ChartStackOrder;
+	readonly stackOrder: StackOrder;
+	readonly baselineWidth: number;
 }
+
+interface VisibleData {
+	readonly points: readonly ChartPoint[];
+	readonly bars: readonly ChartSeriesResolved[];
+	readonly lines: readonly ChartSeriesResolved[];
+}
+
+const FLAT: NiceScale = { min: 0, max: 0, step: 0 };
 
 const EMPTY: ChartGeometry = {
 	points: [],
@@ -125,116 +96,149 @@ const EMPTY: ChartGeometry = {
 	bars: [],
 	lines: [],
 	axes: [],
-	barMax: 0,
-	lineMax: 0,
+	barScale: FLAT,
+	lineScale: FLAT,
+	zeroY: 0,
 	labelStep: 1,
 	dropped: 0,
+	width: 0,
+	viewport: null,
 	issue: null,
 };
 
-/** The newest point owns the right edge: whatever does not fit drops off the left. */
+/**
+ * The first point owns the starting edge — left reading `ltr`, right reading `rtl` — so
+ * whatever does not fit drops off the far end, which is the opposite edge.
+ */
 export function buildChartGeometry(
-	points: readonly ChartPoint[],
-	options: ChartGeometryOptions,
+	data: ChartData,
+	config: ChartConfigResolved,
+	width: number,
 ): ChartGeometry {
-	const required = toRequiredSlot(options);
-	const fit = fitSlots(
-		options.width,
-		Math.max(options.minSlot, required),
-		points.length,
-		'stretch',
-	);
+	const total = data.points.length;
+	const layout = fitBars(width, total, config.bars, config.overflow);
 
-	if (0 === fit.count) {
-		return EMPTY;
+	if (0 === layout.count) {
+		return 0 < width && 0 < total ? { ...EMPTY, dropped: total, issue: 'bar-too-narrow' } : EMPTY;
 	}
 
-	const dropped = points.length - fit.count;
+	const dropped = Math.max(0, total - layout.count);
 
-	if (options.width < required) {
-		return { ...EMPTY, dropped, issue: 'bar-too-narrow' };
-	}
-
-	const budget = points.length * (options.maxDropRatio ?? DEFAULT_MAX_DROP_RATIO);
-
-	if (budget < dropped) {
+	if (total * config.overflow.maxDropRatio < dropped) {
 		return { ...EMPTY, dropped, issue: 'too-many-points' };
 	}
 
-	return toGeometry(points.slice(dropped), fit.size, dropped, options);
-}
+	const visible = {
+		points: data.points.slice(0, layout.count),
+		bars: toBarSeries(data),
+		lines: toLineSeries(data),
+	};
 
-function toRequiredSlot(options: ChartGeometryOptions): number {
-	const spacing = options.barSpacing ?? DEFAULT_BAR_SPACING;
-	const minBarWidth = options.minBarWidth ?? DEFAULT_MIN_BAR_WIDTH;
-
-	if ('fixed' === spacing.mode) {
-		return Math.max(0, spacing.size);
-	}
-
-	if ('gap' === spacing.mode) {
-		return minBarWidth + Math.max(0, spacing.size);
-	}
-
-	const ratio = Math.min(1, Math.max(0, spacing.size));
-
-	return 0 === ratio ? Infinity : minBarWidth / ratio;
+	return toGeometry(visible, layout, dropped, config);
 }
 
 function toGeometry(
-	visible: readonly ChartPoint[],
-	slotSize: number,
+	visible: VisibleData,
+	layout: ChartBarLayout,
 	dropped: number,
-	options: ChartGeometryOptions,
+	config: ChartConfigResolved,
 ): ChartGeometry {
-	const barOptions = toBarOptions(options);
-	const scaleOptions = toScaleOptions(options);
-	const spacing = options.barSpacing ?? DEFAULT_BAR_SPACING;
-	const rawBarMax = maxBar(visible, barOptions.stackMode);
-	const scales = resolveScales(rawBarMax, maxLine(visible), scaleOptions);
-	const slots = visible.map((point, index) => toSlot(point, index, slotSize));
-	const bars = visible.map((point, index) =>
-		toBar(point, slots[index], spacing, scales.barMax, barOptions),
+	const barOptions = toBarOptions(config, visible.bars, layout);
+	const scaleOptions = toScaleOptions(config);
+	const stacks = toStacks(visible);
+	const scales = toScales(stacks, visible, barOptions.stackMode, scaleOptions);
+	const slots = visible.points.map((point, index) =>
+		toSlot(point, toColumn(index, layout.columns, config), layout.slot),
 	);
 
 	return {
-		points: visible,
+		points: visible.points,
 		slots,
-		bars,
-		lines: toLines(visible, slots, scales.lineMax, options),
-		axes: buildAxes(scales, options.height, scaleOptions),
-		barMax: scales.barMax,
-		lineMax: scales.lineMax,
-		labelStep: Math.max(1, Math.ceil(LABEL_MIN_WIDTH / slotSize)),
+		bars: toBars(stacks, slots, scales.bar, barOptions),
+		lines: toLines(visible.lines, slots, scales.line, config.layout.height),
+		axes: buildAxes(scales, config.layout.height, scaleOptions),
+		barScale: scales.bar,
+		lineScale: scales.line,
+		zeroY: toChartY(0, scales.bar, config.layout.height),
+		labelStep: toLabelStep(config, layout.slot),
 		dropped,
+		width: layout.content,
+		viewport: layout.viewport,
 		issue: null,
 	};
 }
 
-function toBarOptions(options: ChartGeometryOptions): BarOptions {
+function toScales(
+	stacks: readonly (readonly number[])[],
+	visible: VisibleData,
+	mode: ChartStackMode,
+	options: ChartScaleOptions,
+): ChartScales {
+	return resolveScales(barBounds(stacks, mode), lineBounds(visible), options);
+}
+
+function toStacks(visible: VisibleData): readonly (readonly number[])[] {
+	return visible.points.map((_unused, index) =>
+		visible.bars.map((series) => seriesValue(series, index)),
+	);
+}
+
+function toColumn(index: number, total: number, config: ChartConfigResolved): number {
+	return 'rtl' === config.layout.direction ? total - 1 - index : index;
+}
+
+function toLabelStep(config: ChartConfigResolved, slotSize: number): number {
+	return 'auto' === config.labels.step
+		? Math.max(1, Math.ceil(LABEL_MIN_WIDTH / slotSize))
+		: Math.max(1, Math.round(config.labels.step));
+}
+
+function toBarOptions(
+	config: ChartConfigResolved,
+	series: readonly ChartSeriesResolved[],
+	layout: ChartBarLayout,
+): BarOptions {
+	const order = config.bars.order;
+
 	return {
-		height: options.height,
-		stackMode: options.stackMode ?? 'stacked',
-		stackOrder: options.stackOrder ?? 'input',
+		height: config.layout.height,
+		bar: layout.bar,
+		gap: layout.slot - layout.bar,
+		stackMode: config.bars.stack,
+		stackOrder: 'string' === typeof order ? order : toOrderIndices(order, series),
+		baselineWidth: config.guides.baseline.show ? Math.max(0, config.guides.baseline.width) : 0,
 	};
 }
 
-function toScaleOptions(options: ChartGeometryOptions): ChartScaleOptions {
+function toOrderIndices(
+	order: readonly string[],
+	series: readonly ChartSeriesResolved[],
+): readonly number[] {
+	return order
+		.map((id) => series.findIndex((entry) => id === entry.id))
+		.filter((index) => -1 !== index);
+}
+
+function toScaleOptions(config: ChartConfigResolved): ChartScaleOptions {
 	return {
-		axes: options.axes ?? 'bars',
-		sharedScale: options.sharedScale ?? true,
-		tickCount: options.tickCount ?? DEFAULT_TICK_COUNT,
+		axes: config.axes.mode,
+		sharedScale: config.axes.shared,
+		tickCount: config.axes.tickCount,
 	};
 }
 
-function toBarWidth(slotSize: number, spacing: ChartBarSpacing): number {
-	if ('fixed' === spacing.mode) {
-		return Math.min(slotSize, Math.max(0, spacing.size));
-	}
+function toBars(
+	stacks: readonly (readonly number[])[],
+	slots: readonly ChartSlot[],
+	bounds: ScaleBounds,
+	options: BarOptions,
+): readonly ChartBar[] {
+	return stacks.map((stack, index) => toBar(stack, slots[index], bounds, options));
+}
 
-	return 'gap' === spacing.mode
-		? slotSize - Math.max(0, spacing.size)
-		: slotSize * Math.min(1, Math.max(0, spacing.size));
+/** Bars that touch fill their slot and share its edge; once there is a gap they all match. */
+function toBarWidth(slotWidth: number, options: BarOptions): number {
+	return 0 === Math.round(options.gap) ? slotWidth : Math.min(slotWidth, Math.round(options.bar));
 }
 
 /** Slot edges land on whole pixels, so bars that touch share an edge instead of a seam. */
@@ -246,48 +250,85 @@ function toSlot(point: ChartPoint, index: number, size: number): ChartSlot {
 }
 
 function toBar(
-	point: ChartPoint,
+	stack: readonly number[],
 	slot: ChartSlot | undefined,
-	spacing: ChartBarSpacing,
-	barMax: number,
+	bounds: ScaleBounds,
 	options: BarOptions,
 ): ChartBar {
-	const slotWidth = slot?.width ?? 0;
-	const width = toBarWidth(slotWidth, spacing);
+	const width = toBarWidth(slot?.width ?? 0, options);
 
 	return {
-		key: point.key,
-		x: (slot?.x ?? 0) + (slotWidth - width) / 2,
+		key: slot?.key ?? '',
+		x: Math.round((slot?.center ?? 0) - width / 2),
 		width,
-		segments: toSegments(point.stack, barMax, options),
+		segments: toSegments(stack, bounds, options),
 	};
 }
 
 function toSegments(
 	stack: readonly number[],
-	barMax: number,
+	bounds: ScaleBounds,
 	options: BarOptions,
 ): readonly ChartSegment[] {
 	const overlay = 'overlay' === options.stackMode;
 	const order = overlay ? 'descending' : options.stackOrder;
-	let value = 0;
-	let base = 0;
+	const totals = { up: 0, down: 0 };
 
 	return stackOrderIndices(stack, order)
 		.map((index) => {
-			value = overlay ? (stack[index] ?? 0) : value + (stack[index] ?? 0);
+			const value = stack[index] ?? 0;
+			const totalsIndex = 0 <= value ? 'up' : 'down';
+			const base = overlay ? 0 : totals[totalsIndex];
+			const top = base + value;
 
-			const top = Math.round(scaleTo(value, barMax, options.height));
-			const height = overlay ? top : top - base;
+			if (!overlay) {
+				totals[totalsIndex] = top;
+			}
 
-			base = top;
-
-			return { index, y: options.height - top, height };
+			return toSegment(index, [base, top], bounds, options);
 		})
 		.filter((segment) => 0 < segment.height);
 }
 
-function stackOrderIndices(stack: readonly number[], order: ChartStackOrder): readonly number[] {
+function toSegment(
+	index: number,
+	span: readonly [number, number],
+	bounds: ScaleBounds,
+	options: BarOptions,
+): ChartSegment {
+	const [base, top] = span;
+	const from = Math.round(toChartY(base, bounds, options.height));
+	const to = Math.round(toChartY(top, bounds, options.height));
+	const edges = clearBaseline(
+		{ start: Math.min(from, to), end: Math.max(from, to) },
+		base <= top,
+		bounds,
+		options,
+	);
+
+	return { index, y: edges.start, height: Math.max(0, edges.end - edges.start) };
+}
+
+/** The baseline is a stroke centred on the zero, so a bar stops where that band starts. */
+function clearBaseline(
+	edges: SegmentEdges,
+	above: boolean,
+	bounds: ScaleBounds,
+	options: BarOptions,
+): SegmentEdges {
+	if (0 <= bounds.min || 0 === options.baselineWidth) {
+		return edges;
+	}
+
+	const zeroY = toChartY(0, bounds, options.height);
+	const half = options.baselineWidth / 2;
+
+	return above
+		? { start: edges.start, end: Math.min(edges.end, Math.floor(zeroY - half)) }
+		: { start: Math.max(edges.start, Math.ceil(zeroY + half)), end: edges.end };
+}
+
+function stackOrderIndices(stack: readonly number[], order: StackOrder): readonly number[] {
 	const indices = stack.map((_unused, index) => index);
 
 	if ('input' === order) {
@@ -308,79 +349,47 @@ function stackOrderIndices(stack: readonly number[], order: ChartStackOrder): re
 }
 
 function toLines(
-	points: readonly ChartPoint[],
+	series: readonly ChartSeriesResolved[],
 	slots: readonly ChartSlot[],
-	lineMax: number,
-	options: ChartGeometryOptions,
+	bounds: ScaleBounds,
+	height: number,
 ): readonly ChartLine[] {
-	const count = Math.max(0, ...points.map((point) => point.lines.length));
-
-	return Array.from({ length: count }, (_unused, index) => {
-		const style = resolveLineStyle(options.lineStyles?.[index]);
-		const vertices = points.map((point, slotIndex) => ({
-			x: slots[slotIndex]?.center ?? 0,
-			y: options.height - scaleTo(point.lines[index] ?? 0, lineMax, options.height),
+	return series.map((entry, index) => {
+		const vertices = slots.map((slot, slotIndex) => ({
+			x: slot.center,
+			y: toChartY(seriesValue(entry, slotIndex), bounds, height),
 		}));
 
-		return { index, path: toPath(vertices, style.curve), width: style.width, dash: style.dash };
+		return {
+			index,
+			path: toPath(vertices, entry.line.curve),
+			width: entry.line.width,
+			dash: entry.line.dash,
+		};
 	});
 }
 
-function toPath(vertices: readonly Vertex[], curve: ChartLineCurve): string {
-	const [first, ...rest] = vertices;
+function barBounds(stacks: readonly (readonly number[])[], mode: ChartStackMode): ScaleBounds {
+	const totals =
+		'overlay' === mode
+			? stacks.flat()
+			: stacks.flatMap((stack) => [sumSigned(stack, 1), sumSigned(stack, -1)]);
 
-	if (undefined === first) {
-		return '';
-	}
+	return toBounds(totals);
+}
 
-	const segments = rest.map((vertex, index) =>
-		'smooth' === curve ? toCurveSegment(vertices, index) : `L ${coordinates(vertex)}`,
+function lineBounds(visible: VisibleData): ScaleBounds {
+	return toBounds(
+		visible.lines.flatMap((series) =>
+			visible.points.map((_unused, index) => seriesValue(series, index)),
+		),
 	);
-
-	return [`M ${coordinates(first)}`, ...segments].join(' ');
 }
 
-function toCurveSegment(vertices: readonly Vertex[], index: number): string {
-	const previous = vertices[Math.max(0, index - 1)];
-	const start = vertices[index];
-	const end = vertices[index + 1];
-	const next = vertices[Math.min(vertices.length - 1, index + 2)];
-
-	if (undefined === previous || undefined === start || undefined === end || undefined === next) {
-		return '';
-	}
-
-	const flat = start.y === end.y;
-	const first = {
-		x: start.x + (end.x - previous.x) / 6,
-		y: flat ? start.y : start.y + (end.y - previous.y) / 6,
-	};
-	const second = {
-		x: end.x - (next.x - start.x) / 6,
-		y: flat ? end.y : end.y - (next.y - start.y) / 6,
-	};
-
-	return `C ${coordinates(first)} ${coordinates(second)} ${coordinates(end)}`;
+function toBounds(values: readonly number[]): ScaleBounds {
+	return { min: Math.min(0, ...values), max: Math.max(0, ...values) };
 }
 
-function coordinates(vertex: Vertex): string {
-	return `${vertex.x.toFixed(2)} ${vertex.y.toFixed(2)}`;
-}
-
-function scaleTo(value: number, max: number, height: number): number {
-	return 0 >= max ? 0 : linearScale(value, { min: 0, max }, height);
-}
-
-function maxBar(points: readonly ChartPoint[], mode: ChartStackMode): number {
-	return 'overlay' === mode
-		? Math.max(0, ...points.flatMap((point) => [...point.stack]))
-		: Math.max(0, ...points.map((point) => sum(point.stack)));
-}
-
-function maxLine(points: readonly ChartPoint[]): number {
-	return Math.max(0, ...points.flatMap((point) => [...point.lines]));
-}
-
-function sum(values: readonly number[]): number {
-	return values.reduce((total, value) => total + value, 0);
+function sumSigned(values: readonly number[], sign: number): number {
+	return values.filter((value) => 0 <= sign * value).reduce((total, value) => total + value, 0);
 }

@@ -1,31 +1,4 @@
 <section class="flex-col gap-6">
-	<header class="flex-col gap-1">
-		<p class="fs-sm color-contrast-mid">{{ I18n.training.INTRO | i18n }}</p>
-	</header>
-
-	<div class="flex-col gap-2">
-		<h5>{{ I18n.training.DAILY_TITLE | i18n }}</h5>
-
-		<app-activity-chart
-			[points]="dailyPoints()"
-			[barLabels]="dailyBarLabels()"
-			[lineLabels]="dailyLineLabels()"
-			[lineStyles]="dailyLineStyles"
-			[barSpacing]="{ mode: 'gap', size: 4 }"
-			(pointFocus)="onDailyFocus($event)"
-		/>
-
-		<p class="fs-sm color-contrast-mid">
-			@if (hoveredDay(); as day) {
-				{{ day.description }}
-			} @else {
-				{{
-					I18n.training.DAILY_SUMMARY | i18n: { days: dailyPoints().length, solved: dailySolved() }
-				}}
-			}
-		</p>
-	</div>
-
 	@if (store.error(); as message) {
 		<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
 	}
@@ -44,7 +17,7 @@
 								: {
 										rounds: progress.calibration.rounds.length,
 										rating: progress.calibration.rating ?? '—',
-										average: formatDuration(progress.calibration.averageDurationMs),
+										average: progress.calibration.averageDurationMs | duration,
 								  }
 					}}
 				</p>
@@ -124,58 +97,99 @@
 
 					<ul class="flex-col gap-2">
 						@for (cycle of progress.cycles; track cycle.uuid) {
-							<li class="row flex-col gap-1 p-2 br-1">
-								<span class="fw-lg">
-									{{
-										I18n.training.CYCLE_HEADING
-											| i18n: { index: cycle.index, status: cycleStatus(cycle) }
-									}}
-								</span>
+							<li class="row flex-col gap-4 p-2 br-3">
+								<div class="flex-col gap-1">
+									<h5>
+										{{
+											I18n.training.CYCLE_HEADING
+												| i18n: { index: cycle.index, status: cycleStatus(cycle) }
+										}}
+									</h5>
 
-								<span class="fs-sm color-contrast-mid">{{ describeCycle(cycle) }}</span>
+									<span class="fs-sm color-contrast-mid">{{ describeCycle(cycle) }}</span>
 
-								<span class="fs-sm color-contrast-mid">
-									{{
-										I18n.training.CYCLE_TIMES
-											| i18n
-												: {
-														total: formatDuration(cycle.totalDurationMs),
-														average: formatDuration(cycle.averageDurationMs),
-												  }
-									}}
-									@if (cycle.targetDurationMs; as target) {
-										{{ I18n.training.CYCLE_TARGET | i18n: { target: formatDuration(target) } }}
-									}
-								</span>
+									<span class="fs-sm color-contrast-mid">
+										{{
+											I18n.training.CYCLE_TIMES
+												| i18n
+													: {
+															total: cycle.totalDurationMs | duration,
+															average: cycle.averageDurationMs | duration,
+													  }
+										}}
+										@if (cycle.targetDurationMs; as target) {
+											{{ I18n.training.CYCLE_TARGET | i18n: { target: target | duration } }}
+										}
+									</span>
+								</div>
+
+								@if ('running' === cycle.status) {
+									<div class="flex-col gap-1">
+										@if (0 < cyclePaceChart().points.length) {
+											<app-activity-chart
+												[data]="cyclePaceChart()"
+												[config]="cyclePaceConfig"
+												(pointFocus)="onPaceFocus($event)"
+											/>
+
+											<span class="fs-sm color-contrast-mid">
+												@if (hoveredPaceDay(); as day) {
+													{{ day.description }}
+												} @else {
+													{{ I18n.training.CYCLE_PACE_SUMMARY | i18n: { pace: cyclePaceGoal() } }} ·
+
+													{{
+														cyclePaceDrift() < 0
+															? (I18n.training.CYCLE_PACE_SUMMARY_NEGATIVE
+																| i18n: { exercises: cyclePaceDrift() * -1 })
+															: (I18n.training.CYCLE_PACE_SUMMARY_POSITIVE | i18n: { exercises: 2 })
+													}}
+												}
+											</span>
+										}
+
+										<div class="flex-row gap-2 mt-3">
+											<button
+												appThemed
+												class="flex-grow fs-sm p-1"
+												color="accent"
+												[disabled]="store.isSubmitting()"
+												(click)="cancel()"
+											>
+												{{ I18n.common.CANCEL | i18n }}
+											</button>
+
+											<button appThemed class="flex-grow fs-sm p-1" appRouterLink="/training/solve">
+												{{ I18n.common.CONTINUE | i18n }}
+											</button>
+										</div>
+									</div>
+								}
 							</li>
 						}
 					</ul>
 				</div>
 			}
 
-			<div class="flex-col gap-2">
-				@if (store.runningCycle()) {
-					<button appThemed color="accent" appRouterLink="/training/solve">
-						{{ I18n.training.CONTINUE_CYCLE | i18n }}
-					</button>
-				} @else if (store.canStartCycle()) {
-					<button appThemed color="accent" [disabled]="store.isSubmitting()" (click)="startCycle()">
-						{{ I18n.training.START_CYCLE | i18n: { index: progress.cycles.length + 1 } }}
-					</button>
-				}
-
-				@if (progress.suggestFinish) {
-					<p class="fs-sm color-contrast-mid">{{ I18n.training.SUGGEST_FINISH | i18n }}</p>
-
-					<button appThemed [disabled]="store.isSubmitting()" (click)="finish()">
-						{{ I18n.training.CLOSE_TRAINING | i18n }}
-					</button>
-				}
-
-				<button appThemed [disabled]="store.isSubmitting()" (click)="cancel()">
-					{{ I18n.training.CANCEL_TRAINING | i18n }}
+			@if (store.canStartCycle()) {
+				<button appThemed color="accent" [disabled]="store.isSubmitting()" (click)="startCycle()">
+					{{ I18n.training.START_CYCLE | i18n: { index: progress.cycles.length + 1 } }}
 				</button>
-			</div>
+			}
+
+			@if (progress.suggestFinish) {
+				<p class="fs-sm color-contrast-mid">{{ I18n.training.SUGGEST_FINISH | i18n }}</p>
+
+				<button appThemed [disabled]="store.isSubmitting()" (click)="finish()">
+					{{ I18n.training.CLOSE_TRAINING | i18n }}
+				</button>
+			}
+
+			@if (!store.runningCycle()) {
+				<button appThemed [disabled]="store.isSubmitting()" (click)="cancel()">
+					{{ I18n.common.CANCEL | i18n }}
+				</button>
+			}
 		}
 	} @else {
 		<div class="flex-col gap-2">
@@ -187,19 +201,28 @@
 		</div>
 	}
 
-	@if (0 < store.trainings().length) {
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.training.HISTORY | i18n }}</h5>
+	<div class="flex-col gap-2">
+		<h5>{{ I18n.training.DAILY_TITLE | i18n }}</h5>
 
-			<ul class="flex-col gap-2">
-				@for (training of store.trainings(); track training.uuid) {
-					<li class="row flex-col gap-1 p-2 br-1">
-						<span class="fw-lg">{{ trainingStatus(training) | i18n }}</span>
+		<app-activity-chart
+			[data]="dailyChart()"
+			[config]="dailyConfig"
+			(pointFocus)="onDailyFocus($event)"
+		/>
 
-						<span class="mono fs-sm color-contrast-mid">{{ training.createdAt }}</span>
-					</li>
-				}
-			</ul>
-		</div>
-	}
+		<p class="fs-sm color-contrast-mid">
+			@if (hoveredDay(); as day) {
+				{{ day.description }}
+			} @else {
+				{{
+					I18n.training.DAILY_SUMMARY
+						| i18n: { days: dailyChart().points.length, solved: dailySolved() }
+				}}
+			}
+		</p>
+	</div>
+
+	<div class="flex-col gap-1">
+		<p class="fs-sm color-contrast-mid">{{ I18n.training.INTRO | i18n }}</p>
+	</div>
 </section>

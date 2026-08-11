@@ -1,4 +1,4 @@
-import { linearScale, niceMax, niceTicks } from '@app/util/scale';
+import { NiceScale, ScaleBounds, linearScale, niceScale, scaleTicks } from '@app/util/scale';
 
 export type ChartAxes = 'none' | 'bars' | 'lines' | 'both';
 export type ChartAxisSide = 'start' | 'end';
@@ -19,8 +19,8 @@ export interface ChartAxis {
 }
 
 export interface ChartScales {
-	readonly barMax: number;
-	readonly lineMax: number;
+	readonly bar: NiceScale;
+	readonly line: NiceScale;
 }
 
 export interface ChartScaleOptions {
@@ -45,23 +45,31 @@ export function axisSides(axes: ChartAxes, sharedScale: boolean): ChartAxisSides
 }
 
 export function resolveScales(
-	barMax: number,
-	lineMax: number,
+	bar: ScaleBounds,
+	line: ScaleBounds,
 	options: ChartScaleOptions,
 ): ChartScales {
 	const sides = axisSides(options.axes, options.sharedScale);
 
 	if (options.sharedScale) {
-		const shared = Math.max(barMax, lineMax);
-		const scaled = sides.start ? niceMax(shared, options.tickCount) : shared;
+		const shared = mergeBounds(bar, line);
+		const scaled = sides.start ? niceScale(shared, options.tickCount) : rawScale(shared);
 
-		return { barMax: scaled, lineMax: scaled };
+		return { bar: scaled, line: scaled };
 	}
 
 	return {
-		barMax: sides.start ? niceMax(barMax, options.tickCount) : barMax,
-		lineMax: sides.end ? niceMax(lineMax, options.tickCount) : lineMax,
+		bar: sides.start ? niceScale(bar, options.tickCount) : rawScale(bar),
+		line: sides.end ? niceScale(line, options.tickCount) : rawScale(line),
 	};
+}
+
+export function toChartY(value: number, bounds: ScaleBounds, height: number): number {
+	return bounds.max === bounds.min ? height : height - linearScale(value, bounds, height);
+}
+
+export function mergeBounds(left: ScaleBounds, right: ScaleBounds): ScaleBounds {
+	return { min: Math.min(left.min, right.min), max: Math.max(left.max, right.max) };
 }
 
 export function buildAxes(
@@ -73,23 +81,20 @@ export function buildAxes(
 	const axes: ChartAxis[] = [];
 
 	if (sides.start) {
-		axes.push({ side: 'start', ticks: toTicks(scales.barMax, height, options.tickCount) });
+		axes.push({ side: 'start', ticks: toTicks(scales.bar, height) });
 	}
 
 	if (sides.end) {
-		axes.push({ side: 'end', ticks: toTicks(scales.lineMax, height, options.tickCount) });
+		axes.push({ side: 'end', ticks: toTicks(scales.line, height) });
 	}
 
 	return axes;
 }
 
-function toTicks(max: number, height: number, count: number): readonly ChartTick[] {
-	if (0 >= max) {
-		return [{ value: 0, y: height }];
-	}
+function toTicks(scale: NiceScale, height: number): readonly ChartTick[] {
+	return scaleTicks(scale).map((value) => ({ value, y: toChartY(value, scale, height) }));
+}
 
-	return niceTicks(max, count).map((value) => ({
-		value,
-		y: height - linearScale(value, { min: 0, max }, height),
-	}));
+function rawScale(bounds: ScaleBounds): NiceScale {
+	return { ...bounds, step: 0 };
 }

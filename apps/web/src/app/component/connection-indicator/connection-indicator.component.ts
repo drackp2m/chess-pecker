@@ -3,6 +3,7 @@ import { Component, computed, inject } from '@angular/core';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { ConnectionStore } from '@app/store/connection.store';
 import { SessionStore } from '@app/store/session.store';
 
 /**
@@ -32,12 +33,20 @@ const PHASE_DETAILS = {
 export class ConnectionIndicatorComponent {
 	protected readonly I18n = I18n;
 
+	private readonly connectionStore = inject(ConnectionStore);
 	private readonly sessionStore = inject(SessionStore);
 
-	readonly phase = this.sessionStore.connectionPhase;
+	/**
+	 * Two sources of "unreachable" that must not contradict each other on screen: the last
+	 * call the SDK made, and a session that never settled because the server did not answer.
+	 */
+	readonly phase = computed(() =>
+		this.sessionStore.isUnreachable() ? 'unreachable' : this.connectionStore.phase(),
+	);
+
 	readonly message = computed(() => PHASE_MESSAGES[this.phase()]);
 	readonly detail = computed(() => PHASE_DETAILS[this.phase()]);
-	readonly canRetry = this.sessionStore.isUnreachable;
+	readonly canRetry = computed(() => 'unreachable' === this.phase());
 
 	retry(): void {
 		void this.sessionStore.retry();

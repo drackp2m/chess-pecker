@@ -46,6 +46,9 @@ jobs:
       - name: Typecheck shared definitions
         run: pnpm --filter @chesspecker/api-definitions typecheck
 
+      - name: Run i18n check
+        run: pnpm run i18n:check
+
       - name: Run lint
         run: pnpm run lint
 
