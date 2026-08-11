@@ -8,6 +8,14 @@ export const ACTIVITY_LEVELS = 4;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const LABELED_WEEKDAYS = new Set([0, 3, 6]);
 
+export interface CyclePaceDay {
+	readonly date: string;
+	readonly done: number;
+	readonly expected: number;
+	readonly delta: number;
+	readonly drift: number;
+}
+
 export interface ActivityCell {
 	readonly date: string;
 	readonly count: number;
@@ -55,6 +63,28 @@ export function activityDaySeries(
 		const date = toIsoDate(addUtcDays(end, index - (totalDays - 1)));
 
 		return byDate.get(date) ?? emptyActivityDay(date);
+	});
+}
+
+export function cyclePaceSeries(
+	days: readonly TrainingActivityDay[],
+	startedAt: string,
+	puzzlesPerDay: number,
+	today: Date = new Date(),
+): readonly CyclePaceDay[] {
+	const counts = new Map(days.map((day) => [day.date, day.count]));
+	const start = utcMidnight(new Date(startedAt));
+	const total = Math.max(0, diffUtcDays(start, utcMidnight(today)) + 1);
+	let drift = 0;
+
+	return Array.from({ length: total }, (_unused, index) => {
+		const date = toIsoDate(addUtcDays(start, index));
+		const done = counts.get(date) ?? 0;
+		const delta = done - puzzlesPerDay;
+
+		drift += delta;
+
+		return { date, done, expected: puzzlesPerDay, delta, drift };
 	});
 }
 

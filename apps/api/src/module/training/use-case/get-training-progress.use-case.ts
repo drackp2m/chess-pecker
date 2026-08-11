@@ -75,6 +75,7 @@ export class GetTrainingProgressUseCase {
 			uuid: cycle.uuid,
 			index: cycle.index,
 			status: cycle.status,
+			startedAt: cycle.createdAt,
 			attempted: attempts.length,
 			total,
 			solved,

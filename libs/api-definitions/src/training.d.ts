@@ -128,6 +128,7 @@ export interface CycleProgress {
 	readonly uuid: string;
 	readonly index: number;
 	readonly status: TrainingCycleStatus;
+	readonly startedAt: string;
 	readonly attempted: number;
 	readonly total: number;
 	readonly solved: number;

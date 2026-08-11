@@ -5,6 +5,7 @@ export interface CycleProgress {
 	uuid: string;
 	index: number;
 	status: string;
+	startedAt: Date;
 	/** Cuántos de los X ejercicios llevan intento. */
 	attempted: number;
 	total: number;

@@ -105,5 +105,6 @@
 	"01KZJA7B2XSYA2JR3QZSHNM6YB": "Promote to",
 	"01KZJA7B2XY37MYRC4SMK9RXEA": "Promote to {{ piece }}",
 	"01M2K9V7Q0CHRTX7BARWD3TN0W": "The bars do not fit: lower the spacing or give the chart more room.",
-	"01M2K9V7Q0CHRTX7DRPPED3TN0": "Too much data falls off the chart: give it more room or lower the minimum slot width."
+	"01M2K9V7Q0CHRTX7DRPPED3TN0": "Too much data falls off the chart: give it more room or lower the minimum slot width.",
+	"01M3Q6X6R0F1TXQY0KMH1AGYRC": "Continue"
 }

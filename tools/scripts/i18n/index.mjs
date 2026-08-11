@@ -4,6 +4,7 @@ import { buildFindings } from './checks.mjs';
 import { collectUsages, readScopes } from './collect.mjs';
 import { parseArgs } from './config.mjs';
 import { applyFix } from './fix.mjs';
+import { writeI18nSummary, writeSkippedSummary } from './github-summary.mjs';
 import { printFindings, printWritten } from './report.mjs';
 
 const options = parseArgs(process.argv.slice(2));
@@ -11,6 +12,7 @@ const scopes = readScopes(options);
 
 if (!scopes.length) {
 	console.log(`  ${c.dim}⊘ skipped — no scopes in ${options.i18nDir}${c.reset}`);
+	writeSkippedSummary(options.i18nDir);
 	process.exit(0);
 }
 
@@ -29,4 +31,8 @@ const current = options.fix ? readScopes(options) : scopes;
 const { usages, commented } = collectUsages(options.sourceDirs);
 const findings = buildFindings({ ...options, scopes: current, usages, commented });
 
-process.exit(printFindings(findings, { ...options, scopes: current }));
+const exitCode = printFindings(findings, { ...options, scopes: current });
+
+writeI18nSummary({ ...options, scopes: current, findings });
+
+process.exit(exitCode);

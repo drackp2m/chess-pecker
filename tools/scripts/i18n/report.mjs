@@ -2,77 +2,28 @@ import path from 'node:path';
 
 import { c, plural, printProblems, printTally } from '../lint/lint-report.mjs';
 
-const ERROR_TYPES = new Set([
-	'missing-keys-file',
-	'missing-lang-file',
-	'invalid-json',
-	'bad-const-name',
-	'invalid-ulid',
-	'bad-scope-prefix',
-	'duplicate-ulid',
-	'missing-translation',
-	'param-mismatch',
-	'stale-params',
-	'missing-params-file',
-	'missing-barrel',
-	'unregistered-scope',
-	'unregistered-params',
-]);
+import { FIXABLE_TYPES, cellsOf, columnsOf, severityOf } from './findings.mjs';
 
-const INFO_TYPES = new Set(['commented-usage']);
-
-const FIXABLE_TYPES = new Set([
-	'stale-params',
-	'missing-params-file',
-	'missing-translation',
-	'unregistered-scope',
-	'orphan-translation',
-]);
-
-const KEYS_COLUMN = 'keys';
-const PARAMS_COLUMN = 'params';
 const NAME_COLUMN = 'scope';
-const OK = `${c.green}✔${c.reset}`;
-const WARN = `${c.yellow}⚠${c.reset}`;
-const FAIL = `${c.red}✖${c.reset}`;
-
-const severityOf = (type) => {
-	if (ERROR_TYPES.has(type)) {
-		return 'error';
-	}
-
-	return INFO_TYPES.has(type) ? 'info' : 'warning';
+const ICONS = {
+	ok: ` ${c.green}✔${c.reset}`,
+	warning: ` ${c.yellow}⚠${c.reset}`,
+	error: ` ${c.red}✖${c.reset}`,
 };
 
 const fullPath = (file) => path.resolve(file);
 
-const columnOf = (item) => item.lang ?? item.column ?? KEYS_COLUMN;
-
-const padIcon = (icon, column) => `${icon}${' '.repeat(Math.max(0, column.length - 1))}`;
-
-// Infos never turn a cell yellow: they aren't problems, so a column with only
-// a note (e.g. a key referenced from a comment) still reads as OK.
-function statusOf(items) {
-	const relevant = items.filter(({ type }) => 'info' !== severityOf(type));
-
-	if (relevant.some(({ type }) => 'error' === severityOf(type))) {
-		return FAIL;
-	}
-
-	return 0 === relevant.length ? OK : WARN;
-}
+const padIcon = (icon, column) => `${icon}${' '.repeat(Math.max(0, column.length - 2))}`;
 
 function tableRow(scope, findings, columns) {
-	const mine = findings.filter((item) => item.scope === scope.name);
-
 	return {
 		name: scope.name,
-		cells: columns.map((column) => statusOf(mine.filter((item) => columnOf(item) === column))),
+		cells: cellsOf(scope, findings, columns).map((status) => ICONS[status]),
 	};
 }
 
 function printTable(scopes, findings, langs) {
-	const columns = [KEYS_COLUMN, PARAMS_COLUMN, ...langs];
+	const columns = columnsOf(langs);
 	const rows = scopes.map((scope) => tableRow(scope, findings, columns));
 	const nameWidth = Math.max(...rows.map((row) => row.name.length), NAME_COLUMN.length);
 

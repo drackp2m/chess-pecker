@@ -28,6 +28,7 @@ import { EmptyError, Observable, filter, firstValueFrom, takeUntil } from 'rxjs'
 
 import { ApiCallOptions, ApiCaller } from '@app/definition/api-sdk.type';
 import { API_BASE_URL } from '@app/definition/api.constant';
+import { ConnectionStore } from '@app/store/connection.store';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 
 const MODULE_SEGMENT: Record<ApiModule, string> = {
@@ -54,6 +55,7 @@ const IS_WRITE: Record<ApiVerb, boolean> = {
 export class ApiSdkService {
 	private readonly httpClient = inject(HttpClient);
 	private readonly router = inject(Router);
+	private readonly connectionStore = inject(ConnectionStore);
 
 	private readonly navigations = this.router.events.pipe(
 		filter((event): event is NavigationStart => event instanceof NavigationStart),
@@ -112,7 +114,7 @@ export class ApiSdkService {
 		const request = this.httpClient.request<unknown>(verb, url, toHttpOptions(isWrite, options));
 		const answer = this.awaitAnswer(request, options.cancellable ?? !isWrite, `${verb} ${url}`);
 
-		return isWrite ? this.count(answer) : answer;
+		return this.connectionStore.track(isWrite ? this.count(answer) : answer);
 	}
 
 	private async awaitAnswer(

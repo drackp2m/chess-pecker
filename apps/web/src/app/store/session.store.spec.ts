@@ -120,7 +120,6 @@ describe('SessionStore', () => {
 
 		expect(store.isUnreachable()).toBe(true);
 		expect(store.isAnonymous()).toBe(false);
-		expect(store.connectionPhase()).toBe('unreachable');
 	});
 
 	it('treats a gateway that gave up on a cold start as unreachable', async () => {
@@ -149,7 +148,6 @@ describe('SessionStore', () => {
 		await store.retry();
 
 		expect(store.isAuthenticated()).toBe(true);
-		expect(store.connectionPhase()).toBe('idle');
 	});
 
 	// A cold start is 30–50 seconds of a call that has not failed yet, so a retry during
@@ -164,36 +162,38 @@ describe('SessionStore', () => {
 		expect(getCurrentUser).toHaveBeenCalledTimes(1);
 	});
 
-	it('says how long the first call is taking while it waits', async () => {
+	it('keeps a fresh answer instead of asking again when the app comes back', async () => {
+		const repository = createRepository();
+		const store = await createStore(repository);
+
+		await store.revalidate();
+
+		expect(repository.getCurrentUser).toHaveBeenCalledTimes(1);
+	});
+
+	// The case the whole revalidation exists for: a tab left open long enough for the
+	// server to fall asleep and the session to expire behind it.
+	it('asks again when the answer it has is old', async () => {
 		vi.useFakeTimers();
 
-		let answer!: (user: AuthUser) => void;
-		const getCurrentUser = vi.fn(
-			() =>
-				new Promise<AuthUser>((resolve) => {
-					answer = resolve;
-				}),
-		);
+		const repository = createRepository();
+		const store = await createStore(repository);
 
-		const store = injectStore(createRepository({ getCurrentUser }));
-		const restored = store.restore();
+		vi.setSystemTime(Date.now() + 10 * 60 * 1000);
+		await store.revalidate();
 
-		expect(store.connectionPhase()).toBe('idle');
-
-		vi.advanceTimersByTime(2000);
-
-		expect(store.connectionPhase()).toBe('connecting');
-
-		vi.advanceTimersByTime(8000);
-
-		expect(store.connectionPhase()).toBe('waking');
-
-		answer(authUser);
-		await restored;
-
-		expect(store.connectionPhase()).toBe('idle');
+		expect(repository.getCurrentUser).toHaveBeenCalledTimes(2);
 
 		vi.useRealTimers();
+	});
+
+	it('shares one round trip between everything that asks at once', async () => {
+		const getCurrentUser = vi.fn(() => Promise.resolve(authUser));
+		const store = injectStore(createRepository({ getCurrentUser }));
+
+		await Promise.all([store.restore(), store.restore(), store.restore()]);
+
+		expect(getCurrentUser).toHaveBeenCalledTimes(1);
 	});
 
 	it('keeps the username of whoever logs in', async () => {
