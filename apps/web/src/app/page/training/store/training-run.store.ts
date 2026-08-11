@@ -18,6 +18,7 @@ import {
 	toSlot,
 } from '@app/page/training/store/training-run-state';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
+import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 import { SolveTiming } from '@app/util/solve-timer';
@@ -52,6 +53,7 @@ export class TrainingRunStore extends signalStore(
 	readonly isCalibrated = computed(() => 'accept' === this.roundOutcome());
 
 	private readonly runRepository = inject(TrainingRunRepository);
+	private readonly puzzleCache = inject(PuzzleCacheUseCase);
 
 	async begin(training: Training): Promise<void> {
 		patchState(this, { ...initialState, trainingUuid: training.uuid, isLoading: true });
@@ -176,6 +178,8 @@ export class TrainingRunStore extends signalStore(
 	private openRound(round: CalibrationRound, dealt: CalibrationRoundPuzzles): void {
 		const [first, ...rest] = dealt.puzzles;
 
+		void this.puzzleCache.save(dealt.puzzles);
+
 		patchState(this, {
 			mode: 'calibration',
 			round,
@@ -259,6 +263,8 @@ export class TrainingRunStore extends signalStore(
 	private async fetchNextSlot(uuid: string): Promise<TrainingRunSlot | null> {
 		try {
 			const item = await this.runRepository.getNextItem(uuid);
+
+			void this.puzzleCache.save([item.trainingPuzzle.puzzle]);
 
 			return {
 				puzzle: item.trainingPuzzle.puzzle,
