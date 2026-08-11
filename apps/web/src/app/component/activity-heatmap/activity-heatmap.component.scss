@@ -4,8 +4,23 @@
 	--chart-cell-inset: 0.125rem;
 	--heatmap-months-height: 1rem;
 
+	position: relative;
 	overflow: hidden;
 	display: block;
+}
+
+:host(.is-loading) {
+	.heatmap-layout,
+	.heatmap-legend {
+		visibility: hidden;
+	}
+}
+
+.heatmap-loading {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
 }
 
 .heatmap-layout {

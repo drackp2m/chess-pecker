@@ -1,8 +1,27 @@
 :host {
+	--chart-slot-shade: color-mix(in oklab, var(--color-contrast) 8%, transparent);
+
+	position: relative;
+
 	overflow: hidden;
 	display: block;
+
 	padding-block-start: var(--spacing-2);
 	padding-inline: var(--chart-axis-start, 0) var(--chart-axis-end, 0);
+}
+
+:host(.is-loading) {
+	.chart-frame,
+	.chart-legend {
+		visibility: hidden;
+	}
+}
+
+.chart-loading {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
 }
 
 .chart-frame {
@@ -116,13 +135,19 @@
 
 	background-color: transparent;
 
-	&:hover,
+	&.is-scrubbed,
 	&.is-active:focus-visible {
-		background-color: color-mix(in oklab, var(--color-contrast) 8%, transparent);
+		background-color: var(--chart-slot-shade);
 	}
 
 	&:focus-visible {
 		outline: none;
+	}
+
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--chart-slot-shade);
+		}
 	}
 }
 
