@@ -1,3 +1,13 @@
+# v1.16.0 (2026-08-11)
+
+## What's Changed
+
+### ✨ Features
+
+- improve charts and training section ([e99751c](https://github.com/drackp2m/chess-pecker/commit/e99751c297475a7aa42f29fe417dbf91705d063a)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.15.1...v1.16.0
+
 # v1.15.1 (2026-08-10)
 
 ## What's Changed
