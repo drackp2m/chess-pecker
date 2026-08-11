@@ -1,0 +1,20 @@
+{
+	"01KZJ895MCSEM9GW4024Q0BSYC": "Carrega un conjunt d’exercicis per començar",
+	"01KZJ895MCYB9BVYVJD9K3R5VT": "Reproduint la solució…",
+	"01KZJ895MCKFK3KQW9SHH57JCG": "No és aquesta jugada — la retiro perquè ho puguis tornar a provar",
+	"01KZJ895MCDJ3B3EXWK6QA99QY": "Aquesta era la línia",
+	"01KZJ895MCCN45VVYC001EWXWG": "Resolut després de l’error",
+	"01KZJ895MCVDDX5D3439AY3Q3Q": "Resolut",
+	"01KZJ895MCF0DT06PVFQAEVNAS": "Exercici anterior",
+	"01KZJ895MCY13KWKM6NAWEYN3X": "Exercici següent",
+	"01KZJ895MCAX6WFS067ACB2GW2": "Carregar exercicis",
+	"01KZJ895MCZVFHRQMA0B1T5M0T": "Enganxa files CSV",
+	"01KZJ895MCRGR95VZW39T59ZJ8": "Carregar CSV",
+	"01KZJ895MCK2WJ1KSY96JWJEWJ": "Utilitzar una fila de mostra",
+	"01KZJ895MCKFDW61M35EMFY15W": "Tria un fitxer .csv",
+	"01KZJ895MC41534M6SMAPZ8D0G": "No s’ha pogut llegir {{ name }}.",
+	"01KZJ895MCRTD753DF6A89EP8G": "No hi ha exercicis que es puguin llegir en aquest CSV.",
+	"01KZJ895MCCANY5YTHG3QR0PXQ": "Importat, però no s’ha pogut desar el conjunt per a la propera vegada.",
+	"01KZJ895MCZXZPE04RY1KW34N5": "S’han carregat {{ loaded }} exercicis.",
+	"01KZJ895MCRBV83D30RKZ29XGT": "S’han carregat {{ loaded }} exercicis i se n’han omès {{ skipped }} perquè no es podien llegir."
+}

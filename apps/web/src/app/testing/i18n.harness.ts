@@ -2,6 +2,8 @@ import { Injectable, Provider } from '@angular/core';
 import { Translation, TranslocoLoader, provideTransloco } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 
+import { DEFAULT_LANGUAGE, LANGUAGES } from '@app/definition/language.type';
+
 @Injectable()
 class EmptyTranslationLoader implements TranslocoLoader {
 	getTranslation(): Observable<Translation> {
@@ -16,8 +18,8 @@ class EmptyTranslationLoader implements TranslocoLoader {
 export const provideTestingI18n = (): Provider[] => [
 	provideTransloco({
 		config: {
-			availableLangs: ['es'],
-			defaultLang: 'es',
+			availableLangs: [...LANGUAGES],
+			defaultLang: DEFAULT_LANGUAGE,
 			missingHandler: { logMissingKey: false },
 		},
 		loader: EmptyTranslationLoader,

@@ -11,7 +11,10 @@ class I18nIndex {
 		this.langs = [];
 		this.defaultLang = 'en';
 		this.i18nDir = '';
+		this.sourceDirs = [];
 		this.scopes = new Map();
+		this.rawScopes = [];
+		this.modules = null;
 		this.patterns = [];
 		this.declaredParams = new Map();
 		this.error = null;
@@ -19,6 +22,12 @@ class I18nIndex {
 
 	entry(scopeName, keyName) {
 		return this.scopes.get(scopeName)?.entries.get(keyName) ?? null;
+	}
+
+	entryByUlid(scopeName, ulid) {
+		const entries = this.scopes.get(scopeName)?.entries.values() ?? [];
+
+		return [...entries].find((entry) => entry.ulid === ulid) ?? null;
 	}
 
 	findUsages(text) {
@@ -58,9 +67,14 @@ class I18nIndex {
 		} catch (error) {
 			this.error = error instanceof Error ? error.message : String(error);
 			this.scopes = new Map();
+			this.rawScopes = [];
 		}
 
 		return this.error;
+	}
+
+	scopeAt(dir) {
+		return [...this.scopes.values()].find((scope) => scope.dir === dir) ?? null;
 	}
 
 	scopeNames() {
@@ -83,19 +97,30 @@ class I18nIndex {
 		};
 	}
 
-	async readWorkspace(langsOverride) {
-		const config = await loadModule(this.root, 'config.mjs');
-		const collect = await loadModule(this.root, 'collect.mjs');
-		const params = await loadModule(this.root, 'params.mjs');
+	async loadModules() {
+		const files = ['checks.mjs', 'collect.mjs', 'config.mjs', 'findings.mjs', 'params.mjs'];
+		const [checks, collect, config, findings, params] = await Promise.all(
+			files.map((file) => loadModule(this.root, file)),
+		);
 
+		return { checks, collect, config, findings, params };
+	}
+
+	async readWorkspace(langsOverride) {
+		const modules = await this.loadModules();
+		const { collect, config, params } = modules;
+
+		this.modules = modules;
 		this.toKebabCase = config.toKebabCase;
 		this.patterns = collect.USAGE_PATTERNS;
 		this.langs = langsOverride?.length ? langsOverride : config.DEFAULTS.langs;
 		this.defaultLang = this.langs[0] ?? config.DEFAULTS.defaultLang;
 		this.i18nDir = path.join(this.root, config.DEFAULTS.i18nDir);
+		this.sourceDirs = config.DEFAULTS.sourceDirs.map((dir) => path.join(this.root, dir));
 
 		const scopes = collect.readScopes({ i18nDir: this.i18nDir, langs: this.langs });
 
+		this.rawScopes = scopes;
 		this.scopes = new Map(scopes.map((scope) => [scope.name, this.toScope(scope)]));
 		this.declaredParams = this.readParams(params, scopes);
 	}

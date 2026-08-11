@@ -15,7 +15,9 @@
 	"main": "./src/extension.js",
 	"activationEvents": [
 		"onLanguage:typescript",
-		"onLanguage:html"
+		"onLanguage:html",
+		"onLanguage:json",
+		"onLanguage:jsonc"
 	],
 	"contributes": {
 		"commands": [

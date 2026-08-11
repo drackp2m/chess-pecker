@@ -7,22 +7,49 @@
 		<form [formGroup]="form" class="flex-col gap-1">
 			<ng-template #spanishLabel>
 				<span class="language">
-					<img class="flag" [src]="languageFlag.es" alt="" />
+					<img class="flag" [src]="languageFlag['es-ES']" alt="" />
 
-					<span class="label">{{ languageName.es }}</span>
+					<span class="label">{{ languageName['es-ES'] }}</span>
+				</span>
+			</ng-template>
+
+			<ng-template #catalanLabel>
+				<span class="language">
+					<img class="flag" [src]="languageFlag['ca-ES']" alt="" />
+
+					<span class="label">{{ languageName['ca-ES'] }}</span>
 				</span>
 			</ng-template>
 
 			<ng-template #englishLabel>
 				<span class="language">
-					<img class="flag" [src]="languageFlag.en" alt="" />
+					<img class="flag" [src]="languageFlag['en-GB']" alt="" />
 
-					<span class="label">{{ languageName.en }}</span>
+					<span class="label">{{ languageName['en-GB'] }}</span>
 				</span>
 			</ng-template>
 
-			<input appThemed type="radio" [label]="spanishLabel" value="es" formControlName="language" />
-			<input appThemed type="radio" [label]="englishLabel" value="en" formControlName="language" />
+			<input
+				appThemed
+				type="radio"
+				[label]="spanishLabel"
+				value="es-ES"
+				formControlName="language"
+			/>
+			<input
+				appThemed
+				type="radio"
+				[label]="catalanLabel"
+				value="ca-ES"
+				formControlName="language"
+			/>
+			<input
+				appThemed
+				type="radio"
+				[label]="englishLabel"
+				value="en-GB"
+				formControlName="language"
+			/>
 		</form>
 	</div>
 

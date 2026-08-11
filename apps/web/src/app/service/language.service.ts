@@ -61,7 +61,7 @@ export class LanguageService {
 
 		this.updateSelectedLanguage(
 			undefined === setting?.payload
-				? normalizeLanguage(navigator.language.split('-')[0])
+				? normalizeLanguage(navigator.language)
 				: normalizeLanguage(setting.payload),
 			false,
 		);

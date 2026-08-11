@@ -5,6 +5,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { provideTransloco } from '@jsverse/transloco';
 
 import { APP_ROUTES } from '@app/app.routes';
+import { DEFAULT_LANGUAGE, LANGUAGES } from '@app/definition/language.type';
 import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SettingRepository } from '@app/repository/setting.repository';
 import { LanguageService } from '@app/service/language.service';
@@ -41,9 +42,9 @@ export const appConfig: ApplicationConfig = {
 		),
 		provideTransloco({
 			config: {
-				availableLangs: ['en', 'es'],
-				defaultLang: 'es',
-				fallbackLang: 'es',
+				availableLangs: [...LANGUAGES],
+				defaultLang: DEFAULT_LANGUAGE,
+				fallbackLang: DEFAULT_LANGUAGE,
 				reRenderOnLangChange: true,
 				prodMode: !isDevMode(),
 			},
