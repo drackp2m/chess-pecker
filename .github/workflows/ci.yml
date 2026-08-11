@@ -83,6 +83,9 @@ jobs:
         if: always()
         run: node tools/scripts/build/summary.mjs /tmp/build.log
 
+      - name: Check test lock
+        run: pnpm run test:lock apps/web
+
       - name: Run tests
         run: pnpm --filter @chesspecker/web test
 
@@ -135,6 +138,9 @@ jobs:
       - name: Typecheck summary
         if: always()
         run: node tools/scripts/typecheck/summary.mjs /tmp/typecheck.log
+
+      - name: Check test lock
+        run: pnpm run test:lock apps/api
 
       - name: Run tests
         env:

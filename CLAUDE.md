@@ -71,6 +71,7 @@ Root:
 
 - `pnpm lint` / `pnpm lint:fix` — ESLint → Stylelint → Prettier, in that order, through `tools/scripts/lint/lint.mjs` (one unified stylish summary, `--max-warnings 0`).
 - `pnpm update:deps` — the only supported way to bump deps: `ng update` inside `apps/web` for packages with migrations (Angular, `@ngrx/signals`), then `pnpm -r up --latest`. Refuses a dirty tree. `angular-eslint` lives at the root and its majors are migrated by hand.
+- `pnpm test:lock` — verifies the test files recorded in `tools/test-lock.json` still hash to what was locked (sha256 of the content, CRLF-normalized). `pnpm test:lock:select` opens the interactive picker that (re)builds that list; `pnpm test:lock --update` re-hashes the locked files to accept an intentional change; `--list` prints the lock; a positional path (`pnpm test:lock apps/api`) scopes any mode to a subtree; `--strict` turns "test file not in the lock" from a note into an error. Runs in `pre-commit` and in CI before each test suite — **never edit `tools/test-lock.json` by hand, and never `--update` a mismatch you were not asked to change**.
 - `pnpm git:sync`, `pnpm pnpm:match`, `pnpm import:puzzles` — the last one is interactive and **defaults to the deployed API** (`api.chess.drackp2m.dev`), not localhost.
 
 `@chesspecker/web`: `start`, `build` (→ `apps/web/dist/chesspecker/browser`), `test`, `typecheck` (`ng build --configuration typecheck`), `preview:pwa`.
@@ -83,9 +84,9 @@ pnpm version: `packageManager`, the `pnpm/action-setup` steps and the installed 
 
 ## CI and hooks
 
-`.github/workflows/ci.yml` on **PRs to `main`**: `lint`, `web` (production build, then Vitest), `api` (typecheck, unit, integration, `nest build`). The compile gate goes before the suites in both. The `api` job runs a `services: postgres` standing in for `chesspecker-db`, with the full env block declared on the integration step. `.github/workflows/deploy.yml` on **push to `main`** does no checking: semantic-release → build → Pages.
+`.github/workflows/ci.yml` on **PRs to `main`**: `lint`, `web` (production build, then Vitest), `api` (typecheck, unit, integration, `nest build`). The compile gate goes before the suites in both, and `pnpm test:lock <package>` right after it, so a tampered test file fails before the suite runs. The `api` job runs a `services: postgres` standing in for `chesspecker-db`, with the full env block declared on the integration step. `.github/workflows/deploy.yml` on **push to `main`** does no checking: semantic-release → build → Pages.
 
-Husky's `pre-commit` covers the same ground in order: `pnpm:match`, `lint-staged` (auto-fixes per staged file, so most style issues never need manual fixing), API `typecheck` + `test` + `test:integration`, web `typecheck` + `test`. It needs `chesspecker-db` up.
+Husky's `pre-commit` covers the same ground in order: `pnpm:match`, `lint-staged` (auto-fixes per staged file, so most style issues never need manual fixing), `i18n:check --fix`, `test:lock` (after `lint-staged`, so a formatting fix is already in the file when it is hashed), API `typecheck` + `test` + `test:integration`, web `typecheck` + `test`. It needs `chesspecker-db` up.
 
 Every job writes a step summary through `tools/scripts/*/summary.mjs` (log parsers, no-ops locally, never fail a job).
 
