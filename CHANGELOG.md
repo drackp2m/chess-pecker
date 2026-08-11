@@ -1,3 +1,13 @@
+# v1.18.0 (2026-08-11)
+
+## What's Changed
+
+### ✨ Features
+
+- optimize svg and add new icons ([c1dd343](https://github.com/drackp2m/chess-pecker/commit/c1dd3430cdd80ad8f0be25489c767b9b56815438)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.17.0...v1.18.0
+
 # v1.17.0 (2026-08-11)
 
 ## What's Changed
