@@ -2,8 +2,11 @@ const vscode = require('vscode');
 
 const { Annotations } = require('./annotations');
 const { createKey } = require('./create-key');
+const { Findings } = require('./findings');
+const { i18nDefinitionProvider, i18nReferenceProvider } = require('./navigation');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
 const { ensureTemplateSetup } = require('./setup');
+const { UsageIndex } = require('./usages');
 
 const { I18nIndex } = require('./index');
 
@@ -11,22 +14,23 @@ const DEBOUNCE = 250;
 
 const langsSetting = () => vscode.workspace.getConfiguration('translocoUlidI18n').get('langs', []);
 
-async function reload(index, annotations, notify) {
-	const error = await index.reload(langsSetting());
+async function reload(state, notify) {
+	const error = await state.index.reload(langsSetting());
 
 	if (null !== error && true === notify) {
 		vscode.window.showErrorMessage(`Transloco ULID i18n: ${error}`);
 	}
 
-	annotations.refreshAll();
+	state.annotations.refreshAll();
+	state.findings.schedule();
 
 	return error;
 }
 
-function watchTranslations(index, annotations) {
-	const pattern = new vscode.RelativePattern(index.i18nDir, '**/*.{ts,json}');
+function watchTranslations(state) {
+	const pattern = new vscode.RelativePattern(state.index.i18nDir, '**/*.{ts,json}');
 	const watcher = vscode.workspace.createFileSystemWatcher(pattern);
-	const onChange = () => void reload(index, annotations, false);
+	const onChange = () => void reload(state, false);
 
 	watcher.onDidChange(onChange);
 	watcher.onDidCreate(onChange);
@@ -35,7 +39,22 @@ function watchTranslations(index, annotations) {
 	return watcher;
 }
 
-function watchEditors(index, annotations) {
+function watchSources({ usages, findings }) {
+	const watcher = vscode.workspace.createFileSystemWatcher('**/*.{ts,html}');
+	const invalidate = () => usages.invalidate();
+	const onChange = () => {
+		usages.invalidate();
+		findings.schedule();
+	};
+
+	watcher.onDidChange(onChange);
+	watcher.onDidCreate(onChange);
+	watcher.onDidDelete(onChange);
+
+	return [watcher, vscode.workspace.onDidChangeTextDocument(invalidate)];
+}
+
+function watchEditors(annotations) {
 	let timer = null;
 
 	const schedule = (document) => {
@@ -55,7 +74,8 @@ function watchEditors(index, annotations) {
 	];
 }
 
-function registerCommands(index, annotations) {
+function registerCommands(state) {
+	const { index, annotations } = state;
 	const run = (task) => () => {
 		task().catch((error) =>
 			vscode.window.showErrorMessage(`Transloco ULID i18n: ${error.message}`),
@@ -69,7 +89,7 @@ function registerCommands(index, annotations) {
 		),
 		vscode.commands.registerCommand(
 			'translocoUlidI18n.reload',
-			run(() => reload(index, annotations, true)),
+			run(() => reload(state, true)),
 		),
 		vscode.commands.registerCommand(
 			'translocoUlidI18n.toggleInlineText',
@@ -89,6 +109,29 @@ async function toggleInlineText(annotations) {
 	annotations.refreshAll();
 }
 
+function subscriptionsOf(state) {
+	const { index, annotations, usages, findings } = state;
+
+	return [
+		annotations,
+		findings,
+		hoverProvider(index),
+		definitionProvider(index),
+		completionProvider(index),
+		i18nDefinitionProvider(index, usages),
+		i18nReferenceProvider(index, usages),
+		watchTranslations(state),
+		...watchSources(state),
+		...watchEditors(annotations),
+		...registerCommands(state),
+		vscode.workspace.onDidChangeConfiguration((event) => {
+			if (event.affectsConfiguration('translocoUlidI18n')) {
+				void reload(state, false);
+			}
+		}),
+	];
+}
+
 async function activate(context) {
 	const [folder] = vscode.workspace.workspaceFolders ?? [];
 
@@ -97,24 +140,16 @@ async function activate(context) {
 	}
 
 	const index = new I18nIndex(folder.uri.fsPath);
-	const annotations = new Annotations(index);
+	const state = {
+		index,
+		annotations: new Annotations(index),
+		usages: new UsageIndex(index),
+		findings: new Findings(index),
+	};
 
-	await reload(index, annotations, false);
+	await reload(state, false);
 
-	context.subscriptions.push(
-		annotations,
-		hoverProvider(index),
-		definitionProvider(index),
-		completionProvider(index),
-		watchTranslations(index, annotations),
-		...watchEditors(index, annotations),
-		...registerCommands(index, annotations),
-		vscode.workspace.onDidChangeConfiguration((event) => {
-			if (event.affectsConfiguration('translocoUlidI18n')) {
-				void reload(index, annotations, false);
-			}
-		}),
-	);
+	context.subscriptions.push(...subscriptionsOf(state));
 }
 
 module.exports = { activate, deactivate: () => undefined };

@@ -76,12 +76,9 @@ function definitionTargets(index, usage) {
 		return [];
 	}
 
-	const scope = index.scopes.get(usage.scope);
-	const targets = index.langs
+	return index.langs
 		.map((lang) => locate(index.translation(usage.scope, entry.ulid, lang).file, entry.ulid))
 		.filter((target) => null !== target);
-
-	return [...targets, locate(scope.keysFile, `${usage.key}:`)].filter((target) => null !== target);
 }
 
 function definitionProvider(index) {

@@ -32,14 +32,38 @@ function locate(file, needle) {
 }
 
 const TRANSLOCO_PIPE = /^\s*\|\s*i18n\b/;
+const TRANSLOCO_PIPE_ANYWHERE = /\|\s*i18n\b/;
+const INTERPOLATION_OPEN = '{{';
+const INTERPOLATION_CLOSE = '}}';
 
-function displayRange(document, usage) {
-	const [pipe] = TRANSLOCO_PIPE.exec(document.getText().slice(usage.end)) ?? [];
+function insideInterpolation(text, start) {
+	const opened = text.lastIndexOf(INTERPOLATION_OPEN, start);
 
-	return new vscode.Range(
-		document.positionAt(usage.start),
-		document.positionAt(usage.end + (pipe?.length ?? 0)),
-	);
+	return -1 !== opened && opened > text.lastIndexOf(INTERPOLATION_CLOSE, start);
+}
+
+function pipedLater(after) {
+	const closed = after.indexOf(INTERPOLATION_CLOSE);
+
+	return TRANSLOCO_PIPE_ANYWHERE.test(-1 === closed ? after : after.slice(0, closed));
+}
+
+function usageDisplay(document, usage) {
+	const text = document.getText();
+	const after = text.slice(usage.end);
+	const [pipe] = TRANSLOCO_PIPE.exec(after) ?? [];
+	const end = usage.end + (pipe?.length ?? 0);
+	const range = new vscode.Range(document.positionAt(usage.start), document.positionAt(end));
+
+	if (undefined !== pipe || 'html' !== document.languageId) {
+		return { range, mode: 'collapse' };
+	}
+
+	if (!insideInterpolation(text, usage.start)) {
+		return { range, mode: 'collapse' };
+	}
+
+	return { range, mode: pipedLater(after) ? 'ghost' : 'bare' };
 }
 
 function shorten(text, max) {
@@ -62,4 +86,4 @@ function usageRange(document, usage) {
 	return new vscode.Range(document.positionAt(usage.start), document.positionAt(usage.end));
 }
 
-module.exports = { SELECTOR, displayRange, locate, shorten, usageAt, usageRange };
+module.exports = { SELECTOR, locate, shorten, usageAt, usageDisplay, usageRange };

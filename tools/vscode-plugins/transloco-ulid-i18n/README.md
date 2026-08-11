@@ -11,11 +11,52 @@ It has no dependencies and no build step: the collectors are loaded straight fro
 
 - **Inline text** — the default language translation rendered _in place of_ the key usage: the whole
   `I18n.scope.KEY | i18n` collapses to the text. Put the cursor inside and the real source comes
-  back, so it stays editable.
+  back, so it stays editable. The text only stands in for what would really be rendered, so what
+  gets swallowed depends on what follows the key:
+
+  | Usage                              | Shown as                           |
+  | ---------------------------------- | ---------------------------------- |
+  | `{{ I18n.a.B \| i18n }}`           | `{{ Log out }}`                    |
+  | `[label]="I18n.a.B"`, any `.ts`    | `[label]="Log out"`                |
+  | `{{ I18n.a.B }}`                   | `{{ I18n.a.B «Log out» }}`, warned |
+  | `{{ (x ? I18n.a.B : …) \| i18n }}` | `{{ (x ? I18n.a.B «Log out» … }}`  |
+
+  A key handed to a child input or held in TypeScript is a key, not a sentence, so it collapses
+  the way it always did. A key sitting bare in an interpolation is the one case that _lies_: it
+  renders `a.01KZ…` at runtime, so it is annotated instead of hidden, and warned about. The last
+  row is the same annotation without the warning — the pipe applies further along the
+  interpolation, so nothing is broken and nothing lines up to be collapsed either.
+
 - **Hover** — every language at once, the params the key takes with the types declared in the
   generated `<scope>/params.ts`, and the raw `scope.ULID` value.
-- **Go to definition** — `ctrl+click` a key to jump to its line in each `<lang>.json` and in `keys.ts`.
-- **Diagnostics** — undeclared keys and missing/empty translations underlined in `.ts` and `.html`.
+- **Go to definition** — `ctrl+click` a key to jump to its line in each `<lang>.json`. The jump to
+  `keys.ts` is not listed: TypeScript and the Angular language service already resolve the property
+  themselves, and listing it again only put the same line in the peek twice.
+- **Navigation inside the i18n files** — the same `ctrl+click` keeps working once you are there, so
+  every file of a scope is one hop from the others:
+
+  | File          | Clicking on…                   | Goes to                              |
+  | ------------- | ------------------------------ | ------------------------------------ |
+  | `keys.ts`     | the name (`LOG_OUT`)           | every `.ts` / `.html` that uses it   |
+  | `keys.ts`     | the value (`'scope.ULID'`)     | that ULID in each `<lang>.json`      |
+  | `params.ts`   | the entry key (`'scope.ULID'`) | that ULID in each `<lang>.json`      |
+  | `<lang>.json` | the ULID                       | its line in `keys.ts`                |
+  | `<lang>.json` | the text                       | the same text in the other languages |
+
+  A single target opens straight away; several open the peek list. The key name also answers
+  **Find all references** (`shift+alt+F12`), which is the better view when a key is used in a
+  dozen places. The usage scan reads `apps/web/src` from disk and overlays the unsaved editors, so
+  a key you just typed is already there.
+
+- **Diagnostics** — undeclared keys, missing/empty translations and keys interpolated without
+  `| i18n` underlined in `.ts` and `.html`.
+- **Findings** — everything `pnpm i18n:check` reports, published as problems _on the i18n files
+  themselves_ and refreshed whenever any of them changes. It is the same `buildFindings()` the CLI
+  calls, with the same `severityOf` and the finding type as the diagnostic code, so a stale
+  `params.ts`, a param added to one language and not the other, an orphan ULID, a scope missing from
+  the barrel or a key nobody uses is underlined where it lives, without waiting for the commit hook.
+  It runs over the whole workspace, so those problems show up in the panel even with no i18n file
+  open.
 - **Completion** — scopes after `I18n.`, keys after `I18n.dashboard.` and while the key is half
   typed, each row showing its default language text on the right. A key that takes params completes
   with them: picking `PROGRAM_CURRENT_SCANS` inside `{{ I18n.dashboard.| | i18n }}` leaves

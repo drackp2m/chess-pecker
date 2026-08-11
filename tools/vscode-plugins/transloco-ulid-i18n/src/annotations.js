@@ -1,6 +1,6 @@
 const vscode = require('vscode');
 
-const { displayRange, shorten, usageRange } = require('./util');
+const { shorten, usageDisplay, usageRange } = require('./util');
 
 const SUPPORTED = new Set(['typescript', 'html']);
 
@@ -11,6 +11,18 @@ const hiddenType = vscode.window.createTextEditorDecorationType({
 const inlineType = vscode.window.createTextEditorDecorationType({
 	before: {
 		color: new vscode.ThemeColor('editorCodeLens.foreground'),
+	},
+});
+
+const ghostType = vscode.window.createTextEditorDecorationType({
+	after: {
+		color: new vscode.ThemeColor('editorCodeLens.foreground'),
+	},
+});
+
+const bareType = vscode.window.createTextEditorDecorationType({
+	after: {
+		color: new vscode.ThemeColor('editorWarning.foreground'),
 	},
 });
 
@@ -32,30 +44,46 @@ function revealed(range, selections) {
 	return selections.some((selection) => undefined !== range.intersection(selection));
 }
 
+function collapseInto(groups, range, label) {
+	groups.hidden.push(range);
+	groups.inline.push({
+		range: new vscode.Range(range.start, range.start),
+		renderOptions: { before: { contentText: label } },
+	});
+}
+
+function appendInto(groups, mode, range, label) {
+	const target = 'bare' === mode ? groups.bare : groups.ghost;
+
+	target.push({
+		range: new vscode.Range(range.end, range.end),
+		renderOptions: { after: { contentText: ` «${label}»` } },
+	});
+}
+
 function decorationsFor(index, editor, usages) {
-	const hidden = [];
-	const inline = [];
+	const groups = { hidden: [], inline: [], ghost: [], bare: [] };
 
 	if (true !== settings().get('inlineText', true)) {
-		return { hidden, inline };
+		return groups;
 	}
 
 	for (const usage of usages) {
 		const label = inlineLabel(index, usage);
-		const range = displayRange(editor.document, usage);
+		const { range, mode } = usageDisplay(editor.document, usage);
 
-		if (null === label || revealed(range, editor.selections)) {
+		if (null === label) {
 			continue;
 		}
 
-		hidden.push(range);
-		inline.push({
-			range: new vscode.Range(range.start, range.start),
-			renderOptions: { before: { contentText: label } },
-		});
+		if ('collapse' !== mode) {
+			appendInto(groups, mode, range, label);
+		} else if (!revealed(range, editor.selections)) {
+			collapseInto(groups, range, label);
+		}
 	}
 
-	return { hidden, inline };
+	return groups;
 }
 
 function diagnosticFor(index, document, usage) {
@@ -87,6 +115,24 @@ function diagnosticFor(index, document, usage) {
 	return new vscode.Diagnostic(range, message, severity);
 }
 
+function pipeDiagnostic(document, usage) {
+	if ('bare' !== usageDisplay(document, usage).mode) {
+		return null;
+	}
+
+	const detail = 'is interpolated without "| i18n", so the key itself is what renders';
+	const message = `${usage.scope}.${usage.key} ${detail}`;
+	const diagnostic = new vscode.Diagnostic(
+		usageRange(document, usage),
+		message,
+		vscode.DiagnosticSeverity.Warning,
+	);
+
+	diagnostic.code = 'missing-pipe';
+
+	return diagnostic;
+}
+
 class Annotations {
 	constructor(index) {
 		this.index = index;
@@ -108,7 +154,10 @@ class Annotations {
 
 		const usages = this.index.findUsages(document.getText());
 		const diagnostics = usages
-			.map((usage) => diagnosticFor(this.index, document, usage))
+			.flatMap((usage) => [
+				diagnosticFor(this.index, document, usage),
+				pipeDiagnostic(document, usage),
+			])
 			.filter((diagnostic) => null !== diagnostic);
 
 		this.diagnostics.set(document.uri, diagnostics);
@@ -121,10 +170,12 @@ class Annotations {
 	}
 
 	paint(editor, usages) {
-		const { hidden, inline } = decorationsFor(this.index, editor, usages);
+		const groups = decorationsFor(this.index, editor, usages);
 
-		editor.setDecorations(hiddenType, hidden);
-		editor.setDecorations(inlineType, inline);
+		editor.setDecorations(hiddenType, groups.hidden);
+		editor.setDecorations(inlineType, groups.inline);
+		editor.setDecorations(ghostType, groups.ghost);
+		editor.setDecorations(bareType, groups.bare);
 	}
 
 	repaint(editor) {

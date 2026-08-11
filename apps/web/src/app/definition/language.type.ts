@@ -1,19 +1,34 @@
-export type Language = 'es' | 'en';
+export type Language = 'es-ES' | 'ca-ES' | 'en-GB';
 
-export const LANGUAGES: readonly Language[] = ['es', 'en'];
+export const LANGUAGES: readonly Language[] = ['es-ES', 'ca-ES', 'en-GB'];
 
-export const DEFAULT_LANGUAGE: Language = 'es';
+export const DEFAULT_LANGUAGE: Language = 'es-ES';
 
 export const LANGUAGE_NAME = {
-	es: 'Español',
-	en: 'English',
+	'es-ES': 'Español',
+	'ca-ES': 'Català',
+	'en-GB': 'English',
 } as const satisfies Record<Language, string>;
 
 export const LANGUAGE_FLAG = {
-	es: 'svg/flag/es.svg',
-	en: 'svg/flag/gb.svg',
+	'es-ES': 'svg/flag/es.svg',
+	'ca-ES': 'svg/flag/es-ct.svg',
+	'en-GB': 'svg/flag/gb.svg',
 } as const satisfies Record<Language, string>;
 
 export function normalizeLanguage(value: unknown): Language {
-	return LANGUAGES.includes(value as Language) ? (value as Language) : DEFAULT_LANGUAGE;
+	if (LANGUAGES.includes(value as Language)) {
+		return value as Language;
+	}
+
+	if ('string' === typeof value) {
+		const base = value.split('-')[0]?.toLowerCase();
+		const match = LANGUAGES.find((language) => language.split('-')[0]?.toLowerCase() === base);
+
+		if (undefined !== match) {
+			return match;
+		}
+	}
+
+	return DEFAULT_LANGUAGE;
 }
