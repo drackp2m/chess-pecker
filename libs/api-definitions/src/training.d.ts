@@ -101,9 +101,21 @@ export interface SetTrainingGoalRequest<TDate = string> extends SyncTimestamps<T
 	endDate?: TDate;
 }
 
+/** Un paso de la partida: una jugada en notación larga, o un marcador negativo. */
+export type PuzzleEvent = string | number;
+
+/** Una visita al juego libre: dónde estaba la línea principal, y qué se jugó dentro. */
+export interface FreePlayRun {
+	at: number;
+	events: PuzzleEvent[];
+}
+
 /**
  * Cómo fue el intento, igual en calibración que en ciclo. `solved` es la nota, sellada al
  * primer intento; el resto cuenta lo que costó llegar hasta la solución.
+ *
+ * `record` y `explorations` son la partida entera —la línea principal y lo que se probó
+ * fuera de ella—, con la que se puede volver a dibujar el ejercicio tal como se resolvió.
  */
 export interface PuzzleAttemptRecord {
 	durationMs: number;
@@ -111,6 +123,8 @@ export interface PuzzleAttemptRecord {
 	closure: PuzzleAttemptClosure;
 	hintUsed: boolean;
 	mistakeCount: number;
+	record: PuzzleEvent[];
+	explorations: FreePlayRun[];
 }
 
 export interface SubmitCalibrationAttemptRequest<TDate = string>
@@ -166,13 +180,47 @@ export interface TrainingProgress {
 	readonly suggestFinish: boolean;
 }
 
-/** Un día con al menos un ejercicio cerrado; los días sin actividad no viajan. */
+export interface GetTrainingActivityRequest<TDate = string> {
+	/** Días que cubre el desglose, hoy incluido. El backend recorta al máximo que sirve. */
+	days?: number;
+	/**
+	 * El `cursor` de la respuesta anterior. Con él sólo vuelven los días que hayan
+	 * recibido intentos después, que es lo que permite guardar el resto en local sin
+	 * quedarse con una foto vieja cuando otro dispositivo sube lo suyo.
+	 */
+	since?: TDate;
+}
+
+export interface TrainingActivity {
+	/** Todos los días del rango con actividad, o sólo los tocados si se mandó `since`. */
+	readonly days: readonly TrainingActivityDay[];
+	/**
+	 * Hasta dónde llega esta respuesta, en tiempo de servidor. Se guarda tal cual y se
+	 * devuelve en la siguiente petición.
+	 */
+	readonly cursor: string;
+}
+
+/**
+ * Un día con al menos un ejercicio cerrado; los días sin actividad no viajan.
+ *
+ * Dos lecturas del mismo día que no se derivan la una de la otra. `solved` / `failed` /
+ * `resigned` reparten por el veredicto, que se sella en la primera jugada. Los `found*` /
+ * `revealed*` reparten por cómo acabó el ejercicio cruzado con qué ayuda hizo falta, y ahí
+ * un `foundMissed` puede ser un acierto que falló más adelante en la línea.
+ */
 export interface TrainingActivityDay {
 	readonly date: string;
 	readonly count: number;
 	readonly solved: number;
 	readonly failed: number;
 	readonly resigned: number;
+	readonly foundClean: number;
+	readonly foundHinted: number;
+	readonly foundMissed: number;
+	readonly foundMissedHinted: number;
+	readonly revealed: number;
+	readonly revealedHinted: number;
 	readonly mistakes: number;
 	readonly hints: number;
 	readonly durationMs: number;

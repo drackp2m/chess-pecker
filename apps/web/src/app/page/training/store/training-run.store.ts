@@ -73,13 +73,16 @@ export class TrainingRunStore extends signalStore(
 	 * Records how the exercise on screen went, once it is over. Woodpecker grades on the
 	 * first try, so the verdict inside `record` was settled long before the exercise
 	 * closed; this still runs once per exercise and is never revised.
+	 *
+	 * Devuelve si el API se quedó con el intento, que es lo que decide si la copia local
+	 * puede darse por subida o sigue siendo la única que hay.
 	 */
-	async grade(record: TrainingAttemptRecord, timing: SolveTiming): Promise<void> {
+	async grade(record: TrainingAttemptRecord, timing: SolveTiming): Promise<boolean> {
 		const uuid = this.trainingUuid();
 		const current = this.current();
 
 		if (null === uuid || null === current || null !== this.lastResult()) {
-			return;
+			return false;
 		}
 
 		patchState(this, {
@@ -95,8 +98,12 @@ export class TrainingRunStore extends signalStore(
 					: await this.gradeCycle(uuid, current, record, timing);
 
 			patchState(this, { isSubmitting: false, isDone: isClosed });
+
+			return true;
 		} catch (error) {
 			this.fail(error, i18nRef(I18n.training.ATTEMPT_RECORD_ERROR));
+
+			return false;
 		}
 	}
 

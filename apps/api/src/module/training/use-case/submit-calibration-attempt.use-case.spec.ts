@@ -39,6 +39,8 @@ describe('SubmitCalibrationAttemptUseCase', () => {
 		closure: PuzzleAttemptClosure.Found,
 		hintUsed: false,
 		mistakeCount: 0,
+		record: [],
+		explorations: [],
 	};
 
 	const dealtPuzzle = (uuid: string, position: number): TrainingCalibrationPuzzle =>

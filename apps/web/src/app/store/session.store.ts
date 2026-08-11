@@ -144,6 +144,9 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	 * llamada falla no hay nada que el cliente pueda borrar por su cuenta. Pasar a
 	 * `anonymous` de todos modos dejaba una interfaz mintiendo, con la sesión intacta
 	 * esperando al siguiente refresco, así que el fallo se queda a la vista.
+	 *
+	 * Aquí sólo se cierra la sesión. Vaciar lo que el usuario dejó en el dispositivo es
+	 * de `LogOutUseCase`, que es por donde entra la interfaz.
 	 */
 	async logOut(): Promise<boolean> {
 		patchState(this, { isSubmitting: true, error: null });

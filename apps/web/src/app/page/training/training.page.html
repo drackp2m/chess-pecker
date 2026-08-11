@@ -142,7 +142,8 @@
 														cyclePaceDrift() < 0
 															? (I18n.training.CYCLE_PACE_SUMMARY_NEGATIVE
 																| i18n: { exercises: cyclePaceDrift() * -1 })
-															: (I18n.training.CYCLE_PACE_SUMMARY_POSITIVE | i18n: { exercises: 2 })
+															: (I18n.training.CYCLE_PACE_SUMMARY_POSITIVE
+																| i18n: { exercises: cyclePaceDrift() })
 													}}
 												}
 											</span>

@@ -1,5 +1,7 @@
+import type { FreePlayRun, PuzzleEvent } from '@chesspecker/api-definitions';
 import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/core';
 
+import { GenerateNowDateUseCase } from '../../shared/use-case/generate-now-date.use-case';
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';
 
@@ -69,4 +71,19 @@ export class PuzzleAttempt extends CustomBaseEntity<PuzzleAttempt> {
 
 	@Property({ default: 0 })
 	mistakeCount!: number;
+
+	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
+	record: PuzzleEvent[] = [];
+
+	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
+	explorations: FreePlayRun[] = [];
+
+	/**
+	 * Cuándo entró la fila aquí, con el reloj del servidor. `createdAt` y `updatedAt` los
+	 * pone el cliente —son cuándo se abrió y cuándo se cerró el ejercicio, y una subida
+	 * offline los trae del pasado—, así que ninguno de los dos sirve para preguntar «qué
+	 * ha llegado desde la última vez». Esta sí, porque sólo la escribe el insert.
+	 */
+	@Property({ defaultRaw: 'now()' })
+	receivedAt: Date = new GenerateNowDateUseCase().execute();
 }

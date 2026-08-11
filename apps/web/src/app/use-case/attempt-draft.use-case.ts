@@ -54,6 +54,18 @@ export class AttemptDraftUseCase {
 		await this.repository.insert('attempt', this.toRow(draft, progress));
 	}
 
+	/**
+	 * El intento ya está en el servidor, así que la copia local deja de ser la única.
+	 * Sin este sello no habría manera de saber qué se perdería al vaciar el dispositivo.
+	 */
+	async markSynced(draft: AttemptDraft, syncedAt: Date = new Date()): Promise<void> {
+		const row = await this.find(draft.identity);
+
+		if (undefined !== row) {
+			await this.repository.insert('attempt', { ...row, syncedAt });
+		}
+	}
+
 	private toRow(draft: AttemptDraft, progress: AttemptProgress): AttemptRow {
 		const { identity } = draft;
 

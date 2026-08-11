@@ -1,11 +1,12 @@
 import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 
+import { fillActivityDays } from '@app/util/activity-day';
 import { ScaleBounds, positiveBounds, toBucket } from '@app/util/scale';
+import { addUtcDays, diffUtcDays, toIsoDate, utcMidnight } from '@app/util/utc-date';
 
 export const DAYS_PER_WEEK = 7;
 export const ACTIVITY_LEVELS = 4;
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 const LABELED_WEEKDAYS = new Set([0, 3, 6]);
 
 export interface CyclePaceDay {
@@ -56,14 +57,9 @@ export function activityDaySeries(
 	totalDays: number,
 	today: Date = new Date(),
 ): readonly TrainingActivityDay[] {
-	const byDate = new Map(days.map((day) => [day.date, day]));
 	const end = utcMidnight(today);
 
-	return Array.from({ length: totalDays }, (_unused, index) => {
-		const date = toIsoDate(addUtcDays(end, index - (totalDays - 1)));
-
-		return byDate.get(date) ?? emptyActivityDay(date);
-	});
+	return fillActivityDays(days, addUtcDays(end, -(totalDays - 1)), end);
 }
 
 export function cyclePaceSeries(
@@ -163,38 +159,9 @@ function toCell(
 	};
 }
 
-function emptyActivityDay(date: string): TrainingActivityDay {
-	return {
-		date,
-		count: 0,
-		solved: 0,
-		failed: 0,
-		resigned: 0,
-		mistakes: 0,
-		hints: 0,
-		durationMs: 0,
-	};
-}
-
-function utcMidnight(date: Date): Date {
-	return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-}
-
-function addUtcDays(date: Date, amount: number): Date {
-	return new Date(date.getTime() + amount * DAY_MS);
-}
-
-function diffUtcDays(from: Date, to: Date): number {
-	return Math.round((to.getTime() - from.getTime()) / DAY_MS);
-}
-
 /** Lunes-primero: `getUTCDay()` da domingo=0, así que se desplaza para que lunes quede en 0. */
 function mostRecentMonday(date: Date): Date {
 	return addUtcDays(date, -((date.getUTCDay() + 6) % 7));
-}
-
-function toIsoDate(date: Date): string {
-	return date.toISOString().slice(0, 10);
 }
 
 function capitalize(text: string): string {

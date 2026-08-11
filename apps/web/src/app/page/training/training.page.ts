@@ -23,8 +23,9 @@ import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
 import { TrainingStore } from '@app/store/training.store';
 import { CyclePaceDay, activityDaySeries, cyclePaceSeries } from '@app/util/activity-grid';
+import { diffUtcDays, utcMidnight } from '@app/util/utc-date';
 
-const DAILY_RANGE_DAYS = 45;
+const DAILY_RANGE_DAYS = 14;
 const DEFAULT_SET_SIZE = 1000;
 const DEFAULT_PUZZLES_PER_DAY = 20;
 const MAX_SET_SIZE = 5000;
@@ -170,8 +171,7 @@ export class TrainingPage implements OnInit {
 
 	ngOnInit(): void {
 		this.store.clearError();
-		void this.store.load();
-		void this.activity.load();
+		void this.loadTraining();
 	}
 
 	start(): void {
@@ -233,6 +233,28 @@ export class TrainingPage implements OnInit {
 			total: cycle.total,
 			percent: Math.round(cycle.accuracy * 100),
 		});
+	}
+
+	/**
+	 * El entrenamiento va primero porque decide cuánta actividad hace falta: el desglose
+	 * diario mira los últimos días, pero el ritmo del ciclo se dibuja desde que arrancó, y
+	 * un día del ciclo que no llegue cuenta como cero y hunde la deriva.
+	 */
+	private async loadTraining(): Promise<void> {
+		await this.store.load();
+		await this.activity.load(this.activityRangeDays());
+	}
+
+	private activityRangeDays(): number {
+		const startedAt = this.store.runningCycle()?.startedAt;
+
+		if (undefined === startedAt) {
+			return DAILY_RANGE_DAYS;
+		}
+
+		const started = utcMidnight(new Date(startedAt));
+
+		return Math.max(DAILY_RANGE_DAYS, diffUtcDays(started, utcMidnight(new Date())) + 1);
 	}
 
 	private dailyBars(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {

@@ -1,0 +1,15 @@
+<div class="flex-col gap-4 p-4">
+	<p class="fs-sm color-contrast-mid">
+		{{ I18n.common.PENDING_SYNC_MESSAGE | i18n: { pending: pending() } }}
+	</p>
+
+	<div class="flex-row gap-2">
+		<button appThemed class="flex-grow" color="accent" (click)="confirm()">
+			{{ I18n.common.LOG_OUT_ANYWAY | i18n }}
+		</button>
+
+		<button appThemed class="flex-grow" (click)="dismiss()">
+			{{ I18n.common.STAY | i18n }}
+		</button>
+	</div>
+</div>

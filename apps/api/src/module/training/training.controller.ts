@@ -1,10 +1,21 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Param,
+	Post,
+	Query,
+} from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
-import { TrainingActivityDay } from './definition/training-activity.interface';
+import { TrainingActivity } from './definition/training-activity.interface';
 import { TrainingProgress } from './definition/training-progress.interface';
+import { GetTrainingActivityRequestDto } from './dto/request/get-training-activity-request.dto';
 import { SelectTrainingSetRequestDto } from './dto/request/select-training-set-request.dto';
 import { SetTrainingGoalRequestDto } from './dto/request/set-training-goal-request.dto';
 import { TrainingGoal } from './training-goal.entity';
@@ -38,8 +49,11 @@ export class TrainingController {
 
 	/** Agregado sobre todos los entrenamientos del usuario, no de uno solo: va antes de `:uuid`. */
 	@Get('activity')
-	async getActivity(@CurrentUser() user: User): Promise<TrainingActivityDay[]> {
-		return this.getTrainingActivityUseCase.execute(user);
+	async getActivity(
+		@CurrentUser() user: User,
+		@Query() query: GetTrainingActivityRequestDto,
+	): Promise<TrainingActivity> {
+		return this.getTrainingActivityUseCase.execute(user, query);
 	}
 
 	@Post()

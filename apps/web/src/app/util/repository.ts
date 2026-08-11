@@ -14,6 +14,9 @@ import { createTrainingStoresMigration } from '@app/repository/migration/v3_crea
 import { rekeyAttemptStoreMigration } from '@app/repository/migration/v4_rekey-attempt-store.migration';
 import { recordAttemptSolveMigration } from '@app/repository/migration/v5_record-attempt-solve.migration';
 import { recordAttemptClosureMigration } from '@app/repository/migration/v6_record-attempt-closure.migration';
+import { createActivityStoreMigration } from '@app/repository/migration/v7_create-activity-store.migration';
+import { createActivityCursorStoreMigration } from '@app/repository/migration/v8_create-activity-cursor-store.migration';
+import { markStoredAttemptsSyncedMigration } from '@app/repository/migration/v9_mark-stored-attempts-synced.migration';
 
 export abstract class Repository {
 	private static migrations: (
@@ -29,6 +32,9 @@ export abstract class Repository {
 		rekeyAttemptStoreMigration,
 		recordAttemptSolveMigration,
 		recordAttemptClosureMigration,
+		createActivityStoreMigration,
+		createActivityCursorStoreMigration,
+		markStoredAttemptsSyncedMigration,
 	];
 
 	static getLatestVersion(): number {

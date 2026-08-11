@@ -1,3 +1,4 @@
+import { ActivitySchema } from '@app/repository/definition/activity-schema.interface';
 import {
 	AttemptSchema,
 	AttemptSchemaV3,
@@ -10,7 +11,13 @@ import { PuzzleSetSchema } from '@app/repository/definition/puzzle-set-schema.in
 import { SettingSchema } from '@app/repository/definition/setting-schema.interface';
 
 export interface AppSchema
-	extends AttemptSchema, CycleSchema, PuzzleSchema, PuzzleSetSchema, SettingSchema {}
+	extends
+		ActivitySchema,
+		AttemptSchema,
+		CycleSchema,
+		PuzzleSchema,
+		PuzzleSetSchema,
+		SettingSchema {}
 
 export interface AppSchemaV5
 	extends AttemptSchemaV5, CycleSchema, PuzzleSchema, PuzzleSetSchema, SettingSchema {}

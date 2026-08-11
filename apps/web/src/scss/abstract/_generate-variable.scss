@@ -4,8 +4,8 @@
 
 @layer base {
 	:root {
-		--safe-area-top: env(safe-area-inset-top, 0px);
-		--safe-area-bottom: env(safe-area-inset-bottom, 0px);
+		--safe-area-top: 0px;
+		--safe-area-bottom: 0px;
 		--safe-padding-top: calc(var(--spacing-2) + var(--safe-area-top));
 		--safe-padding-bottom: calc(var(--spacing-4) + var(--safe-area-bottom));
 		--safe-offset-bottom: max(var(--safe-area-bottom), var(--spacing-2));
@@ -79,6 +79,13 @@
 		@each $name, $value in var.$dark-color {
 			--color-#{$name}: #{$value} !important;
 			--color-#{$name}-hover: #{map.get(var.$dark-color-hover, $name)} !important;
+		}
+	}
+
+	@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+		:root {
+			--safe-area-top: env(safe-area-inset-top, 0px);
+			--safe-area-bottom: env(safe-area-inset-bottom, 0px);
 		}
 	}
 

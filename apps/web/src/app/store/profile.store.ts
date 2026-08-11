@@ -3,6 +3,7 @@ import type { FriendUser, Friendship, UserBlock, UserSummary } from '@chesspecke
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
+import { Resettable } from '@app/definition/resettable.interface';
 import { I18n, i18nRef } from '@app/i18n';
 import { FriendshipRepository } from '@app/repository/friendship.repository';
 import { UserRepository } from '@app/repository/user.repository';
@@ -41,9 +42,16 @@ const initialState: ProfileStoreProps = {
 @Injectable({
 	providedIn: 'root',
 })
-export class ProfileStore extends signalStore({ protectedState: false }, withState(initialState)) {
+export class ProfileStore
+	extends signalStore({ protectedState: false }, withState(initialState))
+	implements Resettable
+{
 	private readonly friendshipRepository = inject(FriendshipRepository);
 	private readonly userRepository = inject(UserRepository);
+
+	reset(): void {
+		patchState(this, initialState);
+	}
 
 	async load(): Promise<void> {
 		patchState(this, { isLoading: true, error: null });
