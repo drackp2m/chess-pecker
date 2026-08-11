@@ -1,3 +1,13 @@
+# v1.17.0 (2026-08-11)
+
+## What's Changed
+
+### ✨ Features
+
+- add catalan to available languages ([d6a9b79](https://github.com/drackp2m/chess-pecker/commit/d6a9b796f951669bb11cc0cff0bf986d9e5229b8)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.16.0...v1.17.0
+
 # v1.16.0 (2026-08-11)
 
 ## What's Changed
