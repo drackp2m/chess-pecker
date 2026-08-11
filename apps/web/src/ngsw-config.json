@@ -25,7 +25,14 @@
 			"installMode": "prefetch",
 			"updateMode": "lazy",
 			"resources": {
-				"files": ["/font/**", "/svg/**", "/sound/**", "/i18n/**", "/icon-*.{png,svg}"]
+				"files": [
+					"/font/**",
+					"/svg/**",
+					"/sound/**",
+					"/i18n/**",
+					"/icon-*.png",
+					"/apple-touch-icon.png"
+				]
 			}
 		}
 	]
