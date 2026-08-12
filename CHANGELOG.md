@@ -1,3 +1,19 @@
+# v1.19.0 (2026-08-12)
+
+## What's Changed
+
+### ✨ Features
+
+- cache API puzzles into IndexedDB during training ([99bdc4a](https://github.com/drackp2m/chess-pecker/commit/99bdc4a41a6983eaa3ff673e6904b6ef4d989a48)) by Marc Jovaní González
+- icons for network feedback ([cb3d884](https://github.com/drackp2m/chess-pecker/commit/cb3d884005ddb9659454463926725aa000c5bf11)) by Marc Jovaní González
+- sync training activity with offline cache ([d0d5b21](https://github.com/drackp2m/chess-pecker/commit/d0d5b21aeb3deeda56c9e056ba8f823f1931e628)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- charts now scroll with two fingers ([2d583de](https://github.com/drackp2m/chess-pecker/commit/2d583de2fe68598bb8dad715fa3d8841ca19df21)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.18.0...v1.19.0
+
 # v1.18.0 (2026-08-11)
 
 ## What's Changed
