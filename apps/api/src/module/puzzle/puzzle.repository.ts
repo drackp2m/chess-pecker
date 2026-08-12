@@ -20,6 +20,16 @@ export class PuzzleRepository extends CustomRepository<Puzzle> {
 		});
 	}
 
+	async getManyAfterLichessId(limit: number, after?: string): Promise<Puzzle[]> {
+		const query: FilterQuery<Puzzle> = undefined === after ? {} : { lichessId: { $gt: after } };
+
+		return this.getMany(query, { limit, orderBy: { lichessId: 'asc' } });
+	}
+
+	async countAll(): Promise<number> {
+		return this.entityManager.fork().count(Puzzle, {});
+	}
+
 	/**
 	 * Una muestra de una franja de ELO cerrada por arriba. Lo usan tanto la calibración
 	 * (sondeos y rondas de diez) como la selección del set de trabajo.

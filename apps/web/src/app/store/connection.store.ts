@@ -1,12 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Injectable, computed } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import { ConnectionPhase } from '@app/definition/session-status.type';
+import { I18n, i18nRef } from '@app/i18n';
+import { NotificationService } from '@app/service/notification.service';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 
 const CONNECTING_AFTER_MS = 2000;
 const WAKING_AFTER_MS = 10000;
+
+const NO_CONNECTION_MESSAGE = i18nRef(I18n.common.NO_CONNECTION_DETAIL);
 
 const UNREACHABLE_STATUS = new Set([0, 408, 502, 503, 504]);
 
@@ -37,32 +41,36 @@ export class ConnectionStore extends signalStore(
 		this.isReachable() ? this.waiting() : 'unreachable',
 	);
 
+	private readonly notificationService = inject(NotificationService);
+
 	private readonly pending = new Map<number, number>();
 	private timers: ReturnType<typeof setTimeout>[] = [];
 	private nextId = 0;
 
 	/**
-	 * Every call goes through here, so the interface can say a request is taking long
-	 * whoever started it — not only the session probe that runs once on startup.
+	 * Sólo el sondeo de sesión cronometra: el arranque y la revalidación que lo repite
+	 * cuando la app vuelve tras un rato son los dos únicos momentos en que se está
+	 * esperando a que el servidor despierte, y centralizar ahí el «va lento» evita que una
+	 * llamada larga cualquiera —un trabajo de fondo, sin ir más lejos— lo afirme por su
+	 * cuenta. No avisa: quien mira la sesión ya tiene su propia pantalla para decirlo.
 	 */
 	async track<T>(answer: Promise<T>): Promise<T> {
 		const id = this.start();
 
 		try {
-			const value = await answer;
-
-			patchState(this, { isReachable: true });
-
-			return value;
-		} catch (error) {
-			if (!ApiCancelledError.is(error)) {
-				patchState(this, { isReachable: !ConnectionStore.saysUnreachable(error) });
-			}
-
-			throw error;
+			return await this.settle(answer, false);
 		} finally {
 			this.end(id);
 		}
+	}
+
+	/**
+	 * El resto de llamadas. No cronometran, pero sí dicen si el servidor está ahí: un
+	 * timeout o una red caída son la única forma de enterarse fuera del sondeo, y quien
+	 * la sufrió no tiene por qué estar mirando la nube.
+	 */
+	async check<T>(answer: Promise<T>): Promise<T> {
+		return this.settle(answer, true);
 	}
 
 	private static saysUnreachable(error: unknown): boolean {
@@ -75,6 +83,32 @@ export class ConnectionStore extends signalStore(
 		}
 
 		return CONNECTING_AFTER_MS <= elapsed ? 'connecting' : 'idle';
+	}
+
+	private async settle<T>(answer: Promise<T>, warn: boolean): Promise<T> {
+		try {
+			const value = await answer;
+
+			this.setReachable(true, warn);
+
+			return value;
+		} catch (error) {
+			if (!ApiCancelledError.is(error)) {
+				this.setReachable(!ConnectionStore.saysUnreachable(error), warn);
+			}
+
+			throw error;
+		}
+	}
+
+	private setReachable(isReachable: boolean, warn: boolean): void {
+		const isLost = warn && this.isReachable() && !isReachable;
+
+		patchState(this, { isReachable });
+
+		if (isLost) {
+			this.notificationService.notify(NO_CONNECTION_MESSAGE);
+		}
 	}
 
 	private start(): number {

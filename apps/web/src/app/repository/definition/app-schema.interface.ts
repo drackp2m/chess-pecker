@@ -5,6 +5,7 @@ import {
 	AttemptSchemaV4,
 	AttemptSchemaV5,
 } from '@app/repository/definition/attempt-schema.interface';
+import { CatalogCursorSchema } from '@app/repository/definition/catalog-cursor-schema.interface';
 import { CycleSchema } from '@app/repository/definition/cycle-schema.interface';
 import { PuzzleSchema } from '@app/repository/definition/puzzle-schema.interface';
 import { PuzzleSetSchema } from '@app/repository/definition/puzzle-set-schema.interface';
@@ -14,6 +15,7 @@ export interface AppSchema
 	extends
 		ActivitySchema,
 		AttemptSchema,
+		CatalogCursorSchema,
 		CycleSchema,
 		PuzzleSchema,
 		PuzzleSetSchema,

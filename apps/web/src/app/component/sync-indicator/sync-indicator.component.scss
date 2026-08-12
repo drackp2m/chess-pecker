@@ -1,5 +1,6 @@
 $cycle: 1400ms;
 $wave-step: 180ms;
+$spread: 4.5px;
 
 :host {
 	display: inline-flex;
@@ -15,30 +16,45 @@ $wave-step: 180ms;
 
 	width: 17px;
 
-	transition: opacity 200ms ease-in-out;
+	transition:
+		opacity 200ms ease-in-out,
+		visibility 200ms;
 
 	&.offline {
 		opacity: 0.55;
 	}
+
+	&.hidden {
+		visibility: hidden;
+		opacity: 0;
+	}
 }
 
 .below {
-	display: flex;
-	gap: 2px;
-	align-items: center;
-	justify-content: center;
-
+	display: grid;
+	place-items: center;
 	height: 12px;
+
+	&.both .chevrons.down {
+		transform: translateX(-$spread);
+	}
+
+	&.both .chevrons.up {
+		transform: translateX($spread);
+	}
 }
 
 .chevrons {
 	display: flex;
+	grid-area: 1 / 1;
 	flex-direction: column;
 	align-items: center;
 
 	opacity: 0;
 
-	transition: opacity 200ms ease-in-out;
+	transition:
+		opacity 200ms ease-in-out,
+		transform 200ms ease-in-out;
 
 	&.active {
 		opacity: 1;

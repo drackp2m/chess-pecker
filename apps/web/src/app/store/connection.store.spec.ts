@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ConnectionStore } from '@app/store/connection.store';
+import { provideTestingI18n } from '@app/testing/i18n.harness';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 
 interface Deferred {
@@ -24,7 +25,7 @@ function defer(): Deferred {
 }
 
 function createStore(): ConnectionStore {
-	TestBed.configureTestingModule({ providers: [ConnectionStore] });
+	TestBed.configureTestingModule({ providers: [provideTestingI18n(), ConnectionStore] });
 
 	return TestBed.inject(ConnectionStore);
 }

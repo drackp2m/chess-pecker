@@ -116,7 +116,7 @@ export class ApiSdkService {
 		const request = this.httpClient.request<unknown>(verb, url, toHttpOptions(isWrite, options));
 		const answer = this.awaitAnswer(request, options.cancellable ?? !isWrite, `${verb} ${url}`);
 
-		return this.connectionStore.track(
+		return this.connectionStore.check(
 			this.count(isWrite ? this.writesInFlight : this.readsInFlight, answer),
 		);
 	}

@@ -35,3 +35,14 @@ export interface SearchPuzzleRequest {
 	limit?: number;
 	offset?: number;
 }
+
+export interface GetPuzzleCatalogRequest {
+	after?: string;
+	limit?: number;
+}
+
+export interface PuzzleCatalogPage {
+	readonly items: readonly ApiPuzzle[];
+	readonly nextCursor: string | null;
+	readonly total: number;
+}

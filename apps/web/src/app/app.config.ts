@@ -14,6 +14,7 @@ import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
 import { SessionStore } from '@app/store/session.store';
 import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.strategy';
+import { PuzzleCatalogReplicaUseCase } from '@app/use-case/puzzle-catalog-replica.use-case';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -28,9 +29,14 @@ export const appConfig: ApplicationConfig = {
 			// starts as `unknown` and whatever reads the store reacts when it settles,
 			// so the initializer fires it without awaiting the result.
 			const sessionStore = inject(SessionStore);
+			const catalogReplica = inject(PuzzleCatalogReplicaUseCase);
 
 			sessionStore.watch();
-			void sessionStore.restore();
+			void sessionStore.restore().then(() => {
+				if (sessionStore.isAuthenticated()) {
+					void catalogReplica.run();
+				}
+			});
 		}),
 		provideRouter(
 			APP_ROUTES,

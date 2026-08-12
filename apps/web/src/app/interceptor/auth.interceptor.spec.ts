@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { API_BASE_URL } from '@app/definition/api.constant';
 import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SessionStore } from '@app/store/session.store';
+import { provideTestingI18n } from '@app/testing/i18n.harness';
 
 const TRAINING_URL = `${API_BASE_URL}/training`;
 const FRIENDSHIP_URL = `${API_BASE_URL}/friendship`;
@@ -43,6 +44,7 @@ function setUp(): Harness {
 
 	TestBed.configureTestingModule({
 		providers: [
+			provideTestingI18n(),
 			provideHttpClient(withInterceptors([authInterceptor])),
 			provideHttpClientTesting(),
 			{ provide: Router, useValue: router },
