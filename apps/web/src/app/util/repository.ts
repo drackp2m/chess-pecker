@@ -8,6 +8,7 @@ import {
 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 import { SettingSchemaV1 } from '@app/repository/definition/setting-schema.interface';
+import { createCatalogCursorStoreMigration } from '@app/repository/migration/v10_create-catalog-cursor-store.migration';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
@@ -35,6 +36,7 @@ export abstract class Repository {
 		createActivityStoreMigration,
 		createActivityCursorStoreMigration,
 		markStoredAttemptsSyncedMigration,
+		createCatalogCursorStoreMigration,
 	];
 
 	static getLatestVersion(): number {

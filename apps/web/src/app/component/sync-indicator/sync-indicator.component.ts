@@ -30,6 +30,10 @@ export class SyncIndicatorComponent {
 	protected readonly showUp = computed(() => !this.isOffline() && this.apiSdk.isSaving());
 	protected readonly showDown = computed(() => !this.isOffline() && this.apiSdk.isFetching());
 
+	protected readonly isVisible = computed(
+		() => 'idle' !== this.phase() || this.showUp() || this.showDown(),
+	);
+
 	protected readonly icon = computed(() => (this.isOffline() ? 'cloud-slash' : 'cloud'));
 	protected readonly detail = computed(() => PHASE_DETAILS[this.phase()]);
 

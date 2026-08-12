@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18n } from '@app/i18n';
 import { AuthRepository } from '@app/repository/auth.repository';
 import { SessionStore } from '@app/store/session.store';
+import { provideTestingI18n } from '@app/testing/i18n.harness';
 
 interface AuthRepositoryStub {
 	register: (...args: unknown[]) => Promise<AuthUser>;
@@ -41,7 +42,11 @@ function createRepository(overrides: Partial<AuthRepositoryStub> = {}): AuthRepo
 
 function injectStore(repository: AuthRepositoryStub): SessionStore {
 	TestBed.configureTestingModule({
-		providers: [SessionStore, { provide: AuthRepository, useValue: repository }],
+		providers: [
+			provideTestingI18n(),
+			SessionStore,
+			{ provide: AuthRepository, useValue: repository },
+		],
 	});
 
 	return TestBed.inject(SessionStore);

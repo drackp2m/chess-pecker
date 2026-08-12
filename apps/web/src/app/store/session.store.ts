@@ -42,8 +42,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	readonly username = computed(() => this.user()?.username ?? null);
 
 	/**
-	 * Two sources of "unreachable" that must not contradict each other on screen: the last
-	 * call the SDK made, and a session that never settled because the server did not answer.
+	 * Dos lecturas del mismo sondeo que no pueden contradecirse en pantalla: la sesión que
+	 * no llegó a resolverse y lo que ese viaje dijo del servidor mientras se esperaba.
 	 */
 	readonly connectionPhase = computed<ConnectionPhase>(() =>
 		this.isUnreachable() ? 'unreachable' : this.connectionStore.phase(),
@@ -238,7 +238,7 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	 */
 	private async probe(): Promise<void> {
 		try {
-			const user = await this.authRepository.getCurrentUser();
+			const user = await this.connectionStore.track(this.authRepository.getCurrentUser());
 
 			patchState(this, { status: 'authenticated', user });
 			this.checkedAt = Date.now();

@@ -7,7 +7,14 @@ import {
 	SendFriendRequest,
 	UserBlock,
 } from './friendship';
-import { ApiPuzzle, ImportPuzzleRequest, ImportPuzzleResult, SearchPuzzleRequest } from './puzzle';
+import {
+	ApiPuzzle,
+	GetPuzzleCatalogRequest,
+	ImportPuzzleRequest,
+	ImportPuzzleResult,
+	PuzzleCatalogPage,
+	SearchPuzzleRequest,
+} from './puzzle';
 import {
 	CalibrationAttemptResult,
 	CalibrationRound,
@@ -81,6 +88,7 @@ export interface FriendshipDeleteRoutes {
 
 export interface PuzzleGetRoutes {
 	'': { query: SearchPuzzleRequest; response: readonly ApiPuzzle[] };
+	'/catalog': { query: GetPuzzleCatalogRequest; response: PuzzleCatalogPage };
 	'/:lichessId': { path: { lichessId: string }; response: ApiPuzzle };
 }
 
