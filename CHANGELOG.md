@@ -1,3 +1,13 @@
+# v1.19.1 (2026-08-12)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- connection status chevron centered, show server status with notification ([8b9784e](https://github.com/drackp2m/chess-pecker/commit/8b9784eba37a7472726baf59d580fb7e27a0c219)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.19.0...v1.19.1
+
 # v1.19.0 (2026-08-12)
 
 ## What's Changed
