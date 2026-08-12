@@ -4,9 +4,10 @@ import type { AuthUser, LoginRequest, RegisterRequest } from '@chesspecker/api-d
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
-import { SessionStatus } from '@app/definition/session-status.type';
+import { ConnectionPhase, SessionStatus } from '@app/definition/session-status.type';
 import { I18n, i18nRef } from '@app/i18n';
 import { AuthRepository } from '@app/repository/auth.repository';
+import { ConnectionStore } from '@app/store/connection.store';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
@@ -40,7 +41,16 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	readonly isUnreachable = computed(() => 'unreachable' === this.status());
 	readonly username = computed(() => this.user()?.username ?? null);
 
+	/**
+	 * Two sources of "unreachable" that must not contradict each other on screen: the last
+	 * call the SDK made, and a session that never settled because the server did not answer.
+	 */
+	readonly connectionPhase = computed<ConnectionPhase>(() =>
+		this.isUnreachable() ? 'unreachable' : this.connectionStore.phase(),
+	);
+
 	private readonly authRepository = inject(AuthRepository);
+	private readonly connectionStore = inject(ConnectionStore);
 	private refreshing: Promise<void> | null = null;
 	private probing: Promise<void> | null = null;
 	private checkedAt = 0;
