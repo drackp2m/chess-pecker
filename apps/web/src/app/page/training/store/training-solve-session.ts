@@ -3,7 +3,10 @@ import { DestroyRef, Injectable, effect, inject } from '@angular/core';
 import { PuzzleClosure } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { isUntouchedRecord } from '@app/page/puzzle/store/puzzle/record';
-import { TrainingRunSlot } from '@app/page/training/store/training-run-state';
+import {
+	TrainingAttemptRecord,
+	TrainingRunSlot,
+} from '@app/page/training/store/training-run-state';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingStore } from '@app/store/training.store';
@@ -237,19 +240,39 @@ export class TrainingSolveSession {
 
 		this.gradedUuid = slot.puzzle.uuid;
 
-		const timing = this.timer.stop();
+		void this.submit(closure, 'solved' === result);
+	}
 
-		void this.flush();
+	/**
+	 * Todo lo que hay que leer del tablero se lee de una vez, antes del primer `await`:
+	 * para cuando el API conteste, la partida en pantalla puede ser ya la siguiente.
+	 *
+	 * El sello de subido va después del último volcado —que si no lo pisaría— y sólo si
+	 * el API se quedó con el intento. Lo que no lleve sello es lo único que se perdería
+	 * al vaciar el dispositivo, y es lo que mira el cierre de sesión.
+	 */
+	private async submit(closure: TrainingAttemptRecord['closure'], solved: boolean): Promise<void> {
+		const draft = this.draft;
+		const timing = this.timer.stop();
+		const attempt: TrainingAttemptRecord = {
+			solved,
+			closure,
+			hintUsed: this.board.hintUsed(),
+			mistakeCount: this.board.mistakeCount(),
+			record: [...this.board.record()],
+			explorations: this.board
+				.explorations()
+				.map((run) => ({ at: run.at, events: [...run.events] })),
+		};
+
+		const flushed = this.flush();
+
 		this.draft = undefined;
 
-		void this.run.grade(
-			{
-				solved: 'solved' === result,
-				closure,
-				hintUsed: this.board.hintUsed(),
-				mistakeCount: this.board.mistakeCount(),
-			},
-			timing,
-		);
+		await flushed;
+
+		if ((await this.run.grade(attempt, timing)) && undefined !== draft) {
+			await this.drafts.markSynced(draft);
+		}
 	}
 }

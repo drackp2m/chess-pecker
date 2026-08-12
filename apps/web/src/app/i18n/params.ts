@@ -36,4 +36,7 @@ export interface CommonI18nParams {
 	'01KZJA7B2XY37MYRC4SMK9RXEA': {
 		piece: string;
 	};
+	'01KZS8AGRW2GFXT6E5GZ6HHZPQ': {
+		pending: number;
+	};
 }

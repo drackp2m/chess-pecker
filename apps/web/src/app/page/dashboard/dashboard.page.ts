@@ -11,10 +11,12 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { ActivityStore } from '@app/store/activity.store';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
+import { LogOutUseCase } from '@app/use-case/log-out.use-case';
 import { ActivityCell, activityRangeDays, filterActivityDays } from '@app/util/activity-grid';
 
 const ACTIVITY_RANGES = [1, 2, 3, 6, 9, 12] as const;
 const DEFAULT_ACTIVITY_MONTHS = 6;
+const MAX_ACTIVITY_MONTHS = Math.max(...ACTIVITY_RANGES);
 
 @Component({
 	templateUrl: './dashboard.page.html',
@@ -66,6 +68,7 @@ export class DashboardPage {
 			: '/training',
 	);
 
+	private readonly logOutUseCase = inject(LogOutUseCase);
 	private readonly router = inject(Router);
 
 	private hasLoadedProgram = false;
@@ -78,7 +81,7 @@ export class DashboardPage {
 				this.hasLoadedProgram = true;
 
 				void this.training.load();
-				void this.activity.load();
+				void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS));
 			}
 		});
 	}
@@ -97,7 +100,7 @@ export class DashboardPage {
 	}
 
 	logOut(): void {
-		void this.session.logOut();
+		void this.logOutUseCase.execute();
 	}
 
 	retryConnection(): void {

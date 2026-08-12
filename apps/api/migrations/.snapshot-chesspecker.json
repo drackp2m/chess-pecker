@@ -587,6 +587,54 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "integer"
+        },
+        "record": {
+          "name": "record",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'[]'",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "explorations": {
+          "name": "explorations",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": "'[]'",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "puzzle_attempt",
@@ -2119,7 +2167,7 @@
       "checks": [
         {
           "name": "user_block_check",
-          "columnName": "blocked_uuid",
+          "columnName": "blocker_uuid",
           "definition": "CHECK (((blocker_uuid)::text <> (blocked_uuid)::text))",
           "expression": "blocker_uuid <> blocked_uuid"
         }

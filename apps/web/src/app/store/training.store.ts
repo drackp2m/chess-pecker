@@ -7,6 +7,7 @@ import type {
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
+import { Resettable } from '@app/definition/resettable.interface';
 import { I18n, i18nRef } from '@app/i18n';
 import { TrainingRunRepository } from '@app/repository/training-run.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
@@ -36,7 +37,10 @@ const initialState: TrainingStoreProps = {
 @Injectable({
 	providedIn: 'root',
 })
-export class TrainingStore extends signalStore({ protectedState: false }, withState(initialState)) {
+export class TrainingStore
+	extends signalStore({ protectedState: false }, withState(initialState))
+	implements Resettable
+{
 	readonly cycles = computed(() => this.progress()?.cycles ?? []);
 
 	readonly runningCycle = computed(() => this.cycles().find((cycle) => 'running' === cycle.status));
@@ -124,6 +128,10 @@ export class TrainingStore extends signalStore({ protectedState: false }, withSt
 
 	clearError(): void {
 		patchState(this, { error: null });
+	}
+
+	reset(): void {
+		patchState(this, initialState);
 	}
 
 	private async withActive(

@@ -4,8 +4,6 @@
 		role="status"
 		[title]="detail() | i18n"
 	>
-		<span class="dot" [attr.data-phase]="phase()"></span>
-
 		<span class="label fs-sm">{{ text | i18n }}</span>
 
 		@if (canRetry()) {

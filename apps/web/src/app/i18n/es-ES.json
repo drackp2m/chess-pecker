@@ -71,7 +71,7 @@
 	"01KZJ895M5N2CXD3N18QQHBYB5": "Encuentra la jugada de las negras",
 	"01KZJ895M5XYNGZSAMDEN1S36C": "Conectando…",
 	"01KZJ895M56FTGA6W3G8ZFEMAY": "Hablando con el servidor.",
-	"01KZJ895M5B442S4TMEKHWDA6X": "Despertando el servidor…",
+	"01KZJ895M5B442S4TMEKHWDA6X": "Despertando…",
 	"01KZJ895M59PJDN2ET82ZVWJ8Z": "El servidor estaba dormido. Despertarlo puede tardar hasta un minuto.",
 	"01KZJ895M56P5P50RSFH61MMFD": "Sin conexión",
 	"01KZJ895M5YRHJZEJYHV7MNTYE": "El servidor no ha respondido. El tablero, el juego libre y tus ajustes siguen funcionando.",
@@ -106,5 +106,10 @@
 	"01KZJA7B2XY37MYRC4SMK9RXEA": "Coronar a {{ piece }}",
 	"01M2K9V7Q0CHRTX7BARWD3TN0W": "Las barras no caben: reduce la separación o dale más espacio al gráfico.",
 	"01M2K9V7Q0CHRTX7DRPPED3TN0": "Se quedan fuera demasiados datos: dale más espacio al gráfico o baja el ancho mínimo de columna.",
-	"01M3Q6X6R0F1TXQY0KMH1AGYRC": "Continuar"
+	"01M3Q6X6R0F1TXQY0KMH1AGYRC": "Continuar",
+	"01KZS8AGRV1YW49KHZWA9S4S3Y": "No se han podido traer los últimos datos: se muestra lo guardado en este dispositivo.",
+	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Quedan ejercicios sin subir",
+	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.",
+	"01KZS8AGRWES0GY7DRQM4RQVPC": "Cerrar sesión igualmente",
+	"01KZS8AGRWVYYDY12EVBWAY17D": "Quedarme"
 }

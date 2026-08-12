@@ -17,7 +17,7 @@ $levels: 4 !default;
 		background-color: var(--chart-level-0);
 	}
 
-	&:hover::before,
+	&.is-scrubbed::before,
 	&:focus-visible::before {
 		border-color: var(--chart-cell-focus);
 	}
@@ -28,6 +28,12 @@ $levels: 4 !default;
 
 	&.level-empty {
 		visibility: hidden;
+	}
+
+	@media (hover: hover) {
+		&:hover::before {
+			border-color: var(--chart-cell-focus);
+		}
 	}
 
 	@for $level from 1 through $levels {

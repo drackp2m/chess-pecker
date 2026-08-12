@@ -10,10 +10,11 @@
 	</button>
 
 	<span class="session flex-row gap-2 align-center">
-		<app-connection-indicator />
+		<app-sync-indicator />
 
-		@if (session.isAuthenticated()) {
-			<app-save-indicator />
+		@if (hasNotice()) {
+			<app-connection-indicator />
+		} @else if (session.isAuthenticated()) {
 			<span class="fs-md">{{ session.username() }}</span>
 		} @else if (session.isAnonymous()) {
 			<button appRouterLink="/login" class="log-in fs-md color-primary">

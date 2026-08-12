@@ -37,4 +37,7 @@ export const TrainingPolicy = {
 
 	/** Por debajo de esta mejora entre ciclos se considera que ya no rinde seguir. */
 	plateauImprovement: 0.1,
+
+	/** Ventana máxima del desglose de actividad, y la que se sirve si no se pide otra. */
+	activityMaxDays: 53 * 7,
 } as const;

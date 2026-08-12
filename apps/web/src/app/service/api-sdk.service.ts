@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import type {
 	ApiEndpointMap,
@@ -62,9 +62,11 @@ export class ApiSdkService {
 	);
 
 	private readonly writesInFlight = signal(0);
+	private readonly readsInFlight = signal(0);
 
 	readonly pendingWrites = this.writesInFlight.asReadonly();
 	readonly isSaving = computed(() => 0 < this.writesInFlight());
+	readonly isFetching = computed(() => 0 < this.readsInFlight());
 
 	readonly GET = {
 		auth: this.caller<AuthGetRoutes>('GET', 'auth'),
@@ -114,7 +116,9 @@ export class ApiSdkService {
 		const request = this.httpClient.request<unknown>(verb, url, toHttpOptions(isWrite, options));
 		const answer = this.awaitAnswer(request, options.cancellable ?? !isWrite, `${verb} ${url}`);
 
-		return this.connectionStore.track(isWrite ? this.count(answer) : answer);
+		return this.connectionStore.track(
+			this.count(isWrite ? this.writesInFlight : this.readsInFlight, answer),
+		);
 	}
 
 	private async awaitAnswer(
@@ -137,13 +141,13 @@ export class ApiSdkService {
 		}
 	}
 
-	private async count(answer: Promise<unknown>): Promise<unknown> {
-		this.writesInFlight.update((pending) => pending + 1);
+	private async count(counter: WritableSignal<number>, answer: Promise<unknown>): Promise<unknown> {
+		counter.update((pending) => pending + 1);
 
 		try {
 			return await answer;
 		} finally {
-			this.writesInFlight.update((pending) => pending - 1);
+			counter.update((pending) => pending - 1);
 		}
 	}
 }

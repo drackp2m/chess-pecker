@@ -71,7 +71,7 @@
 	"01KZJ895M5N2CXD3N18QQHBYB5": "Troba la jugada de les negres",
 	"01KZJ895M5XYNGZSAMDEN1S36C": "Connectant…",
 	"01KZJ895M56FTGA6W3G8ZFEMAY": "Comunicant amb el servidor.",
-	"01KZJ895M5B442S4TMEKHWDA6X": "Despertant el servidor…",
+	"01KZJ895M5B442S4TMEKHWDA6X": "Despertant…",
 	"01KZJ895M59PJDN2ET82ZVWJ8Z": "El servidor estava adormit. Despertar-lo pot trigar fins a un minut.",
 	"01KZJ895M56P5P50RSFH61MMFD": "Sense connexió",
 	"01KZJ895M5YRHJZEJYHV7MNTYE": "El servidor no ha respost. El tauler, el joc lliure i la teva configuració continuen funcionant.",
@@ -106,5 +106,10 @@
 	"01KZJA7B2XY37MYRC4SMK9RXEA": "Promociona a {{ piece }}",
 	"01M2K9V7Q0CHRTX7BARWD3TN0W": "Les barres no hi caben: redueix l’espaiat o dona més espai al gràfic.",
 	"01M2K9V7Q0CHRTX7DRPPED3TN0": "Hi ha massa dades que queden fora del gràfic: dona-li més espai o redueix l’amplada mínima de cada franja.",
-	"01M3Q6X6R0F1TXQY0KMH1AGYRC": "Continua"
+	"01M3Q6X6R0F1TXQY0KMH1AGYRC": "Continua",
+	"01KZS8AGRV1YW49KHZWA9S4S3Y": "No s’han pogut portar les últimes dades: es mostra el que hi ha desat en aquest dispositiu.",
+	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Queden exercicis sense pujar",
+	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} exercicis d’aquest dispositiu encara no han arribat al servidor. En tancar la sessió s’esborren, i no hi ha manera de recuperar-los.",
+	"01KZS8AGRWES0GY7DRQM4RQVPC": "Tanca la sessió igualment",
+	"01KZS8AGRWVYYDY12EVBWAY17D": "Em quedo"
 }

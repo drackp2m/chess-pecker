@@ -22,6 +22,7 @@ import {
 	toLineSeries,
 } from '@app/component/activity-chart/chart-data';
 import { buildChartGeometry } from '@app/component/activity-chart/chart-geometry';
+import { TouchScrubDirective } from '@app/directive/touch-scrub.directive';
 import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { hostWidth } from '@app/util/element-size';
@@ -34,6 +35,7 @@ import {
 } from '@app/util/roving-focus';
 
 const DEFAULT_AXIS_WIDTH = 36;
+const MAX_MEASURE_PASSES = 4;
 const LEGEND_STROKE_WIDTH = 24;
 const LEGEND_STROKE_HEIGHT = 8;
 const LEGEND_DASH_CYCLES = 2;
@@ -54,13 +56,16 @@ const MIRRORED_KEYS: Record<string, string> = {
 	selector: 'app-activity-chart',
 	templateUrl: './activity-chart.component.html',
 	styleUrl: './activity-chart.component.scss',
-	imports: [I18nPipe],
+	imports: [I18nPipe, TouchScrubDirective],
 	host: {
+		'[class.is-loading]': '!ready()',
 		'[style.--chart-axis-start]': 'startAxisPx()',
 		'[style.--chart-axis-end]': 'endAxisPx()',
 	},
 })
 export class ActivityChartComponent {
+	protected readonly I18n = I18n;
+
 	readonly data = input.required<ChartData>();
 	readonly config = input<ChartConfig>({});
 
@@ -143,8 +148,14 @@ export class ActivityChartComponent {
 		},
 	});
 
+	protected readonly scrubbedColumn = signal<number | null>(null);
+
+	protected readonly ready = signal(false);
+
 	private readonly slots = viewChildren<ElementRef<HTMLElement>>('slot');
 	private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+
+	private passes = 0;
 
 	constructor() {
 		afterRenderEffect(() => {
@@ -182,12 +193,25 @@ export class ActivityChartComponent {
 		return this.activePosition()?.column === column;
 	}
 
+	isScrubbed(column: number): boolean {
+		return this.scrubbedColumn() === column;
+	}
+
 	showsLabel(column: number): boolean {
 		return 0 === column % this.geometry().labelStep;
 	}
 
 	onFocus(point: ChartPoint | null): void {
 		this.pointFocus.emit(point);
+	}
+
+	onScrub(target: HTMLElement | null): void {
+		const column =
+			null === target ? -1 : this.slots().findIndex((slot) => target === slot.nativeElement);
+		const point = this.geometry().points[column] ?? null;
+
+		this.scrubbedColumn.set(null === point ? null : column);
+		this.onFocus(point);
 	}
 
 	onSlotFocus(point: ChartPoint, column: number): void {
@@ -255,9 +279,18 @@ export class ActivityChartComponent {
 			widths[axis.side] = tickWidth(elements[index]?.nativeElement);
 		});
 
-		this.measured.update((previous) =>
-			previous.start === widths.start && previous.end === widths.end ? previous : widths,
-		);
+		const previous = this.measured();
+		const settled = previous.start === widths.start && previous.end === widths.end;
+
+		this.passes += 1;
+
+		if (!settled) {
+			this.measured.set(widths);
+		}
+
+		if (0 < this.plotWidth() && (settled || MAX_MEASURE_PASSES <= this.passes)) {
+			this.ready.set(true);
+		}
 	}
 }
 

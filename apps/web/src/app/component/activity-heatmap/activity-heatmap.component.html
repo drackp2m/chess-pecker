@@ -1,3 +1,7 @@
+@if (!ready()) {
+	<p class="heatmap-loading fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
+}
+
 <div class="heatmap-layout">
 	<div class="heatmap-weekdays" #weekdays>
 		<span class="heatmap-weekday-spacer"></span>
@@ -9,8 +13,10 @@
 
 	<div
 		class="heatmap-scroll flex-col"
+		appTouchScrub=".heatmap-cell"
 		[appPinScrollEnd]="weekColumns()"
 		[style.maxWidth.px]="visibleWidth()"
+		(touchScrub)="onScrub($event)"
 	>
 		<div class="heatmap-months">
 			@for (label of monthLabels(); track $index) {
@@ -30,6 +36,7 @@
 							#cell
 							class="heatmap-cell"
 							[class]="'level-' + (cell?.level ?? 'empty')"
+							[class.is-scrubbed]="isScrubbed({ column: columnIndex, row: rowIndex })"
 							[attr.tabindex]="isActive({ column: columnIndex, row: rowIndex }) ? 0 : -1"
 							[attr.aria-hidden]="!cell"
 							[attr.aria-label]="

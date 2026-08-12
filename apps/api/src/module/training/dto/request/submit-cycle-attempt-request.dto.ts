@@ -1,8 +1,23 @@
-import type { SubmitCycleAttemptRequest } from '@chesspecker/api-definitions';
-import { IsBoolean, IsEnum, IsInt, IsNotEmpty, IsString, Min } from 'class-validator';
+import type {
+	FreePlayRun,
+	PuzzleEvent,
+	SubmitCycleAttemptRequest,
+} from '@chesspecker/api-definitions';
+import { Type } from 'class-transformer';
+import {
+	IsArray,
+	IsBoolean,
+	IsEnum,
+	IsInt,
+	IsNotEmpty,
+	IsString,
+	Min,
+	ValidateNested,
+} from 'class-validator';
 
 import { PuzzleAttemptClosure } from '../../definition/puzzle-attempt-closure.enum';
 
+import { FreePlayRunDto } from './free-play-run.dto';
 import { SyncTimestampsDto } from './sync-timestamps.dto';
 
 export class SubmitCycleAttemptRequestDto
@@ -30,4 +45,12 @@ export class SubmitCycleAttemptRequestDto
 	@IsInt()
 	@Min(0)
 	mistakeCount!: number;
+
+	@IsArray()
+	record!: PuzzleEvent[];
+
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => FreePlayRunDto)
+	explorations!: FreePlayRun[];
 }

@@ -6,12 +6,14 @@ import {
 	input,
 	linkedSignal,
 	output,
+	signal,
 	viewChild,
 	viewChildren,
 } from '@angular/core';
 import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 
 import { PinScrollEndDirective } from '@app/directive/pin-scroll-end.directive';
+import { TouchScrubDirective } from '@app/directive/touch-scrub.directive';
 import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { LanguageService } from '@app/service/language.service';
@@ -40,8 +42,9 @@ const LEGEND_LEVELS = [0, 1, 2, 3, 4] as const;
 	selector: 'app-activity-heatmap',
 	templateUrl: './activity-heatmap.component.html',
 	styleUrl: './activity-heatmap.component.scss',
-	imports: [I18nPipe, PinScrollEndDirective],
+	imports: [I18nPipe, PinScrollEndDirective, TouchScrubDirective],
 	host: {
+		'[class.is-loading]': '!ready()',
 		'[style.--heatmap-cell]': 'cellSizePx()',
 	},
 })
@@ -92,6 +95,8 @@ export class ActivityHeatmapComponent {
 		},
 	});
 
+	protected readonly scrubbedPosition = signal<RovingPosition | null>(null);
+
 	private readonly weekdays = viewChild.required<ElementRef<HTMLElement>>('weekdays');
 	private readonly cells = viewChildren<ElementRef<HTMLElement>>('cell');
 
@@ -110,6 +115,8 @@ export class ActivityHeatmapComponent {
 		return 0 === fit.count ? null : fit.count * fit.size;
 	});
 
+	protected readonly ready = computed(() => 0 < this.availableWidth() && 0 < this.weekdaysWidth());
+
 	onFocus(cell: ActivityCell | null): void {
 		this.dayFocus.emit(cell);
 	}
@@ -123,9 +130,22 @@ export class ActivityHeatmapComponent {
 	}
 
 	isActive(position: RovingPosition): boolean {
-		const active = this.activePosition();
+		return samePosition(this.activePosition(), position);
+	}
 
-		return null !== active && active.column === position.column && active.row === position.row;
+	isScrubbed(position: RovingPosition): boolean {
+		return samePosition(this.scrubbedPosition(), position);
+	}
+
+	onScrub(target: HTMLElement | null): void {
+		const index =
+			null === target ? -1 : this.cells().findIndex((cell) => target === cell.nativeElement);
+		const position =
+			0 > index ? null : { column: Math.floor(index / DAYS_PER_WEEK), row: index % DAYS_PER_WEEK };
+		const cell = null === position ? null : this.cellAt(position);
+
+		this.scrubbedPosition.set(null === cell ? null : position);
+		this.onFocus(cell);
 	}
 
 	onKeydown(event: KeyboardEvent, position: RovingPosition): void {
@@ -140,6 +160,13 @@ export class ActivityHeatmapComponent {
 		this.cells()[rovingIndex(next, this.gridSize())]?.nativeElement.focus();
 	}
 
-	private readonly hasData = (position: RovingPosition): boolean =>
-		null !== (this.weekColumns()[position.column]?.[position.row] ?? null);
+	private cellAt(position: RovingPosition): ActivityCell | null {
+		return this.weekColumns()[position.column]?.[position.row] ?? null;
+	}
+
+	private readonly hasData = (position: RovingPosition): boolean => null !== this.cellAt(position);
+}
+
+function samePosition(left: RovingPosition | null, right: RovingPosition): boolean {
+	return null !== left && left.column === right.column && left.row === right.row;
 }

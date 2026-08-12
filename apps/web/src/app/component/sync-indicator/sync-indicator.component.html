@@ -1,0 +1,23 @@
+<span
+	class="sync-indicator"
+	role="status"
+	[class.offline]="isOffline()"
+	[attr.aria-label]="label() ? (label() | i18n) : null"
+	[attr.title]="detail() ? (detail() | i18n) : null"
+>
+	<app-svg [icon]="icon()" [size]="13" />
+
+	<span class="below">
+		<span class="chevrons down" [class.active]="showDown()">
+			<span class="chevron"><app-svg icon="chevron-right" [size]="6" /></span>
+			<span class="chevron"><app-svg icon="chevron-right" [size]="6" /></span>
+			<span class="chevron"><app-svg icon="chevron-right" [size]="6" /></span>
+		</span>
+
+		<span class="chevrons up" [class.active]="showUp()">
+			<span class="chevron"><app-svg icon="chevron-right" [size]="6" /></span>
+			<span class="chevron"><app-svg icon="chevron-right" [size]="6" /></span>
+			<span class="chevron"><app-svg icon="chevron-right" [size]="6" /></span>
+		</span>
+	</span>
+</span>

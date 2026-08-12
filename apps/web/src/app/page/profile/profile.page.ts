@@ -9,6 +9,7 @@ import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { ProfileStore } from '@app/store/profile.store';
 import { SessionStore } from '@app/store/session.store';
+import { LogOutUseCase } from '@app/use-case/log-out.use-case';
 
 @Component({
 	templateUrl: './profile.page.html',
@@ -22,6 +23,8 @@ export class ProfilePage implements OnInit {
 	readonly store = inject(ProfileStore);
 	readonly session = inject(SessionStore);
 
+	private readonly logOutUseCase = inject(LogOutUseCase);
+
 	readonly form = new FormGroup({
 		username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
 	});
@@ -33,7 +36,7 @@ export class ProfilePage implements OnInit {
 	}
 
 	logOut(): void {
-		void this.session.logOut();
+		void this.logOutUseCase.execute();
 	}
 
 	retryConnection(): void {

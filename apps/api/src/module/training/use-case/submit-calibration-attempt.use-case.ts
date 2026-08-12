@@ -86,6 +86,8 @@ export class SubmitCalibrationAttemptUseCase {
 				closure: submitRequest.closure,
 				hintUsed: submitRequest.hintUsed,
 				mistakeCount: submitRequest.mistakeCount,
+				record: submitRequest.record,
+				explorations: submitRequest.explorations,
 			}),
 			submitRequest,
 		);

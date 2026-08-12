@@ -1,4 +1,8 @@
-@if (null !== geometry().issue) {
+@if (!ready()) {
+	<p class="chart-loading fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
+}
+
+@if (ready() && null !== geometry().issue) {
 	<p class="chart-issue fs-sm" role="alert">
 		{{ issueMessage() | i18n }}
 	</p>
@@ -18,7 +22,13 @@
 			</div>
 		}
 
-		<div #scroller class="chart-scroll" [style.maxWidth.px]="geometry().viewport">
+		<div
+			#scroller
+			class="chart-scroll"
+			appTouchScrub=".chart-slot"
+			[style.maxWidth.px]="geometry().viewport"
+			(touchScrub)="onScrub($event)"
+		>
 			<div
 				class="chart-plot"
 				[style.width.px]="geometry().width"
@@ -92,6 +102,7 @@
 								type="button"
 								class="chart-slot"
 								[class.is-active]="isActive(column)"
+								[class.is-scrubbed]="isScrubbed(column)"
 								[style.left.px]="geometry().slots[column]?.x"
 								[style.width.px]="geometry().slots[column]?.width"
 								[attr.tabindex]="isActive(column) ? 0 : -1"

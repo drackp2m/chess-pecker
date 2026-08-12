@@ -79,10 +79,4 @@
 	strong {
 		font-weight: var(--font-weight-lg);
 	}
-
-	#modal-outlet {
-		.modal > section {
-			padding-bottom: var(--safe-padding-bottom);
-		}
-	}
 }

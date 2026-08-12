@@ -14,13 +14,14 @@ import {
 	CalibrationRoundPuzzles,
 	CalibrationRoundStart,
 	CycleAttemptResult,
+	GetTrainingActivityRequest,
 	SelectTrainingSetRequest,
 	SelectTrainingSetResult,
 	SetTrainingGoalRequest,
 	SubmitCalibrationAttemptRequest,
 	SubmitCycleAttemptRequest,
 	Training,
-	TrainingActivityDay,
+	TrainingActivity,
 	TrainingCycle,
 	TrainingCycleItem,
 	TrainingGoal,
@@ -89,7 +90,7 @@ export interface PuzzlePostRoutes {
 
 export interface TrainingGetRoutes {
 	'': { response: readonly Training[] };
-	'/activity': { response: readonly TrainingActivityDay[] };
+	'/activity': { query: GetTrainingActivityRequest; response: TrainingActivity };
 	'/:uuid': { path: { uuid: string }; response: Training };
 	'/:uuid/progress': { path: { uuid: string }; response: TrainingProgress };
 	'/:uuid/calibration/round': { path: { uuid: string }; response: readonly CalibrationRound[] };

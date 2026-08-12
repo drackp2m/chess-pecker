@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import type {
 	SetTrainingGoalRequest,
 	Training,
-	TrainingActivityDay,
+	TrainingActivity,
 	TrainingProgress,
 } from '@chesspecker/api-definitions';
 
@@ -30,8 +30,11 @@ export class TrainingRepository {
 		return this.apiSdk.GET.training('/:uuid/progress', { path: { uuid } });
 	}
 
-	async getActivity(): Promise<readonly TrainingActivityDay[]> {
-		return this.apiSdk.GET.training('/activity');
+	/** Sin `since` vuelve el rango entero; con él, sólo los días tocados desde ese corte. */
+	async getActivity(days: number, since?: string): Promise<TrainingActivity> {
+		return this.apiSdk.GET.training('/activity', {
+			query: undefined === since ? { days } : { days, since },
+		});
 	}
 
 	/** Fixes the X exercises every cycle then runs over. Only possible once. */
