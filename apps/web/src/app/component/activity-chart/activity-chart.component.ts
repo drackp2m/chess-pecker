@@ -1,8 +1,10 @@
 import {
 	Component,
+	DOCUMENT,
 	ElementRef,
 	afterRenderEffect,
 	computed,
+	inject,
 	input,
 	linkedSignal,
 	output,
@@ -21,11 +23,11 @@ import {
 	toBarSeries,
 	toLineSeries,
 } from '@app/component/activity-chart/chart-data';
-import { buildChartGeometry } from '@app/component/activity-chart/chart-geometry';
+import { ChartGeometry, buildChartGeometry } from '@app/component/activity-chart/chart-geometry';
 import { TouchScrubDirective } from '@app/directive/touch-scrub.directive';
 import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
-import { hostWidth } from '@app/util/element-size';
+import { hostBorderWidth } from '@app/util/element-size';
 import {
 	RovingGridSize,
 	RovingPosition,
@@ -35,6 +37,7 @@ import {
 } from '@app/util/roving-focus';
 
 const DEFAULT_AXIS_WIDTH = 36;
+const LABEL_GAP = 6;
 const MAX_MEASURE_PASSES = 4;
 const LEGEND_STROKE_WIDTH = 24;
 const LEGEND_STROKE_HEIGHT = 8;
@@ -71,28 +74,44 @@ export class ActivityChartComponent {
 
 	readonly pointFocus = output<ChartPoint | null>();
 
-	protected readonly plotWidth = hostWidth();
+	private readonly document = inject(DOCUMENT);
+	private readonly hostBox = hostBorderWidth();
 
 	protected readonly settings = computed(() => resolveChartConfig(this.config()));
 	protected readonly barSeries = computed(() => toBarSeries(this.data()));
 	protected readonly lineSeries = computed(() => toLineSeries(this.data()));
 
-	protected readonly geometry = computed(() =>
-		buildChartGeometry(this.data(), this.settings(), this.plotWidth()),
-	);
+	private readonly labelSpace = signal(0);
 
 	private readonly sides = computed(() =>
 		axisSides(this.settings().axes.mode, this.settings().axes.shared),
 	);
 
 	private readonly axisElements = viewChildren<ElementRef<HTMLElement>>('axisElement');
+	private readonly labelElements = viewChildren<ElementRef<HTMLElement>>('labelElement');
 	private readonly measured = signal<Record<ChartAxisSide, number>>({
 		start: DEFAULT_AXIS_WIDTH,
 		end: DEFAULT_AXIS_WIDTH,
 	});
 
-	protected readonly startAxisPx = computed(() => this.gutter('start', this.sides().start));
-	protected readonly endAxisPx = computed(() => this.gutter('end', this.sides().end));
+	private readonly startGutter = computed(() => this.gutter('start', this.sides().start));
+	private readonly endGutter = computed(() => this.gutter('end', this.sides().end));
+
+	protected readonly startAxisPx = computed(() => `${this.startGutter().toString()}px`);
+	protected readonly endAxisPx = computed(() => `${this.endGutter().toString()}px`);
+
+	/**
+	 * The gutters pad the host, so the plot gets the border box less whatever they take rather
+	 * than the content box the browser hands back a layout later — the width a gutter changes
+	 * lands in the same pass that changed it, and the geometry is never a paint behind.
+	 */
+	private readonly plotWidth = computed(() =>
+		Math.max(0, this.hostBox() - this.startGutter() - this.endGutter()),
+	);
+
+	protected readonly geometry = computed(() =>
+		buildChartGeometry(this.data(), this.settings(), this.plotWidth(), this.labelSpace()),
+	);
 
 	protected readonly scrolls = computed(() => null !== this.geometry().viewport);
 
@@ -148,9 +167,32 @@ export class ActivityChartComponent {
 		},
 	});
 
-	protected readonly scrubbedColumn = signal<number | null>(null);
+	private readonly hoveredColumn = signal<number | null>(null);
 
-	protected readonly ready = signal(false);
+	private readonly pinnedColumn = linkedSignal<RovingGridSize, number | null>({
+		source: () => this.gridSize(),
+		computation: () => null,
+	});
+
+	private readonly highlightedColumn = computed(() => this.hoveredColumn() ?? this.pinnedColumn());
+
+	private readonly highlightedPoint = computed(() => {
+		const column = this.highlightedColumn();
+
+		return null === column ? null : (this.geometry().points[column] ?? null);
+	});
+
+	private readonly settledGeometry = signal<ChartGeometry | null>(null);
+
+	protected readonly ready = computed(
+		() => 0 < this.plotWidth() && this.settledGeometry() === this.geometry(),
+	);
+
+	protected readonly showsLoading = computed(
+		() => !this.ready() && null === this.settledGeometry(),
+	);
+
+	private emitted: ChartPoint | null = null;
 
 	private readonly slots = viewChildren<ElementRef<HTMLElement>>('slot');
 	private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
@@ -158,8 +200,10 @@ export class ActivityChartComponent {
 	private passes = 0;
 
 	constructor() {
+		this.watchFontSwap();
+
 		afterRenderEffect(() => {
-			this.measureAxes();
+			this.measurePlot();
 		});
 
 		afterRenderEffect({
@@ -193,30 +237,39 @@ export class ActivityChartComponent {
 		return this.activePosition()?.column === column;
 	}
 
-	isScrubbed(column: number): boolean {
-		return this.scrubbedColumn() === column;
+	isHighlighted(column: number): boolean {
+		return this.highlightedColumn() === column;
 	}
 
 	showsLabel(column: number): boolean {
 		return 0 === column % this.geometry().labelStep;
 	}
 
-	onFocus(point: ChartPoint | null): void {
-		this.pointFocus.emit(point);
+	onHover(column: number): void {
+		this.hoveredColumn.set(column);
+		this.emitHighlight();
+	}
+
+	onLeave(column: number): void {
+		if (this.hoveredColumn() === column) {
+			this.hoveredColumn.set(null);
+			this.emitHighlight();
+		}
 	}
 
 	onScrub(target: HTMLElement | null): void {
-		const column =
-			null === target ? -1 : this.slots().findIndex((slot) => target === slot.nativeElement);
-		const point = this.geometry().points[column] ?? null;
-
-		this.scrubbedColumn.set(null === point ? null : column);
-		this.onFocus(point);
+		this.hoveredColumn.set(this.columnOf(target));
+		this.emitHighlight();
 	}
 
-	onSlotFocus(point: ChartPoint, column: number): void {
+	onPin(target: HTMLElement | null): void {
+		this.pinnedColumn.set(this.columnOf(target));
+		this.emitHighlight();
+	}
+
+	onSlotFocus(column: number): void {
 		this.activePosition.set({ column, row: 0 });
-		this.onFocus(point);
+		this.onHover(column);
 	}
 
 	onKeydown(event: KeyboardEvent, column: number): void {
@@ -234,6 +287,24 @@ export class ActivityChartComponent {
 		this.slots()[rovingIndex(next, size)]?.nativeElement.focus();
 	}
 
+	private emitHighlight(): void {
+		const point = this.highlightedPoint();
+
+		if (point === this.emitted) {
+			return;
+		}
+
+		this.emitted = point;
+		this.pointFocus.emit(point);
+	}
+
+	private columnOf(target: HTMLElement | null): number | null {
+		const column =
+			null === target ? -1 : this.slots().findIndex((slot) => target === slot.nativeElement);
+
+		return undefined === this.geometry().points[column] ? null : column;
+	}
+
 	private compose(point: ChartPoint, column: number): string {
 		const series = [...this.barSeries(), ...this.lineSeries()];
 		const values = series.map((entry) => this.valueLabel(entry, column));
@@ -245,20 +316,20 @@ export class ActivityChartComponent {
 		return `${series.label} ${seriesValue(series, column).toString()}`;
 	}
 
-	private gutter(side: ChartAxisSide, shown: boolean): string {
+	private gutter(side: ChartAxisSide, shown: boolean): number {
 		if (!shown) {
-			return '0px';
+			return 0;
 		}
 
 		const width = this.settings().axes.width;
 
-		return `${('auto' === width ? this.measured()[side] : width).toString()}px`;
+		return 'auto' === width ? this.measured()[side] : width;
 	}
 
 	/**
 	 * A plot read backwards opens on its first point, the way the heatmap opens on today. The
-	 * strip is re-pinned whenever it is re-measured — the axis gutters land after the first
-	 * paint, and a viewport that moves under a scroll left where it was hides the opening point.
+	 * strip is re-pinned whenever it is re-measured — a viewport that moves under a scroll left
+	 * where it was hides the opening point.
 	 */
 	private pinScroll(): void {
 		const element = this.scroller()?.nativeElement;
@@ -271,7 +342,67 @@ export class ActivityChartComponent {
 		element.scrollLeft = 'rtl' === this.settings().layout.direction ? element.scrollWidth : 0;
 	}
 
-	private measureAxes(): void {
+	/**
+	 * Text is the one thing only the browser can size, so a pass reads the ticks and the labels
+	 * back and reopens the loop until what it reads is what the geometry already assumed. Only
+	 * a geometry that survived such a pass is handed over to be painted, so a later measurement
+	 * — a resize, a font swap, the data landing — reopens the loop out of sight.
+	 */
+	private measurePlot(): void {
+		if (0 === this.plotWidth() || this.awaitsView()) {
+			return;
+		}
+
+		const gutters = this.readGutters();
+		const label = this.readLabelSpace();
+		const settled = this.matches(gutters, label);
+		const exhausted = MAX_MEASURE_PASSES <= this.passes;
+
+		this.passes = settled || exhausted ? 0 : this.passes + 1;
+
+		if (settled || exhausted) {
+			this.settledGeometry.set(this.geometry());
+
+			return;
+		}
+
+		this.measured.set(gutters);
+		this.labelSpace.set(label);
+	}
+
+	/**
+	 * A font that swaps in after the plot settled moves the very text the gutters were cut to
+	 * fit, and nothing about the layout announces it, so the loop is reopened by hand.
+	 */
+	private watchFontSwap(): void {
+		void this.document.fonts.ready.then(() => {
+			this.passes = 0;
+			this.measured.set({ ...this.measured() });
+		});
+	}
+
+	/** A pass that runs on a view the geometry has outgrown would measure the wrong text. */
+	private awaitsView(): boolean {
+		const { axes, points } = this.geometry();
+		const labelled = this.settings().labels.show && 0 < points.length;
+
+		return (
+			this.axisElements().length !== axes.length ||
+			(labelled && this.labelElements().length !== points.length)
+		);
+	}
+
+	private matches(gutters: Record<ChartAxisSide, number>, label: number): boolean {
+		const previous = this.measured();
+
+		return (
+			previous.start === gutters.start &&
+			previous.end === gutters.end &&
+			this.labelSpace() === label
+		);
+	}
+
+	private readGutters(): Record<ChartAxisSide, number> {
 		const elements = this.axisElements();
 		const widths: Record<ChartAxisSide, number> = { start: 0, end: 0 };
 
@@ -279,18 +410,15 @@ export class ActivityChartComponent {
 			widths[axis.side] = tickWidth(elements[index]?.nativeElement);
 		});
 
-		const previous = this.measured();
-		const settled = previous.start === widths.start && previous.end === widths.end;
+		return widths;
+	}
 
-		this.passes += 1;
+	private readLabelSpace(): number {
+		const widths = this.labelElements().map(
+			(element) => element.nativeElement.getBoundingClientRect().width,
+		);
 
-		if (!settled) {
-			this.measured.set(widths);
-		}
-
-		if (0 < this.plotWidth() && (settled || MAX_MEASURE_PASSES <= this.passes)) {
-			this.ready.set(true);
-		}
+		return 0 === widths.length ? 0 : Math.ceil(Math.max(...widths)) + LABEL_GAP;
 	}
 }
 
@@ -318,5 +446,5 @@ function legendDash(dash: string | null): string | null {
 function tickWidth(axis: HTMLElement | undefined): number {
 	const ticks = Array.from(axis?.children ?? []).filter((tick) => tick instanceof HTMLElement);
 
-	return Math.ceil(Math.max(0, ...ticks.map((tick) => tick.offsetWidth)));
+	return Math.ceil(Math.max(0, ...ticks.map((tick) => tick.getBoundingClientRect().width)));
 }

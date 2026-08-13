@@ -30,24 +30,38 @@
 
 @layer utility {
 	.app-button:not(:disabled, .icon) {
-		&:hover,
-		&:focus {
+		&:focus-visible {
 			background-color: var(--surface-hover);
+		}
+
+		@media (hover: hover) {
+			&:hover {
+				background-color: var(--surface-hover);
+			}
 		}
 	}
 
 	// An icon button carries no surface of its own, so hovering it has nothing to shade
 	// unless one is lent to it here — and the accent an active one wears has to survive.
 	.app-button.icon:not(:disabled) {
-		&:hover,
 		&:focus-visible {
 			color: var(--color-contrast);
 			background-color: color-mix(in oklab, var(--color-contrast) 12%, transparent);
 		}
 
-		&.active:hover,
 		&.active:focus-visible {
 			color: var(--color-accent-hover);
+		}
+
+		@media (hover: hover) {
+			&:hover {
+				color: var(--color-contrast);
+				background-color: color-mix(in oklab, var(--color-contrast) 12%, transparent);
+			}
+
+			&.active:hover {
+				color: var(--color-accent-hover);
+			}
 		}
 	}
 }

@@ -114,6 +114,7 @@ export function buildChartGeometry(
 	data: ChartData,
 	config: ChartConfigResolved,
 	width: number,
+	labelSpace: number = LABEL_MIN_WIDTH,
 ): ChartGeometry {
 	const total = data.points.length;
 	const layout = fitBars(width, total, config.bars, config.overflow);
@@ -134,7 +135,7 @@ export function buildChartGeometry(
 		lines: toLineSeries(data),
 	};
 
-	return toGeometry(visible, layout, dropped, config);
+	return toGeometry(visible, layout, dropped, config, labelSpace);
 }
 
 function toGeometry(
@@ -142,6 +143,7 @@ function toGeometry(
 	layout: ChartBarLayout,
 	dropped: number,
 	config: ChartConfigResolved,
+	labelSpace: number,
 ): ChartGeometry {
 	const barOptions = toBarOptions(config, visible.bars, layout);
 	const scaleOptions = toScaleOptions(config);
@@ -160,7 +162,7 @@ function toGeometry(
 		barScale: scales.bar,
 		lineScale: scales.line,
 		zeroY: toChartY(0, scales.bar, config.layout.height),
-		labelStep: toLabelStep(config, layout.slot),
+		labelStep: toLabelStep(config, layout.slot, labelSpace),
 		dropped,
 		width: layout.content,
 		viewport: layout.viewport,
@@ -187,9 +189,9 @@ function toColumn(index: number, total: number, config: ChartConfigResolved): nu
 	return 'rtl' === config.layout.direction ? total - 1 - index : index;
 }
 
-function toLabelStep(config: ChartConfigResolved, slotSize: number): number {
+function toLabelStep(config: ChartConfigResolved, slotSize: number, labelSpace: number): number {
 	return 'auto' === config.labels.step
-		? Math.max(1, Math.ceil(LABEL_MIN_WIDTH / slotSize))
+		? Math.max(1, Math.ceil(labelSpace / slotSize))
 		: Math.max(1, Math.round(config.labels.step));
 }
 

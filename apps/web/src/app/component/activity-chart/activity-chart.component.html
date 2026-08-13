@@ -1,4 +1,4 @@
-@if (!ready()) {
+@if (showsLoading()) {
 	<p class="chart-loading fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
 }
 
@@ -28,6 +28,7 @@
 			appTouchScrub=".chart-slot"
 			[style.maxWidth.px]="geometry().viewport"
 			(touchScrub)="onScrub($event)"
+			(touchScrubPin)="onPin($event)"
 		>
 			<div
 				class="chart-plot"
@@ -102,15 +103,16 @@
 								type="button"
 								class="chart-slot"
 								[class.is-active]="isActive(column)"
-								[class.is-scrubbed]="isScrubbed(column)"
+								[class.is-highlighted]="isHighlighted(column)"
 								[style.left.px]="geometry().slots[column]?.x"
 								[style.width.px]="geometry().slots[column]?.width"
 								[attr.tabindex]="isActive(column) ? 0 : -1"
 								[attr.aria-label]="describe(point, column)"
-								(mouseenter)="onFocus(point)"
-								(mouseleave)="onFocus(null)"
-								(focus)="onSlotFocus(point, column)"
-								(blur)="onFocus(null)"
+								(mousedown)="$event.preventDefault()"
+								(mouseenter)="onHover(column)"
+								(mouseleave)="onLeave(column)"
+								(focus)="onSlotFocus(column)"
+								(blur)="onLeave(column)"
 								(keydown)="onKeydown($event, column)"
 							></button>
 						}
@@ -122,9 +124,11 @@
 				<div class="chart-labels" aria-hidden="true" [style.width.px]="geometry().width">
 					@for (point of geometry().points; track point.key; let column = $index) {
 						<span
+							#labelElement
 							class="chart-label fs-sm color-contrast-mid"
+							[class.is-hidden]="!showsLabel(column)"
 							[style.left.px]="geometry().slots[column]?.center"
-							>{{ showsLabel(column) ? point.label : '' }}</span
+							>{{ point.label }}</span
 						>
 					}
 				</div>
@@ -134,7 +138,7 @@
 }
 
 @if (settings().legend.show) {
-	<div class="chart-legend flex-row fs-sm color-contrast-mid">
+	<div class="chart-legend fs-sm color-contrast-mid">
 		@for (series of barSeries(); track series.id) {
 			<span class="chart-key">
 				<i class="chart-swatch" [style.--series-color]="series.color"></i>

@@ -34,6 +34,11 @@ import {
 	rovingIndex,
 } from '@app/util/roving-focus';
 
+interface MonthMarker {
+	readonly label: string | null;
+	readonly span: string | null;
+}
+
 const DEFAULT_TOTAL_DAYS = 365;
 const DEFAULT_CELL_SIZE = 14;
 const LEGEND_LEVELS = [0, 1, 2, 3, 4] as const;
@@ -68,9 +73,16 @@ export class ActivityHeatmapComponent {
 		monthAbbreviations(this.weekColumns(), this.languageService.selectedLanguage()),
 	);
 
-	readonly lastMonthIndex = computed(() =>
-		this.monthLabels().findLastIndex((label) => null !== label),
-	);
+	readonly monthMarkers = computed<readonly MonthMarker[]>(() => {
+		const labels = this.monthLabels();
+		const last = labels.findLastIndex((label) => null !== label);
+		const trailing = this.weekColumns().length - last;
+
+		return labels.slice(0, last + 1).map((label, index) => ({
+			label,
+			span: index === last ? `span ${trailing.toString()}` : null,
+		}));
+	});
 
 	readonly weekdayLabels = computed<readonly (string | null)[]>(() =>
 		weekdayAbbreviations(this.languageService.selectedLanguage()),
@@ -95,7 +107,27 @@ export class ActivityHeatmapComponent {
 		},
 	});
 
-	protected readonly scrubbedPosition = signal<RovingPosition | null>(null);
+	private readonly hoveredPosition = signal<RovingPosition | null>(null);
+
+	private readonly pinnedPosition = linkedSignal<
+		readonly (ActivityCell | null)[][],
+		RovingPosition | null
+	>({
+		source: () => this.weekColumns(),
+		computation: () => null,
+	});
+
+	private readonly highlightedPosition = computed(
+		() => this.hoveredPosition() ?? this.pinnedPosition(),
+	);
+
+	private readonly highlightedCell = computed(() => {
+		const position = this.highlightedPosition();
+
+		return null === position ? null : this.cellAt(position);
+	});
+
+	private emitted: ActivityCell | null = null;
 
 	private readonly weekdays = viewChild.required<ElementRef<HTMLElement>>('weekdays');
 	private readonly cells = viewChildren<ElementRef<HTMLElement>>('cell');
@@ -117,8 +149,21 @@ export class ActivityHeatmapComponent {
 
 	protected readonly ready = computed(() => 0 < this.availableWidth() && 0 < this.weekdaysWidth());
 
-	onFocus(cell: ActivityCell | null): void {
-		this.dayFocus.emit(cell);
+	/** Re-pins scroll whenever the visible width settles, not just when the data changes. */
+	protected readonly scrollPinTrigger = computed(
+		() => [this.weekColumns(), this.visibleWidth()] as const,
+	);
+
+	onHover(cell: ActivityCell | null, position: RovingPosition): void {
+		this.hoveredPosition.set(null === cell ? null : position);
+		this.emitHighlight();
+	}
+
+	onLeave(position: RovingPosition): void {
+		if (samePosition(this.hoveredPosition(), position)) {
+			this.hoveredPosition.set(null);
+			this.emitHighlight();
+		}
 	}
 
 	onCellFocus(cell: ActivityCell | null, position: RovingPosition): void {
@@ -126,26 +171,25 @@ export class ActivityHeatmapComponent {
 			this.activePosition.set(position);
 		}
 
-		this.onFocus(cell);
+		this.onHover(cell, position);
 	}
 
 	isActive(position: RovingPosition): boolean {
 		return samePosition(this.activePosition(), position);
 	}
 
-	isScrubbed(position: RovingPosition): boolean {
-		return samePosition(this.scrubbedPosition(), position);
+	isHighlighted(position: RovingPosition): boolean {
+		return samePosition(this.highlightedPosition(), position);
 	}
 
 	onScrub(target: HTMLElement | null): void {
-		const index =
-			null === target ? -1 : this.cells().findIndex((cell) => target === cell.nativeElement);
-		const position =
-			0 > index ? null : { column: Math.floor(index / DAYS_PER_WEEK), row: index % DAYS_PER_WEEK };
-		const cell = null === position ? null : this.cellAt(position);
+		this.hoveredPosition.set(this.positionOf(target));
+		this.emitHighlight();
+	}
 
-		this.scrubbedPosition.set(null === cell ? null : position);
-		this.onFocus(cell);
+	onPin(target: HTMLElement | null): void {
+		this.pinnedPosition.set(this.positionOf(target));
+		this.emitHighlight();
 	}
 
 	onKeydown(event: KeyboardEvent, position: RovingPosition): void {
@@ -158,6 +202,26 @@ export class ActivityHeatmapComponent {
 		event.preventDefault();
 		this.activePosition.set(next);
 		this.cells()[rovingIndex(next, this.gridSize())]?.nativeElement.focus();
+	}
+
+	private emitHighlight(): void {
+		const cell = this.highlightedCell();
+
+		if (cell === this.emitted) {
+			return;
+		}
+
+		this.emitted = cell;
+		this.dayFocus.emit(cell);
+	}
+
+	private positionOf(target: HTMLElement | null): RovingPosition | null {
+		const index =
+			null === target ? -1 : this.cells().findIndex((cell) => target === cell.nativeElement);
+		const position =
+			0 > index ? null : { column: Math.floor(index / DAYS_PER_WEEK), row: index % DAYS_PER_WEEK };
+
+		return null === position || null === this.cellAt(position) ? null : position;
 	}
 
 	private cellAt(position: RovingPosition): ActivityCell | null {

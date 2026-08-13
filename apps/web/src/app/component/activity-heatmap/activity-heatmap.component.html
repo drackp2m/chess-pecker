@@ -14,17 +14,16 @@
 	<div
 		class="heatmap-scroll flex-col"
 		appTouchScrub=".heatmap-cell"
-		[appPinScrollEnd]="weekColumns()"
+		[appPinScrollEnd]="scrollPinTrigger()"
 		[style.maxWidth.px]="visibleWidth()"
 		(touchScrub)="onScrub($event)"
+		(touchScrubPin)="onPin($event)"
 	>
 		<div class="heatmap-months">
-			@for (label of monthLabels(); track $index) {
-				<span
-					class="heatmap-month fs-sm color-contrast-mid"
-					[class.is-last]="$index === lastMonthIndex()"
-					>{{ label }}</span
-				>
+			@for (marker of monthMarkers(); track $index) {
+				<span class="heatmap-month fs-sm color-contrast-mid" [style.gridColumnEnd]="marker.span">{{
+					marker.label
+				}}</span>
 			}
 		</div>
 
@@ -36,7 +35,7 @@
 							#cell
 							class="heatmap-cell"
 							[class]="'level-' + (cell?.level ?? 'empty')"
-							[class.is-scrubbed]="isScrubbed({ column: columnIndex, row: rowIndex })"
+							[class.is-highlighted]="isHighlighted({ column: columnIndex, row: rowIndex })"
 							[attr.tabindex]="isActive({ column: columnIndex, row: rowIndex }) ? 0 : -1"
 							[attr.aria-hidden]="!cell"
 							[attr.aria-label]="
@@ -45,10 +44,11 @@
 										| i18n: { count: cell.count, date: cell.date })
 									: null
 							"
-							(mouseenter)="onFocus(cell)"
-							(mouseleave)="onFocus(null)"
+							(mousedown)="$event.preventDefault()"
+							(mouseenter)="onHover(cell, { column: columnIndex, row: rowIndex })"
+							(mouseleave)="onLeave({ column: columnIndex, row: rowIndex })"
 							(focus)="onCellFocus(cell, { column: columnIndex, row: rowIndex })"
-							(blur)="onFocus(null)"
+							(blur)="onLeave({ column: columnIndex, row: rowIndex })"
 							(keydown)="onKeydown($event, { column: columnIndex, row: rowIndex })"
 						></div>
 					}

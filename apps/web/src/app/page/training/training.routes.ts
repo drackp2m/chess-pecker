@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
+import { resolveI18n } from '@app/guard/i18n.resolver';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
@@ -22,6 +23,7 @@ export default [
 			TrainingSolveSession,
 			{ provide: BOARD_PRESENTER, useExisting: PuzzleStore },
 		],
+		resolve: { i18n: resolveI18n('training') },
 		children: [
 			{
 				path: '',

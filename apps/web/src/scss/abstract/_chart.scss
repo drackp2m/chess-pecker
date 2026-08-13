@@ -17,7 +17,7 @@ $levels: 4 !default;
 		background-color: var(--chart-level-0);
 	}
 
-	&.is-scrubbed::before,
+	&.is-highlighted::before,
 	&:focus-visible::before {
 		border-color: var(--chart-cell-focus);
 	}

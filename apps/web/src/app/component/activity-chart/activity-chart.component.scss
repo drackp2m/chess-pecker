@@ -135,7 +135,7 @@
 
 	background-color: transparent;
 
-	&.is-scrubbed,
+	&.is-highlighted,
 	&.is-active:focus-visible {
 		background-color: var(--chart-slot-shade);
 	}
@@ -163,18 +163,27 @@
 
 	line-height: 1.25rem;
 	white-space: nowrap;
+
+	&.is-hidden {
+		visibility: hidden;
+	}
 }
 
 .chart-legend {
-	flex-wrap: wrap;
-	gap: var(--spacing-1) var(--spacing-3);
 	padding-block-start: var(--spacing-1);
+	line-height: 1.75rem;
+	text-wrap: balance;
 }
 
 .chart-key {
 	display: inline-flex;
 	gap: var(--spacing-1);
 	align-items: center;
+	line-height: 1.25rem;
+
+	&:not(:last-child) {
+		margin-inline-end: var(--spacing-3);
+	}
 }
 
 .chart-swatch {
