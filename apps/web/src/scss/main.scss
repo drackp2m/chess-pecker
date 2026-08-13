@@ -17,9 +17,22 @@
 		letter-spacing: -0.01rem;
 
 		body {
+			user-select: none;
+
 			overflow: hidden;
+
 			height: 100dvh;
+
 			background-color: var(--color-primary);
+
+			-webkit-tap-highlight-color: transparent;
+			-webkit-touch-callout: none;
+
+			input,
+			textarea,
+			[contenteditable]:not([contenteditable='false']) {
+				user-select: text;
+			}
 
 			main {
 				// Named rather than inlined so a child that has to run edge to edge can

@@ -16,6 +16,11 @@ export class LanguageService {
 
 	readonly selectedLanguage = computed(() => this.language());
 
+	/** Resolves once the stored setting decided the language the user actually reads in. */
+	readonly whenSettled = new Promise<void>((resolve) => {
+		this.settle = resolve;
+	});
+
 	constructor() {
 		this.applyLanguage();
 
@@ -25,6 +30,7 @@ export class LanguageService {
 			}
 
 			this.setLanguageFromSettings();
+			this.settle();
 
 			waitForSetting.destroy();
 		});
@@ -45,6 +51,8 @@ export class LanguageService {
 			);
 		}
 	}
+
+	private settle = (): void => undefined;
 
 	private applyLanguage(): void {
 		const language = this.language();

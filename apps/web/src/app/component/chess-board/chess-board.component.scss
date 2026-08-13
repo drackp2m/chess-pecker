@@ -198,9 +198,14 @@
 		background-color: var(--square-dark);
 	}
 
-	&:hover,
 	&:focus-visible {
 		background-color: var(--square-selected);
+	}
+
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--square-selected);
+		}
 	}
 }
 

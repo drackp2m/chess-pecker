@@ -1,14 +1,14 @@
 import { DestroyRef, ElementRef, Signal, afterNextRender, inject, signal } from '@angular/core';
 
 type ElementSource = () => ElementRef<HTMLElement> | HTMLElement | undefined;
-type SizeReader = (element: HTMLElement, entry: ResizeObserverEntry) => number;
+type SizeReader = (element: HTMLElement, entry: ResizeObserverEntry | null) => number;
 
 export function elementWidth(source: ElementSource): Signal<number> {
-	return observeSize(source, (_element, entry) => entry.contentRect.width);
+	return observeSize(source, (_element, entry) => entry?.contentRect.width ?? 0);
 }
 
 export function elementHeight(source: ElementSource): Signal<number> {
-	return observeSize(source, (_element, entry) => entry.contentRect.height);
+	return observeSize(source, (_element, entry) => entry?.contentRect.height ?? 0);
 }
 
 export function elementOffsetWidth(source: ElementSource): Signal<number> {
@@ -25,6 +25,20 @@ export function hostWidth(): Signal<number> {
 	return elementWidth(() => host);
 }
 
+/**
+ * The border box of a block host is the room its container hands it, so it holds still while
+ * the host's own padding moves inside it — a width read off it cannot feed back into itself.
+ */
+export function hostBorderWidth(): Signal<number> {
+	const host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+	return observeSize(
+		() => host,
+		(element) => element.getBoundingClientRect().width,
+	);
+}
+
+/** The first size is read straight off the element, so nothing waits a frame for the observer. */
 function observeSize(source: ElementSource, read: SizeReader): Signal<number> {
 	const size = signal(0);
 	const destroyRef = inject(DestroyRef);
@@ -36,8 +50,10 @@ function observeSize(source: ElementSource, read: SizeReader): Signal<number> {
 			return;
 		}
 
+		size.set(read(element, null));
+
 		const observer = new ResizeObserver(([entry]) => {
-			size.set(undefined === entry ? 0 : read(element, entry));
+			size.set(read(element, entry ?? null));
 		});
 
 		observer.observe(element);

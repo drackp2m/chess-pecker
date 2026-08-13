@@ -5,6 +5,22 @@ $border-radius: var(--border-radius-3);
 $transition-duration: 0.25s;
 $clip-gap: 3px;
 
+@mixin glow {
+	$shadow: 0 0 var(--glow-size)
+		color-mix(
+			in oklab,
+			color-mix(in oklab, var(--color-accent) 30%, transparent) 80%,
+			rgb(255 210 75)
+		);
+
+	.border-container {
+		border-color: var(--color-accent);
+		box-shadow:
+			$shadow,
+			inset $shadow;
+	}
+}
+
 @mixin shell($control, $slider: $control) {
 	$glow: var(--glow-size);
 	$glow-neg: calc(-1 * var(--glow-size));
@@ -134,30 +150,21 @@ $clip-gap: 3px;
 	}
 
 	&.focused {
+		@include glow;
+
 		#{$control}::placeholder {
 			color: var(--color-contrast-mid);
-		}
-	}
-
-	&:hover,
-	&.focused {
-		$shadow: 0 0 var(--glow-size)
-			color-mix(
-				in oklab,
-				color-mix(in oklab, var(--color-accent) 30%, transparent) 80%,
-				rgb(255 210 75)
-			);
-
-		.border-container {
-			border-color: var(--color-accent);
-			box-shadow:
-				$shadow,
-				inset $shadow;
 		}
 	}
 
 	&.disabled {
 		pointer-events: none;
 		opacity: 0.5;
+	}
+
+	@media (hover: hover) {
+		&:hover {
+			@include glow;
+		}
 	}
 }

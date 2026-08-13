@@ -40,8 +40,10 @@
 					background-color: var(--color-contrast-mid);
 				}
 
-				&:hover {
-					border-color: var(--color-accent);
+				@media (hover: hover) {
+					&:hover {
+						border-color: var(--color-accent);
+					}
 				}
 			}
 		}

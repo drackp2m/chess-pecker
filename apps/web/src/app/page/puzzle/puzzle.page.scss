@@ -55,8 +55,10 @@ textarea {
 	display: inline-flex;
 	background-color: var(--color-primary-mid);
 
-	&:hover {
-		background-color: var(--color-primary-mid-hover);
+	@media (hover: hover) {
+		&:hover {
+			background-color: var(--color-primary-mid-hover);
+		}
 	}
 }
 
