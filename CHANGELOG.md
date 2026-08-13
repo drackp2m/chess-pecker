@@ -1,3 +1,14 @@
+# v1.19.2 (2026-08-13)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- improve chart visualization, remove re-render bugs ([35f7557](https://github.com/drackp2m/chess-pecker/commit/35f75572ec5c0b029fb83d3e8e8ceb7e0ed3d9c9)) by Marc Jovaní González
+- page load works ([ad121e1](https://github.com/drackp2m/chess-pecker/commit/ad121e1099147d2e1dd8a15537bf25435b93fa16)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.19.1...v1.19.2
+
 # v1.19.1 (2026-08-12)
 
 ## What's Changed
