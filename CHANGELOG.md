@@ -1,3 +1,13 @@
+# v1.19.3 (2026-08-14)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- prevent missing translation message on settings when change it ([751d031](https://github.com/drackp2m/chess-pecker/commit/751d03168c31ef0d079a4e318088b2880b9e47d1)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.19.2...v1.19.3
+
 # v1.19.2 (2026-08-13)
 
 ## What's Changed
