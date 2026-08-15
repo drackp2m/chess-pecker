@@ -40,8 +40,8 @@ export class PuzzleStore
 		withState(buildPuzzleState),
 		withPuzzleComputed(),
 		withPuzzleGating(),
-		withPuzzlePlayback(),
 		withPuzzlePlayer(),
+		withPuzzlePlayback(),
 	)
 	implements BoardPresenter
 {

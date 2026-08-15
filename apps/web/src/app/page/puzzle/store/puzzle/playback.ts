@@ -46,6 +46,8 @@ import { WatchedDelay } from '@app/util/watched-delay';
 const UNDO_DELAY = 800;
 
 interface PuzzlePlaybackInput {
+	/** The player's clock, which is the board's only one. */
+	readonly boardClock: ScheduledAction;
 	readonly puzzle: Signal<Puzzle | undefined>;
 	readonly isReplaying: Signal<boolean>;
 	readonly isRevealing: Signal<boolean>;
@@ -391,19 +393,21 @@ function scheduleUndo(context: PlaybackContext, undo: () => void): void {
 	);
 }
 
-/** Timers outlive the store they were started from, so they are stopped with it. */
+/**
+ * Timers outlive the store they were started from, so they are stopped with it — the hint's
+ * own, which is the only one made here. What is left of the playback still beats on the
+ * player's clock, and the player is what stops that one.
+ */
 function createContext(store: PlaybackStore): PlaybackContext {
-	const scheduled = new ScheduledAction();
 	const hintGate = new WatchedDelay();
 
 	inject(DestroyRef).onDestroy(() => {
-		scheduled.cancel();
 		hintGate.cancel();
 	});
 
 	return {
 		store,
-		scheduled,
+		scheduled: store.boardClock,
 		hintGate,
 		speed: inject(BoardPreferenceService).moveSpeed,
 	};

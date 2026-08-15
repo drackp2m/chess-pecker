@@ -6,6 +6,7 @@ import {
 	signalStoreFeature,
 	type,
 	withMethods,
+	withProps,
 } from '@ngrx/signals';
 
 import { BoardTransition, BoardTransitionKind } from '@app/definition/board-animation.type';
@@ -195,13 +196,17 @@ function run(context: PlayerContext, program: PlaybackProgram, hooks: PlaybackHo
 	advance(context);
 }
 
+/**
+ * Abandons the programme and leaves the board where it stands. The clock is only put out
+ * when there was something on it to put out: it is shared with the take-back a refuted move
+ * is waiting for, and a programme that was never running has no business cancelling that.
+ */
 function stop(context: PlayerContext): void {
-	context.scheduled.cancel();
-
 	if (undefined === context.running) {
 		return;
 	}
 
+	context.scheduled.cancel();
 	context.running = undefined;
 	patchState(context.store, { playback: undefined, announced: undefined });
 }
@@ -212,16 +217,26 @@ function settle(context: PlayerContext): void {
 	}
 }
 
-function createContext(store: PlayerStore): PlayerContext {
-	const scheduled = new ScheduledAction();
+/**
+ * The one clock the board plays on, which is why it is handed out rather than kept: the
+ * replay, the take-back and everything a programme waits on all queue on the same timeout,
+ * so starting any of them puts out whatever was pending without anyone having to ask. A
+ * second timer beside it would let a rewind stay alive inside a reveal.
+ */
+function createClock(): ScheduledAction {
+	const clock = new ScheduledAction();
 
 	inject(DestroyRef).onDestroy(() => {
-		scheduled.cancel();
+		clock.cancel();
 	});
 
+	return clock;
+}
+
+function createContext(store: PlayerStore, clock: ScheduledAction): PlayerContext {
 	return {
 		store,
-		scheduled,
+		scheduled: clock,
 		speed: inject(BoardPreferenceService).moveSpeed,
 		running: undefined,
 	};
@@ -230,8 +245,9 @@ function createContext(store: PlayerStore): PlayerContext {
 export function withPuzzlePlayer() {
 	return signalStoreFeature(
 		{ state: type<PuzzleStoreProps>(), props: type<PuzzlePlayerInput>() },
+		withProps(() => ({ boardClock: createClock() })),
 		withMethods((store) => {
-			const context = createContext(store);
+			const context = createContext(store, store.boardClock);
 
 			return {
 				run: (program: PlaybackProgram, hooks: PlaybackHooks): void => {
