@@ -3,7 +3,7 @@ import { PuzzleClosure, PuzzleEvent, PuzzleRecord } from '@app/definition/puzzle
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
 /** What a restart looks like in the record, wherever the board was when it happened. */
-const RESTART = 0;
+export const RESTART = 0;
 
 /**
  * What asking for the themes looks like. A UCI move is two squares and maybe a promotion

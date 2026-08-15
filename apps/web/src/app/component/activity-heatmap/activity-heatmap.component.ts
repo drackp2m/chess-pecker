@@ -35,8 +35,8 @@ import {
 } from '@app/util/roving-focus';
 
 interface MonthMarker {
-	readonly label: string | null;
-	readonly span: string | null;
+	readonly label: string;
+	readonly width: number | null;
 }
 
 const DEFAULT_TOTAL_DAYS = 365;
@@ -73,15 +73,21 @@ export class ActivityHeatmapComponent {
 		monthAbbreviations(this.weekColumns(), this.languageService.selectedLanguage()),
 	);
 
-	readonly monthMarkers = computed<readonly MonthMarker[]>(() => {
-		const labels = this.monthLabels();
-		const last = labels.findLastIndex((label) => null !== label);
-		const trailing = this.weekColumns().length - last;
+	private readonly labeledMonths = computed(() =>
+		this.monthLabels().flatMap((label, column) => (null === label ? [] : [{ label, column }])),
+	);
 
-		return labels.slice(0, last + 1).map((label, index) => ({
-			label,
-			span: index === last ? `span ${trailing.toString()}` : null,
-		}));
+	readonly monthMarkers = computed<readonly MonthMarker[]>(() => {
+		const labeled = this.labeledMonths();
+
+		return labeled.map(({ label, column }, index) => {
+			const next = labeled[index + 1];
+
+			return {
+				label,
+				width: undefined === next ? null : (next.column - column) * this.cellSize(),
+			};
+		});
 	});
 
 	readonly weekdayLabels = computed<readonly (string | null)[]>(() =>
@@ -89,6 +95,12 @@ export class ActivityHeatmapComponent {
 	);
 
 	protected readonly cellSizePx = computed(() => `${this.cellSize().toString()}px`);
+
+	protected readonly monthsWidth = computed(() => this.weekColumns().length * this.cellSize());
+
+	protected readonly monthsOffset = computed(
+		() => (this.labeledMonths()[0]?.column ?? 0) * this.cellSize(),
+	);
 
 	protected readonly gridSize = computed<RovingGridSize>(() => ({
 		columns: this.weekColumns().length,

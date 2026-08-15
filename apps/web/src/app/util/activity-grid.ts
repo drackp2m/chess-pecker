@@ -95,7 +95,10 @@ export function filterActivityDays(
 	return days.filter((day) => day.date >= from);
 }
 
-/** One label per column, only where its first day starts a month the previous column hadn't reached. */
+/**
+ * One label per column, only where the column's Monday is the first one of a month the previous
+ * columns hadn't reached — a range opening mid-month leaves that month unlabeled.
+ */
 export function monthAbbreviations(
 	weekColumns: readonly (readonly (ActivityCell | null)[])[],
 	locale: string,
@@ -113,7 +116,7 @@ export function monthAbbreviations(
 		const date = new Date(firstCell.date);
 		const month = date.getUTCMonth();
 
-		if (month === lastMonth) {
+		if (month === lastMonth || !startsMonth(date)) {
 			return null;
 		}
 
@@ -157,6 +160,12 @@ function toCell(
 		count,
 		level: toBucket(count, bounds, ACTIVITY_LEVELS) as ActivityCell['level'],
 	};
+}
+
+function startsMonth(date: Date): boolean {
+	const monday = mostRecentMonday(date);
+
+	return monday.getUTCMonth() === date.getUTCMonth() && DAYS_PER_WEEK >= monday.getUTCDate();
 }
 
 /** Lunes-primero: `getUTCDay()` da domingo=0, así que se desplaza para que lunes quede en 0. */

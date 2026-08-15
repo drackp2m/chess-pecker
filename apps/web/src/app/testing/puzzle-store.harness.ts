@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 
-import { ChessPosition, Square } from '@app/definition/chess.type';
+import { Square } from '@app/definition/chess.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed } from '@app/definition/move-speed.type';
 import {
 	HINT_DELAY_MS,
@@ -12,11 +12,10 @@ import {
 } from '@app/definition/puzzle.type';
 import { I18n } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
-import { HINT } from '@app/page/puzzle/store/puzzle/record';
+import { foldRecord } from '@app/page/puzzle/store/puzzle/replay';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
-import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
@@ -211,54 +210,7 @@ export function describeBoard(store: PuzzleStore): BoardReading {
 	};
 }
 
-interface ReplayState {
-	readonly positions: readonly ChessPosition[];
-	readonly line: readonly string[];
-	readonly cursor: number;
-}
-
-/**
- * One event of a main-line record played back onto a board. A `0` is the restart
- * button, which walks the cursor back to the opening move the board plays for itself
- * — it never unwrites the line, so the plies ahead of the cursor are still there to
- * be stepped through. The hint marker moves nothing at all.
- */
-function replayStep(state: ReplayState, event: PuzzleEvent): ReplayState {
-	if (HINT === event) {
-		return state;
-	}
-
-	if ('number' === typeof event) {
-		const cursor = 0 === event ? Math.min(1, state.line.length) : state.cursor + event;
-
-		return { ...state, cursor };
-	}
-
-	const position = state.positions[state.cursor];
-	const move = undefined === position ? undefined : ChessNotation.parse(position, event);
-
-	if (undefined === position || undefined === move) {
-		throw new Error(`the record does not replay: ${event} at ply ${state.cursor.toString()}`);
-	}
-
-	return {
-		positions: [...state.positions.slice(0, state.cursor + 1), ChessBoard.apply(position, move)],
-		line: [...state.line.slice(0, state.cursor), event],
-		cursor: state.cursor + 1,
-	};
-}
-
 /** Rebuilds the one board a prefix of the record describes, in `describeLine`'s shape. */
 export function replayRecord(fen: string, events: readonly PuzzleEvent[]) {
-	const state = events.reduce<ReplayState>(replayStep, {
-		positions: [ChessFen.parse(fen)],
-		line: [],
-		cursor: 0,
-	});
-
-	return {
-		fens: state.positions.map((position) => ChessFen.serialize(position)),
-		line: [...state.line],
-		cursor: state.cursor,
-	};
+	return describeLine(foldRecord(fen, events));
 }
