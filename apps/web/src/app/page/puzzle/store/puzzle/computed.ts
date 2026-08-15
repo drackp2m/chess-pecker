@@ -90,6 +90,13 @@ interface SessionInput {
 	readonly playerColor: Signal<PieceColor>;
 }
 
+function playbackDerived(store: StateSignals<PuzzleStoreProps>) {
+	return {
+		isReplaying: computed(() => undefined !== store.playback()),
+		isRevealing: computed(() => 'reveal' === store.playback()),
+	};
+}
+
 /** What the board offers from the position on screen, script aside. */
 function boardComputed(position: Signal<ChessPosition>, selected: Signal<Square | undefined>) {
 	const legalMoves = computed(() => ChessMoveGenerator.legalMoves(position()));
@@ -212,44 +219,56 @@ function freePlayComputed(
 	);
 }
 
+/** The pieces every computed below is built out of, folded once and shared. */
+function puzzleDerived(store: StateSignals<PuzzleStoreProps>) {
+	const puzzle = inject(PuzzleLibraryStore).current;
+
+	const { positions, line, cursor, freePlay } = lineDerived(store, puzzle);
+	const { scriptCursor, ...script } = scriptComputed({ positions, line, cursor, freePlay }, puzzle);
+
+	return {
+		puzzle,
+		positions,
+		line,
+		cursor,
+		freePlay,
+		script,
+		scriptCursor,
+		playback: playbackDerived(store),
+		position: computed(() => positions()[cursor()] ?? ChessFen.initial()),
+	};
+}
+
+function puzzleComputed(store: StateSignals<PuzzleStoreProps>) {
+	const { puzzle, positions, line, cursor, freePlay, script, scriptCursor, playback, position } =
+		puzzleDerived(store);
+
+	return {
+		puzzle,
+		position,
+		positions,
+		line,
+		cursor,
+		freePlay,
+
+		isPlayerTurn: computed(
+			() => 'solving' === store.outcome() && position().turn === store.playerColor(),
+		),
+
+		freePlayStatus: freePlayComputed(position, positions, cursor, script.isFreePlay),
+
+		...playback,
+		...script,
+		...boardComputed(position, store.selected),
+		...lineComputed(line, cursor, script),
+		...sessionComputed(puzzle, { ...store, ...playback, cursor }, { ...script, scriptCursor }),
+	};
+}
+
 /**
  * Everything the puzzle store derives rather than stores. Split off as a signal
  * store feature so the store class itself is left holding only commands.
  */
 export function withPuzzleComputed() {
-	return signalStoreFeature(
-		{ state: type<PuzzleStoreProps>() },
-		withComputed((store) => {
-			const puzzle = inject(PuzzleLibraryStore).current;
-
-			const { positions, line, cursor, freePlay } = lineDerived(store, puzzle);
-
-			const position = computed(() => positions()[cursor()] ?? ChessFen.initial());
-
-			const { scriptCursor, ...script } = scriptComputed(
-				{ positions, line, cursor, freePlay },
-				puzzle,
-			);
-
-			return {
-				puzzle,
-				position,
-				positions,
-				line,
-				cursor,
-				freePlay,
-
-				isPlayerTurn: computed(
-					() => 'solving' === store.outcome() && position().turn === store.playerColor(),
-				),
-
-				freePlayStatus: freePlayComputed(position, positions, cursor, script.isFreePlay),
-
-				...script,
-				...boardComputed(position, store.selected),
-				...lineComputed(line, cursor, script),
-				...sessionComputed(puzzle, { ...store, cursor }, { ...script, scriptCursor }),
-			};
-		}),
-	);
+	return signalStoreFeature({ state: type<PuzzleStoreProps>() }, withComputed(puzzleComputed));
 }

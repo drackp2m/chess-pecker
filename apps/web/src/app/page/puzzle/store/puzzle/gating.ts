@@ -6,6 +6,7 @@ import { PuzzleStoreProps } from '@app/page/puzzle/store/puzzle/session';
 
 interface PuzzleGatingInput {
 	readonly puzzle: Signal<Puzzle | undefined>;
+	readonly isReplaying: Signal<boolean>;
 	readonly isFreePlay: Signal<boolean>;
 	readonly isBehindLine: Signal<boolean>;
 	readonly isPlayerTurn: Signal<boolean>;

@@ -16,6 +16,7 @@ import {
 	RESUME_DELAY,
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
+import { PlaybackTag } from '@app/definition/playback.type';
 import {
 	HINT_DELAY_MS,
 	Puzzle,
@@ -46,6 +47,8 @@ const UNDO_DELAY = 800;
 
 interface PuzzlePlaybackInput {
 	readonly puzzle: Signal<Puzzle | undefined>;
+	readonly isReplaying: Signal<boolean>;
+	readonly isRevealing: Signal<boolean>;
 	readonly position: Signal<ChessPosition>;
 	readonly positions: Signal<ChessPosition[]>;
 	readonly line: Signal<PuzzleMove[]>;
@@ -132,7 +135,7 @@ function playScripted(context: PlaybackContext): void {
 	const { store, scheduled, speed } = context;
 
 	scheduled.cancel();
-	patchState(store, { isReplaying: true });
+	patchState(store, { playback: store.playback() ?? 'reply' });
 
 	scheduled.run(
 		() => {
@@ -178,7 +181,7 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 
 	// Real Lichess lines end on a player move, but a set that ends on the
 	// opponent's would otherwise leave the exercise waiting forever.
-	patchState(store, { isReplaying: false, isRevealing: false });
+	patchState(store, { playback: undefined });
 
 	const outcome = outcomeAt(store, store.cursor());
 
@@ -219,7 +222,7 @@ interface ReplayBeat {
 function landReplay(store: PlaybackStore, beat: ReplayBeat): void {
 	const landed = {
 		announced: undefined,
-		isReplaying: false,
+		playback: undefined,
 		transition: nextTransition(beat.played, beat.move, 'forward'),
 	};
 
@@ -249,10 +252,10 @@ function landReplay(store: PlaybackStore, beat: ReplayBeat): void {
  * read, then the piece lights up on the square it is about to leave, then it travels.
  * Nothing is committed and nothing is recorded — the move happened once already.
  */
-function replayBeat(context: PlaybackContext, beat: ReplayBeat): void {
+function replayBeat(context: PlaybackContext, beat: ReplayBeat, tag: PlaybackTag): void {
 	const { store, scheduled, speed } = context;
 
-	patchState(store, { isReplaying: true });
+	patchState(store, { playback: tag });
 
 	scheduled.run(
 		() => {
@@ -303,7 +306,7 @@ function rewindToStart(context: PlaybackContext): void {
 		selected: undefined,
 		pendingPromotion: undefined,
 		transition: undefined,
-		isRevealing: false,
+		playback: undefined,
 	}));
 
 	if (undefined === move || undefined === played) {
@@ -312,7 +315,7 @@ function rewindToStart(context: PlaybackContext): void {
 		return;
 	}
 
-	replayBeat(context, { cursor: 1, move, played });
+	replayBeat(context, { cursor: 1, move, played }, 'restart');
 }
 
 /**
@@ -350,7 +353,7 @@ function replayLastMove(context: PlaybackContext): void {
 	scheduled.cancel();
 	patchState(store, { rewound: 1, announced: undefined, transition: undefined });
 
-	replayBeat(context, { cursor, move, played });
+	replayBeat(context, { cursor, move, played }, 'resume');
 }
 
 /**

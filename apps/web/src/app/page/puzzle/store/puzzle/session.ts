@@ -7,6 +7,7 @@ import {
 	PromotionPieceType,
 	Square,
 } from '@app/definition/chess.type';
+import { PlaybackTag } from '@app/definition/playback.type';
 import {
 	Puzzle,
 	PuzzleClosure,
@@ -65,9 +66,7 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 	hintUnlocked: boolean;
 	/** Wrong moves in this exercise, counted from the moment it was opened. */
 	mistakeCount: number;
-	isReplaying: boolean;
-	/** The rest of the solution is being played out right now. */
-	isRevealing: boolean;
+	playback: PlaybackTag | undefined;
 }
 
 /**
@@ -136,8 +135,7 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		hintUsed: false,
 		hintUnlocked: false,
 		mistakeCount: 0,
-		isReplaying: false,
-		isRevealing: false,
+		playback: undefined,
 	};
 }
 
@@ -180,8 +178,7 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		hintUsed: false,
 		hintUnlocked: false,
 		mistakeCount: 0,
-		isReplaying: true,
-		isRevealing: false,
+		playback: 'reply',
 	};
 }
 
@@ -222,8 +219,7 @@ export function restorePatch(
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
-		isReplaying: false,
-		isRevealing: false,
+		playback: undefined,
 	};
 }
 
@@ -281,7 +277,7 @@ export function restoreFreePlayPatch(
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
-		isReplaying: false,
+		playback: undefined,
 		transition: keptTransition(state, anchor.cursor),
 	};
 }
@@ -330,7 +326,7 @@ export function revealPatch(
 		// it here when the caller has nothing to say about where it starts.
 		revealed: undefined,
 		rewound: 0,
-		isRevealing: true,
+		playback: 'reveal',
 	};
 }
 

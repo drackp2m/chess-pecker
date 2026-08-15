@@ -13,6 +13,7 @@ import {
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
 import { withPuzzleGating } from '@app/page/puzzle/store/puzzle/gating';
 import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
+import { withPuzzlePlayer } from '@app/page/puzzle/store/puzzle/player';
 import { PuzzleAction, RecordState, append } from '@app/page/puzzle/store/puzzle/record';
 import {
 	PuzzleRestore,
@@ -40,6 +41,7 @@ export class PuzzleStore
 		withPuzzleComputed(),
 		withPuzzleGating(),
 		withPuzzlePlayback(),
+		withPuzzlePlayer(),
 	)
 	implements BoardPresenter
 {
@@ -379,7 +381,7 @@ export class PuzzleStore
 		}
 
 		this.cancelPlayback();
-		patchState(this, { isReplaying: false, isRevealing: false, announced: undefined });
+		patchState(this, { playback: undefined, announced: undefined });
 		patchState(this, { outcome: this.outcomeAt(this.cursor()) });
 	}
 
