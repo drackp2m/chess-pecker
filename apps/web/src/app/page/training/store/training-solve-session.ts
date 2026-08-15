@@ -1,8 +1,8 @@
 import { DestroyRef, Injectable, effect, inject } from '@angular/core';
 
-import { PuzzleClosure } from '@app/definition/puzzle.type';
+import { PuzzleClosure, PuzzleResult } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
-import { isUntouchedRecord } from '@app/page/puzzle/store/puzzle/record';
+import { PuzzleRestore } from '@app/page/puzzle/store/puzzle/session';
 import {
 	TrainingAttemptRecord,
 	TrainingRunSlot,
@@ -31,7 +31,6 @@ export class TrainingSolveSession {
 	private slot: TrainingRunSlot | undefined;
 	private gradedUuid: string | undefined;
 	private draft: AttemptDraft | undefined;
-	private stored: AttemptRow | undefined;
 
 	constructor() {
 		effect(() => {
@@ -99,7 +98,6 @@ export class TrainingSolveSession {
 		this.slot = undefined;
 		this.gradedUuid = undefined;
 		this.draft = undefined;
-		this.stored = undefined;
 		this.timer.pause();
 		this.run.reset();
 	}
@@ -115,7 +113,6 @@ export class TrainingSolveSession {
 
 		this.slot = slot;
 		this.draft = undefined;
-		this.stored = undefined;
 		this.board.setPuzzles([PuzzleMapper.toPuzzle(slot.puzzle)]);
 		this.timer.start();
 
@@ -123,10 +120,12 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * An exercise is reopened on the draft row it left behind, not from zero: without
-	 * this the row would be written and then immediately overwritten with a fresh clock,
-	 * which is the whole point of persisting it. A row that was closed is left alone —
-	 * its verdict says nothing about that, since a missed exercise goes on being solved.
+	 * An exercise is reopened on the row it left behind, not from zero: the clock is picked
+	 * up where it stopped and the board is folded back out of the record, so what comes back
+	 * is the exercise as it was left rather than a fresh one about to overwrite it.
+	 *
+	 * The board is restored before anything is written, which is what makes the draft safe
+	 * to flush again — a reload that touches nothing writes back what it read.
 	 */
 	private async openDraft(
 		slot: TrainingRunSlot,
@@ -138,15 +137,21 @@ export class TrainingSolveSession {
 
 		const stored = await this.drafts.find(identity).catch(() => undefined);
 
-		if (this.slot !== slot || (undefined !== stored && 'open' !== stored.closure)) {
+		if (this.slot !== slot) {
 			return;
 		}
 
 		if (undefined !== stored) {
 			this.timer.restore(stored.durationMs, stored.createdAt);
+			this.board.restoreFrom(this.toRestore(stored));
 		}
 
-		this.stored = stored;
+		// A row that was closed is put back on the board all the same — the exercise is
+		// there to be looked at — but it is finished, and nothing goes on being written to it.
+		if (undefined !== stored && 'open' !== stored.closure) {
+			return;
+		}
+
 		this.draft = {
 			uuid: stored?.uuid ?? crypto.randomUUID(),
 			createdAt: stored?.createdAt ?? this.timer.snapshot().createdAt,
@@ -154,6 +159,21 @@ export class TrainingSolveSession {
 		};
 
 		await this.flush();
+	}
+
+	/** The row as the board reads it, which is the record plus the verdict it was left on. */
+	private toRestore(row: AttemptRow): PuzzleRestore {
+		const solved: PuzzleResult = true === row.solved ? 'solved' : 'failed';
+
+		return {
+			record: row.record,
+			explorations: row.explorations,
+			closure: row.closure,
+			hintUsed: row.hintUsed,
+			mistakeCount: row.mistakeCount,
+			result: undefined === row.solved ? undefined : solved,
+			...(undefined === row.orientation ? {} : { orientation: row.orientation }),
+		};
 	}
 
 	private identify(slot: TrainingRunSlot): AttemptIdentity | undefined {
@@ -176,16 +196,6 @@ export class TrainingSolveSession {
 		};
 	}
 
-	private representsDraft(): boolean {
-		if (undefined === this.stored) {
-			return true;
-		}
-
-		const written = { record: this.board.record(), explorations: this.board.explorations() };
-
-		return 'open' !== this.board.closure() || !isUntouchedRecord(written);
-	}
-
 	/**
 	 * Everything the row is composed from is read synchronously, so a flush in flight
 	 * while the next exercise opens still writes the clock of the one it belongs to.
@@ -193,11 +203,15 @@ export class TrainingSolveSession {
 	 *
 	 * The verdict goes in as soon as the board settles it, which is not the end of the
 	 * exercise any more: what says the row is finished is its closure.
+	 *
+	 * Nothing guards what it writes any more: the board it reads is the one the stored row
+	 * was folded back onto, so a reload that touches nothing writes the very record it
+	 * came in with.
 	 */
 	private flush(): Promise<void> {
 		const draft = this.draft;
 
-		if (undefined === draft || !this.representsDraft()) {
+		if (undefined === draft) {
 			return Promise.resolve();
 		}
 

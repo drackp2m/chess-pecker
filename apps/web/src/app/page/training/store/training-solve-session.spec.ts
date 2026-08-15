@@ -370,7 +370,11 @@ describe('TrainingSolveSession', () => {
 		expect(attempts.rows.size).toBe(1);
 	});
 
-	it('leaves the stored row untouched while nothing has been played on the board', async () => {
+	/**
+	 * The regression the whole restore is for: the board a reload draws is the stored one,
+	 * so what the flush writes back is what it read. Only the clock moves on.
+	 */
+	it('writes the stored record straight back while nothing is played on the board', async () => {
 		const attempts = createAttemptStorage();
 
 		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
@@ -384,10 +388,34 @@ describe('TrainingSolveSession', () => {
 		await vi.advanceTimersByTimeAsync(0);
 
 		expect(attempts.rows.size).toBe(1);
-		expect(onlyRow(attempts)).toEqual(STORED_DRAFT);
+		expect(onlyRow(attempts)).toMatchObject({
+			uuid: STORED_DRAFT.uuid,
+			record: STORED_DRAFT.record,
+			explorations: [],
+			hintUsed: true,
+			mistakeCount: 1,
+			closure: 'open',
+		});
 	});
 
-	it('takes the stored row over again once the player plays on the board', async () => {
+	it('puts the stored board back, cursor and all, before anything is written', async () => {
+		const attempts = createAttemptStorage();
+
+		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
+
+		const { session, board } = configure(createRepository(), attempts);
+
+		await enter(session);
+
+		// `g8h8`, then the miss `a1a2` and the step back off it: two plies on the board with
+		// the cursor standing behind the second.
+		expect(board.line()).toHaveLength(2);
+		expect(board.cursor()).toBe(1);
+		expect(board.mistakeCount()).toBe(1);
+		expect(board.hintUsed()).toBe(true);
+	});
+
+	it('goes on writing the stored row once the player plays on the board again', async () => {
 		const attempts = createAttemptStorage();
 
 		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
@@ -397,14 +425,14 @@ describe('TrainingSolveSession', () => {
 		await enter(session);
 
 		board.selectSquare('a1');
-		board.selectSquare('a2');
+		board.selectSquare('a8');
 		TestBed.tick();
 		await vi.advanceTimersByTimeAsync(0);
 
 		expect(attempts.rows.size).toBe(1);
 		expect(onlyRow(attempts)).toMatchObject({
 			uuid: STORED_DRAFT.uuid,
-			record: ['g8h8', 'a1a2'],
+			record: [...STORED_DRAFT.record, 'a1a8'],
 			mistakeCount: 1,
 		});
 	});

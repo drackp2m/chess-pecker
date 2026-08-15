@@ -141,6 +141,64 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 	};
 }
 
+/** What a saved exercise puts back on the board, beyond the line the record folds to. */
+export interface PuzzleRestore extends PuzzleRecord, PuzzleVerdict {
+	readonly orientation?: PieceColor;
+}
+
+/**
+ * The board a saved exercise reopens on. The line comes from folding its record, so what
+ * is put back is what was played and not a summary of it, and the verdict comes from the
+ * row: the grade was sealed while it was being solved and reopening revises nothing.
+ *
+ * Nothing is left in flight. An exercise picked up again has no beat pending, no square
+ * selected and no exploration standing — the record does not say whether one was open
+ * when it was saved, so what comes back is the main line it hangs off.
+ *
+ * The board it was left flipped to is the one thing the record cannot give back, so it
+ * travels on the row; rows written before it was stored fall back to the player's colour.
+ *
+ * What travels on the way in is `restoredTransition`'s to say, so nothing here touches it.
+ */
+export function restorePatch(
+	state: LineState,
+	stored: PuzzleRestore,
+	playerColor: PieceColor,
+): Partial<PuzzleStoreProps> {
+	return {
+		...state,
+		record: stored.record,
+		explorations: stored.explorations,
+		result: stored.result,
+		closure: stored.closure,
+		hintUsed: stored.hintUsed,
+		mistakeCount: stored.mistakeCount,
+		orientation: stored.orientation ?? playerColor,
+		freePlay: undefined,
+		announced: undefined,
+		selected: undefined,
+		pendingPromotion: undefined,
+		isReplaying: false,
+		isRevealing: false,
+	};
+}
+
+/**
+ * The slide a restored board comes back with: the last move of the path the cursor is
+ * standing at the end of, travelled forward. It is the only thing a restore animates —
+ * how the board got to where it was left is history, and history does not replay itself.
+ */
+export function restoredTransition(state: LineState): BoardTransition | undefined {
+	const move = state.line[state.cursor - 1];
+	const played = state.positions[state.cursor - 1];
+
+	if (undefined === move || undefined === played) {
+		return undefined;
+	}
+
+	return nextTransition(played, move, 'forward');
+}
+
 export function anchorFreePlay(state: LineState, deviation: number | undefined): FreePlayAnchor {
 	return { positions: state.positions, line: state.line, cursor: state.cursor, deviation };
 }

@@ -24,10 +24,6 @@ export function blankRecord(): PuzzleRecord {
 	return { record: [], explorations: [] };
 }
 
-export function isUntouchedRecord(state: PuzzleRecord): boolean {
-	return 1 >= state.record.length && 0 === state.explorations.length;
-}
-
 /** The record untouched, for everything that happens once it is closed. */
 function keep(state: PuzzleRecord): PuzzleRecord {
 	return { record: state.record, explorations: state.explorations };

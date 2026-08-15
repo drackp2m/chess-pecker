@@ -20,7 +20,9 @@ import {
 	recordRestart,
 	recordStep,
 } from '@app/page/puzzle/store/puzzle/record';
+import { foldOrBlank } from '@app/page/puzzle/store/puzzle/replay';
 import {
+	PuzzleRestore,
 	PuzzleVerdict,
 	anchorFreePlay,
 	buildPuzzleState,
@@ -30,6 +32,8 @@ import {
 	openPuzzle,
 	restartExplorationPatch,
 	restoreFreePlayPatch,
+	restorePatch,
+	restoredTransition,
 	revealPatch,
 } from '@app/page/puzzle/store/puzzle/session';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
@@ -136,6 +140,37 @@ export class PuzzleStore
 		this.cancelPlayback();
 		patchState(this, (state) => revealPatch(state, this.isOpen() ? this.deviation() : 0));
 		this.playScripted();
+	}
+
+	/**
+	 * Puts a saved exercise back on the board, exactly as it was left. It is the board the
+	 * record describes, so nothing here is played: the playback in flight is dropped, the
+	 * line is folded out of the record in one go and the cursor lands where it stood.
+	 *
+	 * The move the line is standing on is the one thing that travels, so what changed while
+	 * the page was away can be seen — a slide and nothing more, with no beat of its own and
+	 * nothing following it.
+	 *
+	 * A record that does not replay is not worth an empty board on top of a solved
+	 * exercise, so it degrades to the position the exercise opened on and the exercise is
+	 * simply begun again; the verdict it carries still stands.
+	 */
+	restoreFrom(stored: PuzzleRestore): void {
+		const puzzle = this.puzzle();
+
+		if (undefined === puzzle) {
+			return;
+		}
+
+		this.cancelPlayback();
+
+		const state = foldOrBlank(puzzle.fen, stored.record);
+
+		patchState(this, restorePatch(state, stored, this.playerColor()), {
+			transition: restoredTransition(state),
+		});
+
+		patchState(this, { outcome: this.outcomeAt(this.cursor()) });
 	}
 
 	/**
