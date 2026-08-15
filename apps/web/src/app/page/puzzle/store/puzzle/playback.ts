@@ -13,20 +13,16 @@ import {
 	ANNOUNCE_DELAY,
 	MoveSpeed,
 	REPLAY_DELAY,
-	RESUME_DELAY,
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
-import { PlaybackTag } from '@app/definition/playback.type';
 import {
 	HINT_DELAY_MS,
 	Puzzle,
 	PuzzleClosure,
-	PuzzleMove,
 	PuzzleOutcome,
 	settleClosure,
 } from '@app/definition/puzzle.type';
 import { append } from '@app/page/puzzle/store/puzzle/record';
-import { foldOrBlank } from '@app/page/puzzle/store/puzzle/replay';
 import {
 	FreePlayAnchor,
 	PuzzleStoreProps,
@@ -34,7 +30,6 @@ import {
 	describeOutcome,
 } from '@app/page/puzzle/store/puzzle/session';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 import { WatchedDelay } from '@app/util/watched-delay';
@@ -53,7 +48,6 @@ interface PuzzlePlaybackInput {
 	readonly isRevealing: Signal<boolean>;
 	readonly position: Signal<ChessPosition>;
 	readonly positions: Signal<ChessPosition[]>;
-	readonly line: Signal<PuzzleMove[]>;
 	readonly cursor: Signal<number>;
 	readonly freePlay: Signal<FreePlayAnchor | undefined>;
 	readonly deviation: Signal<number | undefined>;
@@ -191,174 +185,6 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 }
 
 /**
- * Where the record alone leaves the cursor, with no answer played out on the end of it and
- * nothing held back. It is what the board falls to when a closed exercise is started over
- * and the reveal it was showing is dropped.
- */
-function recordCursor(store: PlaybackStore): number {
-	return foldOrBlank(store.fen(), store.record()).cursor;
-}
-
-/**
- * Whether a board being come back to has anything of its own to replay. A playback still
- * in flight is about to paint it, and so is the take-back a refuted move is waiting for:
- * both are answers to something the player did, and neither may be cut short.
- */
-function isSettled(store: PlaybackStore): boolean {
-	return !store.isReplaying() && undefined === store.mistake();
-}
-
-/** The move a board picked up again replays, and the line it puts back once it has. */
-interface ReplayBeat {
-	readonly cursor: number;
-	readonly move: ChessMove;
-	readonly played: ChessPosition;
-}
-
-/**
- * The piece that was named sets off, and the line is left exactly where it was found.
- * Landing means the board catches up with the log, which it does by writing the step it
- * still has to travel — or, on a record already closed, by letting go of that much of
- * what was being held back, since nothing there can be written.
- */
-function landReplay(store: PlaybackStore, beat: ReplayBeat): void {
-	const landed = {
-		announced: undefined,
-		playback: undefined,
-		transition: nextTransition(beat.played, beat.move, 'forward'),
-	};
-
-	if ('open' === store.closure()) {
-		// `cursor` is the log's own less whatever is held back, so putting them together
-		// again says where the log itself is standing.
-		const step = beat.cursor - (store.cursor() + store.rewound());
-
-		patchState(store, (state) => append(state, { kind: 'step', step }), {
-			...landed,
-			rewound: 0,
-		});
-	} else {
-		// The board catches up by giving back exactly the plies it travels, so the offset
-		// shrinks by the distance rather than being worked out from the cursor it moved.
-		patchState(store, (state) => ({
-			...landed,
-			rewound: Math.max(0, state.rewound - (beat.cursor - store.cursor())),
-		}));
-	}
-
-	patchState(store, { outcome: outcomeAt(store, beat.cursor) });
-}
-
-/**
- * A move the line already holds, shown again: the position is left up long enough to be
- * read, then the piece lights up on the square it is about to leave, then it travels.
- * Nothing is committed and nothing is recorded — the move happened once already.
- */
-function replayBeat(context: PlaybackContext, beat: ReplayBeat, tag: PlaybackTag): void {
-	const { store, scheduled, speed } = context;
-
-	patchState(store, { playback: tag });
-
-	scheduled.run(
-		() => {
-			patchState(store, { announced: beat.move });
-			scheduled.run(
-				() => {
-					landReplay(store, beat);
-				},
-				scaleForSpeed(ANNOUNCE_DELAY, speed()),
-			);
-		},
-		scaleForSpeed(RESUME_DELAY, speed()),
-	);
-}
-
-/**
- * The restart button. It takes the board back to the position the exercise opened on
- * and replays the opponent's first move onto it, and that is all it does: the line is
- * left standing to its full length, so everything that was solved is still there to be
- * stepped back up to. Nothing may be played until the cursor gets there.
- *
- * A line with no opening move in it yet is one the exercise has not begun on, so there
- * the first move is played for real instead of shown again.
- *
- * The log's own `0` already stands the board on the opening move, which is where the
- * rewind is going and not where it starts. It is held one ply behind that while the move
- * is shown again, so the board really is the one the exercise opened on until it travels.
- */
-function rewindToStart(context: PlaybackContext): void {
-	const { store, scheduled } = context;
-	const move = store.line()[0];
-	const played = store.positions()[0];
-
-	scheduled.cancel();
-	patchState(store, (state) => ({
-		// The board sits on ply 0 for the whole rewind, whether the opening move is about
-		// to be shown again from there or played for the first time. While the record is
-		// open its own `0` has already carried the log to ply 1, so one ply is held back.
-		//
-		// A closed record took no restart at all, so the board is stood back by hand — and
-		// the answer it had played out is dropped in the same breath, because starting the
-		// exercise over is starting it over. What is left to hold back is the log's own
-		// cursor, which is where the fold would otherwise leave the board.
-		...('open' === state.closure
-			? { rewound: 1 }
-			: { rewound: recordCursor(store), revealed: undefined }),
-		announced: undefined,
-		selected: undefined,
-		pendingPromotion: undefined,
-		transition: undefined,
-		playback: undefined,
-	}));
-
-	if (undefined === move || undefined === played) {
-		playScripted(context);
-
-		return;
-	}
-
-	replayBeat(context, { cursor: 1, move, played }, 'restart');
-}
-
-/**
- * Plays the last move of the visible line over again, for a board that is being come back
- * to rather than played on — the line as the cursor leaves it, never whatever the last
- * thing done to the board happened to be. A rewind is a way of looking at the line, not a
- * move in it, and looking at it is not something to be shown a second time.
- *
- * Nothing moved on the player's account here, so it is played the way the opponent's own
- * moves are: the position is left up long enough to be read, then the piece lights up on
- * the square it is about to leave, then it travels.
- *
- * Standing the line back on the board that move was played from is a beat of the
- * animation and nothing else — the cursor ends exactly where it was found, and the record
- * never hears about it.
- */
-function replayLastMove(context: PlaybackContext): void {
-	const { store, scheduled } = context;
-	const cursor = store.cursor();
-	const move = store.line()[cursor - 1];
-	const played = store.positions()[cursor - 1];
-
-	// The beat the board was left standing on is dropped either way: it is over, and a
-	// board coming back must not run it again on its way in.
-	if (undefined === move || undefined === played || !isSettled(store)) {
-		patchState(store, { transition: undefined });
-
-		return;
-	}
-
-	// Stand the line back on the board the move was played from, so the piece that is
-	// named is still on the square it is about to leave. It is a beat of the animation and
-	// nothing that happened, so it is held apart from the log: `rewound` is display only,
-	// and `landReplay` drops it once the piece has travelled.
-	scheduled.cancel();
-	patchState(store, { rewound: 1, announced: undefined, transition: undefined });
-
-	replayBeat(context, { cursor, move, played }, 'resume');
-}
-
-/**
  * Locks the hint and starts the clock that puts it on offer. Only opening an exercise
  * arms it: a restart is the same exercise being worked on, and the position has been
  * looked at for as long as it has been.
@@ -425,14 +251,6 @@ function buildCoreMethods(context: PlaybackContext) {
 
 		playScripted: (): void => {
 			playScripted(context);
-		},
-
-		replayLastMove: (): void => {
-			replayLastMove(context);
-		},
-
-		rewindToStart: (): void => {
-			rewindToStart(context);
 		},
 	};
 }

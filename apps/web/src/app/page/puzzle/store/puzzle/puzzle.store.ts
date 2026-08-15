@@ -13,7 +13,8 @@ import {
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
 import { withPuzzleGating } from '@app/page/puzzle/store/puzzle/gating';
 import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
-import { withPuzzlePlayer } from '@app/page/puzzle/store/puzzle/player';
+import { PlaybackHooks, withPuzzlePlayer } from '@app/page/puzzle/store/puzzle/player';
+import { RESTART_PROGRAM, resumeProgram } from '@app/page/puzzle/store/puzzle/program';
 import { PuzzleAction, RecordState, append } from '@app/page/puzzle/store/puzzle/record';
 import {
 	PuzzleRestore,
@@ -24,6 +25,7 @@ import {
 	isSolution,
 	nextSelection,
 	openPuzzle,
+	restartPatch,
 	restoreFreePlayPatch,
 	restorePatch,
 	restoredTransition,
@@ -113,7 +115,33 @@ export class PuzzleStore
 		// The sandbox stays open — starting the exercise over is not leaving it — so the
 		// restart is written inside the exploration, which is where the board is.
 		this.append({ kind: 'restart' });
-		this.rewindToStart();
+		patchState(this, restartPatch(this.closure()));
+		this.run(RESTART_PROGRAM, this.playbackHooks());
+	}
+
+	/**
+	 * Plays the last move of the visible line over again, for a board that is being come
+	 * back to rather than played on — the line as the cursor leaves it, never whatever the
+	 * last thing done to the board happened to be. A rewind is a way of looking at the line,
+	 * not a move in it, and looking at it is not something to be shown a second time.
+	 *
+	 * The beat the board was left standing on is dropped either way: it is over, and a board
+	 * coming back must not run it again on its way in. What it may not cut short is a
+	 * playback still in flight or the take-back a refuted move is waiting for — both are
+	 * answers to something the player did, and the board comes back to them as it left them.
+	 */
+	replayLastMove(): void {
+		const cursor = this.cursor();
+		const isReplayable =
+			undefined !== this.line()[cursor - 1] && undefined !== this.positions()[cursor - 1];
+
+		if (!isReplayable || this.isReplaying() || undefined !== this.mistake()) {
+			patchState(this, { transition: undefined });
+
+			return;
+		}
+
+		this.run(resumeProgram(cursor), this.playbackHooks());
 	}
 
 	/**
@@ -175,6 +203,7 @@ export class PuzzleStore
 			return;
 		}
 
+		this.stop();
 		this.cancelPlayback();
 		patchState(this, restorePatch(stored, this.playerColor()));
 
@@ -290,6 +319,7 @@ export class PuzzleStore
 	private open(verdict?: PuzzleVerdict, recorded?: PuzzleRecord): void {
 		const puzzle = this.puzzle();
 
+		this.stop();
 		this.cancelPlayback();
 
 		if (undefined === puzzle) {
@@ -305,6 +335,24 @@ export class PuzzleStore
 
 	private lineState() {
 		return { positions: this.positions(), line: this.line(), cursor: this.cursor() };
+	}
+
+	/**
+	 * The two things the player cannot reach on its own, because they live on the store and
+	 * not in a feature. The seek is always the held one: everything real is written before
+	 * the programme is handed over, so all a programme ever moves is the board. And the end
+	 * of one is where the verdict is read back off the head it left the board standing on.
+	 */
+	private playbackHooks(): PlaybackHooks {
+		return {
+			seek: (to: number): void => {
+				patchState(this, { rewound: Math.max(0, this.rewound() + this.cursor() - to) });
+			},
+
+			settled: (): void => {
+				patchState(this, { outcome: this.outcomeAt(this.cursor()) });
+			},
+		};
 	}
 
 	/**
@@ -375,7 +423,15 @@ export class PuzzleStore
 		}
 	}
 
+	/**
+	 * Anything the player does ends what the board was playing by itself. The programme goes
+	 * first and unconditionally — it is the player's to abandon whatever it was showing — and
+	 * what is left below is the reveal, which still runs outside the player until the rest of
+	 * the programmes are hooked up and cannot yet be stopped by the same call.
+	 */
 	private stopReveal(): void {
+		this.stop();
+
 		if (!this.isRevealing()) {
 			return;
 		}

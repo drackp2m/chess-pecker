@@ -6,6 +6,7 @@ import { Square } from '@app/definition/chess.type';
 import {
 	ANNOUNCE_DELAY,
 	DEFAULT_MOVE_SPEED,
+	REPLAY_DELAY,
 	RESUME_DELAY,
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
@@ -585,9 +586,10 @@ describe('PuzzleStore', () => {
 		const reopened = slideOf(store.transition());
 
 		// The same move onto the same square as before, so only the tick tells the two
-		// slides apart — and the miss in between must not have rewound it. It travels as
-		// a replay and not as a move: the line already had it, and still does.
-		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'forward' });
+		// slides apart — and the miss in between must not have rewound it. It answers the
+		// button that was just pressed, so it travels the way a move played does: the
+		// board is not being navigated, it is being started over.
+		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'played' });
 		expect(reopened.tick).toBeGreaterThan(opening.tick ?? 0);
 	});
 
@@ -871,7 +873,9 @@ describe('PuzzleStore', () => {
 			const entry = snapshot(store);
 
 			store.restart();
-			vi.advanceTimersByTime(800);
+			// Far enough in for the piece to be lit up and not far enough for it to have
+			// travelled, which is the only moment there is anything in flight to drop.
+			vi.advanceTimersByTime(REPLAY_DELAY + 1);
 
 			expect(store.announcedMove()?.to).toBe('f8');
 

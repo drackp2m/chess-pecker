@@ -296,6 +296,29 @@ export function explorationRestartCursor(anchor: FreePlayAnchor): number {
 }
 
 /**
+ * What starting over clears before the opening move is shown again. Where the board goes is
+ * the programme's to say, so nothing here rewinds anything: this is the furniture the
+ * exercise had out at the time, and the board stood back up where the log leaves it.
+ *
+ * Whatever was being held back goes with it. The rewind that follows is measured from the
+ * board it starts on, so the board has to be the one the log describes for it to come out
+ * right — and none of what the offset was showing survives starting over anyway.
+ *
+ * A closed record took no restart, because it takes nothing at all, so the answer it had
+ * played out is let go of by hand. Starting the exercise over is starting it over.
+ */
+export function restartPatch(closure: PuzzleClosure): Partial<PuzzleStoreProps> {
+	return {
+		announced: undefined,
+		selected: undefined,
+		pendingPromotion: undefined,
+		transition: undefined,
+		rewound: 0,
+		...('open' === closure ? {} : { revealed: undefined }),
+	};
+}
+
+/**
  * How far back giving up rewinds: onto the ply where the line stopped following the
  * script, so the solution can be played out from there.
  */

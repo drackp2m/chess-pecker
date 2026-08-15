@@ -197,9 +197,17 @@ function run(context: PlayerContext, program: PlaybackProgram, hooks: PlaybackHo
 }
 
 /**
- * Abandons the programme and leaves the board where it stands. The clock is only put out
- * when there was something on it to put out: it is shared with the take-back a refuted move
- * is waiting for, and a programme that was never running has no business cancelling that.
+ * Abandons the programme. The clock is only put out when there was something on it to put
+ * out: it is shared with the take-back a refuted move is waiting for, and a programme that
+ * was never running has no business cancelling that.
+ *
+ * What the programme was holding the board back by is given back with it, so the board lands
+ * where the log leaves it — without the beats, which is the whole of what is dropped. Held
+ * back is a promise to move on, and everything that writes takes the board being where the
+ * log left it for granted: a move played onto a board a ply behind is written where it was
+ * never played. A closed record is the one place the offset is not a promise but the head
+ * itself, walking an answer that was played out after the log was sealed, and nothing here
+ * may move it.
  */
 function stop(context: PlayerContext): void {
 	if (undefined === context.running) {
@@ -208,7 +216,11 @@ function stop(context: PlayerContext): void {
 
 	context.scheduled.cancel();
 	context.running = undefined;
-	patchState(context.store, { playback: undefined, announced: undefined });
+	patchState(context.store, (state) => ({
+		playback: undefined,
+		announced: undefined,
+		...('open' === state.closure ? { rewound: 0 } : {}),
+	}));
 }
 
 function settle(context: PlayerContext): void {
