@@ -178,7 +178,10 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		hintUsed: false,
 		hintUnlocked: false,
 		mistakeCount: 0,
-		playback: 'reply',
+		// What the board is playing is the player's to say, and it says so by starting a
+		// programme. A patch that named one without running it would leave the board busy
+		// for good, so nothing here names one.
+		playback: undefined,
 	};
 }
 
@@ -349,8 +352,45 @@ export function revealPatch(
 		// it here when the caller has nothing to say about where it starts.
 		revealed: undefined,
 		rewound: 0,
-		playback: 'reveal',
+		playback: undefined,
 	};
+}
+
+/**
+ * The whole of the answer, parsed forward from the ply it is played from. A programme walks
+ * a line that already exists, so the answer has to exist before the walking starts: it is
+ * written in one go here and held back, rather than growing a move at a time underneath it.
+ *
+ * It is cut where a move stops parsing. A script that runs into a position it cannot be
+ * played from ends there, and what was read up to that point is still an answer worth
+ * watching — the same bargain the fold strikes with a record it cannot finish.
+ */
+export function revealedLine(
+	positions: readonly ChessPosition[],
+	scripted: readonly string[],
+	at: number,
+): RevealedLine {
+	const anchor = positions[at];
+
+	if (undefined === anchor) {
+		return { at, moves: [] };
+	}
+
+	const moves: string[] = [];
+	let board = anchor;
+
+	for (const written of scripted.slice(at)) {
+		const move = ChessNotation.parse(board, written);
+
+		if (undefined === move) {
+			break;
+		}
+
+		moves.push(ChessNotation.describeLong(move));
+		board = ChessBoard.apply(board, move);
+	}
+
+	return { at, moves };
 }
 
 export function toRecord(

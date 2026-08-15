@@ -318,11 +318,14 @@ describe('PuzzleStore', () => {
 		expect(store.isPlayerTurn()).toBe(true);
 		expect(store.mistake()).toBeUndefined();
 
-		// Playing the solution from there drops the whole free-play branch.
+		// Playing the solution from there drops the whole free-play branch. Three plies and
+		// not two: the answer is written before it is walked, so it is on the line already
+		// with the board still a ply short of it — which is what the scoresheet reads.
 		store.selectSquare('b2');
 		store.selectSquare('b1');
 
-		expect(store.line()).toHaveLength(2);
+		expect(store.line()).toHaveLength(3);
+		expect(store.history()).toHaveLength(2);
 		expect(store.history()[1]?.san).toBe('Rb1+');
 		expect(store.outcome()).toBe('replying');
 	});
@@ -1275,7 +1278,9 @@ describe('PuzzleStore', () => {
 			play(store, 'b2', 'b1');
 
 			expect(store.result()).toBe('failed');
-			expect(store.record()).toEqual(['f1f8', 'b2c2', -1, 'b2b1']);
+			// The answer is written whole before it is walked, so it is in the record while
+			// the board is still a ply short of it.
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1, 'b2b1', 'b3d1']);
 		});
 
 		it('keeps an exploration made after the miss, anchor and all', () => {

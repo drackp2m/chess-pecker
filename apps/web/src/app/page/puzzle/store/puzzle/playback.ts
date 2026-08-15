@@ -9,19 +9,8 @@ import {
 } from '@ngrx/signals';
 
 import { ChessMove, ChessPosition } from '@app/definition/chess.type';
-import {
-	ANNOUNCE_DELAY,
-	MoveSpeed,
-	REPLAY_DELAY,
-	scaleForSpeed,
-} from '@app/definition/move-speed.type';
-import {
-	HINT_DELAY_MS,
-	Puzzle,
-	PuzzleClosure,
-	PuzzleOutcome,
-	settleClosure,
-} from '@app/definition/puzzle.type';
+import { MoveSpeed, scaleForSpeed } from '@app/definition/move-speed.type';
+import { HINT_DELAY_MS, Puzzle, PuzzleOutcome } from '@app/definition/puzzle.type';
 import { append } from '@app/page/puzzle/store/puzzle/record';
 import {
 	FreePlayAnchor,
@@ -30,7 +19,6 @@ import {
 	describeOutcome,
 } from '@app/page/puzzle/store/puzzle/session';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
-import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 import { WatchedDelay } from '@app/util/watched-delay';
 
@@ -45,10 +33,8 @@ interface PuzzlePlaybackInput {
 	readonly boardClock: ScheduledAction;
 	readonly puzzle: Signal<Puzzle | undefined>;
 	readonly isReplaying: Signal<boolean>;
-	readonly isRevealing: Signal<boolean>;
 	readonly position: Signal<ChessPosition>;
 	readonly positions: Signal<ChessPosition[]>;
-	readonly cursor: Signal<number>;
 	readonly freePlay: Signal<FreePlayAnchor | undefined>;
 	readonly deviation: Signal<number | undefined>;
 	readonly mistake: Signal<ChessMove | undefined>;
@@ -77,111 +63,17 @@ function outcomeAt(store: PlaybackStore, cursor: number): PuzzleOutcome {
 }
 
 /**
- * Whether the line that just landed ends the exercise. Only the main line played out
- * on the board does: free play is a sandbox, and an answer playing itself is the very
- * thing the player did not find.
- */
-function landedClosure(
-	store: PlaybackStore,
-	outcome: PuzzleOutcome,
-	wasRevealing: boolean,
-): PuzzleClosure {
-	const isFound = 'solved' === outcome && !wasRevealing && undefined === store.freePlay();
-
-	return isFound ? settleClosure(store.closure(), 'found') : store.closure();
-}
-
-/**
- * A move onto the board. It goes into the log while the exercise is open; once it is
- * closed the log takes nothing, and the answer playing itself out lands in `revealed`
- * instead — on the board, and deliberately not in the record of how it was solved.
+ * A move the player put on the board, which is the only kind there is any more. Everything
+ * the board plays by itself is written before it is played — the opponent's answer by the
+ * caller that starts the programme, the whole revealed line in one go — and a programme moves
+ * nothing but the head. So anything reaching here is a move on its way into the log.
  */
 function commit(store: PlaybackStore, move: ChessMove): void {
-	const position = store.position();
-
 	// A move written into the log is the board moving on for real, so anything that was
 	// holding it behind the line is spent: what it was waiting to show has now happened.
-	// An answer played out after the close carries its own anchor and needs no such offset.
-	if ('open' === store.closure()) {
-		patchState(store, commitPatch(position, move), { rewound: 0 }, (state) =>
-			append(state, { kind: 'move', move }),
-		);
-
-		return;
-	}
-
-	const written = ChessNotation.describeLong(move);
-	// The first move of an answer anchors it to the ply the board is standing on, which is
-	// where it is being played from. Every move after it joins the one already anchored.
-	const cursor = store.cursor();
-
-	patchState(store, commitPatch(position, move), (state) => ({
-		revealed:
-			undefined === state.revealed
-				? { at: cursor, moves: [written] }
-				: { ...state.revealed, moves: [...state.revealed.moves, written] },
-	}));
-}
-
-/**
- * Plays the scripted ply at the cursor in two beats: the piece lights up on
- * its own square first, so it can be seen before it slides across the board.
- */
-function playScripted(context: PlaybackContext): void {
-	const { store, scheduled, speed } = context;
-
-	scheduled.cancel();
-	patchState(store, { playback: store.playback() ?? 'reply' });
-
-	scheduled.run(
-		() => {
-			const expected = store.puzzle()?.moves[store.cursor()];
-			const move =
-				undefined === expected ? undefined : ChessNotation.parse(store.position(), expected);
-
-			patchState(store, { announced: move });
-			scheduled.run(
-				() => {
-					land(context, move);
-				},
-				scaleForSpeed(ANNOUNCE_DELAY, speed()),
-			);
-		},
-		scaleForSpeed(REPLAY_DELAY, speed()),
+	patchState(store, commitPatch(store.position(), move), { rewound: 0 }, (state) =>
+		append(state, { kind: 'move', move }),
 	);
-}
-
-/**
- * A reveal walks the whole rest of the line, so it comes back here for the
- * next ply; a lone reply stops. Either way the line can run out early — a
- * mate cuts the script short, and from a finished position there is nothing
- * left to parse.
- */
-function land(context: PlaybackContext, move: ChessMove | undefined): void {
-	const { store } = context;
-
-	patchState(store, { announced: undefined });
-
-	if (undefined !== move) {
-		commit(store, move);
-	}
-
-	const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
-	const wasRevealing = store.isRevealing();
-
-	if (wasRevealing && undefined !== move && isScriptLeft) {
-		playScripted(context);
-
-		return;
-	}
-
-	// Real Lichess lines end on a player move, but a set that ends on the
-	// opponent's would otherwise leave the exercise waiting forever.
-	patchState(store, { playback: undefined });
-
-	const outcome = outcomeAt(store, store.cursor());
-
-	patchState(store, { outcome, closure: landedClosure(store, outcome, wasRevealing) });
 }
 
 /**
@@ -221,8 +113,8 @@ function scheduleUndo(context: PlaybackContext, undo: () => void): void {
 
 /**
  * Timers outlive the store they were started from, so they are stopped with it — the hint's
- * own, which is the only one made here. What is left of the playback still beats on the
- * player's clock, and the player is what stops that one.
+ * own, which is the only one made here. The take-back beats on the player's clock, and the
+ * player is what stops that one.
  */
 function createContext(store: PlaybackStore): PlaybackContext {
 	const hintGate = new WatchedDelay();
@@ -236,48 +128,6 @@ function createContext(store: PlaybackStore): PlaybackContext {
 		scheduled: store.boardClock,
 		hintGate,
 		speed: inject(BoardPreferenceService).moveSpeed,
-	};
-}
-
-function buildCoreMethods(context: PlaybackContext) {
-	const { store } = context;
-
-	return {
-		outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
-
-		commit: (move: ChessMove): void => {
-			commit(store, move);
-		},
-
-		playScripted: (): void => {
-			playScripted(context);
-		},
-	};
-}
-
-function buildTimerMethods(context: PlaybackContext) {
-	const { store, scheduled } = context;
-
-	return {
-		settleScripted: (): void => {
-			if (store.isReplaying()) {
-				scheduled.flush();
-			}
-		},
-
-		cancelScripted: (): void => {
-			if (store.isReplaying()) {
-				scheduled.cancel();
-			}
-		},
-
-		cancelPlayback: (): void => {
-			scheduled.cancel();
-		},
-
-		scheduleUndo: (undo: () => void): void => {
-			scheduleUndo(context, undo);
-		},
 	};
 }
 
@@ -304,18 +154,28 @@ function buildClockMethods(context: PlaybackContext) {
 }
 
 function buildMethods(context: PlaybackContext) {
+	const { store } = context;
+
 	return {
-		...buildCoreMethods(context),
-		...buildTimerMethods(context),
+		outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
+
+		commit: (move: ChessMove): void => {
+			commit(store, move);
+		},
+
+		scheduleUndo: (undo: () => void): void => {
+			scheduleUndo(context, undo);
+		},
+
 		...buildClockMethods(context),
 	};
 }
 
 /**
- * Everything the board plays by itself, on a timer: the opponent's scripted replies,
- * the solution when it is asked for, the take-back of a refuted move, and the move the
- * line is standing on when an exercise is picked up again. The store decides *when* any
- * of it happens; this decides how it looks while it does.
+ * What is left of the board playing by itself once the programmes took the replaying over:
+ * the move the player puts on the board, the take-back a refuted one waits for, and the
+ * clock the hint sits behind. The store decides *when* any of it happens; this decides how
+ * it looks while it does.
  */
 export function withPuzzlePlayback() {
 	return signalStoreFeature(
