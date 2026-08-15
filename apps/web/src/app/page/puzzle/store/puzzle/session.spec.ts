@@ -2,18 +2,16 @@ import { describe, expect, it } from 'vitest';
 
 import { ChessMove } from '@app/definition/chess.type';
 import { Puzzle } from '@app/definition/puzzle.type';
+import { foldRecord } from '@app/page/puzzle/store/puzzle/replay';
 import {
 	FreePlayAnchor,
 	LineState,
 	anchorFreePlay,
-	extendLine,
 	isSolution,
 	openPuzzle,
 	restoreFreePlayPatch,
-	toRecord,
 } from '@app/page/puzzle/store/puzzle/session';
 import { nextTransition } from '@app/util/chess/board-transition';
-import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
@@ -33,28 +31,9 @@ function move(fen: string, uci: string): ChessMove {
 	return parsed;
 }
 
-function append(state: LineState, notation: string): LineState {
-	const position = state.positions[state.cursor];
-
-	if (undefined === position) {
-		throw new Error(`the line holds no position at ply ${state.cursor.toString()}`);
-	}
-
-	const played = ChessNotation.parse(position, notation);
-
-	if (undefined === played) {
-		throw new Error(`${notation} is not legal at ply ${state.cursor.toString()}`);
-	}
-
-	return extendLine(state, toRecord(position, played, false), ChessBoard.apply(position, played));
-}
-
+/** The line a log describes, which is the only way one is built now. */
 function buildLine(fen: string, notations: readonly string[]): LineState {
-	return notations.reduce<LineState>(append, {
-		positions: [ChessFen.parse(fen)],
-		line: [],
-		cursor: 0,
-	});
+	return foldRecord(fen, notations);
 }
 
 describe('isSolution', () => {
@@ -99,8 +78,10 @@ describe('openPuzzle', () => {
 
 		expect(opened.playerColor).toBe('black');
 		expect(opened.orientation).toBe('black');
-		expect(opened.cursor).toBe(0);
 		expect(opened.outcome).toBe('opening');
+		// The line is the log folded out, so opening one is emptying the log.
+		expect(opened.record).toEqual([]);
+		expect(opened.explorations).toEqual([]);
 	});
 });
 
@@ -116,32 +97,15 @@ describe('the free play anchor', () => {
 		expect(anchorFreePlay(LINE, undefined).deviation).toBeUndefined();
 	});
 
-	it('puts positions, line and cursor back where free play started', () => {
+	it('lets go of the exploration rather than unwriting it', () => {
 		const anchor = anchorFreePlay(LINE, undefined);
-		const strayed = append(append(LINE, 'f8f1'), 'd1f1');
+		const patch = restore(anchor, 6);
 
-		expect(strayed.cursor).toBe(6);
-
-		const patch = restore(anchor, strayed.cursor);
-
-		expect(patch.positions).toEqual(LINE.positions);
-		expect(patch.line).toEqual(LINE.line);
-		expect(patch.cursor).toBe(4);
-		expect(patch.freePlay).toBeUndefined();
-	});
-
-	it('gives back the moves a rewound entry had left ahead of the cursor', () => {
-		const rewound: LineState = { ...LINE, cursor: 2 };
-		const anchor = anchorFreePlay(rewound, undefined);
-		const strayed = append(rewound, 'f8f1');
-
-		expect(strayed.line).toHaveLength(3);
-
-		const patch = restore(anchor, strayed.cursor);
-
-		expect(patch.line).toEqual(LINE.line);
-		expect(patch.line).toHaveLength(4);
-		expect(patch.cursor).toBe(2);
+		expect(patch.freePlayIndex).toBeUndefined();
+		// The line is derived now, so nothing here puts it back by hand.
+		expect(patch).not.toHaveProperty('positions');
+		expect(patch).not.toHaveProperty('line');
+		expect(patch).not.toHaveProperty('cursor');
 	});
 
 	it('keeps the slide that lands on the cursor it restores, and drops any other', () => {

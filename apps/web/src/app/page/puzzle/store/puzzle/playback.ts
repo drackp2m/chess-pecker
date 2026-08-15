@@ -20,11 +20,14 @@ import {
 	HINT_DELAY_MS,
 	Puzzle,
 	PuzzleClosure,
+	PuzzleMove,
 	PuzzleOutcome,
 	settleClosure,
 } from '@app/definition/puzzle.type';
-import { recordMove } from '@app/page/puzzle/store/puzzle/record';
+import { append } from '@app/page/puzzle/store/puzzle/record';
+import { foldOrBlank } from '@app/page/puzzle/store/puzzle/replay';
 import {
+	FreePlayAnchor,
 	PuzzleStoreProps,
 	commitPatch,
 	describeOutcome,
@@ -44,6 +47,10 @@ const UNDO_DELAY = 800;
 interface PuzzlePlaybackInput {
 	readonly puzzle: Signal<Puzzle | undefined>;
 	readonly position: Signal<ChessPosition>;
+	readonly positions: Signal<ChessPosition[]>;
+	readonly line: Signal<PuzzleMove[]>;
+	readonly cursor: Signal<number>;
+	readonly freePlay: Signal<FreePlayAnchor | undefined>;
 	readonly deviation: Signal<number | undefined>;
 	readonly mistake: Signal<ChessMove | undefined>;
 }
@@ -85,14 +92,29 @@ function landedClosure(
 	return isFound ? settleClosure(store.closure(), 'found') : store.closure();
 }
 
-function commit(store: PlaybackStore, move: ChessMove, isOpponent: boolean): void {
+/**
+ * A move onto the board. It goes into the log while the exercise is open; once it is
+ * closed the log takes nothing, and the answer playing itself out lands in `revealed`
+ * instead — on the board, and deliberately not in the record of how it was solved.
+ */
+function commit(store: PlaybackStore, move: ChessMove): void {
 	const position = store.position();
 
-	patchState(
-		store,
-		(state) => commitPatch(state, position, move, isOpponent),
-		(state) => recordMove(state, move),
-	);
+	// A move written into the log is the board moving on for real, so anything that was
+	// holding it behind the line is spent: what it was waiting to show has now happened.
+	// The answer played out after the close is folded from where the board is standing,
+	// so there the offset is what keeps it there and it stays.
+	if ('open' === store.closure()) {
+		patchState(store, commitPatch(position, move), { rewound: 0 }, (state) =>
+			append(state, { kind: 'move', move }),
+		);
+
+		return;
+	}
+
+	patchState(store, commitPatch(position, move), (state) => ({
+		revealed: [...state.revealed, ChessNotation.describeLong(move)],
+	}));
 }
 
 /**
@@ -135,7 +157,7 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 	patchState(store, { announced: undefined });
 
 	if (undefined !== move) {
-		commit(store, move, store.position().turn !== store.playerColor());
+		commit(store, move);
 	}
 
 	const isScriptLeft = store.cursor() < (store.puzzle()?.moves.length ?? 0);
@@ -157,6 +179,15 @@ function land(context: PlaybackContext, move: ChessMove | undefined): void {
 }
 
 /**
+ * Where the record alone leaves the cursor, with no answer played out on the end of it and
+ * nothing held back. It is what the board falls to when a closed exercise is started over
+ * and the reveal it was showing is dropped.
+ */
+function recordCursor(store: PlaybackStore): number {
+	return foldOrBlank(store.fen(), store.record()).cursor;
+}
+
+/**
  * Whether a board being come back to has anything of its own to replay. A playback still
  * in flight is about to paint it, and so is the take-back a refuted move is waiting for:
  * both are answers to something the player did, and neither may be cut short.
@@ -172,14 +203,36 @@ interface ReplayBeat {
 	readonly played: ChessPosition;
 }
 
-/** The piece that was named sets off, and the line is left exactly where it was found. */
+/**
+ * The piece that was named sets off, and the line is left exactly where it was found.
+ * Landing means the board catches up with the log, which it does by writing the step it
+ * still has to travel — or, on a record already closed, by letting go of that much of
+ * what was being held back, since nothing there can be written.
+ */
 function landReplay(store: PlaybackStore, beat: ReplayBeat): void {
-	patchState(store, {
-		cursor: beat.cursor,
+	const landed = {
 		announced: undefined,
 		isReplaying: false,
 		transition: nextTransition(beat.played, beat.move, 'forward'),
-	});
+	};
+
+	if ('open' === store.closure()) {
+		// `cursor` is the log's own less whatever is held back, so putting them together
+		// again says where the log itself is standing.
+		const step = beat.cursor - (store.cursor() + store.rewound());
+
+		patchState(store, (state) => append(state, { kind: 'step', step }), {
+			...landed,
+			rewound: 0,
+		});
+	} else {
+		// The board catches up by giving back exactly the plies it travels, so the offset
+		// shrinks by the distance rather than being worked out from the cursor it moved.
+		patchState(store, (state) => ({
+			...landed,
+			rewound: Math.max(0, state.rewound - (beat.cursor - store.cursor())),
+		}));
+	}
 
 	patchState(store, { outcome: outcomeAt(store, beat.cursor) });
 }
@@ -216,6 +269,10 @@ function replayBeat(context: PlaybackContext, beat: ReplayBeat): void {
  *
  * A line with no opening move in it yet is one the exercise has not begun on, so there
  * the first move is played for real instead of shown again.
+ *
+ * The log's own `0` already stands the board on the opening move, which is where the
+ * rewind is going and not where it starts. It is held one ply behind that while the move
+ * is shown again, so the board really is the one the exercise opened on until it travels.
  */
 function rewindToStart(context: PlaybackContext): void {
 	const { store, scheduled } = context;
@@ -223,14 +280,22 @@ function rewindToStart(context: PlaybackContext): void {
 	const played = store.positions()[0];
 
 	scheduled.cancel();
-	patchState(store, {
-		cursor: 0,
+	patchState(store, (state) => ({
+		// The board sits on ply 0 for the whole rewind, whether the opening move is about
+		// to be shown again from there or played for the first time. While the record is
+		// open its own `0` has already carried the log to ply 1, so one ply is held back.
+		//
+		// A closed record took no restart at all, so the board is stood back by hand — and
+		// the answer it had played out is dropped in the same breath, because starting the
+		// exercise over is starting it over. What is left to hold back is the log's own
+		// cursor, which is where the fold would otherwise leave the board.
+		...('open' === state.closure ? { rewound: 1 } : { rewound: recordCursor(store), revealed: [] }),
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
 		transition: undefined,
 		isRevealing: false,
-	});
+	}));
 
 	if (undefined === move || undefined === played) {
 		playScripted(context);
@@ -270,9 +335,11 @@ function replayLastMove(context: PlaybackContext): void {
 	}
 
 	// Stand the line back on the board the move was played from, so the piece that is
-	// named is still on the square it is about to leave.
+	// named is still on the square it is about to leave. It is a beat of the animation and
+	// nothing that happened, so it is held apart from the log: `rewound` is display only,
+	// and `landReplay` drops it once the piece has travelled.
 	scheduled.cancel();
-	patchState(store, { cursor: cursor - 1, announced: undefined, transition: undefined });
+	patchState(store, { rewound: 1, announced: undefined, transition: undefined });
 
 	replayBeat(context, { cursor, move, played });
 }
@@ -336,8 +403,8 @@ function buildCoreMethods(context: PlaybackContext) {
 	return {
 		outcomeAt: (cursor: number): PuzzleOutcome => outcomeAt(store, cursor),
 
-		commit: (move: ChessMove, isOpponent: boolean): void => {
-			commit(store, move, isOpponent);
+		commit: (move: ChessMove): void => {
+			commit(store, move);
 		},
 
 		playScripted: (): void => {
