@@ -645,6 +645,30 @@ describe('PuzzleStore', () => {
 		expect(store.transition()).toBeUndefined();
 	});
 
+	it('walks back through an answer that played itself out, a ply at a time', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
+		store.revealSolution();
+		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+		const watched = store.history();
+
+		expect(watched.length).toBeGreaterThan(1);
+
+		store.stepBackward();
+
+		// The answer is anchored to the ply it was played from, so the head travels it like
+		// any other stretch of line instead of the whole thing falling off the board.
+		expect(store.cursor()).toBe(watched.length - 1);
+		expect(store.history()).toEqual(watched.slice(0, -1));
+
+		store.stepForward();
+
+		expect(store.cursor()).toBe(watched.length);
+		expect(store.history()).toEqual(watched);
+	});
+
 	it('navigates between exercises and restarts them', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}\n${SHORT}`);
 

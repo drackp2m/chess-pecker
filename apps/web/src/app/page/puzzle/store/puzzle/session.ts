@@ -42,13 +42,8 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 	 * allowed. Both are undone by the log moving on, so it is cleared whenever it does.
 	 */
 	rewound: number;
-	/**
-	 * The answer played out after the exercise was given up on. It reaches the board like
-	 * any other move, but the record is closed by the time it does and takes none of it —
-	 * so it is folded onto the end of the line from here instead, which is the one place
-	 * the board says more than the log does.
-	 */
-	revealed: readonly string[];
+	/** The answer played out after the exercise was given up on, or none. */
+	revealed: RevealedLine | undefined;
 	/** The board the exercise opened on, which the fold replays the log onto. */
 	fen: string;
 	/** The opponent's scripted move, lit up before it is replayed. */
@@ -73,6 +68,23 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 	isReplaying: boolean;
 	/** The rest of the solution is being played out right now. */
 	isRevealing: boolean;
+}
+
+/**
+ * The answer played out after the exercise was given up on. It reaches the board like any
+ * other move, but the record is closed by the time it does and takes none of it — so it is
+ * folded onto the line from here instead, which is the one place the board says more than
+ * the log does.
+ *
+ * `at` is what keeps it seekable. Without it the answer had to be folded from wherever the
+ * head happened to be standing, so stepping back through it moved where it began rather
+ * than where it was being read from, and the first move stopped replaying. Anchored, the
+ * answer is a fixed stretch of line like any other and `rewound` walks it.
+ */
+export interface RevealedLine {
+	/** The ply it is played from, as an index into the line the log folds to. */
+	readonly at: number;
+	readonly moves: readonly string[];
 }
 
 /**
@@ -110,7 +122,7 @@ export function buildPuzzleState(): PuzzleStoreProps {
 		...blankRecord(),
 		freePlayIndex: undefined,
 		rewound: 0,
-		revealed: [],
+		revealed: undefined,
 		fen: ChessFen.serialize(ChessFen.initial()),
 		announced: undefined,
 		transition: undefined,
@@ -139,7 +151,7 @@ function startLine(fen: string): Partial<PuzzleStoreProps> {
 		fen,
 		freePlayIndex: undefined,
 		rewound: 0,
-		revealed: [],
+		revealed: undefined,
 		announced: undefined,
 		transition: undefined,
 		selected: undefined,
@@ -206,7 +218,7 @@ export function restorePatch(
 		orientation: stored.orientation ?? playerColor,
 		freePlayIndex: undefined,
 		rewound: 0,
-		revealed: [],
+		revealed: undefined,
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
@@ -313,10 +325,10 @@ export function revealPatch(
 		pendingPromotion: undefined,
 		transition: keptTransition(state, cursor),
 		closure: settleClosure(state.closure, 'revealed'),
-		// Asked for again, the answer is played out afresh rather than onto the end of
-		// the one before it, and from the board it is really standing on: a beat still
-		// holding the cursor behind the line would have it play the wrong ply.
-		revealed: [],
+		// Asked for again, the answer is played out afresh rather than onto the end of the
+		// one before it; the caller anchors the new one, and the first move played anchors
+		// it here when the caller has nothing to say about where it starts.
+		revealed: undefined,
 		rewound: 0,
 		isRevealing: true,
 	};

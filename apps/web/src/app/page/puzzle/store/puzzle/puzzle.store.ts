@@ -143,12 +143,11 @@ export class PuzzleStore
 
 		patchState(this, revealPatch({ ...rewind, closure: this.closure() }, cursor));
 
-		// Asked for again once it was already over, nothing is left ahead, so the whole
-		// line is played out from the board the exercise opened on. The record is sealed
-		// by then and the answer played out last time has just been dropped, so what
-		// stands the board back there is the offset the cursor travels beside the log on.
+		// Asked for again once it was already over, nothing is left ahead, so the whole line
+		// is played out from the board the exercise opened on. Anchoring the answer there is
+		// all it takes to stand the board back: the head follows the answer, not the log.
 		if (!wasOpen) {
-			patchState(this, { rewound: this.cursor() });
+			patchState(this, { revealed: { at: 0, moves: [] } });
 		}
 
 		this.playScripted();

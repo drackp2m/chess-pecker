@@ -102,8 +102,7 @@ function commit(store: PlaybackStore, move: ChessMove): void {
 
 	// A move written into the log is the board moving on for real, so anything that was
 	// holding it behind the line is spent: what it was waiting to show has now happened.
-	// The answer played out after the close is folded from where the board is standing,
-	// so there the offset is what keeps it there and it stays.
+	// An answer played out after the close carries its own anchor and needs no such offset.
 	if ('open' === store.closure()) {
 		patchState(store, commitPatch(position, move), { rewound: 0 }, (state) =>
 			append(state, { kind: 'move', move }),
@@ -112,8 +111,16 @@ function commit(store: PlaybackStore, move: ChessMove): void {
 		return;
 	}
 
+	const written = ChessNotation.describeLong(move);
+	// The first move of an answer anchors it to the ply the board is standing on, which is
+	// where it is being played from. Every move after it joins the one already anchored.
+	const cursor = store.cursor();
+
 	patchState(store, commitPatch(position, move), (state) => ({
-		revealed: [...state.revealed, ChessNotation.describeLong(move)],
+		revealed:
+			undefined === state.revealed
+				? { at: cursor, moves: [written] }
+				: { ...state.revealed, moves: [...state.revealed.moves, written] },
 	}));
 }
 
@@ -289,7 +296,9 @@ function rewindToStart(context: PlaybackContext): void {
 		// the answer it had played out is dropped in the same breath, because starting the
 		// exercise over is starting it over. What is left to hold back is the log's own
 		// cursor, which is where the fold would otherwise leave the board.
-		...('open' === state.closure ? { rewound: 1 } : { rewound: recordCursor(store), revealed: [] }),
+		...('open' === state.closure
+			? { rewound: 1 }
+			: { rewound: recordCursor(store), revealed: undefined }),
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,

@@ -4,6 +4,7 @@ import { HINT, RESTART } from '@app/page/puzzle/store/puzzle/record';
 import {
 	FreePlayAnchor,
 	LineState,
+	RevealedLine,
 	anchorFreePlay,
 	findDeviation,
 	toRecord,
@@ -95,22 +96,33 @@ export function foldRecord(fen: string, events: readonly PuzzleEvent[]): LineSta
 }
 
 /**
- * The answer played out onto the end of a line the record has already stopped following.
- * Giving up closes the record, so the plies that follow cannot be written to it; they are
- * still what the board is showing, and this is where they join the line.
+ * The answer played out onto a line the record has already stopped following. Giving up
+ * closes the record, so the plies that follow cannot be written to it; they are still what
+ * the board is showing, and this is where they join the line.
+ *
+ * It is folded from the ply it was anchored to and never from wherever the head is, so it
+ * stays put while the head walks it. What it lands on is a stretch of line like any other:
+ * the plies it replaces go the way a move played after stepping back sends them.
  *
  * It is the same fold as everything else, so a move that will not replay is dropped along
- * with the rest of the answer rather than taking the solved line down with it.
+ * with the rest of the answer rather than taking the solved line down with it — leaving
+ * the board standing where the answer was to begin, which is a board that exists.
  */
-export function foldRevealed(state: LineState, revealed: readonly string[]): LineState {
-	if (0 === revealed.length) {
+export function foldRevealed(state: LineState, revealed: RevealedLine | undefined): LineState {
+	if (undefined === revealed) {
 		return state;
 	}
 
+	const stood = { ...state, cursor: Math.min(Math.max(0, revealed.at), state.line.length) };
+
+	if (0 === revealed.moves.length) {
+		return stood;
+	}
+
 	try {
-		return foldEvents(state, revealed, state.positions[0]?.turn ?? 'white');
+		return foldEvents(stood, revealed.moves, state.positions[0]?.turn ?? 'white');
 	} catch {
-		return state;
+		return stood;
 	}
 }
 

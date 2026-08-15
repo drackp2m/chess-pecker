@@ -38,21 +38,21 @@ function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzl
 	}));
 
 	/**
-	 * The log folded out, stood back by whatever the animation is holding. `rewound` is
-	 * the one thing that moves the board without moving the log, and it is clamped so a
-	 * beat left over can never walk the cursor off the front of the line.
+	 * The log folded out, with any answer played out on top of it, stood back by whatever
+	 * the head is holding. `rewound` is the one thing that moves the board without moving
+	 * the log, and it is clamped so a beat left over can never walk the cursor off the
+	 * front of the line.
 	 */
 	const fold = computed<LineState>(() => {
 		const logged = foldSession(store.fen(), record(), store.freePlayIndex(), puzzle());
+		// The answer goes on before the offset comes off, because it is anchored to the ply
+		// it was played from and belongs to the line rather than to where the head is. The
+		// offset then walks that whole line, the answer included, instead of dragging the
+		// answer along behind it.
+		const grown = foldRevealed(logged, store.revealed());
 		const rewound = store.rewound();
 
-		// The offset comes off the log's own cursor first, because it is what says where
-		// the board really is standing — and the answer that follows is played from there,
-		// onto the line, exactly as if it had been played by hand.
-		const stood =
-			0 === rewound ? logged : { ...logged, cursor: Math.max(0, logged.cursor - rewound) };
-
-		return foldRevealed(stood, store.revealed());
+		return 0 === rewound ? grown : { ...grown, cursor: Math.max(0, grown.cursor - rewound) };
 	});
 
 	return {
