@@ -65,7 +65,9 @@ import { SubmitCycleAttemptUseCase } from './use-case/submit-cycle-attempt.use-c
 		FinishTrainingUseCase,
 		ApplySyncTimestampsUseCase,
 	],
-	exports: [MikroOrmModule],
+	// La cordura de las fechas del cliente la comparte la subida del módulo de
+	// sincronización, que escribe en estas mismas tablas.
+	exports: [MikroOrmModule, ApplySyncTimestampsUseCase],
 	controllers: [TrainingController, TrainingCalibrationController, TrainingCycleController],
 })
 export class TrainingModule {}

@@ -1,8 +1,7 @@
 import type { FreePlayRun, PuzzleEvent } from '@chesspecker/api-definitions';
 import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/core';
 
-import { GenerateNowDateUseCase } from '../../shared/use-case/generate-now-date.use-case';
-import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
+import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';
 
 import { PuzzleAttemptClosure } from './definition/puzzle-attempt-closure.enum';
@@ -39,7 +38,7 @@ import { Training } from './training.entity';
 	name: 'puzzle_attempt_kind_parent_check',
 	expression: `(kind = 'calibration' and calibration_round_uuid is not null and cycle_item_uuid is null) or (kind = 'cycle' and cycle_item_uuid is not null and calibration_round_uuid is null)`,
 })
-export class PuzzleAttempt extends CustomBaseEntity<PuzzleAttempt> {
+export class PuzzleAttempt extends SyncableBaseEntity<PuzzleAttempt> {
 	/** Desnormalizado a propósito: evita un join en toda consulta de progreso. */
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
@@ -82,13 +81,4 @@ export class PuzzleAttempt extends CustomBaseEntity<PuzzleAttempt> {
 
 	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
 	explorations!: FreePlayRun[];
-
-	/**
-	 * Cuándo entró la fila aquí, con el reloj del servidor. `createdAt` y `updatedAt` los
-	 * pone el cliente —son cuándo se abrió y cuándo se cerró el ejercicio, y una subida
-	 * offline los trae del pasado—, así que ninguno de los dos sirve para preguntar «qué
-	 * ha llegado desde la última vez». Esta sí, porque sólo la escribe el insert.
-	 */
-	@Property({ defaultRaw: 'now()' })
-	receivedAt: Date = new GenerateNowDateUseCase().execute();
 }

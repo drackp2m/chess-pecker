@@ -15,6 +15,7 @@ import {
 	PuzzleCatalogPage,
 	SearchPuzzleRequest,
 } from './puzzle';
+import { PushTrainingRequest, PushTrainingResult } from './sync';
 import {
 	CalibrationAttemptResult,
 	CalibrationRound,
@@ -56,7 +57,7 @@ export type ApiEndpointMap<M> = Record<keyof M, ApiEndpoint>;
 export type ApiVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type ApiModule =
-	'auth' | 'friendship' | 'puzzle' | 'training' | 'user' | 'userBlock' | 'userSetting';
+	'auth' | 'friendship' | 'puzzle' | 'sync' | 'training' | 'user' | 'userBlock' | 'userSetting';
 
 export interface AuthGetRoutes {
 	'/logout': { response: undefined };
@@ -96,6 +97,11 @@ export interface PuzzleGetRoutes {
 
 export interface PuzzlePostRoutes {
 	'/import': { params: ImportPuzzleRequest; response: ImportPuzzleResult };
+}
+
+export interface SyncPostRoutes {
+	/** El árbol entero de un entrenamiento. Idempotente por `clientRef`. */
+	'/training': { params: PushTrainingRequest; response: PushTrainingResult };
 }
 
 export interface TrainingGetRoutes {

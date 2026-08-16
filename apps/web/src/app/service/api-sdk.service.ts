@@ -13,6 +13,7 @@ import type {
 	FriendshipPostRoutes,
 	PuzzleGetRoutes,
 	PuzzlePostRoutes,
+	SyncPostRoutes,
 	TrainingDeleteRoutes,
 	TrainingGetRoutes,
 	TrainingPostRoutes,
@@ -35,6 +36,7 @@ const MODULE_SEGMENT: Record<ApiModule, string> = {
 	auth: 'auth',
 	friendship: 'friendship',
 	puzzle: 'puzzle',
+	sync: 'sync',
 	training: 'training',
 	user: 'user',
 	userBlock: 'user-block',
@@ -82,6 +84,7 @@ export class ApiSdkService {
 		auth: this.caller<AuthPostRoutes>('POST', 'auth'),
 		friendship: this.caller<FriendshipPostRoutes>('POST', 'friendship'),
 		puzzle: this.caller<PuzzlePostRoutes>('POST', 'puzzle'),
+		sync: this.caller<SyncPostRoutes>('POST', 'sync'),
 		training: this.caller<TrainingPostRoutes>('POST', 'training'),
 		userBlock: this.caller<UserBlockPostRoutes>('POST', 'userBlock'),
 	};
