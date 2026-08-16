@@ -5,6 +5,7 @@ import { resolveI18n } from '@app/guard/i18n.resolver';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
+import { TrainingReviewStore } from '@app/page/training/store/training-review.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
 
@@ -20,6 +21,7 @@ export default [
 			PuzzleLibraryStore,
 			PuzzleStore,
 			TrainingRunStore,
+			TrainingReviewStore,
 			TrainingSolveSession,
 			{ provide: BOARD_PRESENTER, useExisting: PuzzleStore },
 		],

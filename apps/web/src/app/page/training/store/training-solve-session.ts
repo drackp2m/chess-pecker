@@ -1,4 +1,5 @@
 import { DestroyRef, Injectable, effect, inject } from '@angular/core';
+import { patchState } from '@ngrx/signals';
 
 import { PuzzleClosure, PuzzleResult } from '@app/definition/puzzle.type';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
@@ -15,8 +16,14 @@ import {
 	AttemptDraftUseCase,
 	AttemptIdentity,
 } from '@app/use-case/attempt-draft.use-case';
+import { SolvedAttempt } from '@app/use-case/training-history.use-case';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
 import { SolveTimer } from '@app/util/solve-timer';
+
+interface SuspendedBoard {
+	readonly restore: PuzzleRestore;
+	readonly hintUnlocked: boolean;
+}
 
 @Injectable()
 export class TrainingSolveSession {
@@ -31,6 +38,8 @@ export class TrainingSolveSession {
 	private slot: TrainingRunSlot | undefined;
 	private gradedUuid: string | undefined;
 	private draft: AttemptDraft | undefined;
+	private isReviewing = false;
+	private suspended: SuspendedBoard | undefined;
 
 	constructor() {
 		effect(() => {
@@ -60,6 +69,12 @@ export class TrainingSolveSession {
 	 * from the line instead, which is what the position on screen was arrived at by.
 	 */
 	async open(): Promise<void> {
+		if (this.isReviewing) {
+			this.leaveSolved();
+
+			return;
+		}
+
 		if (undefined !== this.slot && !this.run.isDone()) {
 			this.resume();
 			this.board.replayLastMove();
@@ -80,7 +95,48 @@ export class TrainingSolveSession {
 		}
 	}
 
+	showSolved(entry: SolvedAttempt): void {
+		if (!this.isReviewing) {
+			this.suspended = this.captureBoard();
+			this.pause();
+			this.isReviewing = true;
+		}
+
+		this.board.setPuzzles([entry.puzzle]);
+		this.board.restoreFrom(this.toRestore(entry.row));
+	}
+
+	leaveSolved(): void {
+		const slot = this.slot;
+		const suspended = this.suspended;
+
+		if (!this.isReviewing) {
+			return;
+		}
+
+		this.isReviewing = false;
+		this.suspended = undefined;
+
+		if (undefined === slot) {
+			return;
+		}
+
+		this.board.setPuzzles([PuzzleMapper.toPuzzle(slot.puzzle)]);
+
+		if (undefined !== suspended) {
+			this.board.restoreFrom(suspended.restore);
+			patchState(this.board, { hintUnlocked: suspended.hintUnlocked });
+		}
+
+		this.resume();
+		this.board.replayLastMove();
+	}
+
 	resume(): void {
+		if (this.isReviewing) {
+			return;
+		}
+
 		if (undefined !== this.slot && this.gradedUuid !== this.slot.puzzle.uuid) {
 			this.timer.resume();
 			this.board.resumeClock();
@@ -92,6 +148,23 @@ export class TrainingSolveSession {
 		this.board.pauseClock();
 
 		void this.flush();
+	}
+
+	private captureBoard(): SuspendedBoard {
+		return {
+			hintUnlocked: this.board.hintUnlocked(),
+			restore: {
+				record: [...this.board.record()],
+				explorations: this.board
+					.explorations()
+					.map((run) => ({ at: run.at, events: [...run.events] })),
+				orientation: this.board.orientation(),
+				closure: this.board.closure(),
+				hintUsed: this.board.hintUsed(),
+				mistakeCount: this.board.mistakeCount(),
+				result: this.board.result(),
+			},
+		};
 	}
 
 	private discard(): void {
@@ -107,7 +180,7 @@ export class TrainingSolveSession {
 	 * effect can never pair a fresh exercise with the verdict of the previous one.
 	 */
 	private syncBoard(slot: TrainingRunSlot | null): void {
-		if (null === slot || this.slot?.puzzle.uuid === slot.puzzle.uuid) {
+		if (null === slot || this.isReviewing || this.slot?.puzzle.uuid === slot.puzzle.uuid) {
 			return;
 		}
 
@@ -211,7 +284,7 @@ export class TrainingSolveSession {
 	private flush(): Promise<void> {
 		const draft = this.draft;
 
-		if (undefined === draft) {
+		if (this.isReviewing || undefined === draft) {
 			return Promise.resolve();
 		}
 
@@ -244,7 +317,7 @@ export class TrainingSolveSession {
 		const slot = this.slot;
 		const result = this.board.result();
 
-		if ('open' === closure || undefined === slot || undefined === result) {
+		if ('open' === closure || this.isReviewing || undefined === slot || undefined === result) {
 			return;
 		}
 

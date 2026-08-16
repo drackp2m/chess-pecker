@@ -9,6 +9,7 @@ import {
 	Square,
 } from '@app/definition/chess.type';
 import { Puzzle, PuzzleMove, PuzzleRecord } from '@app/definition/puzzle.type';
+import { Timeline } from '@app/definition/timeline.type';
 import { foldExploration, foldRevealed, foldSession } from '@app/page/puzzle/store/puzzle/replay';
 import {
 	FreePlayAnchor,
@@ -19,6 +20,7 @@ import {
 	isPastDeviation,
 	mistakeAt,
 } from '@app/page/puzzle/store/puzzle/session';
+import { projectTimeline } from '@app/page/puzzle/store/puzzle/timeline';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
@@ -28,6 +30,50 @@ interface ScriptInput {
 	readonly line: Signal<PuzzleMove[]>;
 	readonly cursor: Signal<number>;
 	readonly freePlay: Signal<FreePlayAnchor | undefined>;
+}
+
+function timelineDerived(
+	store: StateSignals<PuzzleStoreProps>,
+	record: Signal<PuzzleRecord>,
+	puzzle: Signal<Puzzle | undefined>,
+): Signal<Timeline> {
+	return computed(() =>
+		projectTimeline({
+			fen: store.fen(),
+			record: record(),
+			freePlayIndex: store.freePlayIndex(),
+			revealed: store.revealed(),
+			rewound: store.rewound(),
+			puzzle: puzzle(),
+		}),
+	);
+}
+
+/**
+ * Where the exploration on the board was entered from. It is folded out of the log
+ * like everything else, so leaving free play needs nothing to have been kept: the
+ * main line up to the entry point is still there to be replayed.
+ */
+function freePlayDerived(
+	store: StateSignals<PuzzleStoreProps>,
+	record: Signal<PuzzleRecord>,
+	puzzle: Signal<Puzzle | undefined>,
+): Signal<FreePlayAnchor | undefined> {
+	return computed(() => {
+		const index = store.freePlayIndex();
+
+		if (undefined === index) {
+			return undefined;
+		}
+
+		// A log that will not replay takes the anchor with it, and free play with it:
+		// the board degrades to the main line rather than to a sandbox over nothing.
+		try {
+			return foldExploration(store.fen(), record(), index, puzzle())?.anchor;
+		} catch {
+			return undefined;
+		}
+	});
 }
 
 /** The log folded out: the line on the board, and the anchor an exploration hangs off. */
@@ -60,26 +106,8 @@ function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzl
 		line: computed(() => fold().line),
 		cursor: computed(() => fold().cursor),
 
-		/**
-		 * Where the exploration on the board was entered from. It is folded out of the log
-		 * like everything else, so leaving free play needs nothing to have been kept: the
-		 * main line up to the entry point is still there to be replayed.
-		 */
-		freePlay: computed(() => {
-			const index = store.freePlayIndex();
-
-			if (undefined === index) {
-				return undefined;
-			}
-
-			// A log that will not replay takes the anchor with it, and free play with it:
-			// the board degrades to the main line rather than to a sandbox over nothing.
-			try {
-				return foldExploration(store.fen(), record(), index, puzzle())?.anchor;
-			} catch {
-				return undefined;
-			}
-		}),
+		timeline: timelineDerived(store, record, puzzle),
+		freePlay: freePlayDerived(store, record, puzzle),
 	};
 }
 
@@ -223,7 +251,7 @@ function freePlayComputed(
 function puzzleDerived(store: StateSignals<PuzzleStoreProps>) {
 	const puzzle = inject(PuzzleLibraryStore).current;
 
-	const { positions, line, cursor, freePlay } = lineDerived(store, puzzle);
+	const { positions, line, cursor, freePlay, timeline } = lineDerived(store, puzzle);
 	const { scriptCursor, ...script } = scriptComputed({ positions, line, cursor, freePlay }, puzzle);
 
 	return {
@@ -232,6 +260,7 @@ function puzzleDerived(store: StateSignals<PuzzleStoreProps>) {
 		line,
 		cursor,
 		freePlay,
+		timeline,
 		script,
 		scriptCursor,
 		playback: playbackDerived(store),
@@ -240,8 +269,9 @@ function puzzleDerived(store: StateSignals<PuzzleStoreProps>) {
 }
 
 function puzzleComputed(store: StateSignals<PuzzleStoreProps>) {
-	const { puzzle, positions, line, cursor, freePlay, script, scriptCursor, playback, position } =
-		puzzleDerived(store);
+	const derived = puzzleDerived(store);
+	const { puzzle, positions, line, cursor, freePlay, timeline } = derived;
+	const { script, scriptCursor, playback, position } = derived;
 
 	return {
 		puzzle,
@@ -250,6 +280,7 @@ function puzzleComputed(store: StateSignals<PuzzleStoreProps>) {
 		line,
 		cursor,
 		freePlay,
+		timeline,
 
 		isPlayerTurn: computed(
 			() => 'solving' === store.outcome() && position().turn === store.playerColor(),

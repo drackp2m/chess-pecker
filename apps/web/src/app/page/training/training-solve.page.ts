@@ -1,4 +1,3 @@
-import { Location } from '@angular/common';
 import {
 	Component,
 	HostListener,
@@ -15,6 +14,7 @@ import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solve
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { I18n, i18nRef } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { TrainingReviewStore } from '@app/page/training/store/training-review.store';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
@@ -29,13 +29,24 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 
 	readonly run = inject(TrainingRunStore);
 	readonly board = inject(PuzzleStore);
+	readonly review = inject(TrainingReviewStore);
 
 	readonly headline = computed(() => this.describe());
 
-	readonly nextLabel = computed(() =>
-		!this.run.hasNext() && this.run.hasNextRound()
+	readonly nextLabel = computed(() => {
+		if (this.review.isReviewing()) {
+			return this.review.hasNext() ? I18n.training.NEXT_EXERCISE : I18n.training.RESUME_EXERCISE;
+		}
+
+		return !this.run.hasNext() && this.run.hasNextRound()
 			? I18n.training.NEXT_ROUND
-			: I18n.training.NEXT_EXERCISE,
+			: I18n.training.NEXT_EXERCISE;
+	});
+
+	readonly isNextDisabled = computed(
+		() =>
+			!this.review.isReviewing() &&
+			(this.run.isBusy() || (!this.run.hasNext() && !this.run.hasNextRound())),
 	);
 
 	/**
@@ -66,7 +77,6 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			: i18nRef(I18n.training.CYCLE_LABEL_POSITION, { position: position + 1 });
 	});
 
-	private readonly location = inject(Location);
 	private readonly router = inject(Router);
 	private readonly session = inject(TrainingSolveSession);
 
@@ -100,6 +110,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	}
 
 	ngOnInit(): void {
+		this.review.leave();
 		void this.session.open();
 	}
 
@@ -107,12 +118,27 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 		this.session.pause();
 	}
 
-	/** Wherever the exercise was opened from — the training page, a link, a reload. */
-	back(): void {
-		this.location.back();
+	previous(): void {
+		const entry = this.review.previous();
+
+		if (null !== entry) {
+			this.session.showSolved(entry);
+		}
 	}
 
 	next(): void {
+		if (this.review.isReviewing()) {
+			const entry = this.review.forward();
+
+			if (null === entry) {
+				this.session.leaveSolved();
+			} else {
+				this.session.showSolved(entry);
+			}
+
+			return;
+		}
+
 		if (this.run.hasNext()) {
 			this.run.advance();
 
