@@ -15,7 +15,7 @@ import { LogOutUseCase } from '@app/use-case/log-out.use-case';
 import { ActivityCell, activityRangeDays, filterActivityDays } from '@app/util/activity-grid';
 
 const ACTIVITY_RANGES = [1, 2, 3, 6, 9, 12] as const;
-const DEFAULT_ACTIVITY_MONTHS = 3;
+const DEFAULT_ACTIVITY_MONTHS = 6;
 const MAX_ACTIVITY_MONTHS = Math.max(...ACTIVITY_RANGES);
 
 @Component({

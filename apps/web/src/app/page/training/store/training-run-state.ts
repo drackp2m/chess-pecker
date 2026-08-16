@@ -1,12 +1,12 @@
-import type {
-	ApiPuzzle,
-	CalibrationRound,
-	CalibrationRoundOutcome,
-	PuzzleAttemptRecord,
-} from '@chesspecker/api-definitions';
+import type { CalibrationRoundOutcome, PuzzleAttemptRecord } from '@chesspecker/api-definitions';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { I18n, i18nRef } from '@app/i18n';
+import { PuzzleRow } from '@app/repository/definition/puzzle-schema.interface';
+import {
+	CalibrationRoundRow,
+	CycleItemRow,
+} from '@app/repository/definition/training-schema.interface';
 
 export type TrainingRunMode = 'calibration' | 'cycle';
 export type TrainingRunResult = 'solved' | 'failed';
@@ -14,17 +14,17 @@ export type TrainingRunResult = 'solved' | 'failed';
 /** How the exercise went, minus the clock: that travels as its own `SolveTiming`. */
 export type TrainingAttemptRecord = Omit<PuzzleAttemptRecord, 'durationMs'>;
 
-/** One exercise on the board, with whatever the API needs to record its attempt. */
+/** One exercise on the board, with whatever recording its attempt needs. */
 export interface TrainingRunSlot {
-	readonly puzzle: ApiPuzzle;
-	readonly cycleItemUuid: string | null;
+	readonly puzzle: PuzzleRow;
+	readonly cycleItem: CycleItemRow | null;
 	readonly position: number | null;
 }
 
 export interface TrainingRunProps {
 	mode: TrainingRunMode | null;
 	trainingUuid: string | null;
-	round: CalibrationRound | null;
+	round: CalibrationRoundRow | null;
 	/** 1-indexed position of `current` among the round's exercises, calibration only. */
 	roundPosition: number | null;
 	roundTotal: number | null;
@@ -33,7 +33,7 @@ export interface TrainingRunProps {
 	current: TrainingRunSlot | null;
 	/** Already fetched, waiting for the user to leave the graded exercise behind. */
 	pending: TrainingRunSlot | null;
-	queue: readonly ApiPuzzle[];
+	queue: readonly PuzzleRow[];
 	lastResult: TrainingRunResult | null;
 	isDone: boolean;
 	isLoading: boolean;
@@ -60,10 +60,10 @@ export const initialState: TrainingRunProps = {
 	notice: null,
 };
 
-export function toSlot(puzzle: ApiPuzzle): TrainingRunSlot {
+export function toSlot(puzzle: PuzzleRow): TrainingRunSlot {
 	return {
 		puzzle,
-		cycleItemUuid: null,
+		cycleItem: null,
 		position: null,
 	};
 }

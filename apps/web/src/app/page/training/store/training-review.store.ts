@@ -7,6 +7,7 @@ import {
 	TrainingHistoryScope,
 	TrainingHistoryUseCase,
 } from '@app/use-case/training-history.use-case';
+import { PuzzleMapper } from '@app/util/puzzle-mapper';
 
 interface TrainingReviewProps {
 	entries: readonly SolvedAttempt[];
@@ -24,9 +25,11 @@ export class TrainingReviewStore extends signalStore(
 	withState(initialState),
 ) {
 	readonly available = computed(() => {
-		const solving = this.run.current()?.puzzle.uuid;
+		const solving = this.run.current()?.puzzle;
 
-		return this.entries().filter((entry) => entry.row.puzzleUuid !== solving);
+		return this.entries().filter(
+			(entry) => undefined === solving || entry.row.puzzleUuid !== PuzzleMapper.toKey(solving),
+		);
 	});
 
 	readonly reviewed = computed<SolvedAttempt | null>(() => {
@@ -57,7 +60,7 @@ export class TrainingReviewStore extends signalStore(
 
 		effect(() => {
 			const scope = this.scope();
-			const solving = this.run.current()?.puzzle.uuid;
+			const solving = this.run.current()?.puzzle;
 
 			void this.reload(undefined === solving ? undefined : scope);
 		});

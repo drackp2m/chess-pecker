@@ -12,6 +12,11 @@ export interface AttemptRow extends LocalRecord {
 	readonly slotId: string;
 	readonly roundUuid?: string;
 	readonly cycleItemUuid?: string;
+	/**
+	 * Its place inside the pass, from 0. It travels on the row because the plan it belongs
+	 * to may not be here: a restored device only knows the slots it was served.
+	 */
+	readonly position?: number;
 	readonly puzzleUuid: string;
 	readonly lichessId: string;
 	readonly startedAt?: Date;
@@ -20,12 +25,6 @@ export interface AttemptRow extends LocalRecord {
 	readonly record: readonly PuzzleEvent[];
 	/** Every visit to free play, anchored to a length of `record`. */
 	readonly explorations: readonly FreePlayRun[];
-	/**
-	 * Which colour was at the bottom when the verdict settled. It is the one thing the
-	 * record cannot give back —flipping the board is not something that happens to the
-	 * board's position— and it is absent on rows written before v5.
-	 */
-	readonly orientation?: PieceColor;
 	/** The verdict, sealed on the first try, or absent while there is none yet. */
 	readonly solved?: boolean;
 	/** Whether the exercise is over, which is what reopening it looks at. */

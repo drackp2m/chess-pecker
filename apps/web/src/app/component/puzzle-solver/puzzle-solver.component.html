@@ -94,7 +94,7 @@
 			<div class="flex-col gap-2">
 				@if (0 < puzzle.themes.length && store.areThemesShown()) {
 					<ul class="themes flex-row flex-wrap gap-1">
-						@for (theme of puzzle.themes; track theme) {
+						@for (theme of puzzle.themes; track $index) {
 							<li class="theme px-2 br-1 fs-sm">{{ theme }}</li>
 						}
 					</ul>

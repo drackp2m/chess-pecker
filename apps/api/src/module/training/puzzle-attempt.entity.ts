@@ -72,11 +72,16 @@ export class PuzzleAttempt extends CustomBaseEntity<PuzzleAttempt> {
 	@Property({ default: 0 })
 	mistakeCount!: number;
 
+	/**
+	 * Sin inicializar a propósito: un campo con valor por defecto se escribe *después* de
+	 * `super()`, así que pisaría lo que el constructor de la entidad base acaba de asignar y
+	 * la partida entraría vacía. El defecto lo pone la columna.
+	 */
 	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
-	record: PuzzleEvent[] = [];
+	record!: PuzzleEvent[];
 
 	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
-	explorations: FreePlayRun[] = [];
+	explorations!: FreePlayRun[];
 
 	/**
 	 * Cuándo entró la fila aquí, con el reloj del servidor. `createdAt` y `updatedAt` los

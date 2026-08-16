@@ -40,4 +40,11 @@ export const TrainingPolicy = {
 
 	/** Ventana máxima del desglose de actividad, y la que se sirve si no se pide otra. */
 	activityMaxDays: 53 * 7,
+
+	/**
+	 * Intentos por página del histórico, y los que se sirven si no se piden menos. La
+	 * partida entera viaja dentro de cada uno, así que la página se mide en filas y no en
+	 * días: un ciclo de 1000 ejercicios son cuatro viajes, no uno enorme.
+	 */
+	attemptPageSize: 250,
 } as const;

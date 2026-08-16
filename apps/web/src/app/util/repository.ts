@@ -2,6 +2,7 @@ import { IDBPDatabase, IDBPTransaction, StoreNames } from 'idb';
 
 import {
 	AppSchema,
+	AppSchemaV10,
 	AppSchemaV3,
 	AppSchemaV4,
 	AppSchemaV5,
@@ -9,6 +10,10 @@ import {
 import { Migration } from '@app/repository/definition/migration.interface';
 import { SettingSchemaV1 } from '@app/repository/definition/setting-schema.interface';
 import { createCatalogCursorStoreMigration } from '@app/repository/migration/v10_create-catalog-cursor-store.migration';
+import { createLocalTrainingStoresMigration } from '@app/repository/migration/v11_create-training-stores.migration';
+import { dropAttemptOrientationMigration } from '@app/repository/migration/v12_drop-attempt-orientation.migration';
+import { createAttemptCursorStoreMigration } from '@app/repository/migration/v13_create-attempt-cursor-store.migration';
+import { resetAttemptCursorMigration } from '@app/repository/migration/v14_reset-attempt-cursor.migration';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
@@ -22,6 +27,7 @@ import { markStoredAttemptsSyncedMigration } from '@app/repository/migration/v9_
 export abstract class Repository {
 	private static migrations: (
 		| Migration<AppSchema>
+		| Migration<AppSchemaV10>
 		| Migration<AppSchemaV3>
 		| Migration<AppSchemaV4>
 		| Migration<AppSchemaV5>
@@ -37,6 +43,10 @@ export abstract class Repository {
 		createActivityCursorStoreMigration,
 		markStoredAttemptsSyncedMigration,
 		createCatalogCursorStoreMigration,
+		createLocalTrainingStoresMigration,
+		dropAttemptOrientationMigration,
+		createAttemptCursorStoreMigration,
+		resetAttemptCursorMigration,
 	];
 
 	static getLatestVersion(): number {

@@ -22,6 +22,7 @@ import {
 	CalibrationRoundStart,
 	CycleAttemptResult,
 	GetTrainingActivityRequest,
+	GetTrainingAttemptsRequest,
 	SelectTrainingSetRequest,
 	SelectTrainingSetResult,
 	SetTrainingGoalRequest,
@@ -29,6 +30,7 @@ import {
 	SubmitCycleAttemptRequest,
 	Training,
 	TrainingActivity,
+	TrainingAttemptHistory,
 	TrainingCycle,
 	TrainingCycleItem,
 	TrainingGoal,
@@ -101,6 +103,11 @@ export interface TrainingGetRoutes {
 	'/activity': { query: GetTrainingActivityRequest; response: TrainingActivity };
 	'/:uuid': { path: { uuid: string }; response: Training };
 	'/:uuid/progress': { path: { uuid: string }; response: TrainingProgress };
+	'/:uuid/attempt': {
+		path: { uuid: string };
+		query: GetTrainingAttemptsRequest;
+		response: TrainingAttemptHistory;
+	};
 	'/:uuid/calibration/round': { path: { uuid: string }; response: readonly CalibrationRound[] };
 	'/:uuid/calibration/round/:roundUuid/puzzle': {
 		path: { uuid: string; roundUuid: string };

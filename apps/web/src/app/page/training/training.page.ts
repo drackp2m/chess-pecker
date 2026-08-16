@@ -2,7 +2,6 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import type {
 	CycleProgress,
-	Training,
 	TrainingActivityDay,
 	TrainingStatus,
 } from '@chesspecker/api-definitions';
@@ -18,6 +17,7 @@ import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { I18n } from '@app/i18n';
 import { DurationPipe } from '@app/pipe/duration.pipe';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { I18nService } from '@app/service/i18n.service';
 import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
@@ -215,7 +215,7 @@ export class TrainingPage implements OnInit {
 		this.hoveredPaceDay.set(point);
 	}
 
-	trainingStatus(training: Training): string {
+	trainingStatus(training: TrainingRow): string {
 		return STATUS_LABEL[training.status];
 	}
 
