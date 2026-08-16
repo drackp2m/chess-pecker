@@ -51,8 +51,7 @@
 	overflow-x: auto;
 }
 
-.heatmap,
-.heatmap-months {
+.heatmap {
 	display: grid;
 	grid-auto-columns: var(--heatmap-cell);
 	grid-auto-flow: column;
@@ -65,19 +64,27 @@
 }
 
 .heatmap-months {
-	width: max-content;
+	display: flex;
+	box-sizing: border-box;
 	height: var(--heatmap-months-height);
 }
 
 .heatmap-month {
 	overflow: visible;
+	flex: 0 0 auto;
+
+	box-sizing: border-box;
+	min-width: 0;
 	padding-inline-start: var(--chart-cell-inset);
+
 	line-height: var(--heatmap-months-height);
 	white-space: nowrap;
 
+	&:nth-last-child(2) {
+		flex-shrink: 1;
+	}
+
 	&:last-child {
-		justify-self: end;
-		margin-inline-end: auto;
 		padding-inline: var(--chart-cell-inset);
 	}
 }

@@ -1,31 +1,90 @@
 import { describe, expect, it } from 'vitest';
 
-import { HINT, blankRecord, isUntouchedRecord } from '@app/page/puzzle/store/puzzle/record';
+import { ChessMove } from '@app/definition/chess.type';
+import { PuzzleClosure } from '@app/definition/puzzle.type';
+import { HINT, RecordState, append, blankRecord } from '@app/page/puzzle/store/puzzle/record';
+import { ChessFen } from '@app/util/chess/chess-fen';
+import { ChessNotation } from '@app/util/chess/chess-notation';
 
-describe('isUntouchedRecord', () => {
-	it('holds for a record nothing has been written into yet', () => {
-		expect(isUntouchedRecord(blankRecord())).toBe(true);
+const FEN = '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27';
+
+function move(uci: string): ChessMove {
+	const parsed = ChessNotation.parse(ChessFen.parse(FEN), uci);
+
+	if (undefined === parsed) {
+		throw new Error(`${uci} is not legal in ${FEN}`);
+	}
+
+	return parsed;
+}
+
+function state(overrides: Partial<RecordState> = {}): RecordState {
+	return { ...blankRecord(), freePlayIndex: undefined, closure: 'open', ...overrides };
+}
+
+describe('append', () => {
+	it('writes a move onto the main line', () => {
+		expect(append(state(), { kind: 'move', move: move('f1f8') }).record).toEqual(['f1f8']);
 	});
 
-	it('holds for the opponent move the board plays on its own', () => {
-		expect(isUntouchedRecord({ record: ['g8h8'], explorations: [] })).toBe(true);
+	it('writes the hint and the restart as their own markers', () => {
+		expect(append(state(), { kind: 'hint' }).record).toEqual([HINT]);
+		expect(append(state(), { kind: 'restart' }).record).toEqual([0]);
 	});
 
-	it('fails once a move of the player is in', () => {
-		expect(isUntouchedRecord({ record: ['g8h8', 'a1a8'], explorations: [] })).toBe(false);
+	it('joins a step to the run before it while both go the same way', () => {
+		const stepped = append(state({ record: ['f1f8', -1] }), { kind: 'step', step: -1 });
+
+		expect(stepped.record).toEqual(['f1f8', -2]);
 	});
 
-	it('fails once the cursor has been moved', () => {
-		expect(isUntouchedRecord({ record: ['g8h8', -1], explorations: [] })).toBe(false);
+	/** Adding across a change of direction would land on `0`, which reads as a restart. */
+	it('starts a new run when the direction changes', () => {
+		const stepped = append(state({ record: ['f1f8', -1] }), { kind: 'step', step: 1 });
+
+		expect(stepped.record).toEqual(['f1f8', -1, 1]);
 	});
 
-	it('fails once the hint has been asked for, which is work like any other', () => {
-		expect(isUntouchedRecord({ record: ['g8h8', HINT], explorations: [] })).toBe(false);
+	it('leaves a restart standing rather than adding a step onto it', () => {
+		const stepped = append(state({ record: [0] }), { kind: 'step', step: 1 });
+
+		expect(stepped.record).toEqual([0, 1]);
 	});
 
-	it('fails once free play has been entered', () => {
-		const explorations = [{ at: 1, events: [] }];
+	it('takes no notice of a step that moved nothing', () => {
+		const before = state({ record: ['f1f8'] });
 
-		expect(isUntouchedRecord({ record: ['g8h8'], explorations })).toBe(false);
+		expect(append(before, { kind: 'step', step: 0 }).record).toEqual(['f1f8']);
 	});
+
+	it('opens an exploration anchored to the length the main line had reached', () => {
+		const entered = append(state({ record: ['f1f8', 'b2b1'] }), { kind: 'entry' });
+
+		expect(entered.explorations).toEqual([{ at: 2, events: [] }]);
+		expect(entered.record).toEqual(['f1f8', 'b2b1']);
+	});
+
+	it('writes into the open exploration while free play is on', () => {
+		const before = state({
+			record: ['f1f8'],
+			explorations: [{ at: 1, events: [] }],
+			freePlayIndex: 0,
+		});
+
+		const written = append(before, { kind: 'move', move: move('f1f8') });
+
+		expect(written.record).toEqual(['f1f8']);
+		expect(written.explorations).toEqual([{ at: 1, events: ['f1f8'] }]);
+	});
+
+	it.each<PuzzleClosure>(['found', 'revealed'])(
+		'writes nothing once the exercise is %s',
+		(closure) => {
+			const before = state({ record: ['f1f8'], closure });
+
+			expect(append(before, { kind: 'move', move: move('b3d1') }).record).toEqual(['f1f8']);
+			expect(append(before, { kind: 'hint' }).record).toEqual(['f1f8']);
+			expect(append(before, { kind: 'entry' }).explorations).toEqual([]);
+		},
+	);
 });

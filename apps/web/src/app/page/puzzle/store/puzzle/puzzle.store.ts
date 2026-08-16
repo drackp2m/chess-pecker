@@ -5,6 +5,7 @@ import { BoardPresenter } from '@app/definition/board-presenter.interface';
 import { ChessMove, PromotionPieceType, Square } from '@app/definition/chess.type';
 import {
 	Puzzle,
+	PuzzleClosure,
 	PuzzleOutcome,
 	PuzzleRecord,
 	settleClosure,
@@ -13,27 +14,34 @@ import {
 import { withPuzzleComputed } from '@app/page/puzzle/store/puzzle/computed';
 import { withPuzzleGating } from '@app/page/puzzle/store/puzzle/gating';
 import { withPuzzlePlayback } from '@app/page/puzzle/store/puzzle/playback';
+import { PlaybackHooks, withPuzzlePlayer } from '@app/page/puzzle/store/puzzle/player';
 import {
-	RecordState,
-	recordEntry,
-	recordHint,
-	recordRestart,
-	recordStep,
-} from '@app/page/puzzle/store/puzzle/record';
+	RESTART_PROGRAM,
+	replyProgram,
+	resumeProgram,
+	revealProgram,
+} from '@app/page/puzzle/store/puzzle/program';
+import { PuzzleAction, RecordState, append } from '@app/page/puzzle/store/puzzle/record';
 import {
+	PuzzleRestore,
+	PuzzleStoreProps,
 	PuzzleVerdict,
-	anchorFreePlay,
 	buildPuzzleState,
 	findPromotion,
 	isSolution,
 	nextSelection,
 	openPuzzle,
-	restartExplorationPatch,
+	restartPatch,
 	restoreFreePlayPatch,
+	restorePatch,
+	restoredTransition,
+	revealCursor,
 	revealPatch,
+	revealedLine,
 } from '@app/page/puzzle/store/puzzle/session';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { nextTransition } from '@app/util/chess/board-transition';
+import { ChessNotation } from '@app/util/chess/chess-notation';
 
 @Injectable()
 export class PuzzleStore
@@ -42,6 +50,7 @@ export class PuzzleStore
 		withState(buildPuzzleState),
 		withPuzzleComputed(),
 		withPuzzleGating(),
+		withPuzzlePlayer(),
 		withPuzzlePlayback(),
 	)
 	implements BoardPresenter
@@ -102,23 +111,45 @@ export class PuzzleStore
 	 */
 	restart(): void {
 		const puzzle = this.puzzle();
-		// Read before anything moves, so the restart is written into the record the
-		// exercise already had instead of the blank one reopening it would hand out.
-		const recorded = recordRestart(this.recordState());
-		const anchor = this.freePlay();
 
 		if (undefined === puzzle) {
-			this.open(this.verdict(), recorded);
+			// Written before anything moves, so the restart goes into the record the
+			// exercise already had instead of the blank one reopening it would hand out.
+			this.open(this.verdict(), append(this.recordState(), { kind: 'restart' }));
 
 			return;
 		}
 
-		if (undefined !== anchor) {
-			patchState(this, restartExplorationPatch(anchor));
+		// The sandbox stays open — starting the exercise over is not leaving it — so the
+		// restart is written inside the exploration, which is where the board is.
+		this.append({ kind: 'restart' });
+		patchState(this, restartPatch(this.closure()));
+		this.run(RESTART_PROGRAM, this.playbackHooks());
+	}
+
+	/**
+	 * Plays the last move of the visible line over again, for a board that is being come
+	 * back to rather than played on — the line as the cursor leaves it, never whatever the
+	 * last thing done to the board happened to be. A rewind is a way of looking at the line,
+	 * not a move in it, and looking at it is not something to be shown a second time.
+	 *
+	 * The beat the board was left standing on is dropped either way: it is over, and a board
+	 * coming back must not run it again on its way in. What it may not cut short is a
+	 * playback still in flight or the take-back a refuted move is waiting for — both are
+	 * answers to something the player did, and the board comes back to them as it left them.
+	 */
+	replayLastMove(): void {
+		const cursor = this.cursor();
+		const isReplayable =
+			undefined !== this.line()[cursor - 1] && undefined !== this.positions()[cursor - 1];
+
+		if (!isReplayable || this.isReplaying() || undefined !== this.mistake()) {
+			patchState(this, { transition: undefined });
+
+			return;
 		}
 
-		patchState(this, recorded);
-		this.rewindToStart();
+		this.run(resumeProgram(cursor), this.playbackHooks());
 	}
 
 	/**
@@ -133,9 +164,58 @@ export class PuzzleStore
 			return;
 		}
 
-		this.cancelPlayback();
-		patchState(this, (state) => revealPatch(state, this.isOpen() ? this.deviation() : 0));
-		this.playScripted();
+		this.stop();
+
+		const wasOpen = this.isOpen();
+		const cursor = revealCursor(this.lineState(), wasOpen ? this.deviation() : 0);
+		// The slide is judged against the cursor as it stands now, which is what it
+		// describes; the rewind is about to move it.
+		const rewind = { cursor: this.cursor(), transition: this.transition() };
+
+		// While the exercise is open the rewind onto the script has to be written into the
+		// log before the record closes, or the log would end on a board the line is no
+		// longer standing on.
+		if (wasOpen) {
+			this.seek(cursor);
+		}
+
+		patchState(this, revealPatch({ ...rewind, closure: this.closure() }, cursor));
+
+		// Read off the board the rewind has just left standing, which is the one the answer
+		// is played from. Written whole and held back at its start, it is a stretch of line
+		// like any other, which is the only kind of thing a programme knows how to walk.
+		const answer = revealedLine(this.positions(), this.puzzle()?.moves ?? [], cursor);
+
+		patchState(this, { revealed: answer, rewound: answer.moves.length });
+		this.run(revealProgram(cursor + answer.moves.length), this.playbackHooks());
+	}
+
+	/**
+	 * Puts a saved exercise back on the board, exactly as it was left. It is the board the
+	 * record describes, so nothing here is played: the playback in flight is dropped, the
+	 * line is folded out of the record in one go and the cursor lands where it stood.
+	 *
+	 * The move the line is standing on is the one thing that travels, so what changed while
+	 * the page was away can be seen — a slide and nothing more, with no beat of its own and
+	 * nothing following it.
+	 *
+	 * A record that does not replay is not worth an empty board on top of a solved
+	 * exercise, so it degrades to the position the exercise opened on and the exercise is
+	 * simply begun again; the verdict it carries still stands.
+	 */
+	restoreFrom(stored: PuzzleRestore): void {
+		const puzzle = this.puzzle();
+
+		if (undefined === puzzle) {
+			return;
+		}
+
+		this.stop();
+		patchState(this, restorePatch(stored, this.playerColor()));
+
+		// Read after the log is in: the line it describes is what the slide travels along.
+		patchState(this, { transition: restoredTransition(this.lineState()) });
+		patchState(this, { outcome: this.outcomeAt(this.cursor()) });
 	}
 
 	/**
@@ -149,23 +229,26 @@ export class PuzzleStore
 			return;
 		}
 
-		patchState(this, recordHint(this.recordState()), { hintUsed: true });
+		this.append({ kind: 'hint' }, { hintUsed: true });
 	}
 
 	toggleFreePlay(): void {
-		this.stopReveal();
+		this.stopPlayback();
 
 		const anchor = this.freePlay();
 
 		if (undefined === anchor) {
-			this.settleScripted();
 			this.enterFreePlay();
 
 			return;
 		}
 
-		this.cancelScripted();
-		patchState(this, (state) => restoreFreePlayPatch(state, anchor));
+		// Letting go of the index puts the main line back on the board on its own, and it
+		// comes back standing exactly where the exploration was entered from.
+		patchState(
+			this,
+			restoreFreePlayPatch({ cursor: this.cursor(), transition: this.transition() }, anchor),
+		);
 	}
 
 	/**
@@ -173,7 +256,7 @@ export class PuzzleStore
 	 * exercise back on the rails, so a wrong move can always be tried again.
 	 */
 	stepBackward(): void {
-		this.stopReveal();
+		this.stopPlayback();
 
 		const undone = this.line()[this.cursor() - 1];
 
@@ -181,7 +264,7 @@ export class PuzzleStore
 	}
 
 	stepForward(): void {
-		this.stopReveal();
+		this.stopPlayback();
 
 		const replayed = this.line()[this.cursor()];
 
@@ -189,7 +272,7 @@ export class PuzzleStore
 	}
 
 	selectSquare(square: Square): void {
-		this.stopReveal();
+		this.stopPlayback();
 
 		if (!this.canPlay() || undefined !== this.pendingPromotion()) {
 			return;
@@ -240,7 +323,7 @@ export class PuzzleStore
 	private open(verdict?: PuzzleVerdict, recorded?: PuzzleRecord): void {
 		const puzzle = this.puzzle();
 
-		this.cancelPlayback();
+		this.stop();
 
 		if (undefined === puzzle) {
 			patchState(this, buildPuzzleState());
@@ -250,11 +333,107 @@ export class PuzzleStore
 
 		patchState(this, { ...openPuzzle(puzzle), ...recorded, ...verdict });
 		this.armHintGate();
-		this.playScripted();
+		this.replyScripted();
 	}
 
 	private lineState() {
 		return { positions: this.positions(), line: this.line(), cursor: this.cursor() };
+	}
+
+	/**
+	 * The two things the player cannot reach on its own, because they live on the store and
+	 * not in a feature. The seek is always the held one: everything real is written before
+	 * the programme is handed over, so all a programme ever moves is the board. And the end
+	 * of one is where the verdict is read back off the head it left the board standing on.
+	 */
+	private playbackHooks(): PlaybackHooks {
+		return {
+			seek: (to: number): void => {
+				patchState(this, { rewound: Math.max(0, this.rewound() + this.cursor() - to) });
+			},
+
+			settled: (): void => {
+				this.settleOutcome();
+			},
+		};
+	}
+
+	/**
+	 * The verdict, read back off the head the board is standing on. It is where a programme
+	 * ends, and where one that never started ends too, so a script that ran out and a line
+	 * that was walked to its end leave the exercise saying the same thing about the board.
+	 */
+	private settleOutcome(): void {
+		const outcome = this.outcomeAt(this.cursor());
+
+		patchState(this, { outcome, closure: this.landedClosure(outcome) });
+	}
+
+	/**
+	 * Whether the line that just landed ends the exercise. Only the main line played out on
+	 * the board does, and free play is a sandbox that never reaches it. An answer playing
+	 * itself needs no exception: asking for it is what closed the exercise, and the first
+	 * closure is the one it keeps.
+	 */
+	private landedClosure(outcome: PuzzleOutcome): PuzzleClosure {
+		const isFound = 'solved' === outcome && undefined === this.freePlay();
+
+		return isFound ? settleClosure(this.closure(), 'found') : this.closure();
+	}
+
+	/**
+	 * Lets the opponent answer: the scripted ply at the cursor, parsed and written onto the
+	 * end of the line, with the head held a ply behind it so a programme has somewhere to
+	 * walk. Opening the exercise is the same thing — `moves[0]` is the opponent's move, and
+	 * it answers the exercise being opened rather than anything the player played.
+	 *
+	 * A script with nothing left to parse is a line that ends here: mate cut it short, or it
+	 * simply ran out. Nothing is written and no programme is started, so the verdict is read
+	 * off the board on the spot rather than waiting for a beat that is never coming.
+	 */
+	private replyScripted(): void {
+		const cursor = this.cursor();
+		const scripted = this.puzzle()?.moves[cursor];
+		const move =
+			undefined === scripted ? undefined : ChessNotation.parse(this.position(), scripted);
+
+		if (undefined === move) {
+			this.settleOutcome();
+
+			return;
+		}
+
+		this.append({ kind: 'move', move }, { rewound: 1 });
+		this.run(replyProgram(cursor + 1), this.playbackHooks());
+	}
+
+	/**
+	 * The user did something new. It goes on the end of the log and the cursor follows it
+	 * there; the guard that used to sit on every writer separately lives inside `append`,
+	 * so a closed exercise takes none of this.
+	 */
+	private append(action: PuzzleAction, patch?: Partial<PuzzleStoreProps>): void {
+		patchState(this, (state) => append(state, action), patch ?? {});
+	}
+
+	/**
+	 * Moves the head over what already exists. It never writes a move — only the step it
+	 * took, which is what lets the log replay back to this very board — and a seek that
+	 * goes nowhere writes nothing at all.
+	 *
+	 * A closed exercise is still there to be looked through, but its record is sealed and
+	 * takes no more steps, so the cursor travels beside the log instead of inside it.
+	 */
+	private seek(cursor: number, patch?: Partial<PuzzleStoreProps>): void {
+		const clamped = Math.max(0, Math.min(this.line().length, cursor));
+
+		if ('open' !== this.closure()) {
+			patchState(this, { rewound: this.rewound() + this.cursor() - clamped }, patch ?? {});
+
+			return;
+		}
+
+		this.append({ kind: 'step', step: clamped - this.cursor() }, patch);
 	}
 
 	private verdict(): PuzzleVerdict {
@@ -270,26 +449,44 @@ export class PuzzleStore
 		return {
 			record: this.record(),
 			explorations: this.explorations(),
-			freePlay: this.freePlay(),
+			freePlayIndex: this.freePlayIndex(),
 			closure: this.closure(),
 		};
 	}
 
+	/**
+	 * Opens a sandbox on the end of the log. The anchor it hangs off is not captured — the
+	 * entry event records where the main line stood, and the fold works the rest out — so
+	 * all that is held is which exploration is the open one.
+	 */
 	private enterFreePlay(): void {
-		patchState(this, recordEntry, {
-			freePlay: anchorFreePlay(this.lineState(), this.deviation()),
-			selected: undefined,
-			pendingPromotion: undefined,
-		});
+		const opened = this.explorations().length;
+
+		this.append({ kind: 'entry' });
+
+		// A closed record takes no entry, and an index pointing at an exploration that was
+		// never written would fold to nothing at all. The sandbox opens only if it is there.
+		if (opened < this.explorations().length) {
+			patchState(this, {
+				freePlayIndex: opened,
+				selected: undefined,
+				pendingPromotion: undefined,
+			});
+		}
 	}
 
-	private stopReveal(): void {
-		if (!this.isRevealing()) {
-			return;
-		}
-
-		this.cancelPlayback();
-		patchState(this, { isReplaying: false, isRevealing: false, announced: undefined });
+	/**
+	 * Anything the player does ends what the board was playing by itself, and it no longer
+	 * matters what that was: the reveal, the opponent answering, a restart being shown. All
+	 * of it is the player's to abandon, and what is left standing is the board the log
+	 * describes — the beats being the whole of what is dropped.
+	 *
+	 * Only the outcome is read back, and not the closure with it: the exercise is not over
+	 * because someone stopped watching it. Ending a programme is what settles that, and a
+	 * programme that was cut short never ended.
+	 */
+	private stopPlayback(): void {
+		this.stop();
 		patchState(this, { outcome: this.outcomeAt(this.cursor()) });
 	}
 
@@ -300,14 +497,11 @@ export class PuzzleStore
 		kind: 'backward' | 'forward',
 	): void {
 		const outcome = this.outcomeAt(cursor);
-		// What the cursor really did, which the clamped callers may have cut short.
-		const step = cursor - this.cursor();
 		// The board the stepped move was played on, whichever way it is travelled: it
 		// is the lower of the two cursors the move sits between.
 		const played = this.positions()[Math.min(cursor, this.cursor())];
 
-		patchState(this, (state) => recordStep(state, step), {
-			cursor,
+		this.seek(cursor, {
 			selected: undefined,
 			outcome,
 			result: settleResult(this.result(), outcome),
@@ -330,7 +524,7 @@ export class PuzzleStore
 	 */
 	private attemptMove(move: ChessMove): void {
 		if (this.isFreePlay()) {
-			this.commit(move, this.position().turn !== this.playerColor());
+			this.commit(move);
 
 			return;
 		}
@@ -341,7 +535,7 @@ export class PuzzleStore
 			return;
 		}
 
-		this.commit(move, false);
+		this.commit(move);
 
 		const outcome: PuzzleOutcome =
 			'solved' === this.outcomeAt(this.cursor()) ? 'solved' : 'replying';
@@ -349,11 +543,11 @@ export class PuzzleStore
 		patchState(this, {
 			outcome,
 			result: settleResult(this.result(), outcome),
-			closure: 'solved' === outcome ? settleClosure(this.closure(), 'found') : this.closure(),
+			closure: this.landedClosure(outcome),
 		});
 
 		if ('solved' !== outcome) {
-			this.playScripted();
+			this.replyScripted();
 		}
 	}
 
@@ -362,7 +556,7 @@ export class PuzzleStore
 	 * purpose: only the last one scheduled survives, so two would cancel each other.
 	 */
 	private registerMistake(move: ChessMove): void {
-		this.commit(move, false);
+		this.commit(move);
 		patchState(this, {
 			outcome: 'failed',
 			result: settleResult(this.result(), 'failed'),

@@ -200,7 +200,10 @@ const APPROACH: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			record: [...ASKED, 'b2b1'],
+			// The answer is written before it is shown: what walks it is a programme, and a
+			// programme only ever walks line that is already there. So the record runs a ply
+			// ahead of the board for as long as the beat lasts.
+			record: THREE_PLY,
 			exploring: false,
 			explorations: runs(),
 			cursor: 2,
@@ -484,7 +487,8 @@ const CONTINUED: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			record: [...THREE_PLY, 'b1d1'],
+			// A ply ahead again, for as long as the answer takes to arrive.
+			record: PLAYED,
 			exploring: false,
 			explorations: runs(FIRST),
 			cursor: 4,

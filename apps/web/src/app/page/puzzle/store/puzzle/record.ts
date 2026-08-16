@@ -3,7 +3,7 @@ import { PuzzleClosure, PuzzleEvent, PuzzleRecord } from '@app/definition/puzzle
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
 /** What a restart looks like in the record, wherever the board was when it happened. */
-const RESTART = 0;
+export const RESTART = 0;
 
 /**
  * What asking for the themes looks like. A UCI move is two squares and maybe a promotion
@@ -12,29 +12,37 @@ const RESTART = 0;
  */
 export const HINT = '?';
 
-/** What a writer reads: the record so far, where it writes, and whether it still may. */
+/**
+ * What a writer reads: the record so far, where it writes, and whether it still may.
+ * `freePlayIndex` is the exploration the writing goes into, which is state and not the
+ * folded anchor — the writer has to know where to write without replaying anything.
+ */
 export interface RecordState extends PuzzleRecord {
-	/** The free-play anchor; while one is standing the exploration is the target. */
-	readonly freePlay: object | undefined;
+	/** Which exploration is open; while one is the target, the main line is not. */
+	readonly freePlayIndex: number | undefined;
 	/** How the exercise ended, which closes the record for good. */
 	readonly closure: PuzzleClosure;
 }
+
+/**
+ * The one thing that can happen to a record. Every writer used to carry its own guard and
+ * its own idea of where to write; there is a single verb now, and what varies between them
+ * is only which event they hand it.
+ */
+export type PuzzleAction =
+	| { readonly kind: 'move'; readonly move: ChessMove }
+	| { readonly kind: 'step'; readonly step: number }
+	| { readonly kind: 'restart' }
+	| { readonly kind: 'hint' }
+	| { readonly kind: 'entry' };
 
 export function blankRecord(): PuzzleRecord {
 	return { record: [], explorations: [] };
 }
 
-export function isUntouchedRecord(state: PuzzleRecord): boolean {
-	return 1 >= state.record.length && 0 === state.explorations.length;
-}
-
 /** The record untouched, for everything that happens once it is closed. */
 function keep(state: PuzzleRecord): PuzzleRecord {
 	return { record: state.record, explorations: state.explorations };
-}
-
-function extend(events: readonly PuzzleEvent[], event: PuzzleEvent): readonly PuzzleEvent[] {
-	return [...events, event];
 }
 
 /**
@@ -50,24 +58,61 @@ function extendRun(events: readonly PuzzleEvent[], step: number): readonly Puzzl
 }
 
 /**
- * Puts whatever `write` appends where the exercise is recording right now: the open
+ * What an action writes onto the events it lands in, or `undefined` for an action that
+ * turns out to be nothing at all: a step that moved no ply is not something that happened.
+ *
+ * Entering free play is not in here. It opens the exploration the rest write into rather
+ * than writing into one, so `append` deals with it before a target has been chosen.
+ */
+function writeAction(
+	action: Exclude<PuzzleAction, { kind: 'entry' }>,
+): ((events: readonly PuzzleEvent[]) => readonly PuzzleEvent[]) | undefined {
+	switch (action.kind) {
+		case 'move':
+			return (events) => [...events, ChessNotation.describeLong(action.move)];
+		case 'step':
+			return 0 === action.step ? undefined : (events) => extendRun(events, action.step);
+		case 'restart':
+			return (events) => [...events, RESTART];
+		case 'hint':
+			return (events) => [...events, HINT];
+	}
+}
+
+/**
+ * Puts whatever the action writes where the exercise is recording right now: the open
  * exploration while free play is on, the main line otherwise, and nowhere at all once
  * the exercise has been closed. A miss no longer closes anything, so the take-back it
  * schedules, the retries after it and the explorations around them are all in here.
+ *
+ * Entering free play is the one action that writes outside that rule — it is what opens
+ * the exploration the others go into — so it is handled before the target is chosen.
  */
-function record(
-	state: RecordState,
-	write: (events: readonly PuzzleEvent[]) => readonly PuzzleEvent[],
-): PuzzleRecord {
+export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
 	if ('open' !== state.closure) {
 		return keep(state);
 	}
 
-	if (undefined === state.freePlay) {
+	if ('entry' === action.kind) {
+		return {
+			record: state.record,
+			explorations: [...state.explorations, { at: state.record.length, events: [] }],
+		};
+	}
+
+	const write = writeAction(action);
+
+	if (undefined === write) {
+		return keep(state);
+	}
+
+	const index = state.freePlayIndex;
+
+	if (undefined === index) {
 		return { record: write(state.record), explorations: state.explorations };
 	}
 
-	const open = state.explorations.at(-1);
+	const open = state.explorations[index];
 
 	// Free play without an exploration to write into is free play entered after the
 	// record was closed, which the guard above has already turned away.
@@ -77,47 +122,8 @@ function record(
 
 	return {
 		record: state.record,
-		explorations: [...state.explorations.slice(0, -1), { ...open, events: write(open.events) }],
-	};
-}
-
-/** A move that reached the board, right or wrong and whichever side played it. */
-export function recordMove(state: RecordState, move: ChessMove): PuzzleRecord {
-	return record(state, (events) => extend(events, ChessNotation.describeLong(move)));
-}
-
-/**
- * A cursor displacement, which is the real one — new cursor minus old — and never a
- * magnitude of zero: a step that moved nothing is not something that happened.
- */
-export function recordStep(state: RecordState, step: number): PuzzleRecord {
-	return 0 === step ? keep(state) : record(state, (events) => extendRun(events, step));
-}
-
-export function recordRestart(state: RecordState): PuzzleRecord {
-	return record(state, (events) => extend(events, RESTART));
-}
-
-/**
- * The themes, asked for. It goes wherever the exercise is recording at that moment, so
- * where it lands is the answer to whether the help was taken on the main line or inside
- * an exploration — there is nothing else to store.
- */
-export function recordHint(state: RecordState): PuzzleRecord {
-	return record(state, (events) => extend(events, HINT));
-}
-
-/**
- * A new exploration, anchored to the length the main line had reached. `at` is a length
- * and not an index, so entering before anything at all has happened is plainly `0`.
- */
-export function recordEntry(state: RecordState): PuzzleRecord {
-	if ('open' !== state.closure) {
-		return keep(state);
-	}
-
-	return {
-		record: state.record,
-		explorations: [...state.explorations, { at: state.record.length, events: [] }],
+		explorations: state.explorations.map((run, at) =>
+			at === index ? { ...run, events: write(run.events) } : run,
+		),
 	};
 }

@@ -6,6 +6,7 @@ import { Square } from '@app/definition/chess.type';
 import {
 	ANNOUNCE_DELAY,
 	DEFAULT_MOVE_SPEED,
+	REPLAY_DELAY,
 	RESUME_DELAY,
 	scaleForSpeed,
 } from '@app/definition/move-speed.type';
@@ -317,11 +318,14 @@ describe('PuzzleStore', () => {
 		expect(store.isPlayerTurn()).toBe(true);
 		expect(store.mistake()).toBeUndefined();
 
-		// Playing the solution from there drops the whole free-play branch.
+		// Playing the solution from there drops the whole free-play branch. Three plies and
+		// not two: the answer is written before it is walked, so it is on the line already
+		// with the board still a ply short of it — which is what the scoresheet reads.
 		store.selectSquare('b2');
 		store.selectSquare('b1');
 
-		expect(store.line()).toHaveLength(2);
+		expect(store.line()).toHaveLength(3);
+		expect(store.history()).toHaveLength(2);
 		expect(store.history()[1]?.san).toBe('Rb1+');
 		expect(store.outcome()).toBe('replying');
 	});
@@ -585,9 +589,10 @@ describe('PuzzleStore', () => {
 		const reopened = slideOf(store.transition());
 
 		// The same move onto the same square as before, so only the tick tells the two
-		// slides apart — and the miss in between must not have rewound it. It travels as
-		// a replay and not as a move: the line already had it, and still does.
-		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'forward' });
+		// slides apart — and the miss in between must not have rewound it. It answers the
+		// button that was just pressed, so it travels the way a move played does: the
+		// board is not being navigated, it is being started over.
+		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'played' });
 		expect(reopened.tick).toBeGreaterThan(opening.tick ?? 0);
 	});
 
@@ -643,6 +648,30 @@ describe('PuzzleStore', () => {
 		store.revealSolution();
 
 		expect(store.transition()).toBeUndefined();
+	});
+
+	it('walks back through an answer that played itself out, a ply at a time', () => {
+		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+		miss(store);
+		store.revealSolution();
+		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
+
+		const watched = store.history();
+
+		expect(watched.length).toBeGreaterThan(1);
+
+		store.stepBackward();
+
+		// The answer is anchored to the ply it was played from, so the head travels it like
+		// any other stretch of line instead of the whole thing falling off the board.
+		expect(store.cursor()).toBe(watched.length - 1);
+		expect(store.history()).toEqual(watched.slice(0, -1));
+
+		store.stepForward();
+
+		expect(store.cursor()).toBe(watched.length);
+		expect(store.history()).toEqual(watched);
 	});
 
 	it('navigates between exercises and restarts them', () => {
@@ -847,7 +876,9 @@ describe('PuzzleStore', () => {
 			const entry = snapshot(store);
 
 			store.restart();
-			vi.advanceTimersByTime(800);
+			// Far enough in for the piece to be lit up and not far enough for it to have
+			// travelled, which is the only moment there is anything in flight to drop.
+			vi.advanceTimersByTime(REPLAY_DELAY + 1);
 
 			expect(store.announcedMove()?.to).toBe('f8');
 
@@ -1247,7 +1278,9 @@ describe('PuzzleStore', () => {
 			play(store, 'b2', 'b1');
 
 			expect(store.result()).toBe('failed');
-			expect(store.record()).toEqual(['f1f8', 'b2c2', -1, 'b2b1']);
+			// The answer is written whole before it is walked, so it is in the record while
+			// the board is still a ply short of it.
+			expect(store.record()).toEqual(['f1f8', 'b2c2', -1, 'b2b1', 'b3d1']);
 		});
 
 		it('keeps an exploration made after the miss, anchor and all', () => {

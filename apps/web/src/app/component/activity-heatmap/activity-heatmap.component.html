@@ -19,9 +19,13 @@
 		(touchScrub)="onScrub($event)"
 		(touchScrubPin)="onPin($event)"
 	>
-		<div class="heatmap-months">
+		<div
+			class="heatmap-months"
+			[style.width.px]="monthsWidth()"
+			[style.paddingInlineStart.px]="monthsOffset()"
+		>
 			@for (marker of monthMarkers(); track $index) {
-				<span class="heatmap-month fs-sm color-contrast-mid" [style.gridColumnEnd]="marker.span">{{
+				<span class="heatmap-month fs-sm color-contrast-mid" [style.flexBasis.px]="marker.width">{{
 					marker.label
 				}}</span>
 			}

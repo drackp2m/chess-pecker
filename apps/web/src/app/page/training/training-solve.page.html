@@ -29,10 +29,11 @@
 
 	@if (null !== run.current()) {
 		<app-puzzle-solver
-			[previousLabel]="I18n.training.BACK"
+			[previousLabel]="I18n.training.PREVIOUS_EXERCISE"
 			[nextLabel]="nextLabel()"
-			[isNextDisabled]="run.isBusy() || (!run.hasNext() && !run.hasNextRound())"
-			(previous)="back()"
+			[isPreviousDisabled]="!review.hasPrevious()"
+			[isNextDisabled]="isNextDisabled()"
+			(previous)="previous()"
 			(next)="next()"
 		/>
 	}
