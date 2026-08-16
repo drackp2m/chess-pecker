@@ -95,22 +95,6 @@ export class AttemptDraftUseCase {
 		);
 	}
 
-	/**
-	 * El intento ya está en el servidor, así que la copia local deja de ser la única.
-	 * Sin este sello no habría manera de saber qué se perdería al vaciar el dispositivo.
-	 */
-	async markSynced(draft: AttemptDraft, syncedAt: Date = new Date()): Promise<void> {
-		const row = await this.findClosed(draft.identity);
-
-		if (undefined === row) {
-			return;
-		}
-
-		const { pendingSince: _pendingSince, ...synced } = row;
-
-		await this.repository.insert('attempt', { ...synced, syncedAt });
-	}
-
 	private toDraftRow(draft: AttemptDraft, progress: AttemptProgress): AttemptDraftRow {
 		const { identity } = draft;
 

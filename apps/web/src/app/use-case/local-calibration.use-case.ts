@@ -55,8 +55,6 @@ export class LocalCalibrationUseCase {
 			throw new Error('The training is not calibrating');
 		}
 
-		this.trainings.assertWritableOffline(training);
-
 		const rounds = await this.listRounds(trainingUuid);
 
 		if ('pending' === rounds.at(-1)?.outcome) {

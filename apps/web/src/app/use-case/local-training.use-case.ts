@@ -49,12 +49,6 @@ export class LocalTrainingUseCase {
 		});
 	}
 
-	assertWritableOffline(training: TrainingRow): void {
-		if (undefined !== training.syncedAt) {
-			throw new Error('This training is the server copy and cannot be advanced offline yet');
-		}
-	}
-
 	async save(training: TrainingRow): Promise<TrainingRow> {
 		return this.repository.insert('training', training);
 	}

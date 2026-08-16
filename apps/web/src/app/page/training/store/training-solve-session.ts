@@ -353,11 +353,7 @@ export class TrainingSolveSession {
 
 	/**
 	 * Todo lo que hay que leer del tablero se lee de una vez, antes del primer `await`:
-	 * para cuando el API conteste, la partida en pantalla puede ser ya la siguiente.
-	 *
-	 * El sello de subido va después del último volcado —que si no lo pisaría— y sólo si
-	 * el API se quedó con el intento. Lo que no lleve sello es lo único que se perdería
-	 * al vaciar el dispositivo, y es lo que mira el cierre de sesión.
+	 * para cuando la fila esté sellada, la partida en pantalla puede ser ya la siguiente.
 	 */
 	private async submit(closure: TrainingAttemptRecord['closure'], solved: boolean): Promise<void> {
 		const draft = this.draft;
@@ -383,9 +379,7 @@ export class TrainingSolveSession {
 			await this.seal(draft, attempt, timing);
 		}
 
-		if ((await this.run.grade(attempt, timing)) && undefined !== draft) {
-			await this.drafts.markSynced(draft);
-		}
+		await this.run.grade(attempt);
 	}
 
 	/**

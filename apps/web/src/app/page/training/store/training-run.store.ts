@@ -10,7 +10,6 @@ import {
 	initialState,
 	toSlot,
 } from '@app/page/training/store/training-run-state';
-import { PuzzleRow } from '@app/repository/definition/puzzle-schema.interface';
 import {
 	CalibrationRoundRow,
 	TrainingRow,
@@ -21,7 +20,6 @@ import {
 } from '@app/use-case/training-run-engine.use-case';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
-import { SolveTiming } from '@app/util/solve-timer';
 
 /**
  * Drives one solving run — a calibration round, or a stretch of a cycle. It owns the queue
@@ -69,16 +67,13 @@ export class TrainingRunStore extends signalStore(
 	 * Records how the exercise on screen went, once it is over. Woodpecker grades on the
 	 * first try, so the verdict inside `record` was settled long before the exercise
 	 * closed; this still runs once per exercise and is never revised.
-	 *
-	 * Devuelve si el intento quedó registrado, que es lo que decide si la copia local puede
-	 * darse por subida o sigue siendo la única que hay.
 	 */
-	async grade(record: TrainingAttemptRecord, timing: SolveTiming): Promise<boolean> {
+	async grade(record: TrainingAttemptRecord): Promise<void> {
 		const uuid = this.trainingUuid();
 		const current = this.current();
 
 		if (null === uuid || null === current || null !== this.lastResult()) {
-			return false;
+			return;
 		}
 
 		patchState(this, {
@@ -90,16 +85,12 @@ export class TrainingRunStore extends signalStore(
 		try {
 			const isClosed =
 				'calibration' === this.mode()
-					? await this.gradeCalibration(uuid, current.puzzle, record, timing)
-					: await this.gradeCycle(uuid, current, record, timing);
+					? await this.gradeCalibration()
+					: await this.gradeCycle(uuid, current);
 
 			patchState(this, { isSubmitting: false, isDone: isClosed });
-
-			return this.engine.isRemote();
 		} catch (error) {
 			this.fail(error, i18nRef(I18n.training.ATTEMPT_RECORD_ERROR));
-
-			return false;
 		}
 	}
 
@@ -155,7 +146,7 @@ export class TrainingRunStore extends signalStore(
 		const last = rounds.at(-1);
 
 		if ('pending' === last?.outcome) {
-			this.openRound(last, await this.engine.listRoundPuzzles(uuid, last.uuid));
+			this.openRound(last, await this.engine.listRoundPuzzles(last.uuid));
 
 			return;
 		}
@@ -184,22 +175,14 @@ export class TrainingRunStore extends signalStore(
 	}
 
 	/** Reports whether the run is over, either because the round closed or it ran dry. */
-	private async gradeCalibration(
-		uuid: string,
-		puzzle: PuzzleRow,
-		record: TrainingAttemptRecord,
-		timing: SolveTiming,
-	): Promise<boolean> {
+	private async gradeCalibration(): Promise<boolean> {
 		const round = this.round();
 
 		if (null === round) {
 			return true;
 		}
 
-		const outcome = await this.engine.submitCalibrationAttempt(uuid, round, puzzle, {
-			...record,
-			...timing,
-		});
+		const outcome = await this.engine.submitCalibrationAttempt(round.uuid);
 
 		if ('pending' !== outcome) {
 			patchState(this, { queue: [], roundOutcome: outcome, notice: describeOutcome(outcome) });
@@ -218,20 +201,12 @@ export class TrainingRunStore extends signalStore(
 		return undefined === next;
 	}
 
-	private async gradeCycle(
-		uuid: string,
-		current: TrainingRunSlot,
-		record: TrainingAttemptRecord,
-		timing: SolveTiming,
-	): Promise<boolean> {
+	private async gradeCycle(uuid: string, current: TrainingRunSlot): Promise<boolean> {
 		if (null === current.cycleItem) {
 			return true;
 		}
 
-		const cycleFinished = await this.engine.submitCycleAttempt(uuid, current.cycleItem, {
-			...record,
-			...timing,
-		});
+		const cycleFinished = await this.engine.submitCycleAttempt(uuid, current.cycleItem);
 
 		if (cycleFinished) {
 			patchState(this, { notice: i18nRef(I18n.training.CYCLE_COMPLETE) });

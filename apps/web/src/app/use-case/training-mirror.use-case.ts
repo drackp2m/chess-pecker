@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import type {
 	ApiPuzzle,
 	CalibrationRound,
-	SetTrainingGoalRequest,
 	Training,
 	TrainingCycle,
 	TrainingCycleItem,
@@ -57,7 +56,7 @@ export class TrainingMirrorUseCase {
 			rating: round.rating,
 			outcome: round.outcome,
 			createdAt: stored?.createdAt ?? now,
-			updatedAt: now,
+			updatedAt: stored?.updatedAt ?? now,
 			syncedAt: now,
 		});
 	}
@@ -96,7 +95,7 @@ export class TrainingMirrorUseCase {
 			index: cycle.index,
 			status: cycle.status,
 			createdAt: stored?.createdAt ?? new Date(cycle.createdAt),
-			updatedAt: now,
+			updatedAt: stored?.updatedAt ?? new Date(cycle.createdAt),
 			syncedAt: now,
 		});
 	}
@@ -110,6 +109,7 @@ export class TrainingMirrorUseCase {
 		}
 
 		const stored = await this.repository.find('trainingPuzzle', item.trainingPuzzle.uuid);
+		const storedItem = await this.repository.find('cycleItem', item.uuid);
 
 		await this.repository.insert('trainingPuzzle', {
 			uuid: item.trainingPuzzle.uuid,
@@ -117,7 +117,7 @@ export class TrainingMirrorUseCase {
 			lichessId: item.trainingPuzzle.puzzle.lichessId,
 			rating: item.trainingPuzzle.puzzle.rating,
 			createdAt: stored?.createdAt ?? now,
-			updatedAt: now,
+			updatedAt: stored?.updatedAt ?? now,
 			syncedAt: now,
 		});
 
@@ -127,23 +127,9 @@ export class TrainingMirrorUseCase {
 			trainingPuzzleUuid: item.trainingPuzzle.uuid,
 			lichessId: item.trainingPuzzle.puzzle.lichessId,
 			position: item.position,
-			createdAt: (await this.repository.find('cycleItem', item.uuid))?.createdAt ?? now,
-			updatedAt: now,
+			createdAt: storedItem?.createdAt ?? now,
+			updatedAt: storedItem?.updatedAt ?? now,
 			syncedAt: now,
-		});
-	}
-
-	async goal(trainingUuid: string, goal: SetTrainingGoalRequest): Promise<void> {
-		const now = new Date();
-
-		await this.repository.insert('trainingGoal', {
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			createdAt: now,
-			updatedAt: now,
-			syncedAt: now,
-			...(undefined === goal.puzzlesPerDay ? {} : { puzzlesPerDay: goal.puzzlesPerDay }),
-			...(undefined === goal.endDate ? {} : { endDate: goal.endDate }),
 		});
 	}
 

@@ -77,7 +77,6 @@ function toSlot(puzzle: ApiPuzzle, uuid: string, position: number) {
 
 function createRepository(cycleFinished = false) {
 	return {
-		isRemote: vi.fn().mockReturnValue(true),
 		nextCycleSlot: vi
 			.fn()
 			.mockResolvedValueOnce(toSlot(BACK_RANK_MATE, 'item-1', 0))
@@ -274,8 +273,7 @@ describe('TrainingSolveSession', () => {
 	});
 
 	it('records only the time the exercise spent on screen', async () => {
-		const repository = createRepository();
-		const { session, board } = configure(repository);
+		const { session, board, attempts } = configure(createRepository());
 
 		await enter(session);
 		vi.advanceTimersByTime(3000);
@@ -286,12 +284,12 @@ describe('TrainingSolveSession', () => {
 
 		vi.advanceTimersByTime(2000);
 		await settleSolved(board);
+		await vi.advanceTimersByTimeAsync(0);
 
-		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
-			'training-1',
-			expect.objectContaining({ uuid: 'item-1' }),
-			expect.objectContaining({ durationMs: OPENING + 3000 + 2000, solved: true }),
-		);
+		expect(onlyRow(attempts)).toMatchObject({
+			durationMs: OPENING + 3000 + 2000,
+			solved: true,
+		});
 	});
 
 	/**
@@ -316,22 +314,20 @@ describe('TrainingSolveSession', () => {
 	});
 
 	it('stamps the attempt with when the exercise opened and when it settled', async () => {
-		const repository = createRepository();
-		const { session, board } = configure(repository);
+		const { session, board, attempts } = configure(createRepository());
 
 		await enter(session);
 		await settleSolved(board);
+		await vi.advanceTimersByTimeAsync(0);
 
-		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
-			'training-1',
-			expect.objectContaining({ uuid: 'item-1' }),
-			expect.objectContaining({ createdAt: OPENED_AT, updatedAt: '2026-08-03T10:00:01.500Z' }),
-		);
+		expect(onlyRow(attempts)).toMatchObject({
+			createdAt: new Date(OPENED_AT),
+			updatedAt: new Date('2026-08-03T10:00:01.500Z'),
+		});
 	});
 
 	it('carries the clock across a round trip instead of restarting it', async () => {
-		const repository = createRepository();
-		const { session, board } = configure(repository);
+		const { session, board, attempts } = configure(createRepository());
 
 		await enter(session);
 		vi.advanceTimersByTime(3000);
@@ -341,12 +337,11 @@ describe('TrainingSolveSession', () => {
 
 		vi.advanceTimersByTime(2000);
 		await settleSolved(board);
+		await vi.advanceTimersByTimeAsync(0);
 
-		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
-			'training-1',
-			expect.objectContaining({ uuid: 'item-1' }),
-			expect.objectContaining({ durationMs: OPENING + 3000 + OPENING + 2000 }),
-		);
+		expect(onlyRow(attempts)).toMatchObject({
+			durationMs: OPENING + 3000 + OPENING + 2000,
+		});
 	});
 
 	it('submits the attempt once, however many times the page is reopened', async () => {
@@ -423,12 +418,11 @@ describe('TrainingSolveSession', () => {
 		await enter(reloaded.session);
 		vi.advanceTimersByTime(2000);
 		await settleSolved(reloaded.board);
+		await vi.advanceTimersByTimeAsync(0);
 
-		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
-			'training-1',
-			expect.objectContaining({ uuid: 'item-1' }),
-			expect.objectContaining({ durationMs: OPENING + 3000 + OPENING + 2000 }),
-		);
+		expect(onlyRow(attempts)).toMatchObject({
+			durationMs: OPENING + 3000 + OPENING + 2000,
+		});
 		expect(attempts.rows.size).toBe(1);
 		expect(attempts.drafts.size).toBe(0);
 	});
@@ -502,15 +496,16 @@ describe('TrainingSolveSession', () => {
 
 	it('holds the attempt back while the miss is still being worked on', async () => {
 		const repository = createRepository();
-		const { session, board } = configure(repository);
+		const { session, board, attempts } = configure(repository);
 
 		await enter(session);
 		await settleFailed(board);
 		vi.advanceTimersByTime(4000);
 
-		// The verdict is sealed, the exercise is not: nothing has been sent, and the
+		// The verdict is sealed, the exercise is not: nothing has been recorded, and the
 		// clock is still running on it.
 		expect(repository.submitCycleAttempt).not.toHaveBeenCalled();
+		expect(attempts.rows.size).toBe(0);
 
 		patchState(board, { closure: 'revealed' });
 		TestBed.tick();
@@ -519,8 +514,8 @@ describe('TrainingSolveSession', () => {
 		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
 			'training-1',
 			expect.objectContaining({ uuid: 'item-1' }),
-			expect.objectContaining({ solved: false, durationMs: OPENING + 4000 }),
 		);
+		expect(onlyRow(attempts)).toMatchObject({ solved: false, durationMs: OPENING + 4000 });
 	});
 
 	it('seals the draft into an attempt once the exercise closes', async () => {

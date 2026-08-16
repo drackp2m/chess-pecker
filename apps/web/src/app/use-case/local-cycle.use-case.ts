@@ -39,8 +39,6 @@ export class LocalCycleUseCase {
 			throw new Error('The calibration is not finished');
 		}
 
-		this.trainings.assertWritableOffline(training);
-
 		if (0 < (await this.listSet(trainingUuid)).length) {
 			throw new Error('The set is already selected');
 		}
@@ -172,8 +170,6 @@ export class LocalCycleUseCase {
 		if (undefined === training || !['planning', 'running'].includes(training.status)) {
 			throw new Error('The training is not ready for cycles');
 		}
-
-		this.trainings.assertWritableOffline(training);
 
 		const cycles = await this.listCycles(trainingUuid);
 
