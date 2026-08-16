@@ -16,6 +16,7 @@ import { dropAttemptOrientationMigration } from '@app/repository/migration/v12_d
 import { createAttemptCursorStoreMigration } from '@app/repository/migration/v13_create-attempt-cursor-store.migration';
 import { resetAttemptCursorMigration } from '@app/repository/migration/v14_reset-attempt-cursor.migration';
 import { splitAttemptDraftMigration } from '@app/repository/migration/v15_split-attempt-draft.migration';
+import { markLocalRowsPendingMigration } from '@app/repository/migration/v16_mark-local-rows-pending.migration';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
@@ -51,6 +52,7 @@ export abstract class Repository {
 		createAttemptCursorStoreMigration,
 		resetAttemptCursorMigration,
 		splitAttemptDraftMigration,
+		markLocalRowsPendingMigration,
 	];
 
 	static getLatestVersion(): number {

@@ -15,7 +15,13 @@ import { PushGoalNodeDto } from '../dto/request/push-goal-node.dto';
 import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
 import { PushTrainingPuzzleNodeDto } from '../dto/request/push-training-puzzle-node.dto';
 import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
-import { claimSyncRow, loadTreePuzzles, reuseSyncRow, syncKey } from '../util/sync-node.util';
+import {
+	claimSyncRow,
+	isFresherNode,
+	loadTreePuzzles,
+	reuseSyncRow,
+	syncKey,
+} from '../util/sync-node.util';
 
 import { PushCalibrationBranchUseCase } from './push-calibration-branch.use-case';
 import { PushCycleBranchUseCase } from './push-cycle-branch.use-case';
@@ -71,12 +77,32 @@ export class PushTrainingTreeUseCase {
 				throw new ForbiddenException('not allowed', 'training');
 			}
 
+			this.refreshTraining(existing, node);
 			context.outcome.keep('training', node, existing.uuid);
 
 			return existing;
 		}
 
 		return claimSyncRow(context, 'training', node, this.buildTraining(user, node));
+	}
+
+	/** Terminar o cancelar un entrenamiento ocurre mucho después de que su árbol subiera. */
+	private refreshTraining(row: Training, node: PushTrainingNodeDto): void {
+		if (!isFresherNode(node, row)) {
+			return;
+		}
+
+		row.status = node.status;
+
+		if (undefined !== node.finishedReason) {
+			row.finishedReason = node.finishedReason;
+		}
+
+		if (undefined !== node.finishedAt) {
+			row.finishedAt = node.finishedAt;
+		}
+
+		this.applySyncTimestampsUseCase.execute(row, node);
 	}
 
 	private buildTraining(user: User, node: PushTrainingNodeDto): Training {

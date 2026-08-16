@@ -5,6 +5,7 @@ import { PuzzleRecord } from '@app/definition/puzzle.type';
 import { AttemptRepository } from '@app/repository/attempt.repository';
 import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
+import { born } from '@app/use-case/sync/local-record';
 
 export interface AttemptIdentity {
 	readonly trainingUuid: string;
@@ -122,7 +123,7 @@ export class AttemptDraftUseCase {
 	private toAttemptRow(draft: AttemptDraft, outcome: AttemptOutcome): AttemptRow {
 		const { identity } = draft;
 
-		return {
+		return born<AttemptRow>({
 			uuid: draft.uuid,
 			trainingUuid: identity.trainingUuid,
 			kind: identity.kind,
@@ -137,11 +138,9 @@ export class AttemptDraftUseCase {
 			mistakeCount: outcome.mistakeCount,
 			createdAt: draft.createdAt,
 			updatedAt: outcome.updatedAt,
-			clientRef: draft.uuid,
-			pendingSince: outcome.updatedAt,
 			...(undefined === draft.position ? {} : { position: draft.position }),
 			...(undefined === identity.roundUuid ? {} : { roundUuid: identity.roundUuid }),
 			...(undefined === identity.cycleItemUuid ? {} : { cycleItemUuid: identity.cycleItemUuid }),
-		};
+		});
 	}
 }

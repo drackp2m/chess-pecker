@@ -9,6 +9,7 @@ import {
 } from '@app/repository/definition/training-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
+import { born, touch } from '@app/use-case/sync/local-record';
 import {
 	resolveNextRound,
 	resolveRoundOutcome,
@@ -122,7 +123,10 @@ export class LocalCalibrationUseCase {
 			rounds.filter((other) => other.uuid !== round.uuid),
 		);
 
-		await this.repository.insert('calibrationRound', { ...round, outcome, updatedAt: new Date() });
+		await this.repository.insert(
+			'calibrationRound',
+			touch<CalibrationRoundRow>({ ...round, outcome }),
+		);
 
 		if ('accept' === outcome) {
 			await this.trainings.updateStatus(round.trainingUuid, 'planning');
@@ -153,16 +157,19 @@ export class LocalCalibrationUseCase {
 	): Promise<CalibrationRoundRow> {
 		const now = new Date();
 
-		return this.repository.insert('calibrationRound', {
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			index,
-			kind,
-			rating,
-			outcome: 'pending',
-			createdAt: now,
-			updatedAt: now,
-		});
+		return this.repository.insert(
+			'calibrationRound',
+			born<CalibrationRoundRow>({
+				uuid: crypto.randomUUID(),
+				trainingUuid,
+				index,
+				kind,
+				rating,
+				outcome: 'pending',
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private toDealtRows(
@@ -171,14 +178,16 @@ export class LocalCalibrationUseCase {
 	): CalibrationPuzzleRow[] {
 		const now = new Date();
 
-		return puzzles.map((puzzle, position) => ({
-			uuid: crypto.randomUUID(),
-			roundUuid: round.uuid,
-			lichessId: puzzle.lichessId,
-			position,
-			createdAt: now,
-			updatedAt: now,
-		}));
+		return puzzles.map((puzzle, position) =>
+			born<CalibrationPuzzleRow>({
+				uuid: crypto.randomUUID(),
+				roundUuid: round.uuid,
+				lichessId: puzzle.lichessId,
+				position,
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private async listDealt(roundUuid: string): Promise<readonly CalibrationPuzzleRow[]> {

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import type { PushTrainingResult, SyncEntity } from '@chesspecker/api-definitions';
 import { DBSchema, IDBPObjectStore, StoreNames } from 'idb';
 
+import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
@@ -23,18 +24,6 @@ interface RekeyableSchema extends DBSchema {
 }
 
 type RekeyableStore = IDBPObjectStore<RekeyableSchema, ['row'], 'row', 'readwrite'>;
-
-/** Las ocho tablas del entrenamiento se llaman igual aquí y en el servidor. */
-const SYNC_ENTITIES: readonly SyncEntity[] = [
-	'training',
-	'trainingGoal',
-	'calibrationRound',
-	'calibrationPuzzle',
-	'trainingPuzzle',
-	'cycle',
-	'cycleItem',
-	'attempt',
-];
 
 /** El borrador entra aunque nunca suba: su clave es el hueco, y el hueco se mueve. */
 const REKEY_STORES: StoreNames<AppSchema>[] = [...SYNC_ENTITIES, 'attemptDraft'];

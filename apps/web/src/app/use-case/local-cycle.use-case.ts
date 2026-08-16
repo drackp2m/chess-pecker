@@ -11,6 +11,7 @@ import {
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCalibrationUseCase } from '@app/use-case/local-calibration.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
+import { born, touch } from '@app/use-case/sync/local-record';
 import { buildCycleOrder } from '@app/util/cycle-order';
 import { clampRatingBucket, ratingBucketCeiling } from '@app/util/rating-bucket';
 
@@ -144,20 +145,18 @@ export class LocalCycleUseCase {
 		const running = await this.findRunningCycle(trainingUuid);
 
 		if (undefined !== running) {
-			await this.repository.insert('cycle', {
-				...running,
-				status: 'abandoned',
-				updatedAt: new Date(),
-			});
+			await this.repository.insert(
+				'cycle',
+				touch<TrainingCycleRow>({ ...running, status: 'abandoned' }),
+			);
 		}
 	}
 
 	private async finishCycle(trainingUuid: string, cycle: TrainingCycleRow): Promise<void> {
-		await this.repository.insert('cycle', {
-			...cycle,
-			status: 'finished',
-			updatedAt: new Date(),
-		});
+		await this.repository.insert(
+			'cycle',
+			touch<TrainingCycleRow>({ ...cycle, status: 'finished' }),
+		);
 
 		if (TrainingPolicy.maxCycles <= cycle.index) {
 			await this.trainings.finish(trainingUuid, 'finished', 'max-cycles');
@@ -201,41 +200,48 @@ export class LocalCycleUseCase {
 	private async insertCycle(trainingUuid: string, index: number): Promise<TrainingCycleRow> {
 		const now = new Date();
 
-		return this.repository.insert('cycle', {
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			index,
-			status: 'running',
-			createdAt: now,
-			updatedAt: now,
-		});
+		return this.repository.insert(
+			'cycle',
+			born<TrainingCycleRow>({
+				uuid: crypto.randomUUID(),
+				trainingUuid,
+				index,
+				status: 'running',
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private toSetRows(trainingUuid: string, puzzles: readonly PuzzleRow[]): TrainingPuzzleRow[] {
 		const now = new Date();
 
-		return puzzles.map((puzzle) => ({
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			lichessId: puzzle.lichessId,
-			rating: puzzle.rating,
-			createdAt: now,
-			updatedAt: now,
-		}));
+		return puzzles.map((puzzle) =>
+			born<TrainingPuzzleRow>({
+				uuid: crypto.randomUUID(),
+				trainingUuid,
+				lichessId: puzzle.lichessId,
+				rating: puzzle.rating,
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private toItemRows(cycle: TrainingCycleRow, set: readonly TrainingPuzzleRow[]): CycleItemRow[] {
 		const now = new Date();
 
-		return set.map((trainingPuzzle, position) => ({
-			uuid: crypto.randomUUID(),
-			cycleUuid: cycle.uuid,
-			trainingPuzzleUuid: trainingPuzzle.uuid,
-			lichessId: trainingPuzzle.lichessId,
-			position,
-			createdAt: now,
-			updatedAt: now,
-		}));
+		return set.map((trainingPuzzle, position) =>
+			born<CycleItemRow>({
+				uuid: crypto.randomUUID(),
+				cycleUuid: cycle.uuid,
+				trainingPuzzleUuid: trainingPuzzle.uuid,
+				lichessId: trainingPuzzle.lichessId,
+				position,
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private async closedAttempts(trainingUuid: string): Promise<readonly AttemptRow[]> {

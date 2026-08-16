@@ -27,6 +27,17 @@ export function syncKey(node: SyncNodeDto, entity: SyncEntity): SyncKey {
 }
 
 /**
+ * Si lo que llega es más nuevo que lo guardado. Casi todo este dominio es de sólo añadir,
+ * pero tres filas cambian de estado después de nacer —el entrenamiento termina, la ronda
+ * acepta su franja, el ciclo se cierra— y suelen hacerlo días después de que su árbol
+ * subiera. Local manda, pero sólo hacia adelante: una subida que llega tarde no rebobina lo
+ * que ya hay.
+ */
+export function isFresherNode(node: SyncNodeDto, row: { updatedAt: Date }): boolean {
+	return undefined !== node.updatedAt && node.updatedAt.getTime() > row.updatedAt.getTime();
+}
+
+/**
  * Una fila que ya estaba. Se devuelve tal cual —la subida no pisa lo que hay— salvo que
  * cuelgue de otro padre, y entonces es el choque de dos dispositivos sobre el mismo hueco:
  * se queda el primero y el segundo se marca como rechazado para que deje de reintentarse.

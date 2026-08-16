@@ -8,7 +8,7 @@ import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-t
 import { SyncPushContext } from '../definition/sync-push-context.interface';
 import { PushCycleItemNodeDto } from '../dto/request/push-cycle-item-node.dto';
 import { PushCycleNodeDto } from '../dto/request/push-cycle-node.dto';
-import { claimSyncRow, reuseSyncRow, syncKey } from '../util/sync-node.util';
+import { claimSyncRow, isFresherNode, reuseSyncRow, syncKey } from '../util/sync-node.util';
 
 import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
 
@@ -48,8 +48,13 @@ export class PushCycleBranchUseCase {
 
 		if (null !== existing) {
 			const belongsHere = existing.training.uuid === training.uuid;
+			const reused = reuseSyncRow(context, 'cycle', node, existing, belongsHere, OTHER_TREE);
 
-			return reuseSyncRow(context, 'cycle', node, existing, belongsHere, OTHER_TREE);
+			if (undefined !== reused) {
+				this.refreshCycle(reused, node);
+			}
+
+			return reused;
 		}
 
 		const cycle = this.applySyncTimestampsUseCase.execute(
@@ -58,6 +63,17 @@ export class PushCycleBranchUseCase {
 		);
 
 		return claimSyncRow(context, 'cycle', node, cycle);
+	}
+
+	/** La pasada sube abierta y se cierra —o se abandona— cuando el dispositivo lo decide. */
+	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto): void {
+		if (!isFresherNode(node, row)) {
+			return;
+		}
+
+		row.status = node.status;
+
+		this.applySyncTimestampsUseCase.execute(row, node);
 	}
 
 	private async pushItem(

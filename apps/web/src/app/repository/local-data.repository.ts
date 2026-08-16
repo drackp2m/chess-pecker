@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
 import { StoreNames } from 'idb';
 
+import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { AppSchema } from '@app/repository/definition/app-schema.interface';
+import { PendingStore } from '@app/repository/definition/pending-schema.interface';
 import { GenericRepository } from '@app/repository/generic.repository';
 
 @Injectable({
@@ -9,14 +11,22 @@ import { GenericRepository } from '@app/repository/generic.repository';
 })
 export class LocalDataRepository extends GenericRepository<AppSchema> {
 	/**
-	 * Cuántos intentos no han llegado al servidor. IndexedDB no indexa las filas a las que
-	 * les falta el campo, así que el índice de lo pendiente *es* la lista: contarlo no
-	 * recorre meses de partidas.
+	 * Cuántas filas del entrenamiento no han llegado al servidor. IndexedDB no indexa las
+	 * filas a las que les falta el campo, así que el índice de lo pendiente *es* la lista:
+	 * contarlo no recorre meses de partidas.
 	 */
 	async countPendingSync(): Promise<number> {
-		return this.runInTransaction(['attempt'], 'readonly', (transaction) =>
-			transaction.objectStore('attempt').index('pendingSince').count(),
-		);
+		return this.runInTransaction(syncStores, 'readonly', async (transaction) => {
+			const counts = await Promise.all(
+				SYNC_ENTITIES.map((entity) => {
+					const store = transaction.objectStore(entity) as unknown as PendingStore<'readonly'>;
+
+					return store.index('pendingSince').count();
+				}),
+			);
+
+			return counts.reduce((total, count) => total + count, 0);
+		});
 	}
 
 	/**
@@ -30,6 +40,8 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 		});
 	}
 }
+
+const syncStores: StoreNames<AppSchema>[] = [...SYNC_ENTITIES];
 
 const userStores: StoreNames<AppSchema>[] = [
 	'activityCursor',

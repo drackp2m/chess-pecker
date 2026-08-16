@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import type {
 	GetTrainingAttemptsRequest,
-	SetTrainingGoalRequest,
 	Training,
 	TrainingActivity,
 	TrainingAttemptHistory,
@@ -45,21 +44,6 @@ export class TrainingRepository {
 		query: GetTrainingAttemptsRequest,
 	): Promise<TrainingAttemptHistory> {
 		return this.apiSdk.GET.training('/:uuid/attempt', { path: { uuid }, query });
-	}
-
-	/** Fixes the X exercises every cycle then runs over. Only possible once. */
-	async selectSet(uuid: string, size: number): Promise<number> {
-		const { size: selected } = await this.apiSdk.POST.training('/:uuid/set', {
-			path: { uuid },
-			params: { size },
-		});
-
-		return selected;
-	}
-
-	/** Append-only: every call adds a goal, and the current one is the last. */
-	async setGoal(uuid: string, goal: SetTrainingGoalRequest): Promise<void> {
-		await this.apiSdk.POST.training('/:uuid/goal', { path: { uuid }, params: goal });
 	}
 
 	async finish(uuid: string): Promise<void> {

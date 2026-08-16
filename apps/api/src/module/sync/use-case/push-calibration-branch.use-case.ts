@@ -7,7 +7,7 @@ import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-t
 import { SyncPushContext } from '../definition/sync-push-context.interface';
 import { PushCalibrationPuzzleNodeDto } from '../dto/request/push-calibration-puzzle-node.dto';
 import { PushCalibrationRoundNodeDto } from '../dto/request/push-calibration-round-node.dto';
-import { claimSyncRow, reuseSyncRow, syncKey } from '../util/sync-node.util';
+import { claimSyncRow, isFresherNode, reuseSyncRow, syncKey } from '../util/sync-node.util';
 
 import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
 
@@ -53,11 +53,34 @@ export class PushCalibrationBranchUseCase {
 
 		if (null !== existing) {
 			const belongsHere = existing.training.uuid === training.uuid;
+			const reused = reuseSyncRow(
+				context,
+				'calibrationRound',
+				node,
+				existing,
+				belongsHere,
+				OTHER_TREE,
+			);
 
-			return reuseSyncRow(context, 'calibrationRound', node, existing, belongsHere, OTHER_TREE);
+			if (undefined !== reused) {
+				this.refreshRound(reused, node);
+			}
+
+			return reused;
 		}
 
 		return claimSyncRow(context, 'calibrationRound', node, this.buildRound(training, node));
+	}
+
+	/** La ronda sube abierta y decide después: subir, bajar o aceptar la franja. */
+	private refreshRound(row: TrainingCalibrationRound, node: PushCalibrationRoundNodeDto): void {
+		if (!isFresherNode(node, row)) {
+			return;
+		}
+
+		row.outcome = node.outcome;
+
+		this.applySyncTimestampsUseCase.execute(row, node);
 	}
 
 	private buildRound(
