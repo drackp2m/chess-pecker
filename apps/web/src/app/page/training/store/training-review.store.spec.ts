@@ -33,7 +33,7 @@ function slot(uuid: string): TrainingRunSlot {
 }
 
 function solved(puzzleUuid: string): SolvedAttempt {
-	const row = { puzzleUuid, slotId: `item-${puzzleUuid}` } as AttemptRow;
+	const row = { puzzleUuid, cycleItemUuid: `item-${puzzleUuid}` } as AttemptRow;
 
 	return {
 		row,

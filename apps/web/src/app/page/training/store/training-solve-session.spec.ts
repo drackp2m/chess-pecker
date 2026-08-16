@@ -11,6 +11,7 @@ import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
 import { AttemptRepository } from '@app/repository/attempt.repository';
+import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { CycleItemRow, TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
@@ -43,18 +44,17 @@ const OPENING = 1500;
 
 const OPENED_AT = '2026-08-03T10:00:00.000Z';
 
-const STORED_DRAFT: AttemptRow = {
+const STORED_DRAFT: AttemptDraftRow = {
+	slotId: 'item-1',
 	uuid: 'attempt-draft-1',
 	trainingUuid: 'training-1',
 	kind: 'cycle',
-	slotId: 'item-1',
 	cycleItemUuid: 'item-1',
 	puzzleUuid: 'puzzle-1',
 	lichessId: 'AAA11',
 	durationMs: 12_000,
 	record: ['g8h8', 'a1a2', -1],
 	explorations: [],
-	closure: 'open',
 	hintUsed: true,
 	mistakeCount: 1,
 	createdAt: new Date('2026-08-03T09:00:00.000Z'),
@@ -86,19 +86,70 @@ function createRepository(cycleFinished = false) {
 	};
 }
 
+type StoreName = 'attempt' | 'attemptDraft';
+
+interface FakeStore {
+	put: (row: AttemptRow | AttemptDraftRow) => Promise<void>;
+	delete: (key: string) => Promise<void>;
+}
+
 /** Stands in for IndexedDB, and survives a reset so a reload can be replayed against it. */
 function createAttemptStorage() {
 	const rows = new Map<string, AttemptRow>();
+	const drafts = new Map<string, AttemptDraftRow>();
+
+	const put = (storeName: StoreName, row: AttemptRow | AttemptDraftRow): void => {
+		if ('attempt' === storeName) {
+			rows.set((row as AttemptRow).uuid, row as AttemptRow);
+
+			return;
+		}
+
+		drafts.set((row as AttemptDraftRow).slotId, row as AttemptDraftRow);
+	};
+
+	const objectStore = (storeName: StoreName): FakeStore => ({
+		put: (row) => {
+			put(storeName, row);
+
+			return Promise.resolve();
+		},
+		delete: (key) => {
+			('attempt' === storeName ? rows : drafts).delete(key);
+
+			return Promise.resolve();
+		},
+	});
 
 	return {
 		rows,
-		insert: vi.fn((_storeName: 'attempt', row: AttemptRow) => {
-			rows.set(row.uuid, row);
+		drafts,
+		insert: vi.fn((storeName: StoreName, row: AttemptRow | AttemptDraftRow) => {
+			put(storeName, row);
 
 			return Promise.resolve(row);
 		}),
-		findByIndex: vi.fn((_storeName: 'attempt', _indexName: 'slotId', slotId: string) =>
-			Promise.resolve([...rows.values()].find((row) => row.slotId === slotId)),
+		find: vi.fn((_storeName: 'attemptDraft', slotId: string) =>
+			Promise.resolve(drafts.get(slotId)),
+		),
+		findByIndex: vi.fn(
+			(_storeName: 'attempt', _indexName: string, key: string | readonly string[]) =>
+				Promise.resolve(
+					[...rows.values()].find((row) =>
+						'string' === typeof key
+							? row.cycleItemUuid === key
+							: row.roundUuid === key[0] && row.puzzleUuid === key[1],
+					),
+				),
+		),
+		runInTransaction: vi.fn(
+			(
+				_stores: StoreName[],
+				_mode: string,
+				operation: (transaction: {
+					objectStore: (storeName: StoreName) => FakeStore;
+				}) => Promise<void>,
+			) => operation({ objectStore }),
 		),
 	};
 }
@@ -138,6 +189,10 @@ async function enter(session: TrainingSolveSession): Promise<void> {
 
 function onlyRow(attempts: ReturnType<typeof createAttemptStorage>): AttemptRow | undefined {
 	return [...attempts.rows.values()][0];
+}
+
+function onlyDraft(attempts: ReturnType<typeof createAttemptStorage>): AttemptDraftRow | undefined {
+	return [...attempts.drafts.values()][0];
 }
 
 /** What the board does when the player finds the move, without playing the chess. */
@@ -329,14 +384,15 @@ describe('TrainingSolveSession', () => {
 
 		await enter(session);
 
-		expect(onlyRow(attempts)).toMatchObject({
+		expect(onlyDraft(attempts)).toMatchObject({
 			trainingUuid: 'training-1',
 			kind: 'cycle',
 			slotId: 'item-1',
 			cycleItemUuid: 'item-1',
 			lichessId: 'AAA11',
 		});
-		expect(onlyRow(attempts)?.solved).toBeUndefined();
+		expect(onlyDraft(attempts)?.solved).toBeUndefined();
+		expect(attempts.rows.size).toBe(0);
 	});
 
 	it('keeps the clock flowing into the row with nothing being played', async () => {
@@ -344,11 +400,11 @@ describe('TrainingSolveSession', () => {
 
 		await enter(session);
 
-		expect(onlyRow(attempts)?.durationMs).toBe(OPENING);
+		expect(onlyDraft(attempts)?.durationMs).toBe(OPENING);
 
 		await vi.advanceTimersByTimeAsync(SOLVE_FLUSH_INTERVAL_MS * 2);
 
-		expect(onlyRow(attempts)?.durationMs).toBe(SOLVE_FLUSH_INTERVAL_MS * 2);
+		expect(onlyDraft(attempts)?.durationMs).toBe(SOLVE_FLUSH_INTERVAL_MS * 2);
 	});
 
 	it('picks a stored draft back up instead of restarting the clock', async () => {
@@ -374,6 +430,7 @@ describe('TrainingSolveSession', () => {
 			expect.objectContaining({ durationMs: OPENING + 3000 + OPENING + 2000 }),
 		);
 		expect(attempts.rows.size).toBe(1);
+		expect(attempts.drafts.size).toBe(0);
 	});
 
 	/**
@@ -383,7 +440,7 @@ describe('TrainingSolveSession', () => {
 	it('writes the stored record straight back while nothing is played on the board', async () => {
 		const attempts = createAttemptStorage();
 
-		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
+		attempts.drafts.set(STORED_DRAFT.slotId, STORED_DRAFT);
 
 		const { session } = configure(createRepository(), attempts);
 
@@ -393,21 +450,20 @@ describe('TrainingSolveSession', () => {
 		session.pause();
 		await vi.advanceTimersByTimeAsync(0);
 
-		expect(attempts.rows.size).toBe(1);
-		expect(onlyRow(attempts)).toMatchObject({
+		expect(attempts.drafts.size).toBe(1);
+		expect(onlyDraft(attempts)).toMatchObject({
 			uuid: STORED_DRAFT.uuid,
 			record: STORED_DRAFT.record,
 			explorations: [],
 			hintUsed: true,
 			mistakeCount: 1,
-			closure: 'open',
 		});
 	});
 
 	it('puts the stored board back, cursor and all, before anything is written', async () => {
 		const attempts = createAttemptStorage();
 
-		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
+		attempts.drafts.set(STORED_DRAFT.slotId, STORED_DRAFT);
 
 		const { session, board } = configure(createRepository(), attempts);
 
@@ -421,10 +477,10 @@ describe('TrainingSolveSession', () => {
 		expect(board.hintUsed()).toBe(true);
 	});
 
-	it('goes on writing the stored row once the player plays on the board again', async () => {
+	it('carries the stored record into the attempt once the player finds the move', async () => {
 		const attempts = createAttemptStorage();
 
-		attempts.rows.set(STORED_DRAFT.uuid, STORED_DRAFT);
+		attempts.drafts.set(STORED_DRAFT.slotId, STORED_DRAFT);
 
 		const { session, board } = configure(createRepository(), attempts);
 
@@ -435,11 +491,12 @@ describe('TrainingSolveSession', () => {
 		TestBed.tick();
 		await vi.advanceTimersByTimeAsync(0);
 
-		expect(attempts.rows.size).toBe(1);
+		expect(attempts.drafts.size).toBe(0);
 		expect(onlyRow(attempts)).toMatchObject({
 			uuid: STORED_DRAFT.uuid,
 			record: [...STORED_DRAFT.record, 'a1a8'],
 			mistakeCount: 1,
+			solved: true,
 		});
 	});
 
@@ -466,14 +523,18 @@ describe('TrainingSolveSession', () => {
 		);
 	});
 
-	it('closes the draft with the verdict once the exercise closes', async () => {
+	it('seals the draft into an attempt once the exercise closes', async () => {
 		const { session, board, attempts } = configure(createRepository());
 
 		await enter(session);
 		await settleSolved(board);
 		await vi.advanceTimersByTimeAsync(0);
 
-		expect(onlyRow(attempts)?.solved).toBe(true);
-		expect(onlyRow(attempts)?.startedAt).toBeUndefined();
+		expect(attempts.drafts.size).toBe(0);
+		expect(onlyRow(attempts)).toMatchObject({
+			solved: true,
+			closure: 'found',
+			clientRef: onlyRow(attempts)?.uuid,
+		});
 	});
 });

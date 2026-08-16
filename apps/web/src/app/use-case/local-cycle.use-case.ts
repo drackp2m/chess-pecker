@@ -245,6 +245,6 @@ export class LocalCycleUseCase {
 	private async closedAttempts(trainingUuid: string): Promise<readonly AttemptRow[]> {
 		const rows = await this.repository.findAllByIndex('attempt', 'trainingUuid', trainingUuid);
 
-		return rows.filter((row) => 'cycle' === row.kind && 'open' !== row.closure);
+		return rows.filter((row) => 'cycle' === row.kind);
 	}
 }

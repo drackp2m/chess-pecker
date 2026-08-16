@@ -47,7 +47,7 @@ export class TrainingHistoryUseCase {
 
 		const rows = await this.attempts.findAllByIndex('attempt', 'trainingUuid', scope.trainingUuid);
 		const finished = rows
-			.filter((row) => scope.kind === row.kind && 'open' !== row.closure)
+			.filter((row) => scope.kind === row.kind)
 			.filter((row) => placement.keeps(row))
 			.sort((left, right) => left.updatedAt.getTime() - right.updatedAt.getTime());
 

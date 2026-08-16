@@ -5,7 +5,6 @@ import { AttemptRow } from '@app/repository/definition/attempt-schema.interface'
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
 import { SessionStore } from '@app/store/session.store';
-import { toSlotId } from '@app/use-case/attempt-draft.use-case';
 import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
 
 /** Tope de páginas por visita: un dispositivo vacío termina de llenarse en la siguiente. */
@@ -16,8 +15,8 @@ const MAX_PAGES = 20;
  * aquí no se toca nunca—, así que esto sólo rellena huecos: los ejercicios resueltos en
  * otro dispositivo, o los que se fueron al vaciar el aparato.
  *
- * El intento se reconoce por su `slotId`, que nombra el hueco del plan y no la fila: el
- * uuid lo pone cada lado por su cuenta y no viaja, así que casar por él duplicaría.
+ * El intento se reconoce por el hueco del plan que ocupa y no por su fila: el uuid lo pone
+ * cada lado por su cuenta y no viaja, así que casar por él duplicaría.
  */
 @Injectable({
 	providedIn: 'root',
@@ -70,7 +69,7 @@ export class TrainingRestoreUseCase {
 	private async absorb(trainingUuid: string, attempts: readonly TrainingAttempt[]): Promise<void> {
 		for (const attempt of attempts) {
 			const row = this.toRow(trainingUuid, attempt);
-			const stored = await this.repository.findByIndex('attempt', 'slotId', row.slotId);
+			const stored = await this.findBySlot(row);
 
 			if (undefined === stored) {
 				await this.repository.insert('attempt', row);
@@ -86,6 +85,21 @@ export class TrainingRestoreUseCase {
 		}
 	}
 
+	private async findBySlot(row: AttemptRow): Promise<AttemptRow | undefined> {
+		if (undefined !== row.cycleItemUuid) {
+			return this.repository.findByIndex('attempt', 'cycleItemUuid', row.cycleItemUuid);
+		}
+
+		if (undefined === row.roundUuid) {
+			return undefined;
+		}
+
+		return this.repository.findByIndex('attempt', 'roundUuid-puzzleUuid', [
+			row.roundUuid,
+			row.puzzleUuid,
+		]);
+	}
+
 	private toRow(trainingUuid: string, attempt: TrainingAttempt): AttemptRow {
 		const identity = {
 			trainingUuid,
@@ -99,7 +113,6 @@ export class TrainingRestoreUseCase {
 		return {
 			...identity,
 			uuid: attempt.uuid,
-			slotId: toSlotId(identity),
 			durationMs: attempt.durationMs,
 			record: attempt.record,
 			explorations: attempt.explorations,

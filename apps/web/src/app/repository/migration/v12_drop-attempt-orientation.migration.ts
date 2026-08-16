@@ -1,4 +1,4 @@
-import { AppSchema } from '@app/repository/definition/app-schema.interface';
+import { AppSchemaV14 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
@@ -6,7 +6,7 @@ import { Migration } from '@app/repository/definition/migration.interface';
  * del turno, porque la posición es la de antes de la jugada del rival— y lo único que la
  * fila añadía era el volteo manual, que es del momento y no del ejercicio.
  */
-export const dropAttemptOrientationMigration: Migration<AppSchema> = {
+export const dropAttemptOrientationMigration: Migration<AppSchemaV14> = {
 	version: 12,
 	description: 'drop the stored board orientation from the attempts',
 	apply: async ({ transaction }) => {

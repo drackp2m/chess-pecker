@@ -9,6 +9,7 @@ import {
 	TrainingRunSlot,
 } from '@app/page/training/store/training-run-state';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
+import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingStore } from '@app/store/training.store';
 import {
@@ -18,7 +19,7 @@ import {
 } from '@app/use-case/attempt-draft.use-case';
 import { SolvedAttempt } from '@app/use-case/training-history.use-case';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
-import { SolveTimer } from '@app/util/solve-timer';
+import { SolveTimer, SolveTiming } from '@app/util/solve-timer';
 
 interface SuspendedBoard {
 	readonly restore: PuzzleRestore;
@@ -103,7 +104,7 @@ export class TrainingSolveSession {
 		}
 
 		this.board.setPuzzles([entry.puzzle]);
-		this.board.restoreFrom(this.toRestore(entry.row));
+		this.board.restoreFrom(this.toRestore(entry.row, entry.row.closure));
 	}
 
 	leaveSolved(): void {
@@ -222,15 +223,13 @@ export class TrainingSolveSession {
 			return;
 		}
 
-		if (undefined !== stored) {
-			this.timer.restore(stored.durationMs, stored.createdAt);
-			this.board.restoreFrom(this.toRestore(stored));
+		if (undefined === stored && (await this.openClosed(slot, identity))) {
+			return;
 		}
 
-		// A row that was closed is put back on the board all the same — the exercise is
-		// there to be looked at — but it is finished, and nothing goes on being written to it.
-		if (undefined !== stored && 'open' !== stored.closure) {
-			return;
+		if (undefined !== stored) {
+			this.timer.restore(stored.durationMs, stored.createdAt);
+			this.board.restoreFrom(this.toRestore(stored, 'open'));
 		}
 
 		this.draft = {
@@ -243,14 +242,31 @@ export class TrainingSolveSession {
 		await this.flush();
 	}
 
+	/**
+	 * Un ejercicio ya cerrado se vuelve a poner en el tablero —está ahí para mirarlo— pero
+	 * es definitivo: no se le abre borrador y no se le escribe nada más.
+	 */
+	private async openClosed(slot: TrainingRunSlot, identity: AttemptIdentity): Promise<boolean> {
+		const closed = await this.drafts.findClosed(identity).catch(() => undefined);
+
+		if (this.slot !== slot || undefined === closed) {
+			return false;
+		}
+
+		this.timer.restore(closed.durationMs, closed.createdAt);
+		this.board.restoreFrom(this.toRestore(closed, closed.closure));
+
+		return true;
+	}
+
 	/** The row as the board reads it, which is the record plus the verdict it was left on. */
-	private toRestore(row: AttemptRow): PuzzleRestore {
+	private toRestore(row: AttemptDraftRow | AttemptRow, closure: PuzzleClosure): PuzzleRestore {
 		const solved: PuzzleResult = true === row.solved ? 'solved' : 'failed';
 
 		return {
 			record: row.record,
 			explorations: row.explorations,
-			closure: row.closure,
+			closure,
 			hintUsed: row.hintUsed,
 			mistakeCount: row.mistakeCount,
 			result: undefined === row.solved ? undefined : solved,
@@ -296,7 +312,7 @@ export class TrainingSolveSession {
 			return Promise.resolve();
 		}
 
-		const { durationMs, startedAt, updatedAt } = this.timer.snapshot();
+		const { durationMs, updatedAt } = this.timer.snapshot();
 		const result = this.board.result();
 
 		return this.drafts
@@ -305,10 +321,8 @@ export class TrainingSolveSession {
 				updatedAt,
 				record: this.board.record(),
 				explorations: this.board.explorations(),
-				closure: this.board.closure(),
 				hintUsed: this.board.hintUsed(),
 				mistakeCount: this.board.mistakeCount(),
-				...(undefined === startedAt ? {} : { startedAt }),
 				...(undefined === result ? {} : { solved: 'solved' === result }),
 			})
 			.catch(() => undefined);
@@ -365,8 +379,35 @@ export class TrainingSolveSession {
 
 		await flushed;
 
+		if (undefined !== draft) {
+			await this.seal(draft, attempt, timing);
+		}
+
 		if ((await this.run.grade(attempt, timing)) && undefined !== draft) {
 			await this.drafts.markSynced(draft);
 		}
+	}
+
+	/**
+	 * El borrador se convierte en intento en cuanto el ejercicio se cierra: de aquí en
+	 * adelante la fila es la que sube, y ya no la toca nadie más.
+	 */
+	private async seal(
+		draft: AttemptDraft,
+		attempt: TrainingAttemptRecord,
+		timing: SolveTiming,
+	): Promise<void> {
+		await this.drafts
+			.seal(draft, {
+				durationMs: timing.durationMs,
+				updatedAt: new Date(timing.updatedAt),
+				record: attempt.record,
+				explorations: attempt.explorations,
+				hintUsed: attempt.hintUsed,
+				mistakeCount: attempt.mistakeCount,
+				solved: attempt.solved,
+				closure: attempt.closure,
+			})
+			.catch(() => undefined);
 	}
 }

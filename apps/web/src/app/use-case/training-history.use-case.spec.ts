@@ -32,16 +32,16 @@ const EARLIER_CYCLE = {
 
 function row(over: Partial<AttemptRow> = {}): AttemptRow {
 	return {
-		uuid: `attempt-${over.slotId ?? 'x'}`,
+		uuid: `attempt-${over.cycleItemUuid ?? over.roundUuid ?? 'x'}`,
 		trainingUuid: TRAINING,
 		kind: 'cycle',
-		slotId: 'item-1',
 		cycleItemUuid: 'item-1',
 		puzzleUuid: 'puzzle-1',
 		lichessId: 'AAA11',
 		durationMs: 1000,
 		record: ['g8h8'],
 		explorations: [],
+		solved: true,
 		closure: 'found',
 		hintUsed: false,
 		mistakeCount: 0,
@@ -118,13 +118,11 @@ describe('TrainingHistoryUseCase', () => {
 	it('lists what the pass has finished, oldest first', async () => {
 		const { history } = configure([
 			row({
-				slotId: 'item-2',
 				cycleItemUuid: 'item-2',
 				lichessId: 'BBB22',
 				updatedAt: new Date('2026-08-12T10:00:00Z'),
 			}),
 			row({
-				slotId: 'item-1',
 				cycleItemUuid: 'item-1',
 				lichessId: 'AAA11',
 				updatedAt: new Date('2026-08-11T10:00:00Z'),
@@ -134,13 +132,11 @@ describe('TrainingHistoryUseCase', () => {
 		const entries = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
 
 		expect(entries.map((entry) => entry.puzzle.id)).toEqual(['AAA11', 'BBB22']);
-		expect(entries[0]?.row.slotId).toBe('item-1');
+		expect(entries[0]?.row.uuid).toBe('attempt-item-1');
 	});
 
 	it('numbers every exercise by its place in the pass', async () => {
-		const { history } = configure([
-			row({ slotId: 'item-2', cycleItemUuid: 'item-2', lichessId: 'BBB22' }),
-		]);
+		const { history } = configure([row({ cycleItemUuid: 'item-2', lichessId: 'BBB22' })]);
 
 		const [entry] = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
 
@@ -148,44 +144,27 @@ describe('TrainingHistoryUseCase', () => {
 		expect(entry?.total).toBe(2);
 	});
 
-	it('leaves out the exercise that is still being solved', async () => {
-		const { history } = configure([
-			row({ slotId: 'item-1', cycleItemUuid: 'item-1', lichessId: 'AAA11' }),
-			row({
-				slotId: 'item-2',
-				cycleItemUuid: 'item-2',
-				lichessId: 'BBB22',
-				closure: 'open',
-			}),
-		]);
-
-		const entries = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
-
-		expect(entries.map((entry) => entry.puzzle.id)).toEqual(['AAA11']);
-	});
-
 	it('cuts the history at the pass the run is in', async () => {
 		const { history } = configure(
 			[
 				row({
-					slotId: 'old',
 					cycleItemUuid: 'item-old',
 					lichessId: 'AAA11',
 					updatedAt: new Date('2026-08-01T10:00:00.000Z'),
 				}),
-				row({ slotId: 'new', cycleItemUuid: 'item-1', lichessId: 'BBB22' }),
+				row({ cycleItemUuid: 'item-1', lichessId: 'BBB22' }),
 			],
 			{ cycles: [EARLIER_CYCLE, CYCLE], items: [item('item-1', 0)] },
 		);
 
 		const entries = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
 
-		expect(entries.map((entry) => entry.row.slotId)).toEqual(['new']);
+		expect(entries.map((entry) => entry.row.uuid)).toEqual(['attempt-item-1']);
 	});
 
 	it('numbers a restored exercise from its own row, without the pass order here', async () => {
 		const { history } = configure(
-			[row({ slotId: 'item-9', cycleItemUuid: 'item-9', lichessId: 'BBB22', position: 8 })],
+			[row({ cycleItemUuid: 'item-9', lichessId: 'BBB22', position: 8 })],
 			{ items: [item('item-1', 0)] },
 		);
 
@@ -195,14 +174,13 @@ describe('TrainingHistoryUseCase', () => {
 	});
 
 	it('keeps an exercise of the pass whose place is not known here', async () => {
-		const { history } = configure(
-			[row({ slotId: 'item-2', cycleItemUuid: 'item-2', lichessId: 'BBB22' })],
-			{ items: [item('item-1', 0)] },
-		);
+		const { history } = configure([row({ cycleItemUuid: 'item-2', lichessId: 'BBB22' })], {
+			items: [item('item-1', 0)],
+		});
 
 		const [entry] = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
 
-		expect(entry?.row.slotId).toBe('item-2');
+		expect(entry?.row.uuid).toBe('attempt-item-2');
 		expect(entry?.position).toBeNull();
 	});
 
@@ -215,8 +193,8 @@ describe('TrainingHistoryUseCase', () => {
 	it('keeps a calibration inside its own round', async () => {
 		const { history } = configure(
 			[
-				row({ kind: 'calibration', slotId: 'a', lichessId: 'AAA11', roundUuid: 'round-1' }),
-				row({ kind: 'calibration', slotId: 'b', lichessId: 'BBB22', roundUuid: 'round-2' }),
+				row({ kind: 'calibration', lichessId: 'AAA11', roundUuid: 'round-1' }),
+				row({ kind: 'calibration', lichessId: 'BBB22', roundUuid: 'round-2' }),
 			],
 			{ dealt: [dealt('BBB22', 0, 'round-2')] },
 		);
@@ -227,14 +205,14 @@ describe('TrainingHistoryUseCase', () => {
 			roundUuid: 'round-2',
 		});
 
-		expect(entries.map((entry) => entry.row.slotId)).toEqual(['b']);
+		expect(entries.map((entry) => entry.row.uuid)).toEqual(['attempt-round-2']);
 		expect(entries[0]?.position).toBe(1);
 	});
 
 	it('drops an attempt whose exercise is no longer cached', async () => {
 		const { history, puzzles } = configure([
-			row({ slotId: 'item-1', cycleItemUuid: 'item-1', lichessId: 'AAA11' }),
-			row({ slotId: 'item-2', cycleItemUuid: 'item-2', lichessId: 'BBB22' }),
+			row({ cycleItemUuid: 'item-1', lichessId: 'AAA11' }),
+			row({ cycleItemUuid: 'item-2', lichessId: 'BBB22' }),
 		]);
 
 		puzzles.delete('BBB22');

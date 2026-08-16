@@ -114,7 +114,7 @@ describe('TrainingRestoreUseCase', () => {
 	});
 
 	it('writes the missing attempt under the slot it belongs to', async () => {
-		const { useCase, listAttempts, save, rows } = configure();
+		const { useCase, listAttempts, save, rows, repository } = configure();
 
 		listAttempts.mockResolvedValue(page());
 
@@ -122,10 +122,10 @@ describe('TrainingRestoreUseCase', () => {
 
 		expect(save).toHaveBeenCalledWith([apiPuzzle('AAA11')]);
 		expect(rows()).toHaveLength(1);
+		expect(repository.findByIndex).toHaveBeenCalledWith('attempt', 'cycleItemUuid', 'item-1');
 		expect(rows()[0]).toMatchObject({
 			uuid: 'server-attempt-1',
 			trainingUuid: TRAINING,
-			slotId: 'item-1',
 			cycleItemUuid: 'item-1',
 			puzzleUuid: 'puzzle-AAA11',
 			lichessId: 'AAA11',
@@ -137,8 +137,8 @@ describe('TrainingRestoreUseCase', () => {
 		expect((rows()[0] as AttemptRow).syncedAt).toBeInstanceOf(Date);
 	});
 
-	it('names a calibration slot by its round and its exercise', async () => {
-		const { useCase, listAttempts, rows } = configure();
+	it('looks a calibration attempt up by its round and its exercise', async () => {
+		const { useCase, listAttempts, repository } = configure();
 
 		listAttempts.mockResolvedValue(
 			page({
@@ -150,12 +150,15 @@ describe('TrainingRestoreUseCase', () => {
 
 		await useCase.execute(TRAINING);
 
-		expect(rows()[0]).toMatchObject({ slotId: `${TRAINING}/round-1/puzzle-AAA11` });
+		expect(repository.findByIndex).toHaveBeenCalledWith('attempt', 'roundUuid-puzzleUuid', [
+			'round-1',
+			'puzzle-AAA11',
+		]);
 	});
 
 	it('leaves alone the slot this device already has', async () => {
 		const { useCase, listAttempts, rows } = configure({
-			stored: { uuid: 'local-attempt-1', slotId: 'item-1', position: 6 } as AttemptRow,
+			stored: { uuid: 'local-attempt-1', cycleItemUuid: 'item-1', position: 6 } as AttemptRow,
 		});
 
 		listAttempts.mockResolvedValue(page());
@@ -167,7 +170,7 @@ describe('TrainingRestoreUseCase', () => {
 
 	it('fills in the place of a row that was written before it travelled', async () => {
 		const { useCase, listAttempts, rows } = configure({
-			stored: { uuid: 'local-attempt-1', slotId: 'item-1', solved: false } as AttemptRow,
+			stored: { uuid: 'local-attempt-1', cycleItemUuid: 'item-1', solved: false } as AttemptRow,
 		});
 
 		listAttempts.mockResolvedValue(page());
@@ -175,7 +178,7 @@ describe('TrainingRestoreUseCase', () => {
 		await useCase.execute(TRAINING);
 
 		expect(rows()).toStrictEqual([
-			{ uuid: 'local-attempt-1', slotId: 'item-1', solved: false, position: 6 },
+			{ uuid: 'local-attempt-1', cycleItemUuid: 'item-1', solved: false, position: 6 },
 		]);
 	});
 

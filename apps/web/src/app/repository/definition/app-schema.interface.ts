@@ -1,7 +1,9 @@
 import { ActivitySchema } from '@app/repository/definition/activity-schema.interface';
 import { AttemptCursorSchema } from '@app/repository/definition/attempt-cursor-schema.interface';
+import { AttemptDraftSchema } from '@app/repository/definition/attempt-draft-schema.interface';
 import {
 	AttemptSchema,
+	AttemptSchemaV14,
 	AttemptSchemaV3,
 	AttemptSchemaV4,
 	AttemptSchemaV5,
@@ -17,7 +19,19 @@ export interface AppSchema
 	extends
 		ActivitySchema,
 		AttemptCursorSchema,
+		AttemptDraftSchema,
 		AttemptSchema,
+		CatalogCursorSchema,
+		PuzzleSchema,
+		PuzzleSetSchema,
+		SettingSchema,
+		TrainingSchema {}
+
+export interface AppSchemaV14
+	extends
+		ActivitySchema,
+		AttemptCursorSchema,
+		AttemptSchemaV14,
 		CatalogCursorSchema,
 		PuzzleSchema,
 		PuzzleSetSchema,
@@ -27,7 +41,7 @@ export interface AppSchema
 export interface AppSchemaV10
 	extends
 		ActivitySchema,
-		AttemptSchema,
+		AttemptSchemaV14,
 		CatalogCursorSchema,
 		CycleSchema,
 		PuzzleSchemaV10,

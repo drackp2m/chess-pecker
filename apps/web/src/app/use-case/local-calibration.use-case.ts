@@ -196,7 +196,7 @@ export class LocalCalibrationUseCase {
 			round.trainingUuid,
 		);
 
-		return rows.filter((row) => round.uuid === row.roundUuid && 'open' !== row.closure);
+		return rows.filter((row) => round.uuid === row.roundUuid);
 	}
 
 	private async toPuzzles(rows: readonly CalibrationPuzzleRow[]): Promise<readonly PuzzleRow[]> {

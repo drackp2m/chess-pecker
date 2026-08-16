@@ -1,9 +1,9 @@
 import { PuzzleClosure } from '@app/definition/puzzle.type';
-import { AppSchema } from '@app/repository/definition/app-schema.interface';
-import { AttemptRow, AttemptRowV5 } from '@app/repository/definition/attempt-schema.interface';
+import { AppSchemaV14 } from '@app/repository/definition/app-schema.interface';
+import { AttemptRowV14, AttemptRowV5 } from '@app/repository/definition/attempt-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
-type Closure = Pick<AttemptRow, 'closure' | 'hintUsed' | 'mistakeCount'>;
+type Closure = Pick<AttemptRowV14, 'closure' | 'hintUsed' | 'mistakeCount'>;
 
 /**
  * How an attempt written before v6 ended, which its verdict gives back exactly: back then
@@ -22,7 +22,7 @@ function closeAsGraded(solved: boolean | undefined): Closure {
 	return { closure, hintUsed: false, mistakeCount: solved ? 0 : 1 };
 }
 
-export const recordAttemptClosureMigration: Migration<AppSchema> = {
+export const recordAttemptClosureMigration: Migration<AppSchemaV14> = {
 	version: 6,
 	description: 'record how the attempt was closed, apart from how it was graded',
 	apply: async ({ transaction }) => {

@@ -9,26 +9,14 @@ import { GenericRepository } from '@app/repository/generic.repository';
 })
 export class LocalDataRepository extends GenericRepository<AppSchema> {
 	/**
-	 * Cuántos intentos cerrados no han llegado al servidor. Se recorre con cursor y no con
-	 * un `getAll`, que traería meses de partidas a memoria para contar unas pocas.
+	 * Cuántos intentos no han llegado al servidor. IndexedDB no indexa las filas a las que
+	 * les falta el campo, así que el índice de lo pendiente *es* la lista: contarlo no
+	 * recorre meses de partidas.
 	 */
 	async countPendingSync(): Promise<number> {
-		return this.runInTransaction(['attempt'], 'readonly', async (transaction) => {
-			const store = transaction.objectStore('attempt');
-			let pending = 0;
-
-			for (
-				let cursor = await store.openCursor();
-				null !== cursor;
-				cursor = await cursor.continue()
-			) {
-				if ('open' !== cursor.value.closure && undefined === cursor.value.syncedAt) {
-					pending += 1;
-				}
-			}
-
-			return pending;
-		});
+		return this.runInTransaction(['attempt'], 'readonly', (transaction) =>
+			transaction.objectStore('attempt').index('pendingSince').count(),
+		);
 	}
 
 	/**
@@ -50,6 +38,7 @@ const userStores: StoreNames<AppSchema>[] = [
 	// El corte de lo ya restaurado se va con los intentos: si sobreviviera, el siguiente
 	// usuario del dispositivo pediría sólo lo posterior a un cursor que no es suyo.
 	'attemptCursor',
+	'attemptDraft',
 	'calibrationPuzzle',
 	'calibrationRound',
 	'cycle',
