@@ -1,3 +1,27 @@
+# v1.20.0 (2026-08-16)
+
+## What's Changed
+
+### ✨ Features
+
+- add playback runner over timeline programs ([6c92340](https://github.com/drackp2m/chess-pecker/commit/6c923407060ec8034effe8a7da86591b5c8caed0)) by Marc Jovaní González
+- restore puzzle board from saved attempt on reload ([ea6d48f](https://github.com/drackp2m/chess-pecker/commit/ea6d48fff0875e70485f1e0b060c01b969eda5c3)) by Marc Jovaní González
+- timeline, training history ([2c5ce1a](https://github.com/drackp2m/chess-pecker/commit/2c5ce1a42da9e8f9488500e72c3c71743c615648)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- extract record fold to replay.ts with degradation ([9c6011e](https://github.com/drackp2m/chess-pecker/commit/9c6011ecaed2d326bc8317a3bfe01d5b1391fd56)) by Marc Jovaní González
+- replace replay events with playback programs ([6539a4a](https://github.com/drackp2m/chess-pecker/commit/6539a4a1cab08915960ced1c855319a01d20bf37)) by Marc Jovaní González
+- share one clock between player and playback ([bca1406](https://github.com/drackp2m/chess-pecker/commit/bca140667aae3899a3f6e35784180eb8f33ce50d)) by Marc Jovaní González
+- signal derivation for puzzle line state ([822f445](https://github.com/drackp2m/chess-pecker/commit/822f4458b3668c9753275412d92932d2b7ffbe7f)) by Marc Jovaní González
+- wire playback programs for reply and reveal ([7d15629](https://github.com/drackp2m/chess-pecker/commit/7d156291b2bacce44024dbf3b6f554db99d17fb0)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- anchor revealed answer so it can be stepped ([52f3161](https://github.com/drackp2m/chess-pecker/commit/52f3161a404eb23d33907c497e82afa5ef453868)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.19.3...v1.20.0
+
 # v1.19.3 (2026-08-14)
 
 ## What's Changed
