@@ -1,3 +1,13 @@
+# v1.21.0 (2026-08-16)
+
+## What's Changed
+
+### ✨ Features
+
+- local-first training, history restore, fix navigation ([59b1f1c](https://github.com/drackp2m/chess-pecker/commit/59b1f1ca2bdff4f84db1f85e43d7be2813d1a761)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.20.0...v1.21.0
+
 # v1.20.0 (2026-08-16)
 
 ## What's Changed
