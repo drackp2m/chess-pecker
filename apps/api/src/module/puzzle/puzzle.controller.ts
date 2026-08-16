@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { ProtectTo } from '../auth/decorator/protect-to.decorator';
+import { Public } from '../auth/decorator/public.decorator';
 import { UserRole } from '../user/definition/user-role.enum';
 
 import { PuzzleCatalogPage } from './definition/puzzle-catalog-page.interface';
@@ -28,6 +29,7 @@ export class PuzzleController {
 	}
 
 	@Get('catalog')
+	@Public()
 	async getCatalog(@Query() query: GetPuzzleCatalogRequestDto): Promise<PuzzleCatalogPage> {
 		return this.getPuzzleCatalogUseCase.execute(query);
 	}

@@ -52,6 +52,29 @@ export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
 	}
 
 	/**
+	 * El histórico que se devuelve a un dispositivo, con el ejercicio y el hueco al que
+	 * pertenece dentro. Ordenado por `receivedAt` porque es el orden en que se cortaría una
+	 * respuesta larga, no por `updatedAt`, que lo pone el cliente y puede venir del pasado.
+	 */
+	async getManyByTrainingReceivedAfter(
+		trainingUuid: string,
+		limit: number,
+		receivedAfter?: Date,
+	): Promise<PuzzleAttempt[]> {
+		return this.getMany(
+			{
+				training: trainingUuid,
+				...(undefined === receivedAfter ? {} : { receivedAt: { $gt: receivedAfter } }),
+			},
+			{
+				populate: ['puzzle', 'calibrationRound', 'cycleItem'],
+				orderBy: { receivedAt: 'asc' },
+				limit,
+			},
+		);
+	}
+
+	/**
 	 * Un intento sólo pertenece a un entrenamiento, así que el usuario sale del join.
 	 *
 	 * ToDo => `failed` mira `closure <> 'revealed'` en vez de `= 'found'` para que los tres
@@ -85,6 +108,23 @@ export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
 	 * Hasta dónde ha visto llegar el servidor. Sirve de corte para la siguiente pregunta:
 	 * lo que entre después traerá una fecha mayor, venga del dispositivo que venga.
 	 */
+	/** Lo mismo, acotado a un entrenamiento: el corte de su histórico. */
+	async lastReceivedAtByTraining(trainingUuid: string): Promise<Date | null> {
+		const rows = (await this.entityManager
+			.fork()
+			.getConnection()
+			.execute<CursorRow[]>(
+				`select max(pa.received_at) as cursor
+				 from puzzle_attempt pa
+				 where pa.training_uuid = ?`,
+				[trainingUuid],
+			)) as CursorRow[];
+
+		const cursor = rows[0]?.cursor ?? null;
+
+		return null === cursor ? null : new Date(cursor);
+	}
+
 	async lastReceivedAt(userUuid: string): Promise<Date | null> {
 		const rows = (await this.entityManager
 			.fork()

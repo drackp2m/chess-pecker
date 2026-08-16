@@ -186,9 +186,7 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 }
 
 /** What a saved exercise puts back on the board, beyond the line the record folds to. */
-export interface PuzzleRestore extends PuzzleRecord, PuzzleVerdict {
-	readonly orientation?: PieceColor;
-}
+export type PuzzleRestore = PuzzleRecord & PuzzleVerdict;
 
 /**
  * The board a saved exercise reopens on. The line comes from folding its record, so what
@@ -199,8 +197,9 @@ export interface PuzzleRestore extends PuzzleRecord, PuzzleVerdict {
  * selected and no exploration standing — the record does not say whether one was open
  * when it was saved, so what comes back is the main line it hangs off.
  *
- * The board it was left flipped to is the one thing the record cannot give back, so it
- * travels on the row; rows written before it was stored fall back to the player's colour.
+ * The board always comes back with the player at the bottom. A manual flip is the only
+ * thing the record cannot give back, and it is a preference of the moment rather than part
+ * of the exercise, so nothing stores it.
  *
  * What travels on the way in is `restoredTransition`'s to say, so nothing here touches it.
  */
@@ -215,7 +214,7 @@ export function restorePatch(
 		closure: stored.closure,
 		hintUsed: stored.hintUsed,
 		mistakeCount: stored.mistakeCount,
-		orientation: stored.orientation ?? playerColor,
+		orientation: playerColor,
 		freePlayIndex: undefined,
 		rewound: 0,
 		revealed: undefined,

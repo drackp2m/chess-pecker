@@ -18,6 +18,7 @@ import { TrainingReviewStore } from '@app/page/training/store/training-review.st
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { SolvedAttempt } from '@app/use-case/training-history.use-case';
 
 @Component({
 	templateUrl: './training-solve.page.html',
@@ -65,16 +66,18 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	});
 
 	readonly label = computed<TranslationRef>(() => {
+		const reviewed = this.review.reviewed();
 		const round = this.run.round();
-		const position = this.run.current()?.position;
 
 		if (null !== round) {
-			return this.describeRound(round.index, round.rating);
+			return this.describeRound(round.index, round.rating, reviewed);
 		}
 
-		return null === position || undefined === position
+		const position = null === reviewed ? this.cyclePosition() : reviewed.position;
+
+		return null === position
 			? i18nRef(I18n.training.CYCLE_LABEL)
-			: i18nRef(I18n.training.CYCLE_LABEL_POSITION, { position: position + 1 });
+			: i18nRef(I18n.training.CYCLE_LABEL_POSITION, { position });
 	});
 
 	private readonly router = inject(Router);
@@ -196,9 +199,19 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 			: I18n.common.FIND_MOVE_BLACK;
 	}
 
-	private describeRound(round: number, rating: number): TranslationRef {
-		const position = this.run.roundPosition();
-		const total = this.run.roundTotal();
+	private cyclePosition(): number | null {
+		const position = this.run.current()?.position;
+
+		return null === position || undefined === position ? null : position + 1;
+	}
+
+	private describeRound(
+		round: number,
+		rating: number,
+		reviewed: SolvedAttempt | null,
+	): TranslationRef {
+		const position = null === reviewed ? this.run.roundPosition() : reviewed.position;
+		const total = null === reviewed ? this.run.roundTotal() : reviewed.total;
 
 		return null === position || null === total
 			? i18nRef(I18n.training.CALIBRATION_LABEL, { round, rating })

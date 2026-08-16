@@ -1,16 +1,20 @@
 import { Injectable, inject } from '@angular/core';
-import type { PuzzleAttemptKind, TrainingCycle } from '@chesspecker/api-definitions';
+import type { PuzzleAttemptKind } from '@chesspecker/api-definitions';
 
 import { Puzzle } from '@app/definition/puzzle.type';
 import { AttemptRepository } from '@app/repository/attempt.repository';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { PuzzleRepository } from '@app/repository/puzzle.repository';
-import { TrainingRunRepository } from '@app/repository/training-run.repository';
+import { TrainingLocalRepository } from '@app/repository/training-local.repository';
+import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
 
 export interface SolvedAttempt {
 	readonly row: AttemptRow;
 	readonly puzzle: Puzzle;
+	/** 1-indexed place of the exercise inside its round or its pass, when it is known. */
+	readonly position: number | null;
+	readonly total: number | null;
 }
 
 export interface TrainingHistoryScope {
@@ -19,7 +23,11 @@ export interface TrainingHistoryScope {
 	readonly roundUuid?: string;
 }
 
-type PassFilter = (row: AttemptRow) => boolean;
+interface HistoryPlacement {
+	readonly total: number;
+	readonly keeps: (row: AttemptRow) => boolean;
+	readonly place: (row: AttemptRow) => number | null;
+}
 
 @Injectable({
 	providedIn: 'root',
@@ -27,57 +35,91 @@ type PassFilter = (row: AttemptRow) => boolean;
 export class TrainingHistoryUseCase {
 	private readonly attempts = inject(AttemptRepository);
 	private readonly puzzles = inject(PuzzleRepository);
-	private readonly runs = inject(TrainingRunRepository);
+	private readonly local = inject(TrainingLocalRepository);
+	private readonly cycles = inject(LocalCycleUseCase);
 
 	async list(scope: TrainingHistoryScope): Promise<readonly SolvedAttempt[]> {
-		const pass = await this.passFilter(scope);
+		const placement = await this.resolvePlacement(scope);
 
-		if (undefined === pass) {
+		if (undefined === placement) {
 			return [];
 		}
 
 		const rows = await this.attempts.findAllByIndex('attempt', 'trainingUuid', scope.trainingUuid);
 		const finished = rows
-			.filter((row) => scope.kind === row.kind && 'open' !== row.closure && pass(row))
+			.filter((row) => scope.kind === row.kind && 'open' !== row.closure)
+			.filter((row) => placement.keeps(row))
 			.sort((left, right) => left.updatedAt.getTime() - right.updatedAt.getTime());
-		const entries = await Promise.all(finished.map((row) => this.toEntry(row)));
+
+		const entries = await Promise.all(finished.map((row) => this.toEntry(row, placement)));
 
 		return entries.filter((entry): entry is SolvedAttempt => undefined !== entry);
 	}
 
-	private async passFilter(scope: TrainingHistoryScope): Promise<PassFilter | undefined> {
-		if ('calibration' === scope.kind) {
-			const { roundUuid } = scope;
-
-			return undefined === roundUuid ? undefined : (row) => row.roundUuid === roundUuid;
-		}
-
-		const started = await this.startOfPass(scope.trainingUuid);
-
-		return undefined === started ? undefined : (row) => started <= row.updatedAt;
+	private async resolvePlacement(
+		scope: TrainingHistoryScope,
+	): Promise<HistoryPlacement | undefined> {
+		return 'calibration' === scope.kind
+			? this.roundPlacement(scope.roundUuid)
+			: this.cyclePlacement(scope.trainingUuid);
 	}
 
-	private async startOfPass(trainingUuid: string): Promise<Date | undefined> {
-		try {
-			return this.openedAt(await this.runs.listCycles(trainingUuid));
-		} catch {
+	private async roundPlacement(
+		roundUuid: string | undefined,
+	): Promise<HistoryPlacement | undefined> {
+		if (undefined === roundUuid) {
 			return undefined;
 		}
+
+		const dealt = await this.local.findAllByIndex('calibrationPuzzle', 'roundUuid', roundUuid);
+		const positions = new Map(dealt.map((row) => [row.lichessId, row.position]));
+
+		return {
+			total: dealt.length,
+			keeps: (row) => roundUuid === row.roundUuid,
+			place: (row) => toPlace(positions.get(row.lichessId)) ?? toPlace(row.position),
+		};
 	}
 
-	private openedAt(cycles: readonly TrainingCycle[]): Date | undefined {
-		const latest = cycles.reduce<TrainingCycle | undefined>(
-			(kept, cycle) => (undefined === kept || kept.index < cycle.index ? cycle : kept),
-			undefined,
-		);
-		const pass = cycles.find((cycle) => 'running' === cycle.status) ?? latest;
+	private async cyclePlacement(trainingUuid: string): Promise<HistoryPlacement | undefined> {
+		const cycles = await this.cycles.listCycles(trainingUuid);
+		const pass = cycles.find((cycle) => 'running' === cycle.status) ?? cycles.at(-1);
 
-		return undefined === pass ? undefined : new Date(pass.createdAt);
+		if (undefined === pass) {
+			return undefined;
+		}
+
+		const items = await this.cycles.listItems(pass.uuid);
+		const positions = new Map(items.map((item) => [item.uuid, item.position]));
+		const opened = pass.createdAt.getTime();
+
+		return {
+			total: items.length,
+			keeps: (row) => opened <= row.updatedAt.getTime(),
+			// El orden del ciclo puede no estar aquí —sólo se espeja el hueco que se sirve—,
+			// así que la fila manda cuando trae su sitio dentro.
+			place: (row) =>
+				toPlace(undefined === row.cycleItemUuid ? undefined : positions.get(row.cycleItemUuid)) ??
+				toPlace(row.position),
+		};
 	}
 
-	private async toEntry(row: AttemptRow): Promise<SolvedAttempt | undefined> {
+	private async toEntry(
+		row: AttemptRow,
+		placement: HistoryPlacement,
+	): Promise<SolvedAttempt | undefined> {
 		const stored = await this.puzzles.find('puzzle', row.lichessId).catch(() => undefined);
 
-		return undefined === stored ? undefined : { row, puzzle: PuzzleMapper.toPuzzle(stored) };
+		return undefined === stored
+			? undefined
+			: {
+					row,
+					puzzle: PuzzleMapper.toPuzzle(stored),
+					position: placement.place(row),
+					total: placement.total,
+				};
 	}
 }
+
+const toPlace = (position: number | undefined): number | null =>
+	undefined === position ? null : position + 1;

@@ -33,7 +33,7 @@ export const appConfig: ApplicationConfig = {
 
 			sessionStore.watch();
 			void sessionStore.restore().then(() => {
-				if (sessionStore.isAuthenticated()) {
+				if (!sessionStore.isUnreachable()) {
 					void catalogReplica.run();
 				}
 			});

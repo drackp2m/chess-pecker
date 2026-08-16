@@ -180,6 +180,56 @@ export interface TrainingProgress {
 	readonly suggestFinish: boolean;
 }
 
+export interface GetTrainingAttemptsRequest<TDate = string> {
+	/**
+	 * El `cursor` de la respuesta anterior. Sin él se empieza por el principio, que es lo
+	 * que necesita un dispositivo vacío; con él, sólo lo que haya entrado después, venga del
+	 * dispositivo que venga.
+	 */
+	since?: TDate;
+	/** Intentos por página. El backend recorta al máximo que sirve. */
+	limit?: number;
+}
+
+/**
+ * El histórico de un entrenamiento tal como lo guardó el servidor, que es de donde un
+ * dispositivo sin nada —recién estrenado, o vaciado al cerrar sesión— vuelve a levantar
+ * los ejercicios ya resueltos.
+ */
+export interface TrainingAttemptHistory {
+	readonly attempts: readonly TrainingAttempt[];
+	/**
+	 * Hasta dónde llega esta respuesta, en tiempo de servidor: el final de la página si
+	 * quedan más, y si no, lo último que el servidor había recibido. Se guarda tal cual y se
+	 * devuelve en la siguiente petición, sea para seguir paginando o para preguntar mañana.
+	 */
+	readonly cursor: string;
+	/** Quedan intentos después del cursor: hay que volver a preguntar con él. */
+	readonly hasMore: boolean;
+}
+
+/**
+ * Un intento cerrado, con la partida entera dentro: `record` y `explorations` son lo que
+ * permite volver a dibujarlo. Lo que no viaja es la orientación del tablero, que no se
+ * guarda —se deduce del FEN— y el volteo manual no sobrevive al viaje.
+ */
+export interface TrainingAttempt extends PuzzleAttemptRecord {
+	readonly uuid: string;
+	readonly kind: PuzzleAttemptKind;
+	readonly puzzle: ApiPuzzle;
+	readonly roundUuid?: string;
+	readonly cycleItemUuid?: string;
+	/**
+	 * Su sitio dentro de la pasada, empezando en 0. Viaja con el intento porque el
+	 * dispositivo que lo restaura puede no tener el orden del ciclo: sólo conoce los huecos
+	 * que le fueron sirviendo.
+	 */
+	readonly position?: number;
+	/** Cuándo se abrió el ejercicio y cuándo se cerró, ambos con el reloj del cliente. */
+	readonly createdAt: string;
+	readonly updatedAt: string;
+}
+
 export interface GetTrainingActivityRequest<TDate = string> {
 	/** Días que cubre el desglose, hoy incluido. El backend recorta al máximo que sirve. */
 	days?: number;

@@ -1,4 +1,4 @@
-import { AppSchema } from '@app/repository/definition/app-schema.interface';
+import { AppSchemaV10 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
@@ -6,7 +6,7 @@ import { Migration } from '@app/repository/definition/migration.interface';
  * guardarlo para subirlo luego, así que todo lo cerrado que haya en local ya está arriba.
  * Sellarlo evita que el cierre de sesión avise de una cola de subida que no existe.
  */
-export const markStoredAttemptsSyncedMigration: Migration<AppSchema> = {
+export const markStoredAttemptsSyncedMigration: Migration<AppSchemaV10> = {
 	version: 9,
 	description: 'mark the attempts already sent to the API as synced',
 	apply: async ({ transaction }) => {

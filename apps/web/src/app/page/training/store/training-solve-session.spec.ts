@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { ApiPuzzle, Training, TrainingCycleItem } from '@chesspecker/api-definitions';
+import type { ApiPuzzle } from '@chesspecker/api-definitions';
 import { patchState } from '@ngrx/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,9 +12,11 @@ import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
 import { AttemptRepository } from '@app/repository/attempt.repository';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
-import { TrainingRunRepository } from '@app/repository/training-run.repository';
+import { CycleItemRow, TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { TrainingStore } from '@app/store/training.store';
+import { TrainingRunEngineUseCase } from '@app/use-case/training-run-engine.use-case';
+import { PuzzleMapper } from '@app/util/puzzle-mapper';
 import { SOLVE_FLUSH_INTERVAL_MS } from '@app/util/solve-timer';
 
 /** Black walks into the corner, White mates on the back rank: one move for the player. */
@@ -29,11 +31,11 @@ const BACK_RANK_MATE: ApiPuzzle = {
 
 const OTHER_MATE: ApiPuzzle = { ...BACK_RANK_MATE, uuid: 'puzzle-2', lichessId: 'BBB22' };
 
-const TRAINING: Training = {
+const TRAINING: TrainingRow = {
 	uuid: 'training-1',
 	status: 'running',
-	createdAt: '2026-08-01T00:00:00.000Z',
-	updatedAt: '2026-08-01T00:00:00.000Z',
+	createdAt: new Date('2026-08-01T00:00:00.000Z'),
+	updatedAt: new Date('2026-08-01T00:00:00.000Z'),
 };
 
 /** Long enough for both beats of the opponent's opening move: it lights up, then moves. */
@@ -52,7 +54,6 @@ const STORED_DRAFT: AttemptRow = {
 	durationMs: 12_000,
 	record: ['g8h8', 'a1a2', -1],
 	explorations: [],
-	orientation: 'white',
 	closure: 'open',
 	hintUsed: true,
 	mistakeCount: 1,
@@ -60,20 +61,28 @@ const STORED_DRAFT: AttemptRow = {
 	updatedAt: new Date('2026-08-03T09:00:12.000Z'),
 };
 
-function toItem(puzzle: ApiPuzzle, uuid: string, position: number): TrainingCycleItem {
-	return { uuid, position, trainingPuzzle: { uuid: `tp-${uuid}`, puzzle } };
+function toSlot(puzzle: ApiPuzzle, uuid: string, position: number) {
+	const item = {
+		uuid,
+		position,
+		cycleUuid: 'cycle-1',
+		trainingPuzzleUuid: `tp-${uuid}`,
+		lichessId: puzzle.lichessId,
+		createdAt: new Date('2026-08-01T00:00:00.000Z'),
+		updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+	} satisfies CycleItemRow;
+
+	return { cycleUuid: 'cycle-1', item, puzzle: PuzzleMapper.toRow(puzzle) };
 }
 
 function createRepository(cycleFinished = false) {
 	return {
-		getNextItem: vi
+		isRemote: vi.fn().mockReturnValue(true),
+		nextCycleSlot: vi
 			.fn()
-			.mockResolvedValueOnce(toItem(BACK_RANK_MATE, 'item-1', 0))
-			.mockResolvedValue(toItem(OTHER_MATE, 'item-2', 1)),
-		submitCycleAttempt: vi.fn().mockResolvedValue({
-			attempt: { uuid: 'attempt-1', durationMs: 0, solved: true },
-			cycleFinished,
-		}),
+			.mockResolvedValueOnce(toSlot(BACK_RANK_MATE, 'item-1', 0))
+			.mockResolvedValue(toSlot(OTHER_MATE, 'item-2', 1)),
+		submitCycleAttempt: vi.fn().mockResolvedValue(cycleFinished),
 	};
 }
 
@@ -105,7 +114,7 @@ function configure(
 			TrainingRunStore,
 			TrainingSolveSession,
 			{ provide: AttemptRepository, useValue: attempts },
-			{ provide: TrainingRunRepository, useValue: repository },
+			{ provide: TrainingRunEngineUseCase, useValue: repository },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
 		],
@@ -176,7 +185,7 @@ describe('TrainingSolveSession', () => {
 		session.pause();
 		await enter(session);
 
-		expect(repository.getNextItem).toHaveBeenCalledTimes(1);
+		expect(repository.nextCycleSlot).toHaveBeenCalledTimes(1);
 		expect(run.current()?.puzzle.uuid).toBe('puzzle-1');
 		expect(board.puzzle()?.id).toBe('AAA11');
 		expect(board.cursor()).toBe(cursor);
@@ -225,11 +234,8 @@ describe('TrainingSolveSession', () => {
 
 		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
 			'training-1',
-			expect.objectContaining({
-				cycleItemUuid: 'item-1',
-				durationMs: OPENING + 3000 + 2000,
-				solved: true,
-			}),
+			expect.objectContaining({ uuid: 'item-1' }),
+			expect.objectContaining({ durationMs: OPENING + 3000 + 2000, solved: true }),
 		);
 	});
 
@@ -263,10 +269,8 @@ describe('TrainingSolveSession', () => {
 
 		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
 			'training-1',
-			expect.objectContaining({
-				createdAt: OPENED_AT,
-				updatedAt: '2026-08-03T10:00:01.500Z',
-			}),
+			expect.objectContaining({ uuid: 'item-1' }),
+			expect.objectContaining({ createdAt: OPENED_AT, updatedAt: '2026-08-03T10:00:01.500Z' }),
 		);
 	});
 
@@ -285,6 +289,7 @@ describe('TrainingSolveSession', () => {
 
 		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
 			'training-1',
+			expect.objectContaining({ uuid: 'item-1' }),
 			expect.objectContaining({ durationMs: OPENING + 3000 + OPENING + 2000 }),
 		);
 	});
@@ -315,7 +320,7 @@ describe('TrainingSolveSession', () => {
 		session.pause();
 		await enter(session);
 
-		expect(repository.getNextItem).toHaveBeenCalledTimes(2);
+		expect(repository.nextCycleSlot).toHaveBeenCalledTimes(2);
 		expect(run.current()?.puzzle.uuid).toBe('puzzle-2');
 	});
 
@@ -365,6 +370,7 @@ describe('TrainingSolveSession', () => {
 
 		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
 			'training-1',
+			expect.objectContaining({ uuid: 'item-1' }),
 			expect.objectContaining({ durationMs: OPENING + 3000 + OPENING + 2000 }),
 		);
 		expect(attempts.rows.size).toBe(1);
@@ -455,6 +461,7 @@ describe('TrainingSolveSession', () => {
 
 		expect(repository.submitCycleAttempt).toHaveBeenCalledWith(
 			'training-1',
+			expect.objectContaining({ uuid: 'item-1' }),
 			expect.objectContaining({ solved: false, durationMs: OPENING + 4000 }),
 		);
 	});

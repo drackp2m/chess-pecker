@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import type { ApiPuzzle } from '@chesspecker/api-definitions';
 import { patchState } from '@ngrx/signals';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -7,11 +6,12 @@ import { TrainingReviewStore } from '@app/page/training/store/training-review.st
 import { TrainingRunSlot } from '@app/page/training/store/training-run-state';
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
-import { TrainingRunRepository } from '@app/repository/training-run.repository';
-import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
+import { PuzzleRow } from '@app/repository/definition/puzzle-schema.interface';
+import { CycleItemRow } from '@app/repository/definition/training-schema.interface';
 import { SolvedAttempt, TrainingHistoryUseCase } from '@app/use-case/training-history.use-case';
+import { TrainingRunEngineUseCase } from '@app/use-case/training-run-engine.use-case';
 
-function apiPuzzle(uuid: string, lichessId: string): ApiPuzzle {
+function puzzleRow(uuid: string, lichessId: string): PuzzleRow {
 	return {
 		uuid,
 		lichessId,
@@ -19,17 +19,28 @@ function apiPuzzle(uuid: string, lichessId: string): ApiPuzzle {
 		moves: ['g8h8', 'a1a8'],
 		rating: 1500,
 		themes: ['backRankMate'],
+		createdAt: new Date('2026-08-01T00:00:00.000Z'),
+		updatedAt: new Date('2026-08-01T00:00:00.000Z'),
 	};
 }
 
 function slot(uuid: string): TrainingRunSlot {
-	return { puzzle: apiPuzzle(uuid, `id-${uuid}`), cycleItemUuid: `item-${uuid}`, position: 0 };
+	return {
+		puzzle: puzzleRow(uuid, `id-${uuid}`),
+		cycleItem: { uuid: `item-${uuid}`, position: 0 } as CycleItemRow,
+		position: 0,
+	};
 }
 
 function solved(puzzleUuid: string): SolvedAttempt {
 	const row = { puzzleUuid, slotId: `item-${puzzleUuid}` } as AttemptRow;
 
-	return { row, puzzle: { id: `id-${puzzleUuid}` } as SolvedAttempt['puzzle'] };
+	return {
+		row,
+		puzzle: { id: `id-${puzzleUuid}` } as SolvedAttempt['puzzle'],
+		position: null,
+		total: null,
+	};
 }
 
 async function settle(): Promise<void> {
@@ -47,8 +58,7 @@ async function configure(entries: readonly SolvedAttempt[], solving = 'puzzle-3'
 		providers: [
 			TrainingRunStore,
 			TrainingReviewStore,
-			{ provide: TrainingRunRepository, useValue: {} },
-			{ provide: PuzzleCacheUseCase, useValue: { save: vi.fn() } },
+			{ provide: TrainingRunEngineUseCase, useValue: {} },
 			{ provide: TrainingHistoryUseCase, useValue: { list } },
 		],
 	});

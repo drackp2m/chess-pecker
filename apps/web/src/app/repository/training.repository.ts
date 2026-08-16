@@ -1,8 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import type {
+	GetTrainingAttemptsRequest,
 	SetTrainingGoalRequest,
 	Training,
 	TrainingActivity,
+	TrainingAttemptHistory,
 	TrainingProgress,
 } from '@chesspecker/api-definitions';
 
@@ -35,6 +37,14 @@ export class TrainingRepository {
 		return this.apiSdk.GET.training('/activity', {
 			query: undefined === since ? { days } : { days, since },
 		});
+	}
+
+	/** Una página del histórico. Sin `since` empieza por el principio. */
+	async listAttempts(
+		uuid: string,
+		query: GetTrainingAttemptsRequest,
+	): Promise<TrainingAttemptHistory> {
+		return this.apiSdk.GET.training('/:uuid/attempt', { path: { uuid }, query });
 	}
 
 	/** Fixes the X exercises every cycle then runs over. Only possible once. */

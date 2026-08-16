@@ -81,7 +81,6 @@ describe('PuzzleStore.restoreFrom', () => {
 				closure: 'revealed',
 				hintUsed: true,
 				mistakeCount: 2,
-				orientation: 'white',
 			}),
 		);
 
@@ -89,13 +88,13 @@ describe('PuzzleStore.restoreFrom', () => {
 		expect(store.closure()).toBe('revealed');
 		expect(store.hintUsed()).toBe(true);
 		expect(store.mistakeCount()).toBe(2);
-		expect(store.orientation()).toBe('white');
 		expect(store.isOpen()).toBe(false);
 	});
 
-	it('falls back to the player at the bottom for a row written before it was stored', () => {
+	it('always reopens with the player at the bottom, whatever it was left flipped to', () => {
 		const store = board();
 
+		store.flipBoard();
 		store.restoreFrom(stored(FIVE_PLY));
 
 		expect(store.orientation()).toBe(store.playerColor());

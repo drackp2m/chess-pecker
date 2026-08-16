@@ -11,6 +11,14 @@ export interface PuzzleSchema extends DBSchema {
 	puzzle: {
 		key: string;
 		value: PuzzleRow;
+		indexes: { uuid: string; rating: number };
+	};
+}
+
+export interface PuzzleSchemaV10 extends DBSchema {
+	puzzle: {
+		key: string;
+		value: PuzzleRow;
 		indexes: { uuid: string };
 	};
 }

@@ -23,6 +23,7 @@ import { GetNextCycleItemUseCase } from './use-case/get-next-cycle-item.use-case
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
 import { GetTrainingActivityUseCase } from './use-case/get-training-activity.use-case';
 import { GetTrainingProgressUseCase } from './use-case/get-training-progress.use-case';
+import { ListTrainingAttemptsUseCase } from './use-case/list-training-attempts.use-case';
 import { ListTrainingsUseCase } from './use-case/list-trainings.use-case';
 import { SelectTrainingSetUseCase } from './use-case/select-training-set.use-case';
 import { SetTrainingGoalUseCase } from './use-case/set-training-goal.use-case';
@@ -60,6 +61,7 @@ import { SubmitCycleAttemptUseCase } from './use-case/submit-cycle-attempt.use-c
 		SubmitCycleAttemptUseCase,
 		GetTrainingProgressUseCase,
 		GetTrainingActivityUseCase,
+		ListTrainingAttemptsUseCase,
 		FinishTrainingUseCase,
 		ApplySyncTimestampsUseCase,
 	],

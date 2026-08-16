@@ -14,8 +14,10 @@ import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
 import { TrainingActivity } from './definition/training-activity.interface';
+import { TrainingAttemptHistory } from './definition/training-attempt-history.interface';
 import { TrainingProgress } from './definition/training-progress.interface';
 import { GetTrainingActivityRequestDto } from './dto/request/get-training-activity-request.dto';
+import { GetTrainingAttemptsRequestDto } from './dto/request/get-training-attempts-request.dto';
 import { SelectTrainingSetRequestDto } from './dto/request/select-training-set-request.dto';
 import { SetTrainingGoalRequestDto } from './dto/request/set-training-goal-request.dto';
 import { TrainingGoal } from './training-goal.entity';
@@ -24,6 +26,7 @@ import { FinishTrainingUseCase } from './use-case/finish-training.use-case';
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
 import { GetTrainingActivityUseCase } from './use-case/get-training-activity.use-case';
 import { GetTrainingProgressUseCase } from './use-case/get-training-progress.use-case';
+import { ListTrainingAttemptsUseCase } from './use-case/list-training-attempts.use-case';
 import { ListTrainingsUseCase } from './use-case/list-trainings.use-case';
 import { SelectTrainingSetUseCase } from './use-case/select-training-set.use-case';
 import { SetTrainingGoalUseCase } from './use-case/set-training-goal.use-case';
@@ -39,6 +42,7 @@ export class TrainingController {
 		private readonly setTrainingGoalUseCase: SetTrainingGoalUseCase,
 		private readonly getTrainingProgressUseCase: GetTrainingProgressUseCase,
 		private readonly getTrainingActivityUseCase: GetTrainingActivityUseCase,
+		private readonly listTrainingAttemptsUseCase: ListTrainingAttemptsUseCase,
 		private readonly finishTrainingUseCase: FinishTrainingUseCase,
 	) {}
 
@@ -74,6 +78,22 @@ export class TrainingController {
 		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);
 
 		return this.getTrainingProgressUseCase.execute(training);
+	}
+
+	/**
+	 * El histórico de ejercicios cerrados. Es de donde un dispositivo sin nada vuelve a
+	 * levantar lo ya resuelto, así que el ejercicio viaja dentro de cada intento: quien
+	 * pregunta puede no tenerlo en su catálogo.
+	 */
+	@Get(':uuid/attempt')
+	async listAttempts(
+		@CurrentUser() user: User,
+		@Param('uuid') uuid: string,
+		@Query() query: GetTrainingAttemptsRequestDto,
+	): Promise<TrainingAttemptHistory> {
+		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);
+
+		return this.listTrainingAttemptsUseCase.execute(training, query);
 	}
 
 	/** Fase 2: fijar los X ejercicios sobre los que van a correr todos los ciclos. */

@@ -137,7 +137,7 @@ export class TrainingSolveSession {
 			return;
 		}
 
-		if (undefined !== this.slot && this.gradedUuid !== this.slot.puzzle.uuid) {
+		if (undefined !== this.slot && this.gradedUuid !== PuzzleMapper.toKey(this.slot.puzzle)) {
 			this.timer.resume();
 			this.board.resumeClock();
 		}
@@ -158,7 +158,6 @@ export class TrainingSolveSession {
 				explorations: this.board
 					.explorations()
 					.map((run) => ({ at: run.at, events: [...run.events] })),
-				orientation: this.board.orientation(),
 				closure: this.board.closure(),
 				hintUsed: this.board.hintUsed(),
 				mistakeCount: this.board.mistakeCount(),
@@ -180,7 +179,16 @@ export class TrainingSolveSession {
 	 * effect can never pair a fresh exercise with the verdict of the previous one.
 	 */
 	private syncBoard(slot: TrainingRunSlot | null): void {
-		if (null === slot || this.isReviewing || this.slot?.puzzle.uuid === slot.puzzle.uuid) {
+		if (null === slot || this.isReviewing) {
+			return;
+		}
+
+		const current = this.slot;
+
+		if (
+			undefined !== current &&
+			PuzzleMapper.toKey(current.puzzle) === PuzzleMapper.toKey(slot.puzzle)
+		) {
 			return;
 		}
 
@@ -229,6 +237,7 @@ export class TrainingSolveSession {
 			uuid: stored?.uuid ?? crypto.randomUUID(),
 			createdAt: stored?.createdAt ?? this.timer.snapshot().createdAt,
 			identity,
+			...(null === slot.position ? {} : { position: slot.position }),
 		};
 
 		await this.flush();
@@ -245,7 +254,6 @@ export class TrainingSolveSession {
 			hintUsed: row.hintUsed,
 			mistakeCount: row.mistakeCount,
 			result: undefined === row.solved ? undefined : solved,
-			...(undefined === row.orientation ? {} : { orientation: row.orientation }),
 		};
 	}
 
@@ -262,10 +270,10 @@ export class TrainingSolveSession {
 		return {
 			trainingUuid,
 			kind,
-			puzzleUuid: slot.puzzle.uuid,
+			puzzleUuid: PuzzleMapper.toKey(slot.puzzle),
 			lichessId: slot.puzzle.lichessId,
 			...(undefined === roundUuid ? {} : { roundUuid }),
-			...(null === slot.cycleItemUuid ? {} : { cycleItemUuid: slot.cycleItemUuid }),
+			...(null === slot.cycleItem ? {} : { cycleItemUuid: slot.cycleItem.uuid }),
 		};
 	}
 
@@ -297,7 +305,6 @@ export class TrainingSolveSession {
 				updatedAt,
 				record: this.board.record(),
 				explorations: this.board.explorations(),
-				orientation: this.board.orientation(),
 				closure: this.board.closure(),
 				hintUsed: this.board.hintUsed(),
 				mistakeCount: this.board.mistakeCount(),
@@ -321,11 +328,11 @@ export class TrainingSolveSession {
 			return;
 		}
 
-		if (this.gradedUuid === slot.puzzle.uuid) {
+		if (this.gradedUuid === PuzzleMapper.toKey(slot.puzzle)) {
 			return;
 		}
 
-		this.gradedUuid = slot.puzzle.uuid;
+		this.gradedUuid = PuzzleMapper.toKey(slot.puzzle);
 
 		void this.submit(closure, 'solved' === result);
 	}

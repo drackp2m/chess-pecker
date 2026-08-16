@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { StoreNames } from 'idb';
 
 import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { GenericRepository } from '@app/repository/generic.repository';
@@ -36,18 +37,25 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 	 * dispositivo y siguen valiendo sin sesión.
 	 */
 	async clearUserData(): Promise<void> {
-		await this.runInTransaction(
-			['activityCursor', 'activityDay', 'attempt', 'cycle', 'puzzleSet'],
-			'readwrite',
-			async (transaction) => {
-				await Promise.all([
-					transaction.objectStore('activityCursor').clear(),
-					transaction.objectStore('activityDay').clear(),
-					transaction.objectStore('attempt').clear(),
-					transaction.objectStore('cycle').clear(),
-					transaction.objectStore('puzzleSet').clear(),
-				]);
-			},
-		);
+		await this.runInTransaction(userStores, 'readwrite', async (transaction) => {
+			await Promise.all(userStores.map((store) => transaction.objectStore(store).clear()));
+		});
 	}
 }
+
+const userStores: StoreNames<AppSchema>[] = [
+	'activityCursor',
+	'activityDay',
+	'attempt',
+	// El corte de lo ya restaurado se va con los intentos: si sobreviviera, el siguiente
+	// usuario del dispositivo pediría sólo lo posterior a un cursor que no es suyo.
+	'attemptCursor',
+	'calibrationPuzzle',
+	'calibrationRound',
+	'cycle',
+	'cycleItem',
+	'puzzleSet',
+	'training',
+	'trainingGoal',
+	'trainingPuzzle',
+];
