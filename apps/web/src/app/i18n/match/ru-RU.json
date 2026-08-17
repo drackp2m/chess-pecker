@@ -1,0 +1,20 @@
+{
+	"01KZJ895MBDHHY35NSG66Z2CX2": "Игра",
+	"01KZJ895MB287JNKG3AQK0QE05": "Шах",
+	"01KZJ895MBCKSTCBV7GV3PTNAN": "Мат — вы проиграли",
+	"01KZJ895MB538DDEFCNEEXPJQS": "Мат — вы выиграли",
+	"01KZJ895MB206DWDB9Y66T782Z": "Ваш ход",
+	"01KZJ895MBE0KR3D5T14ATFHHK": "Компьютер думает…",
+	"01KZJ895MBVY40YKSMFMFPEN6Q": "Сторона",
+	"01KZJ895MBBTMX8RM0R5A9PGTE": "Играть за белых",
+	"01KZJ895MB768FTTZ24MSP7YYG": "Играть за чёрных",
+	"01KZJ895MB22G1RVE5CE1152JQ": "Выбор стороны начинает новую партию.",
+	"01KZJ895MBXCGP8VSGTC89J2AK": "Доска",
+	"01KZJ895MBQFFM0M25P885PECC": "Перевернуть доску",
+	"01KZJ895MBE3WQTRW8GC3NAVYD": "Отменить ход",
+	"01KZJ895MB9V885BMCY675C79A": "Позиция упражнения",
+	"01KZJ895MBQKSC9YNYJ0BW24Q8": "Загрузить позицию",
+	"01KZJ895MBS2HDHRSR83E1EN5M": "Закрыть",
+	"01KZJ895MBQ7F44AZ9DTZ2RNRS": "Не удалось прочитать эту FEN-позицию.",
+	"01KZJ93GA1JB7TQ9Z498HP9W55": "«{{ notation }}» не является допустимым ходом в этой позиции."
+}
