@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import type { SyncEntity } from '@chesspecker/api-definitions';
 import { StoreNames } from 'idb';
 
 import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
@@ -6,6 +7,17 @@ import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { PendingStore } from '@app/repository/definition/pending-schema.interface';
 import { SyncCursorKey } from '@app/repository/definition/sync-cursor-schema.interface';
 import { GenericRepository } from '@app/repository/generic.repository';
+
+/** Lo que queda por subir, tabla a tabla. */
+export type PendingCount = Readonly<Record<SyncEntity, number>>;
+
+export const NO_PENDING: PendingCount = Object.fromEntries(
+	SYNC_ENTITIES.map((entity): readonly [SyncEntity, number] => [entity, 0]),
+) as PendingCount;
+
+export function sumPending(pending: PendingCount): number {
+	return SYNC_ENTITIES.reduce((total, entity) => total + pending[entity], 0);
+}
 
 @Injectable({
 	providedIn: 'root',
@@ -17,16 +29,25 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 	 * contarlo no recorre meses de partidas.
 	 */
 	async countPendingSync(): Promise<number> {
+		return sumPending(await this.countPendingByEntity());
+	}
+
+	/**
+	 * Lo mismo, tabla a tabla. Es el desglose que enseña el splash mientras sube y el que
+	 * la pantalla de estado leerá después: ocho recuentos sobre índice cuestan lo mismo
+	 * que su suma.
+	 */
+	async countPendingByEntity(): Promise<PendingCount> {
 		return this.runInTransaction(syncStores, 'readonly', async (transaction) => {
 			const counts = await Promise.all(
-				SYNC_ENTITIES.map((entity) => {
+				SYNC_ENTITIES.map(async (entity): Promise<readonly [SyncEntity, number]> => {
 					const store = transaction.objectStore(entity) as unknown as PendingStore<'readonly'>;
 
-					return store.index('pendingSince').count();
+					return [entity, await store.index('pendingSince').count()];
 				}),
 			);
 
-			return counts.reduce((total, count) => total + count, 0);
+			return Object.fromEntries(counts) as PendingCount;
 		});
 	}
 

@@ -15,6 +15,18 @@ export const SyncPolicy = {
 	/** Tope duro del arranque: pasado esto la puerta se abre, con éxito o sin él. */
 	startupTimeoutMs: 15000,
 
+	/**
+	 * Lo que el splash espera —mirando, no de fondo— antes de contar qué está pasando. Una
+	 * pasada que termina antes es un parpadeo, y un parpadeo no debe enseñar nada.
+	 */
+	splashDetailMs: 600,
+
+	/**
+	 * Cada cuánto vuelve a sincronizarse al volver a la aplicación o al recuperar la red.
+	 * Sin este suelo, alternar de pestaña dispararía una pasada por cambio.
+	 */
+	revisitAfterMs: 5 * 60 * 1000,
+
 	/** A partir de aquí una fila lleva demasiado esperando y hay que decirlo. */
 	staleAfterMs: 7 * 24 * 60 * 60 * 1000,
 } as const;

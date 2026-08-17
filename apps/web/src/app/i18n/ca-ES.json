@@ -111,5 +111,13 @@
 	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Queden exercicis sense pujar",
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} exercicis d’aquest dispositiu encara no han arribat al servidor. En tancar la sessió s’esborren, i no hi ha manera de recuperar-los.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Tanca la sessió igualment",
-	"01KZS8AGRWVYYDY12EVBWAY17D": "Em quedo"
+	"01KZS8AGRWVYYDY12EVBWAY17D": "Em quedo",
+	"01M08S2E7Y4N1GH1WEYNE2PHH2": "Comprovant què ha canviat…",
+	"01M08S2E7Y82F1D1EC3SSESMAC": "Pujant el que hi ha en aquest dispositiu…",
+	"01M08S2E7YD0QHYKHGFRKC95KQ": "Baixant el teu entrenament…",
+	"01M08S2E7Y8DJ8ATJ9EZN9YE5J": "No s’ha pogut sincronitzar",
+	"01M08S2E7YX29H2P0CGSW32QMH": "Sense connexió: es continua amb el que hi ha en aquest dispositiu",
+	"01M08S2E7YMKHXMG6TBMMFGPP0": "{{ pending }} files per pujar",
+	"01M08S2E7Y945FNNZAKHAVR927": "{{ rows }} files rebudes",
+	"01M08S2E7YFS94VPQJW770AFBX": "Exercicis: {{ done }} de {{ total }}"
 }

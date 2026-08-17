@@ -39,4 +39,14 @@ export interface CommonI18nParams {
 	'01KZS8AGRW2GFXT6E5GZ6HHZPQ': {
 		pending: number;
 	};
+	'01M08S2E7YMKHXMG6TBMMFGPP0': {
+		pending: number;
+	};
+	'01M08S2E7Y945FNNZAKHAVR927': {
+		rows: number;
+	};
+	'01M08S2E7YFS94VPQJW770AFBX': {
+		done: number;
+		total: number;
+	};
 }

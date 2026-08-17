@@ -1,0 +1,28 @@
+<section class="sync-splash flex-col gap-3 align-center justify-center p-4" role="status">
+	<p class="fs-lg text-center">{{ message() | i18n }}</p>
+
+	@if (sync.error(); as failure) {
+		<p class="fs-sm text-center color-contrast-mid">{{ failure.key | i18n: failure.params }}</p>
+	}
+
+	@if (showDetail()) {
+		<ul class="detail flex-col gap-1 fs-sm text-center color-contrast-mid">
+			@if (sync.hasPending()) {
+				<li>{{ I18n.common.SYNC_UPLOADING | i18n: { pending: sync.pending() } }}</li>
+			}
+
+			@if (isDownloading()) {
+				<li>{{ I18n.common.SYNC_DOWNLOADING | i18n: { rows: sync.downloaded() } }}</li>
+			}
+
+			@if (isSweeping()) {
+				<li>
+					{{
+						I18n.common.SYNC_CATALOG
+							| i18n: { done: sync.catalogDone(), total: sync.catalogTotal() }
+					}}
+				</li>
+			}
+		</ul>
+	}
+</section>

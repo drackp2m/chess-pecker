@@ -17,6 +17,12 @@ export interface SyncCursorRow {
 	readonly cursor: string | null;
 	/** Cuántas filas había del otro lado. Un `MAX` no ve los borrados; el recuento sí. */
 	readonly count?: number;
+	/**
+	 * De qué versión es lo replicado. Sólo lo usa el catálogo: su `cursor` es la última
+	 * página servida —un `lichessId`—, así que la marca del servidor no tiene otro hueco
+	 * donde vivir. `null` es una réplica bajada sin sesión, que no pudo preguntarla.
+	 */
+	readonly version?: string | null;
 	/** La barrida terminó. Sólo lo usa el catálogo, que se baja entero y por páginas. */
 	readonly completedAt?: Date | null;
 	readonly updatedAt: Date;

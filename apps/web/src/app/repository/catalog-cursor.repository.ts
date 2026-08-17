@@ -6,6 +6,8 @@ export interface CatalogCursorState {
 	/** La última página servida, o `null` cuando no queda nada por pedir. */
 	readonly cursor: string | null;
 	readonly total: number;
+	/** La versión que decía el resumen al empezar la barrida, o `null` si no se pudo pedir. */
+	readonly version: string | null;
 	readonly completedAt: Date | null;
 }
 
@@ -26,13 +28,19 @@ export class CatalogCursorRepository {
 			return undefined;
 		}
 
-		return { cursor: row.cursor, total: row.count ?? 0, completedAt: row.completedAt ?? null };
+		return {
+			cursor: row.cursor,
+			total: row.count ?? 0,
+			version: row.version ?? null,
+			completedAt: row.completedAt ?? null,
+		};
 	}
 
 	async saveState(state: CatalogCursorState): Promise<void> {
 		await this.cursors.saveCursor('catalog', {
 			cursor: state.cursor,
 			count: state.total,
+			version: state.version,
 			completedAt: state.completedAt,
 		});
 	}
