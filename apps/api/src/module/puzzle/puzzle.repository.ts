@@ -5,6 +5,10 @@ import { shuffle } from '../../shared/util/shuffle.util';
 
 import { Puzzle } from './puzzle.entity';
 
+interface CatalogVersionRow {
+	version: Date | string | null;
+}
+
 export class PuzzleRepository extends CustomRepository<Puzzle> {
 	/**
 	 * La importación es un upsert por `lichessId`: reimportar el mismo CSV no duplica y
@@ -28,6 +32,24 @@ export class PuzzleRepository extends CustomRepository<Puzzle> {
 
 	async countAll(): Promise<number> {
 		return this.entityManager.fork().count(Puzzle, {});
+	}
+
+	/**
+	 * La versión del catálogo. La importación es un upsert que refresca rating y popularidad,
+	 * así que esta marca se mueve aunque el total no cambie, que es justo lo que hace falta
+	 * para que una réplica sepa que se ha quedado vieja.
+	 */
+	async lastUpdatedAt(): Promise<Date | null> {
+		const rows = (await this.entityManager
+			.fork()
+			.getConnection()
+			.execute<CatalogVersionRow[]>(
+				'select max(p.updated_at) as version from puzzle p',
+			)) as CatalogVersionRow[];
+
+		const version = rows[0]?.version ?? null;
+
+		return null === version ? null : new Date(version);
 	}
 
 	/**

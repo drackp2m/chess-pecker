@@ -4,6 +4,7 @@ import { StoreNames } from 'idb';
 import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { PendingStore } from '@app/repository/definition/pending-schema.interface';
+import { SyncCursorKey } from '@app/repository/definition/sync-cursor-schema.interface';
 import { GenericRepository } from '@app/repository/generic.repository';
 
 @Injectable({
@@ -33,18 +34,26 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 	 * Todo lo que es del usuario, en una sola transacción. Fuera quedan `puzzle` —el
 	 * catálogo de Lichess, que no es de nadie— y `setting`, que son preferencias del
 	 * dispositivo y siguen valiendo sin sesión.
+	 *
+	 * `syncCursor` no se vacía entero por lo mismo: dentro está también el corte del
+	 * catálogo, que sigue sirviendo a quien entre después. Se borran sólo sus llaves.
 	 */
 	async clearUserData(): Promise<void> {
-		await this.runInTransaction(userStores, 'readwrite', async (transaction) => {
+		await this.runInTransaction(clearedStores, 'readwrite', async (transaction) => {
 			await Promise.all(userStores.map((store) => transaction.objectStore(store).clear()));
+
+			const cursors = transaction.objectStore('syncCursor');
+
+			await Promise.all(userCursors.map((key) => cursors.delete(key)));
 		});
 	}
 }
 
 const syncStores: StoreNames<AppSchema>[] = [...SYNC_ENTITIES];
 
+const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'activity'];
+
 const userStores: StoreNames<AppSchema>[] = [
-	'activityCursor',
 	'activityDay',
 	'attempt',
 	// El corte de lo ya restaurado se va con los intentos: si sobreviviera, el siguiente
@@ -60,3 +69,5 @@ const userStores: StoreNames<AppSchema>[] = [
 	'trainingGoal',
 	'trainingPuzzle',
 ];
+
+const clearedStores: StoreNames<AppSchema>[] = [...userStores, 'syncCursor'];

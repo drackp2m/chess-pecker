@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 
-import { CatalogCursorRepository } from '@app/repository/catalog-cursor.repository';
-import { CatalogCursorRow } from '@app/repository/definition/catalog-cursor-schema.interface';
+import {
+	CatalogCursorRepository,
+	CatalogCursorState,
+} from '@app/repository/catalog-cursor.repository';
 import { PuzzleCatalogRepository } from '@app/repository/puzzle-catalog.repository';
 import { PuzzleRepository } from '@app/repository/puzzle.repository';
 import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
@@ -57,11 +59,11 @@ export class PuzzleCatalogReplicaUseCase {
 		}
 	}
 
-	private resumeFrom(state: CatalogCursorRow | undefined): string | null {
+	private resumeFrom(state: CatalogCursorState | undefined): string | null {
 		return null !== state?.completedAt ? null : state.cursor;
 	}
 
-	private async isUpToDate(state: CatalogCursorRow | undefined): Promise<boolean> {
+	private async isUpToDate(state: CatalogCursorState | undefined): Promise<boolean> {
 		if (undefined === state?.completedAt || null === state.completedAt) {
 			return false;
 		}

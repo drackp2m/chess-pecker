@@ -1,5 +1,9 @@
 import { Injectable, inject } from '@angular/core';
-import type { PushTrainingRequest, PushTrainingResult } from '@chesspecker/api-definitions';
+import type {
+	PushTrainingRequest,
+	PushTrainingResult,
+	SyncSummary,
+} from '@chesspecker/api-definitions';
 
 import { ApiSdkService } from '@app/service/api-sdk.service';
 
@@ -8,6 +12,14 @@ import { ApiSdkService } from '@app/service/api-sdk.service';
 })
 export class SyncRepository {
 	private readonly apiSdk = inject(ApiSdkService);
+
+	/**
+	 * Qué hay del otro lado, por tabla. No se cancela al navegar: se pregunta en el arranque,
+	 * y la primera navegación del router cortaría justo la llamada que abre la puerta.
+	 */
+	async getSummary(): Promise<SyncSummary> {
+		return this.apiSdk.GET.sync('', { cancellable: false });
+	}
 
 	/**
 	 * El árbol entero de un entrenamiento. Es idempotente por `clientRef`, así que repetir

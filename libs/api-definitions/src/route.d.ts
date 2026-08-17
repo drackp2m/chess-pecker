@@ -15,7 +15,7 @@ import {
 	PuzzleCatalogPage,
 	SearchPuzzleRequest,
 } from './puzzle';
-import { PushTrainingRequest, PushTrainingResult } from './sync';
+import { PushTrainingRequest, PushTrainingResult, SyncSummary } from './sync';
 import {
 	CalibrationRound,
 	CalibrationRoundPuzzles,
@@ -88,6 +88,11 @@ export interface PuzzleGetRoutes {
 
 export interface PuzzlePostRoutes {
 	'/import': { params: ImportPuzzleRequest; response: ImportPuzzleResult };
+}
+
+export interface SyncGetRoutes {
+	/** Qué hay del otro lado, por tabla. Una sola llamada decide qué hay que bajar. */
+	'': { response: SyncSummary };
 }
 
 export interface SyncPostRoutes {

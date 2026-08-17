@@ -1,17 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 import {
 	ActivityDayRow,
 	ActivitySchema,
 } from '@app/repository/definition/activity-schema.interface';
 import { GenericRepository } from '@app/repository/generic.repository';
-
-const CURSOR_KEY = 'training-activity';
+import { SyncCursorRepository } from '@app/repository/sync-cursor.repository';
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ActivityRepository extends GenericRepository<ActivitySchema> {
+	private readonly cursors = inject(SyncCursorRepository);
+
 	/** Ambos extremos entran, y el rango va sobre la propia clave: no hace falta índice. */
 	async findRange(from: string, to: string): Promise<ActivityDayRow[]> {
 		return this.runInTransaction(['activityDay'], 'readonly', (transaction) =>
@@ -40,12 +41,10 @@ export class ActivityRepository extends GenericRepository<ActivitySchema> {
 	}
 
 	async findCursor(): Promise<string | null> {
-		const row = await this.find('activityCursor', CURSOR_KEY);
-
-		return row?.cursor ?? null;
+		return (await this.cursors.findCursor('activity'))?.cursor ?? null;
 	}
 
 	async saveCursor(cursor: string): Promise<void> {
-		await this.insert('activityCursor', { id: CURSOR_KEY, cursor, updatedAt: new Date() });
+		await this.cursors.saveCursor('activity', { cursor });
 	}
 }

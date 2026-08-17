@@ -102,6 +102,32 @@ export interface PushAttemptNode<TDate = string> extends SyncNode<TDate> {
 	explorations: FreePlayRun[];
 }
 
+export interface SyncEntitySummary {
+	/** `MAX(received_at)` del usuario en esa tabla, o `null` si no tiene ni una fila. */
+	readonly cursor: string | null;
+	/** Porque un `MAX` no ve los borrados: marca y recuento iguales es «al día». */
+	readonly count: number;
+}
+
+/**
+ * Qué hay del otro lado, en una sola pregunta. Es lo que decide si hay algo que bajar sin
+ * tener que preguntar tabla a tabla ni entrenamiento a entrenamiento.
+ */
+export interface SyncSummary {
+	readonly serverTime: string;
+	/** El modelo que corre el servidor. Un cliente más viejo baja, pero no sube. */
+	readonly schemaVersion: number;
+	readonly entities: Record<SyncEntity, SyncEntitySummary>;
+	/** `puzzle` no es de nadie: es catálogo global y tiene su propia forma. */
+	readonly catalog: SyncCatalogSummary;
+}
+
+export interface SyncCatalogSummary {
+	/** `MAX(updated_at)` del catálogo. Se mueve cuando se reimporta, aunque el total no. */
+	readonly version: string;
+	readonly total: number;
+}
+
 /** Una fila que el servidor no va a aceptar nunca. El cliente la marca y deja de reintentarla. */
 export interface SyncRejection {
 	readonly clientRef: string;

@@ -1,21 +1,43 @@
-export type Language = 'es-ES' | 'ca-ES' | 'en-GB' | 'ru-RU';
+/**
+ * ToDo => Try to add this languages
+ * + en-GB => English
+ * + ru-RU => Русский
+ * - hi-IN => हिन्दी
+ * + es-ES => Español
+ * - fr-FR => Français
+ * - de-DE => Deutsch
+ * - po-BR => Português
+ * - tr-TR => Türkçe
+ * - in-ID => Bahasa Indonesia
+ * - pl-PL => Polski
+ * - uk-UA => Українська
+ * - it-IT => Italiano
+ * - vn-VN => Tiếng Việt
+ * - nl-NL => Nederlands
+ * - ch-CN => 中文
+ * + ca-ES => Català
+ */
 
-export const LANGUAGES: readonly Language[] = ['es-ES', 'ca-ES', 'en-GB', 'ru-RU'];
+export type Language = 'en-GB' | 'ru-RU' | 'hi-IN' | 'es-ES' | 'ca-ES';
+
+export const LANGUAGES: readonly Language[] = ['en-GB', 'ru-RU', 'es-ES', 'ca-ES'];
 
 export const DEFAULT_LANGUAGE: Language = 'es-ES';
 
 export const LANGUAGE_NAME = {
-	'es-ES': 'Español',
-	'ca-ES': 'Català',
 	'en-GB': 'English',
 	'ru-RU': 'Русский',
+	'hi-IN': 'हिन्दी',
+	'es-ES': 'Español',
+	'ca-ES': 'Català',
 } as const satisfies Record<Language, string>;
 
 export const LANGUAGE_FLAG = {
-	'es-ES': 'svg/flag/es.svg',
-	'ca-ES': 'svg/flag/es-ct.svg',
 	'en-GB': 'svg/flag/gb.svg',
 	'ru-RU': 'svg/flag/ru.svg',
+	'hi-IN': 'svg/flag/in.svg',
+	'es-ES': 'svg/flag/es.svg',
+	'ca-ES': 'svg/flag/es-ct.svg',
 } as const satisfies Record<Language, string>;
 
 export function normalizeLanguage(value: unknown): Language {
