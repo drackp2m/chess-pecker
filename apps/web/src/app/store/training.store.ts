@@ -8,7 +8,6 @@ import { I18n, i18nRef } from '@app/i18n';
 import { TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { isActiveTraining } from '@app/use-case/local-training.use-case';
 import { TrainingEngineUseCase } from '@app/use-case/training-engine.use-case';
-import { TrainingRestoreUseCase } from '@app/use-case/training-restore.use-case';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { API_FAILURE, HttpError } from '@app/util/http-error';
 
@@ -56,12 +55,11 @@ export class TrainingStore
 	});
 
 	private readonly engine = inject(TrainingEngineUseCase);
-	private readonly restore = inject(TrainingRestoreUseCase);
 
 	/**
-	 * El histórico se restaura aquí y esperando: es lo que hace que al abrir la pizarra los
-	 * ejercicios ya resueltos estén donde se los va a buscar. Sólo cuesta la primera vez —
-	 * después el cursor deja la petición en una página vacía.
+	 * Sólo lee lo que hay aquí. El histórico lo baja el ciclo de sincronización antes de que
+	 * la aplicación sirva datos, así que al llegar aquí los ejercicios ya resueltos están
+	 * donde se los va a buscar.
 	 */
 	async load(): Promise<void> {
 		patchState(this, { isLoading: true, error: null });
@@ -69,10 +67,6 @@ export class TrainingStore
 		try {
 			const trainings = await this.engine.list();
 			const active = trainings.find((training) => isActiveTraining(training)) ?? null;
-
-			if (null !== active) {
-				await this.restore.execute(active.uuid);
-			}
 
 			patchState(this, {
 				trainings,

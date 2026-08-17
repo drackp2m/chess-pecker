@@ -58,23 +58,15 @@ export class SyncConfirmUseCase {
 			reasons: toReasons(result.rejected),
 		};
 
-		const count = await this.repository.runInTransaction(
-			CONFIRM_STORES,
-			'readwrite',
-			async (transaction) => {
-				let settled = NOTHING_SETTLED;
+		return this.repository.runInTransaction(CONFIRM_STORES, 'readwrite', async (transaction) => {
+			let settled = NOTHING_SETTLED;
 
-				for (const entity of SYNC_ENTITIES) {
-					settled = addSettled(settled, await settleEntity(transaction, entity, push, settlement));
-				}
+			for (const entity of SYNC_ENTITIES) {
+				settled = addSettled(settled, await settleEntity(transaction, entity, push, settlement));
+			}
 
-				return settled;
-			},
-		);
-
-		await this.advanceCursor(push, result);
-
-		return count;
+			return settled;
+		});
 	}
 
 	/**
@@ -96,25 +88,6 @@ export class SyncConfirmUseCase {
 			}
 
 			return { confirmed: 0, rejected: count };
-		});
-	}
-
-	/**
-	 * El corte del histórico salta a la marca de esta subida, y así la bajada siguiente no se
-	 * trae de vuelta lo que acabamos de mandar.
-	 */
-	private async advanceCursor(push: TrainingTreePush, result: PushTrainingResult): Promise<void> {
-		const trainingUuid = result.uuids.training[push.trainingUuid] ?? push.trainingUuid;
-		const stored = await this.repository.find('attemptCursor', trainingUuid);
-
-		if (undefined !== stored && stored.cursor >= result.receivedAt) {
-			return;
-		}
-
-		await this.repository.insert('attemptCursor', {
-			trainingUuid,
-			cursor: result.receivedAt,
-			updatedAt: new Date(),
 		});
 	}
 }

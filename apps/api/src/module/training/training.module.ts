@@ -49,8 +49,9 @@ import { StartTrainingUseCase } from './use-case/start-training.use-case';
 		ApplySyncTimestampsUseCase,
 	],
 	// La cordura de las fechas del cliente la comparte la subida del módulo de
-	// sincronización, que escribe en estas mismas tablas.
-	exports: [MikroOrmModule, ApplySyncTimestampsUseCase],
+	// sincronización, que escribe en estas mismas tablas, y la puerta de propiedad la comparte
+	// su bajada, que sirve el árbol de un entrenamiento.
+	exports: [MikroOrmModule, ApplySyncTimestampsUseCase, GetOwnedTrainingUseCase],
 	controllers: [TrainingController, TrainingCalibrationController, TrainingCycleController],
 })
 export class TrainingModule {}

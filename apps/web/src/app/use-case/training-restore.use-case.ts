@@ -4,7 +4,6 @@ import type { TrainingAttempt } from '@chesspecker/api-definitions';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
-import { SessionStore } from '@app/store/session.store';
 import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
 
 /** Tope de páginas por visita: un dispositivo vacío termina de llenarse en la siguiente. */
@@ -22,25 +21,21 @@ const MAX_PAGES = 20;
 	providedIn: 'root',
 })
 export class TrainingRestoreUseCase {
-	private readonly session = inject(SessionStore);
 	private readonly remote = inject(TrainingRepository);
 	private readonly repository = inject(TrainingLocalRepository);
 	private readonly puzzleCache = inject(PuzzleCacheUseCase);
 
 	/**
-	 * Silencioso a propósito: no poder restaurar no puede tumbar la carga del
-	 * entrenamiento, y lo que quede a medias se termina en la visita siguiente porque el
-	 * cursor sólo avanza con la página ya guardada.
+	 * Silencioso a propósito: no poder restaurar no puede tumbar el ciclo de sincronización.
+	 * Devuelve si el histórico quedó entero —lo que quede a medias se termina en la pasada
+	 * siguiente, porque el cursor sólo avanza con la página ya guardada—, y es lo que decide
+	 * si el corte global de `attempt` se puede adelantar.
 	 */
-	async execute(trainingUuid: string): Promise<void> {
-		if (!this.session.isAuthenticated()) {
-			return;
-		}
-
-		await this.download(trainingUuid).catch(() => undefined);
+	async execute(trainingUuid: string): Promise<boolean> {
+		return this.download(trainingUuid).catch(() => false);
 	}
 
-	private async download(trainingUuid: string): Promise<void> {
+	private async download(trainingUuid: string): Promise<boolean> {
 		let since = (await this.repository.find('attemptCursor', trainingUuid))?.cursor;
 
 		for (let page = 0; page < MAX_PAGES; page += 1) {
@@ -61,9 +56,11 @@ export class TrainingRestoreUseCase {
 			});
 
 			if (!history.hasMore) {
-				return;
+				return true;
 			}
 		}
+
+		return false;
 	}
 
 	private async absorb(trainingUuid: string, attempts: readonly TrainingAttempt[]): Promise<void> {

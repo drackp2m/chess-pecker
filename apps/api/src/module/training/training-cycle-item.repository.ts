@@ -17,6 +17,13 @@ export class TrainingCycleItemRepository extends CustomRepository<TrainingCycleI
 		);
 	}
 
+	async getManyByTraining(trainingUuid: string): Promise<TrainingCycleItem[]> {
+		return this.getMany(
+			{ cycle: { training: trainingUuid } },
+			{ orderBy: { position: 'asc' }, populate: ['trainingPuzzle.puzzle'] },
+		);
+	}
+
 	async countByCycle(cycleUuid: string): Promise<number> {
 		return this.entityManager.fork().count(TrainingCycleItem, { cycle: cycleUuid });
 	}

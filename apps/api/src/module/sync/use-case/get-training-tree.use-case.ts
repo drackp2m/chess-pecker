@@ -1,0 +1,165 @@
+import { Injectable } from '@nestjs/common';
+
+import { Puzzle } from '../../puzzle/puzzle.entity';
+import { TrainingCalibrationPuzzle } from '../../training/training-calibration-puzzle.entity';
+import { TrainingCalibrationPuzzleRepository } from '../../training/training-calibration-puzzle.repository';
+import { TrainingCalibrationRoundRepository } from '../../training/training-calibration-round.repository';
+import { TrainingCycleItem } from '../../training/training-cycle-item.entity';
+import { TrainingCycleItemRepository } from '../../training/training-cycle-item.repository';
+import { TrainingCycleRepository } from '../../training/training-cycle.repository';
+import { TrainingGoalRepository } from '../../training/training-goal.repository';
+import { TrainingPuzzle } from '../../training/training-puzzle.entity';
+import { TrainingPuzzleRepository } from '../../training/training-puzzle.repository';
+import { Training } from '../../training/training.entity';
+import {
+	SyncTrainingTree,
+	SyncTreeCycleNode,
+	SyncTreeDealtNode,
+	SyncTreeGoalNode,
+	SyncTreeItemNode,
+	SyncTreeRoundNode,
+	SyncTreeRow,
+	SyncTreeSetNode,
+	SyncTreeTrainingNode,
+} from '../definition/sync-training-tree.interface';
+
+interface SyncedEntity {
+	uuid: string;
+	clientRef?: string;
+	createdAt: Date;
+	updatedAt: Date;
+	receivedAt: Date;
+}
+
+@Injectable()
+export class GetTrainingTreeUseCase {
+	constructor(
+		private readonly trainingGoalRepository: TrainingGoalRepository,
+		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
+		private readonly calibrationPuzzleRepository: TrainingCalibrationPuzzleRepository,
+		private readonly trainingPuzzleRepository: TrainingPuzzleRepository,
+		private readonly trainingCycleRepository: TrainingCycleRepository,
+		private readonly trainingCycleItemRepository: TrainingCycleItemRepository,
+	) {}
+
+	async execute(training: Training): Promise<SyncTrainingTree> {
+		const uuid = training.uuid;
+		const set = await this.trainingPuzzleRepository.getManyByTraining(uuid);
+		const dealt = await this.calibrationPuzzleRepository.getManyByTraining(uuid);
+
+		return {
+			training: toTrainingNode(training),
+			goals: await this.goalNodes(uuid),
+			rounds: await this.roundNodes(uuid, dealt),
+			set: set.map((entry) => toSetNode(entry)),
+			cycles: await this.cycleNodes(uuid),
+			puzzles: collectPuzzles(set, dealt),
+		};
+	}
+
+	private async goalNodes(trainingUuid: string): Promise<SyncTreeGoalNode[]> {
+		const goals = await this.trainingGoalRepository.getManyByTraining(trainingUuid);
+
+		return goals.map((goal) => ({
+			...toRow(goal),
+			...(undefined === goal.puzzlesPerDay ? {} : { puzzlesPerDay: goal.puzzlesPerDay }),
+			...(undefined === goal.endDate ? {} : { endDate: toDateString(goal.endDate) }),
+		}));
+	}
+
+	private async roundNodes(
+		trainingUuid: string,
+		dealt: TrainingCalibrationPuzzle[],
+	): Promise<SyncTreeRoundNode[]> {
+		const rounds = await this.calibrationRoundRepository.getManyByTraining(trainingUuid);
+		const byRound = groupBy(dealt, (row) => row.calibrationRound.uuid);
+
+		return rounds.map((round) => ({
+			...toRow(round),
+			index: round.index,
+			kind: round.kind,
+			rating: round.rating,
+			outcome: round.outcome,
+			puzzles: (byRound.get(round.uuid) ?? []).map((row) => toDealtNode(row)),
+		}));
+	}
+
+	private async cycleNodes(trainingUuid: string): Promise<SyncTreeCycleNode[]> {
+		const cycles = await this.trainingCycleRepository.getManyByTraining(trainingUuid);
+		const items = await this.trainingCycleItemRepository.getManyByTraining(trainingUuid);
+		const byCycle = groupBy(items, (row) => row.cycle.uuid);
+
+		return cycles.map((cycle) => ({
+			...toRow(cycle),
+			index: cycle.index,
+			status: cycle.status,
+			items: (byCycle.get(cycle.uuid) ?? []).map((row) => toItemNode(row)),
+		}));
+	}
+}
+
+function toRow(entity: SyncedEntity): SyncTreeRow {
+	return {
+		uuid: entity.uuid,
+		...(undefined === entity.clientRef ? {} : { clientRef: entity.clientRef }),
+		createdAt: entity.createdAt.toISOString(),
+		updatedAt: entity.updatedAt.toISOString(),
+		receivedAt: entity.receivedAt.toISOString(),
+	};
+}
+
+function toTrainingNode(training: Training): SyncTreeTrainingNode {
+	return {
+		...toRow(training),
+		status: training.status,
+		...(undefined === training.finishedReason ? {} : { finishedReason: training.finishedReason }),
+		...(undefined === training.finishedAt ? {} : { finishedAt: training.finishedAt.toISOString() }),
+	};
+}
+
+function toSetNode(entry: TrainingPuzzle): SyncTreeSetNode {
+	return { ...toRow(entry), lichessId: entry.puzzle.lichessId };
+}
+
+function toDealtNode(row: TrainingCalibrationPuzzle): SyncTreeDealtNode {
+	return { ...toRow(row), lichessId: row.puzzle.lichessId, position: row.position };
+}
+
+function toItemNode(row: TrainingCycleItem): SyncTreeItemNode {
+	return {
+		...toRow(row),
+		trainingPuzzleUuid: row.trainingPuzzle.uuid,
+		lichessId: row.trainingPuzzle.puzzle.lichessId,
+		position: row.position,
+	};
+}
+
+function toDateString(endDate: Date | string): string {
+	return endDate instanceof Date ? endDate.toISOString().slice(0, 10) : endDate;
+}
+
+function collectPuzzles(set: TrainingPuzzle[], dealt: TrainingCalibrationPuzzle[]): Puzzle[] {
+	const puzzles = new Map<string, Puzzle>();
+
+	for (const row of [...set, ...dealt]) {
+		puzzles.set(row.puzzle.lichessId, row.puzzle);
+	}
+
+	return [...puzzles.values()];
+}
+
+function groupBy<T>(rows: T[], key: (row: T) => string): Map<string, T[]> {
+	const groups = new Map<string, T[]>();
+
+	for (const row of rows) {
+		const group = groups.get(key(row));
+
+		if (undefined === group) {
+			groups.set(key(row), [row]);
+		} else {
+			group.push(row);
+		}
+	}
+
+	return groups;
+}

@@ -1,3 +1,4 @@
+import { ApiPuzzle } from './puzzle';
 import {
 	CalibrationRoundKind,
 	CalibrationRoundOutcome,
@@ -100,6 +101,63 @@ export interface PushAttemptNode<TDate = string> extends SyncNode<TDate> {
 	mistakeCount: number;
 	record: PuzzleEvent[];
 	explorations: FreePlayRun[];
+}
+
+export interface SyncTreeRow<TDate = string> {
+	readonly uuid: string;
+	readonly clientRef?: string;
+	readonly createdAt: TDate;
+	readonly updatedAt: TDate;
+	readonly receivedAt: TDate;
+}
+
+export interface SyncTrainingTree<TDate = string> {
+	readonly training: SyncTreeTrainingNode<TDate>;
+	readonly goals: readonly SyncTreeGoalNode<TDate>[];
+	readonly rounds: readonly SyncTreeRoundNode<TDate>[];
+	readonly set: readonly SyncTreeSetNode<TDate>[];
+	readonly cycles: readonly SyncTreeCycleNode<TDate>[];
+	readonly puzzles: readonly ApiPuzzle[];
+}
+
+export interface SyncTreeTrainingNode<TDate = string> extends SyncTreeRow<TDate> {
+	readonly status: TrainingStatus;
+	readonly finishedReason?: TrainingFinishedReason;
+	readonly finishedAt?: TDate;
+}
+
+export interface SyncTreeGoalNode<TDate = string> extends SyncTreeRow<TDate> {
+	readonly puzzlesPerDay?: number;
+	readonly endDate?: string;
+}
+
+export interface SyncTreeRoundNode<TDate = string> extends SyncTreeRow<TDate> {
+	readonly index: number;
+	readonly kind: CalibrationRoundKind;
+	readonly rating: number;
+	readonly outcome: CalibrationRoundOutcome;
+	readonly puzzles: readonly SyncTreeDealtNode<TDate>[];
+}
+
+export interface SyncTreeDealtNode<TDate = string> extends SyncTreeRow<TDate> {
+	readonly lichessId: string;
+	readonly position: number;
+}
+
+export interface SyncTreeSetNode<TDate = string> extends SyncTreeRow<TDate> {
+	readonly lichessId: string;
+}
+
+export interface SyncTreeCycleNode<TDate = string> extends SyncTreeRow<TDate> {
+	readonly index: number;
+	readonly status: TrainingCycleStatus;
+	readonly items: readonly SyncTreeItemNode<TDate>[];
+}
+
+export interface SyncTreeItemNode<TDate = string> extends SyncTreeRow<TDate> {
+	readonly trainingPuzzleUuid: string;
+	readonly lichessId: string;
+	readonly position: number;
 }
 
 export interface SyncEntitySummary {

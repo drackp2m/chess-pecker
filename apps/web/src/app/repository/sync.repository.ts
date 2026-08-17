@@ -3,6 +3,7 @@ import type {
 	PushTrainingRequest,
 	PushTrainingResult,
 	SyncSummary,
+	SyncTrainingTree,
 } from '@chesspecker/api-definitions';
 
 import { ApiSdkService } from '@app/service/api-sdk.service';
@@ -19,6 +20,10 @@ export class SyncRepository {
 	 */
 	async getSummary(): Promise<SyncSummary> {
 		return this.apiSdk.GET.sync('', { cancellable: false });
+	}
+
+	async getTrainingTree(uuid: string): Promise<SyncTrainingTree> {
+		return this.apiSdk.GET.sync('/training/:uuid', { path: { uuid }, cancellable: false });
 	}
 
 	/**
