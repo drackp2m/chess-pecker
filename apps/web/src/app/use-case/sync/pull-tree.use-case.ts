@@ -8,7 +8,7 @@ import type {
 } from '@chesspecker/api-definitions';
 import { StoreNames } from 'idb';
 
-import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
+import { TREE_SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { SyncRepository } from '@app/repository/sync.repository';
@@ -19,7 +19,7 @@ import { PuzzleIndex, TrainingMirrorUseCase } from '@app/use-case/training-mirro
 
 type Remap = PushTrainingResult['uuids'];
 
-const TREE_STORES: StoreNames<AppSchema>[] = SYNC_ENTITIES.filter((entity) => 'attempt' !== entity);
+const TREE_STORES: StoreNames<AppSchema>[] = [...TREE_SYNC_ENTITIES];
 
 @Injectable({
 	providedIn: 'root',
@@ -31,8 +31,8 @@ export class PullTreeUseCase {
 	private readonly puzzleCache = inject(PuzzleCacheUseCase);
 	private readonly rekey = inject(RekeyUseCase);
 
-	async execute(trainingUuid: string): Promise<number> {
-		const tree = await this.remote.getTrainingTree(trainingUuid);
+	async execute(trainingUuid: string, since?: string): Promise<number> {
+		const tree = await this.remote.getTrainingTree(trainingUuid, since);
 
 		await this.puzzleCache.save(tree.puzzles);
 		await this.rekey.execute(await this.localTrainingUuid(tree), toRemap(tree));

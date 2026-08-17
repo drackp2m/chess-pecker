@@ -14,3 +14,7 @@ export const SYNC_ENTITIES: readonly SyncEntity[] = [
 	'cycleItem',
 	'attempt',
 ];
+
+export const TREE_SYNC_ENTITIES: readonly SyncEntity[] = SYNC_ENTITIES.filter(
+	(entity) => 'attempt' !== entity,
+);

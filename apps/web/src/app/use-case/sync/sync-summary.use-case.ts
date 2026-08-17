@@ -1,11 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import type { SyncEntity, SyncEntitySummary, SyncSummary } from '@chesspecker/api-definitions';
 
-import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
+import { SYNC_ENTITIES, TREE_SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { SYNC_SCHEMA_VERSION } from '@app/definition/sync-schema.constant';
-import { SyncCursorRow } from '@app/repository/definition/sync-cursor-schema.interface';
+import {
+	SyncCursorKey,
+	SyncCursorRow,
+} from '@app/repository/definition/sync-cursor-schema.interface';
 import { SyncCursorRepository } from '@app/repository/sync-cursor.repository';
 import { SyncRepository } from '@app/repository/sync.repository';
+
+type StoredCursors = ReadonlyMap<SyncCursorKey, SyncCursorRow>;
 
 export interface SyncStatus {
 	readonly summary: SyncSummary;
@@ -13,6 +18,7 @@ export interface SyncStatus {
 	readonly canPush: boolean;
 	/** Las tablas cuyo cursor local se ha quedado por detrás del servidor. */
 	readonly behind: readonly SyncEntity[];
+	readonly treeCursor: string | undefined;
 }
 
 /**
@@ -29,7 +35,9 @@ export class SyncSummaryUseCase {
 
 	async read(): Promise<SyncStatus> {
 		const summary = await this.remote.getSummary();
-		const stored = new Map((await this.cursors.findAllCursors()).map((row) => [row.key, row]));
+		const stored: StoredCursors = new Map(
+			(await this.cursors.findAllCursors()).map((row) => [row.key, row]),
+		);
 
 		return {
 			summary,
@@ -37,6 +45,7 @@ export class SyncSummaryUseCase {
 			behind: SYNC_ENTITIES.filter((entity) =>
 				isBehind(stored.get(entity), summary.entities[entity]),
 			),
+			treeCursor: toTreeCursor(stored, summary),
 		};
 	}
 }
@@ -51,4 +60,24 @@ function isBehind(local: SyncCursorRow | undefined, remote: SyncEntitySummary): 
 	}
 
 	return (local?.cursor ?? null) !== remote.cursor || (local?.count ?? 0) !== remote.count;
+}
+
+function toTreeCursor(stored: StoredCursors, summary: SyncSummary): string | undefined {
+	let oldest: string | undefined;
+
+	for (const entity of TREE_SYNC_ENTITIES) {
+		if (null === summary.entities[entity].cursor) {
+			continue;
+		}
+
+		const local = stored.get(entity)?.cursor;
+
+		if (undefined === local || null === local) {
+			return undefined;
+		}
+
+		oldest = undefined === oldest || local < oldest ? local : oldest;
+	}
+
+	return oldest;
 }

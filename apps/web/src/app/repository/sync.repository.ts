@@ -22,8 +22,12 @@ export class SyncRepository {
 		return this.apiSdk.GET.sync('', { cancellable: false });
 	}
 
-	async getTrainingTree(uuid: string): Promise<SyncTrainingTree> {
-		return this.apiSdk.GET.sync('/training/:uuid', { path: { uuid }, cancellable: false });
+	async getTrainingTree(uuid: string, since?: string): Promise<SyncTrainingTree> {
+		return this.apiSdk.GET.sync('/training/:uuid', {
+			path: { uuid },
+			query: undefined === since ? {} : { since },
+			cancellable: false,
+		});
 	}
 
 	/**

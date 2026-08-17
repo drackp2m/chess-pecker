@@ -17,9 +17,15 @@ export class TrainingCycleItemRepository extends CustomRepository<TrainingCycleI
 		);
 	}
 
-	async getManyByTraining(trainingUuid: string): Promise<TrainingCycleItem[]> {
+	async getManyByTraining(
+		trainingUuid: string,
+		receivedAfter?: Date,
+	): Promise<TrainingCycleItem[]> {
 		return this.getMany(
-			{ cycle: { training: trainingUuid } },
+			{
+				cycle: { training: trainingUuid },
+				...(undefined === receivedAfter ? {} : { receivedAt: { $gt: receivedAfter } }),
+			},
 			{ orderBy: { position: 'asc' }, populate: ['trainingPuzzle.puzzle'] },
 		);
 	}

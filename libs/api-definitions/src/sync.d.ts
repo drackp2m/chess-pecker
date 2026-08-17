@@ -103,6 +103,10 @@ export interface PushAttemptNode<TDate = string> extends SyncNode<TDate> {
 	explorations: FreePlayRun[];
 }
 
+export interface GetSyncTrainingTreeRequest<TDate = string> {
+	since?: TDate;
+}
+
 export interface SyncTreeRow<TDate = string> {
 	readonly uuid: string;
 	readonly clientRef?: string;

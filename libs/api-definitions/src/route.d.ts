@@ -15,7 +15,13 @@ import {
 	PuzzleCatalogPage,
 	SearchPuzzleRequest,
 } from './puzzle';
-import { PushTrainingRequest, PushTrainingResult, SyncSummary, SyncTrainingTree } from './sync';
+import {
+	GetSyncTrainingTreeRequest,
+	PushTrainingRequest,
+	PushTrainingResult,
+	SyncSummary,
+	SyncTrainingTree,
+} from './sync';
 import {
 	CalibrationRound,
 	CalibrationRoundPuzzles,
@@ -93,7 +99,11 @@ export interface PuzzlePostRoutes {
 export interface SyncGetRoutes {
 	/** Qué hay del otro lado, por tabla. Una sola llamada decide qué hay que bajar. */
 	'': { response: SyncSummary };
-	'/training/:uuid': { path: { uuid: string }; response: SyncTrainingTree };
+	'/training/:uuid': {
+		path: { uuid: string };
+		query: GetSyncTrainingTreeRequest;
+		response: SyncTrainingTree;
+	};
 }
 
 export interface SyncPostRoutes {

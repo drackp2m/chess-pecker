@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import type { SyncEntity, SyncSummary } from '@chesspecker/api-definitions';
+import type { SyncSummary } from '@chesspecker/api-definitions';
 
-import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
+import { SYNC_ENTITIES, TREE_SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { SyncCursorRepository } from '@app/repository/sync-cursor.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
 import { PullTreeUseCase } from '@app/use-case/sync/pull-tree.use-case';
@@ -17,6 +17,7 @@ export interface SyncPullReport {
 interface Wanted {
 	readonly tree: boolean;
 	readonly attempts: boolean;
+	readonly since: string | undefined;
 }
 
 type PullState = 'done' | 'partial' | 'unreachable';
@@ -25,8 +26,6 @@ interface PullOutcome {
 	readonly rows: number;
 	readonly state: PullState;
 }
-
-const TREE_ENTITIES: readonly SyncEntity[] = SYNC_ENTITIES.filter((entity) => 'attempt' !== entity);
 
 const NOTHING_PULLED: SyncPullReport = { trainings: 0, rows: 0, interrupted: false };
 
@@ -94,7 +93,7 @@ export class SyncPullUseCase {
 
 		if (wanted.tree) {
 			try {
-				rows = await this.trees.execute(uuid);
+				rows = await this.trees.execute(uuid, wanted.since);
 			} catch {
 				return { rows: 0, state: 'unreachable' };
 			}
@@ -118,7 +117,8 @@ export class SyncPullUseCase {
 
 function toWanted(status: SyncStatus): Wanted {
 	return {
-		tree: TREE_ENTITIES.some((entity) => status.behind.includes(entity)),
+		tree: TREE_SYNC_ENTITIES.some((entity) => status.behind.includes(entity)),
 		attempts: status.behind.includes('attempt'),
+		since: status.treeCursor,
 	};
 }

@@ -42,17 +42,17 @@ export class GetTrainingTreeUseCase {
 		private readonly trainingCycleItemRepository: TrainingCycleItemRepository,
 	) {}
 
-	async execute(training: Training): Promise<SyncTrainingTree> {
+	async execute(training: Training, since?: Date): Promise<SyncTrainingTree> {
 		const uuid = training.uuid;
-		const set = await this.trainingPuzzleRepository.getManyByTraining(uuid);
-		const dealt = await this.calibrationPuzzleRepository.getManyByTraining(uuid);
+		const set = await this.trainingPuzzleRepository.getManyByTraining(uuid, since);
+		const dealt = await this.calibrationPuzzleRepository.getManyByTraining(uuid, since);
 
 		return {
 			training: toTrainingNode(training),
 			goals: await this.goalNodes(uuid),
 			rounds: await this.roundNodes(uuid, dealt),
 			set: set.map((entry) => toSetNode(entry)),
-			cycles: await this.cycleNodes(uuid),
+			cycles: await this.cycleNodes(uuid, since),
 			puzzles: collectPuzzles(set, dealt),
 		};
 	}
@@ -84,9 +84,9 @@ export class GetTrainingTreeUseCase {
 		}));
 	}
 
-	private async cycleNodes(trainingUuid: string): Promise<SyncTreeCycleNode[]> {
+	private async cycleNodes(trainingUuid: string, since?: Date): Promise<SyncTreeCycleNode[]> {
 		const cycles = await this.trainingCycleRepository.getManyByTraining(trainingUuid);
-		const items = await this.trainingCycleItemRepository.getManyByTraining(trainingUuid);
+		const items = await this.trainingCycleItemRepository.getManyByTraining(trainingUuid, since);
 		const byCycle = groupBy(items, (row) => row.cycle.uuid);
 
 		return cycles.map((cycle) => ({
