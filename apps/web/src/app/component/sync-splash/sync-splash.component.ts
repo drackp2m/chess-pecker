@@ -1,21 +1,11 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 
-import type { SyncPhase } from '@app/definition/sync-phase.type';
+import { SYNC_PHASE_LABEL } from '@app/definition/sync-phase.type';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { SyncStore } from '@app/store/sync.store';
 import { WatchedDelay } from '@app/util/watched-delay';
-
-const PHASE_MESSAGES: Record<SyncPhase, string> = {
-	idle: I18n.common.LOADING,
-	checking: I18n.common.SYNC_CHECKING,
-	pushing: I18n.common.SYNC_PUSHING,
-	pulling: I18n.common.SYNC_PULLING,
-	ready: I18n.common.LOADING,
-	failed: I18n.common.SYNC_FAILED,
-	offline: I18n.common.SYNC_OFFLINE,
-};
 
 /**
  * Lo que se ve mientras la aplicación aún no sirve datos. El detalle sólo sale si hay
@@ -33,7 +23,7 @@ export class SyncSplashComponent implements OnDestroy {
 
 	protected readonly sync = inject(SyncStore);
 
-	protected readonly message = computed(() => PHASE_MESSAGES[this.sync.phase()]);
+	protected readonly message = computed(() => SYNC_PHASE_LABEL[this.sync.phase()]);
 
 	protected readonly isDownloading = computed(
 		() => 'pulling' === this.sync.phase() && 0 < this.sync.behind().length,

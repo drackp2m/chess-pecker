@@ -29,4 +29,10 @@ export const SyncPolicy = {
 
 	/** A partir de aquí una fila lleva demasiado esperando y hay que decirlo. */
 	staleAfterMs: 7 * 24 * 60 * 60 * 1000,
+
+	/**
+	 * Cuántos motivos de rechazo se guardan por tabla para enseñarlos. El recuento es de
+	 * todas; la lista es una muestra, porque quien la lee busca el patrón, no el inventario.
+	 */
+	rejectionSampleSize: 5,
 } as const;

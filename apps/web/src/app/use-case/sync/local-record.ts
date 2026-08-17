@@ -51,6 +51,12 @@ export function rejected<T extends LocalRecord>(
 	return { ...kept, rejectedAt, rejectedReason } as unknown as T;
 }
 
+export function requeued<T extends LocalRecord>(row: T, pendingSince = new Date()): T {
+	const { rejectedAt: _at, rejectedReason: _reason, ...kept } = row;
+
+	return { ...kept, pendingSince } as unknown as T;
+}
+
 /** Lo que el servidor ya rechazó no vuelve a viajar, y lo que cuelga de ello se va detrás. */
 export function isRejected(row: LocalRecord): boolean {
 	return undefined !== row.rejectedAt;

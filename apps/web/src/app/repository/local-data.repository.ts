@@ -7,6 +7,7 @@ import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { PendingStore } from '@app/repository/definition/pending-schema.interface';
 import { SyncCursorKey } from '@app/repository/definition/sync-cursor-schema.interface';
 import { GenericRepository } from '@app/repository/generic.repository';
+import { requeued } from '@app/use-case/sync/local-record';
 
 /** Lo que queda por subir, tabla a tabla. */
 export type PendingCount = Readonly<Record<SyncEntity, number>>;
@@ -18,6 +19,22 @@ export const NO_PENDING: PendingCount = Object.fromEntries(
 export function sumPending(pending: PendingCount): number {
 	return SYNC_ENTITIES.reduce((total, entity) => total + pending[entity], 0);
 }
+
+export interface EntityRejection {
+	readonly uuid: string;
+	readonly rejectedAt: Date;
+	readonly reason: string;
+}
+
+export interface EntityAudit {
+	readonly rows: number;
+	readonly pending: number;
+	readonly waitingSince: Date | null;
+	readonly rejected: number;
+	readonly rejections: readonly EntityRejection[];
+}
+
+export type SyncAudit = Readonly<Record<SyncEntity, EntityAudit>>;
 
 @Injectable({
 	providedIn: 'root',
@@ -51,6 +68,36 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 		});
 	}
 
+	async auditSync(sampleSize: number): Promise<SyncAudit> {
+		return this.runInTransaction(syncStores, 'readonly', async (transaction) => {
+			const audits = await Promise.all(
+				SYNC_ENTITIES.map(async (entity): Promise<readonly [SyncEntity, EntityAudit]> => {
+					const store = transaction.objectStore(entity) as unknown as PendingStore<'readonly'>;
+
+					return [entity, await auditStore(store, sampleSize)];
+				}),
+			);
+
+			return Object.fromEntries(audits) as SyncAudit;
+		});
+	}
+
+	async requeueRejected(): Promise<number> {
+		const pendingSince = new Date();
+
+		return this.runInTransaction(syncStores, 'readwrite', async (transaction) => {
+			let count = 0;
+
+			for (const entity of SYNC_ENTITIES) {
+				const store = transaction.objectStore(entity) as unknown as PendingStore<'readwrite'>;
+
+				count += await requeueStore(store, pendingSince);
+			}
+
+			return count;
+		});
+	}
+
 	/**
 	 * Todo lo que es del usuario, en una sola transacción. Fuera quedan `puzzle` —el
 	 * catálogo de Lichess, que no es de nadie— y `setting`, que son preferencias del
@@ -68,6 +115,51 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 			await Promise.all(userCursors.map((key) => cursors.delete(key)));
 		});
 	}
+}
+
+async function auditStore(
+	store: PendingStore<'readonly'>,
+	sampleSize: number,
+): Promise<EntityAudit> {
+	const pendingIndex = store.index('pendingSince');
+	const [rows, pending, waiting] = await Promise.all([
+		store.count(),
+		pendingIndex.count(),
+		pendingIndex.getAll(null, 1),
+	]);
+	const rejections: EntityRejection[] = [];
+	let rejected = 0;
+
+	for (let cursor = await store.openCursor(); null !== cursor; cursor = await cursor.continue()) {
+		const { uuid, rejectedAt, rejectedReason } = cursor.value;
+
+		if (undefined === rejectedAt) {
+			continue;
+		}
+
+		rejected += 1;
+
+		if (rejections.length < sampleSize) {
+			rejections.push({ uuid, rejectedAt, reason: rejectedReason ?? '' });
+		}
+	}
+
+	return { rows, pending, waitingSince: waiting[0]?.pendingSince ?? null, rejected, rejections };
+}
+
+async function requeueStore(store: PendingStore<'readwrite'>, pendingSince: Date): Promise<number> {
+	let count = 0;
+
+	for (let cursor = await store.openCursor(); null !== cursor; cursor = await cursor.continue()) {
+		if (undefined === cursor.value.rejectedAt) {
+			continue;
+		}
+
+		await cursor.update(requeued(cursor.value, pendingSince));
+		count += 1;
+	}
+
+	return count;
 }
 
 const syncStores: StoreNames<AppSchema>[] = [...SYNC_ENTITIES];
