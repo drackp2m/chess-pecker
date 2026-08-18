@@ -3,7 +3,7 @@
 	"version": "1.22.0",
 	"author": "Marc Jovaní González",
 	"private": true,
-	"packageManager": "pnpm@11.21.0",
+	"packageManager": "pnpm@11.22.0",
 	"scripts": {
 		"dev:api": "pnpm --filter @chesspecker/api start:safari",
 		"dev:web": "pnpm --filter @chesspecker/web start:safari",

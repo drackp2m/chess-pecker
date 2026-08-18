@@ -34,6 +34,7 @@ import { Training } from './training.entity';
 @Entity({ repository: () => PuzzleAttemptRepository })
 @Index({ properties: ['training', 'kind'] })
 @Index({ properties: ['puzzle', 'training'] })
+@Index({ properties: ['training', 'receivedAt', 'uuid'] })
 @Check({
 	name: 'puzzle_attempt_kind_parent_check',
 	expression: `(kind = 'calibration' and calibration_round_uuid is not null and cycle_item_uuid is null) or (kind = 'cycle' and cycle_item_uuid is not null and calibration_round_uuid is null)`,

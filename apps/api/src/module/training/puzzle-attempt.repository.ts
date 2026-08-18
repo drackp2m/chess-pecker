@@ -23,11 +23,24 @@ const ACTIVITY_BY_DAY = `select to_char(pa.updated_at, 'YYYY-MM-DD') as date,
  where t.user_uuid = ? and pa.updated_at >= ?
  group by to_char(pa.updated_at, 'YYYY-MM-DD')`;
 
-/** Sólo los días con alguna fila recibida después del corte; el resto no ha cambiado. */
 const RECEIVED_AFTER = 'having max(pa.received_at) > ?';
+
+const PAGE_SELECT = `select pa.uuid
+ from puzzle_attempt pa
+ where pa.training_uuid = ?`;
+
+const PAGE_AFTER = `and (pa.received_at, pa.uuid) > (
+   select anchor.received_at, anchor.uuid from puzzle_attempt anchor where anchor.uuid = ?
+ )`;
+
+const PAGE_ORDER = 'order by pa.received_at asc, pa.uuid asc limit ?';
 
 interface CursorRow {
 	cursor: Date | string | null;
+}
+
+interface UuidRow {
+	uuid: string;
 }
 
 export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
@@ -35,11 +48,6 @@ export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
 		return this.getMany({ calibrationRound: roundUuid });
 	}
 
-	/**
-	 * Los intentos de un ciclo. Es la fuente de todo lo que se muestra de él: su tiempo
-	 * total, su tasa de acierto y su fecha de cierre son agregados sobre estas filas, que ya
-	 * no cambian.
-	 */
 	async getManyByCycle(cycleUuid: string): Promise<PuzzleAttempt[]> {
 		return this.getMany(
 			{ kind: PuzzleAttemptKind.Cycle, cycleItem: { cycle: cycleUuid } },
@@ -51,38 +59,27 @@ export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
 		return this.getMany({ training: trainingUuid });
 	}
 
-	/**
-	 * El histórico que se devuelve a un dispositivo, con el ejercicio y el hueco al que
-	 * pertenece dentro. Ordenado por `receivedAt` porque es el orden en que se cortaría una
-	 * respuesta larga, no por `updatedAt`, que lo pone el cliente y puede venir del pasado.
-	 */
-	async getManyByTrainingReceivedAfter(
+	async getPageByTraining(
 		trainingUuid: string,
 		limit: number,
-		receivedAfter?: Date,
+		after?: string,
 	): Promise<PuzzleAttempt[]> {
+		const anchor = undefined === after ? undefined : await this.anchorOf(trainingUuid, after);
+		const uuids = await this.pageUuids(trainingUuid, limit, anchor);
+
+		if (0 === uuids.length) {
+			return [];
+		}
+
 		return this.getMany(
-			{
-				training: trainingUuid,
-				...(undefined === receivedAfter ? {} : { receivedAt: { $gt: receivedAfter } }),
-			},
+			{ uuid: { $in: uuids } },
 			{
 				populate: ['puzzle', 'calibrationRound', 'cycleItem'],
-				orderBy: { receivedAt: 'asc' },
-				limit,
+				orderBy: { receivedAt: 'asc', uuid: 'asc' },
 			},
 		);
 	}
 
-	/**
-	 * Un intento sólo pertenece a un entrenamiento, así que el usuario sale del join.
-	 *
-	 * ToDo => `failed` mira `closure <> 'revealed'` en vez de `= 'found'` para que los tres
-	 * repartos sumen siempre el total aunque llegue un `solved = false` con la solución
-	 * enseñada más tarde. Probablemente `settleClosure` haga eso imposible —fija el cierre al
-	 * primero que llega—, así que revisar si se puede dejar el `= 'found'`, que dice mejor lo
-	 * que cuenta.
-	 */
 	async countByDaySince(
 		userUuid: string,
 		since: Date,
@@ -104,27 +101,6 @@ export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
 			)) as TrainingActivityDay[];
 	}
 
-	/**
-	 * Hasta dónde ha visto llegar el servidor. Sirve de corte para la siguiente pregunta:
-	 * lo que entre después traerá una fecha mayor, venga del dispositivo que venga.
-	 */
-	/** Lo mismo, acotado a un entrenamiento: el corte de su histórico. */
-	async lastReceivedAtByTraining(trainingUuid: string): Promise<Date | null> {
-		const rows = (await this.entityManager
-			.fork()
-			.getConnection()
-			.execute<CursorRow[]>(
-				`select max(pa.received_at) as cursor
-				 from puzzle_attempt pa
-				 where pa.training_uuid = ?`,
-				[trainingUuid],
-			)) as CursorRow[];
-
-		const cursor = rows[0]?.cursor ?? null;
-
-		return null === cursor ? null : new Date(cursor);
-	}
-
 	async lastReceivedAt(userUuid: string): Promise<Date | null> {
 		const rows = (await this.entityManager
 			.fork()
@@ -140,5 +116,31 @@ export class PuzzleAttemptRepository extends CustomRepository<PuzzleAttempt> {
 		const cursor = rows[0]?.cursor ?? null;
 
 		return null === cursor ? null : new Date(cursor);
+	}
+
+	private async anchorOf(trainingUuid: string, uuid: string): Promise<string | undefined> {
+		const rows = (await this.entityManager
+			.fork()
+			.getConnection()
+			.execute<UuidRow[]>(
+				`select pa.uuid
+				 from puzzle_attempt pa
+				 where pa.uuid = ? and pa.training_uuid = ?`,
+				[uuid, trainingUuid],
+			)) as UuidRow[];
+
+		return rows[0]?.uuid;
+	}
+
+	private async pageUuids(trainingUuid: string, limit: number, after?: string): Promise<string[]> {
+		const rows = (await this.entityManager
+			.fork()
+			.getConnection()
+			.execute<UuidRow[]>(
+				`${PAGE_SELECT} ${undefined === after ? '' : PAGE_AFTER} ${PAGE_ORDER}`,
+				undefined === after ? [trainingUuid, limit] : [trainingUuid, after, limit],
+			)) as UuidRow[];
+
+		return rows.map((row) => row.uuid);
 	}
 }

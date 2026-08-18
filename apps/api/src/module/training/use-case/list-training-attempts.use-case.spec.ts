@@ -21,11 +21,9 @@ describe('ListTrainingAttemptsUseCase', () => {
 	const training = new Training({ uuid: 'training-uuid' });
 	const puzzle = new Puzzle({ uuid: 'puzzle-uuid', lichessId: 'AAA11', rating: 1500 });
 
-	// `receivedAt` se pone después de construir: lo sella la entidad al nacer, y un valor en
-	// el `init` lo pisaría el inicializador del campo.
-	const cycleAttempt = (receivedAt = new Date('2026-08-11T10:00:31.000Z')): PuzzleAttempt => {
+	const cycleAttempt = (uuid = 'attempt-uuid'): PuzzleAttempt => {
 		const attempt = new PuzzleAttempt({
-			uuid: 'attempt-uuid',
+			uuid,
 			training,
 			kind: PuzzleAttemptKind.Cycle,
 			cycleItem: new TrainingCycleItem({ uuid: 'item-uuid', position: 3 }),
@@ -40,8 +38,6 @@ describe('ListTrainingAttemptsUseCase', () => {
 			createdAt: new Date('2026-08-11T10:00:00.000Z'),
 			updatedAt: new Date('2026-08-11T10:00:30.000Z'),
 		});
-
-		attempt.receivedAt = receivedAt;
 
 		// El hueco que no es el suyo vuelve de la base como `null`, no como `undefined`.
 		Object.assign(attempt, { calibrationRound: null });
@@ -82,10 +78,7 @@ describe('ListTrainingAttemptsUseCase', () => {
 	});
 
 	beforeEach(() => {
-		puzzleAttemptRepository.lastReceivedAtByTraining.mockResolvedValue(
-			new Date('2026-08-11T10:00:31.000Z'),
-		);
-		puzzleAttemptRepository.getManyByTrainingReceivedAfter.mockResolvedValue([]);
+		puzzleAttemptRepository.getPageByTraining.mockResolvedValue([]);
 	});
 
 	it('should be defined', () => {
@@ -94,9 +87,7 @@ describe('ListTrainingAttemptsUseCase', () => {
 
 	describe('execute', () => {
 		it('hands back the exercise and the slot the attempt belongs to', async () => {
-			puzzleAttemptRepository.getManyByTrainingReceivedAfter.mockResolvedValueOnce([
-				cycleAttempt(),
-			]);
+			puzzleAttemptRepository.getPageByTraining.mockResolvedValueOnce([cycleAttempt()]);
 
 			const { attempts } = await useCase.execute(training, {});
 
@@ -120,9 +111,7 @@ describe('ListTrainingAttemptsUseCase', () => {
 		});
 
 		it('names the round of a calibration attempt instead of the cycle item', async () => {
-			puzzleAttemptRepository.getManyByTrainingReceivedAfter.mockResolvedValueOnce([
-				calibrationAttempt(),
-			]);
+			puzzleAttemptRepository.getPageByTraining.mockResolvedValueOnce([calibrationAttempt()]);
 
 			const { attempts } = await useCase.execute(training, {});
 
@@ -131,29 +120,37 @@ describe('ListTrainingAttemptsUseCase', () => {
 			expect(attempts[0]?.explorations).toStrictEqual([{ at: 0, events: ['e2e4'] }]);
 		});
 
-		it('asks only for what came in after the cursor it was given', async () => {
-			const since = new Date('2026-08-10T00:00:00.000Z');
+		it('asks only for what came in after the row it was given', async () => {
+			await useCase.execute(training, { since: 'last-attempt-uuid' });
 
-			await useCase.execute(training, { since });
-
-			expect(puzzleAttemptRepository.getManyByTrainingReceivedAfter).toHaveBeenCalledWith(
+			expect(puzzleAttemptRepository.getPageByTraining).toHaveBeenCalledWith(
 				'training-uuid',
 				TrainingPolicy.attemptPageSize,
-				since,
+				'last-attempt-uuid',
 			);
 		});
 
-		it('cuts the answer at what the server had already received', async () => {
-			const { cursor, hasMore } = await useCase.execute(training, {});
+		it('starts from the beginning when the cursor comes in blank', async () => {
+			await useCase.execute(training, { since: '  ' });
 
-			expect(cursor).toStrictEqual('2026-08-11T10:00:31.000Z');
+			expect(puzzleAttemptRepository.getPageByTraining).toHaveBeenCalledWith(
+				'training-uuid',
+				TrainingPolicy.attemptPageSize,
+				undefined,
+			);
+		});
+
+		it('hands the cursor back untouched when nothing came after it', async () => {
+			const { cursor, hasMore } = await useCase.execute(training, { since: 'last-attempt-uuid' });
+
+			expect(cursor).toStrictEqual('last-attempt-uuid');
 			expect(hasMore).toBe(false);
 		});
 
 		it('never serves a page bigger than the one the policy allows', async () => {
 			await useCase.execute(training, { limit: TrainingPolicy.attemptPageSize + 100 });
 
-			expect(puzzleAttemptRepository.getManyByTrainingReceivedAfter).toHaveBeenCalledWith(
+			expect(puzzleAttemptRepository.getPageByTraining).toHaveBeenCalledWith(
 				'training-uuid',
 				TrainingPolicy.attemptPageSize,
 				undefined,
@@ -161,37 +158,32 @@ describe('ListTrainingAttemptsUseCase', () => {
 		});
 
 		it('ends a full page at its last row, which is where the next one starts', async () => {
-			const last = new Date('2026-08-11T09:00:00.000Z');
-
-			puzzleAttemptRepository.getManyByTrainingReceivedAfter.mockResolvedValueOnce([
-				cycleAttempt(new Date('2026-08-11T08:00:00.000Z')),
-				cycleAttempt(last),
+			puzzleAttemptRepository.getPageByTraining.mockResolvedValueOnce([
+				cycleAttempt('first-uuid'),
+				cycleAttempt('last-uuid'),
 			]);
 
 			const { cursor, hasMore } = await useCase.execute(training, { limit: 2 });
 
 			expect(hasMore).toBe(true);
-			expect(cursor).toStrictEqual(last.toISOString());
+			expect(cursor).toStrictEqual('last-uuid');
 		});
 
 		it('closes the paging on the page that comes back short', async () => {
-			puzzleAttemptRepository.getManyByTrainingReceivedAfter.mockResolvedValueOnce([
-				cycleAttempt(new Date('2026-08-11T08:00:00.000Z')),
-			]);
+			puzzleAttemptRepository.getPageByTraining.mockResolvedValueOnce([cycleAttempt('last-uuid')]);
 
 			const { cursor, hasMore } = await useCase.execute(training, { limit: 2 });
 
 			expect(hasMore).toBe(false);
-			expect(cursor).toStrictEqual('2026-08-11T10:00:31.000Z');
+			expect(cursor).toStrictEqual('last-uuid');
 		});
 
-		it('cuts at now when the training has never received an attempt', async () => {
-			puzzleAttemptRepository.lastReceivedAtByTraining.mockResolvedValueOnce(null);
-
-			const { attempts, cursor } = await useCase.execute(training, {});
+		it('comes back with an empty cursor when the training has no attempts yet', async () => {
+			const { attempts, cursor, hasMore } = await useCase.execute(training, {});
 
 			expect(attempts).toStrictEqual([]);
-			expect(Number.isNaN(new Date(cursor).getTime())).toBe(false);
+			expect(cursor).toStrictEqual('');
+			expect(hasMore).toBe(false);
 		});
 	});
 });

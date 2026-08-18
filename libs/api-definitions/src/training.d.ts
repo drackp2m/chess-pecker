@@ -140,13 +140,14 @@ export interface TrainingProgress {
 	readonly suggestFinish: boolean;
 }
 
-export interface GetTrainingAttemptsRequest<TDate = string> {
+export interface GetTrainingAttemptsRequest {
 	/**
-	 * El `cursor` de la respuesta anterior. Sin él se empieza por el principio, que es lo
-	 * que necesita un dispositivo vacío; con él, sólo lo que haya entrado después, venga del
-	 * dispositivo que venga.
+	 * El `cursor` de la respuesta anterior, opaco: es el intento por el que se cortó la
+	 * página, no una fecha. Sin él se empieza por el principio, que es lo que necesita un
+	 * dispositivo vacío; con él, sólo lo que venga después, venga del dispositivo que venga.
+	 * Uno que el servidor ya no reconoce se ignora y la bajada vuelve a empezar entera.
 	 */
-	since?: TDate;
+	since?: string;
 	/** Intentos por página. El backend recorta al máximo que sirve. */
 	limit?: number;
 }
@@ -159,9 +160,14 @@ export interface GetTrainingAttemptsRequest<TDate = string> {
 export interface TrainingAttemptHistory {
 	readonly attempts: readonly TrainingAttempt[];
 	/**
-	 * Hasta dónde llega esta respuesta, en tiempo de servidor: el final de la página si
-	 * quedan más, y si no, lo último que el servidor había recibido. Se guarda tal cual y se
-	 * devuelve en la siguiente petición, sea para seguir paginando o para preguntar mañana.
+	 * El último intento de esta respuesta, que es por donde sigue la siguiente. Se guarda
+	 * tal cual y se devuelve sin mirarlo, sea para seguir paginando o para preguntar mañana;
+	 * una respuesta vacía devuelve el cursor que recibió, porque nada ha avanzado.
+	 *
+	 * Es una fila y no una marca de tiempo a propósito: el reloj del servidor tiene
+	 * microsegundos y el del cliente sólo milisegundos, así que una fecha que va y vuelve no
+	 * sirve para cortar —y una compartida por media tabla, como la que deja una migración
+	 * que sella todo con el mismo `now()`, no corta en absoluto.
 	 */
 	readonly cursor: string;
 	/** Quedan intentos después del cursor: hay que volver a preguntar con él. */

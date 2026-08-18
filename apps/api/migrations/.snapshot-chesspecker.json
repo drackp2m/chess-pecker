@@ -707,12 +707,24 @@
           "keyName": "puzzle_attempt_training_uuid_kind_index",
           "unique": false,
           "primary": false
+        },
+        {
+          "columnNames": [
+            "training_uuid",
+            "received_at",
+            "uuid"
+          ],
+          "composite": true,
+          "constraint": false,
+          "keyName": "puzzle_attempt_training_uuid_received_at_uuid_index",
+          "unique": false,
+          "primary": false
         }
       ],
       "checks": [
         {
           "name": "puzzle_attempt_kind_parent_check",
-          "columnName": "cycle_item_uuid",
+          "columnName": "kind",
           "definition": "CHECK ((((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))))",
           "expression": "((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))"
         }
@@ -2487,7 +2499,7 @@
       "checks": [
         {
           "name": "user_block_check",
-          "columnName": "blocked_uuid",
+          "columnName": "blocker_uuid",
           "definition": "CHECK (((blocker_uuid)::text <> (blocked_uuid)::text))",
           "expression": "blocker_uuid <> blocked_uuid"
         }
