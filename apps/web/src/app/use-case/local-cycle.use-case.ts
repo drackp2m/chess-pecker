@@ -79,9 +79,11 @@ export class LocalCycleUseCase {
 			throw new Error('The set is empty');
 		}
 
-		const last = cycles.at(-1);
+		const expected = cycles
+			.map((cycle) => cycle.expectedItems)
+			.filter((count): count is number => undefined !== count);
 
-		if (undefined !== last && last.expectedItems !== set.length) {
+		if (0 < expected.length && Math.max(...expected) !== set.length) {
 			throw new Error('The set is not fully replicated on this device');
 		}
 
