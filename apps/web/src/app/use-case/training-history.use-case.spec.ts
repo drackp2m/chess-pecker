@@ -23,6 +23,8 @@ const CYCLE = {
 	createdAt: new Date('2026-08-11T09:00:00.000Z'),
 } as TrainingCycleRow;
 
+const WHOLE_CYCLE = { ...CYCLE, expectedItems: 2 } as TrainingCycleRow;
+
 const EARLIER_CYCLE = {
 	uuid: 'cycle-1',
 	index: 1,
@@ -182,6 +184,60 @@ describe('TrainingHistoryUseCase', () => {
 
 		expect(entry?.row.uuid).toBe('attempt-item-2');
 		expect(entry?.position).toBeNull();
+	});
+
+	it('drops an attempt of another pass played while this one was open', async () => {
+		const { history } = configure(
+			[
+				row({ cycleItemUuid: 'item-1', lichessId: 'AAA11' }),
+				row({
+					cycleItemUuid: 'crippled-item',
+					lichessId: 'BBB22',
+					position: 0,
+					updatedAt: new Date('2026-08-11T11:00:00.000Z'),
+				}),
+			],
+			{ cycles: [WHOLE_CYCLE] },
+		);
+
+		const entries = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
+
+		expect(entries.map((entry) => entry.row.uuid)).toEqual(['attempt-item-1']);
+	});
+
+	it('keeps an exercise of the pass however old the attempt is', async () => {
+		const { history } = configure(
+			[
+				row({
+					cycleItemUuid: 'item-2',
+					lichessId: 'BBB22',
+					updatedAt: new Date('2026-08-01T10:00:00.000Z'),
+				}),
+			],
+			{ cycles: [WHOLE_CYCLE] },
+		);
+
+		const [entry] = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
+
+		expect(entry?.position).toBe(2);
+	});
+
+	it('falls back to the date only while the pass is not whole here', async () => {
+		const { history } = configure(
+			[
+				row({
+					cycleItemUuid: 'downloaded-item',
+					lichessId: 'BBB22',
+					position: 4,
+					updatedAt: new Date('2026-08-11T11:00:00.000Z'),
+				}),
+			],
+			{ cycles: [{ ...CYCLE, expectedItems: 9 }] },
+		);
+
+		const [entry] = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
+
+		expect(entry?.position).toBe(5);
 	});
 
 	it('has nothing to show when the pass cannot be told apart', async () => {
