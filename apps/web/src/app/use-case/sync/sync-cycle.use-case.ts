@@ -44,7 +44,12 @@ export interface SyncCycleProgress {
 
 export type SyncReport = (progress: Partial<SyncCycleProgress>) => void;
 
-/** Un corte, un 5xx o una red caída: no dicen nada del modelo, así que se reintenta luego. */
+/**
+ * Los códigos en los que nadie llegó a ejecutar nada: una red caída, un plazo agotado o una
+ * pasarela que no encontró a quién preguntar. No dicen nada del modelo, así que se reintenta
+ * luego. Un 500 no está aquí a propósito: ahí el servidor sí corrió, y volverá a contestar lo
+ * mismo hasta que alguien lo arregle.
+ */
 const UNREACHABLE_STATUS = new Set([0, 408, 502, 503, 504]);
 
 /**
@@ -70,6 +75,7 @@ export class SyncCycleUseCase {
 		try {
 			return await withExclusiveLock(SYNC_LOCK, () => this.run(report));
 		} catch (error) {
+			console.error('The sync pass ended in an error it did not expect', error);
 			report({ error: toErrorRef(error) });
 
 			return 'failed';

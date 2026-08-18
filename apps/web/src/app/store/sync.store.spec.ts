@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SyncPhase } from '@app/definition/sync-phase.type';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
+import { I18n } from '@app/i18n';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
 import { SyncCycleUseCase, SyncReport } from '@app/use-case/sync/sync-cycle.use-case';
@@ -35,6 +36,7 @@ describe('SyncStore', () => {
 
 	afterEach(() => {
 		vi.useRealTimers();
+		vi.restoreAllMocks();
 		TestBed.resetTestingModule();
 	});
 
@@ -80,6 +82,18 @@ describe('SyncStore', () => {
 
 		expect(store.isReady()).toBe(true);
 		expect(store.isSyncing()).toBe(true);
+	});
+
+	it('opens the gate when the pass breaks instead of ending in a phase', async () => {
+		const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+		const store = configure(() => Promise.reject(new Error('the local database is closed')));
+
+		await store.start();
+
+		expect(store.isReady()).toBe(true);
+		expect(store.phase()).toBe('failed');
+		expect(store.error()).toEqual({ key: I18n.common.SYNC_FAILED });
+		expect(logged).toHaveBeenCalled();
 	});
 
 	it('lets everything that was waiting through with a single opening', async () => {

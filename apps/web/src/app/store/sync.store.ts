@@ -7,6 +7,7 @@ import { Resettable } from '@app/definition/resettable.interface';
 import { TREE_SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { SyncPhase, isSettledPhase } from '@app/definition/sync-phase.type';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
+import { I18n, i18nRef } from '@app/i18n';
 import { NO_PENDING, PendingCount } from '@app/repository/local-data.repository';
 import { SessionStore } from '@app/store/session.store';
 import { SyncCycleUseCase } from '@app/use-case/sync/sync-cycle.use-case';
@@ -190,19 +191,25 @@ export class SyncStore
 		this.lastRunAt = Date.now();
 		patchState(this, { uploaded: 0, rejected: 0, downloaded: 0, error: null });
 
-		const phase = await this.cycle.execute((progress) => {
-			patchState(this, progress);
+		try {
+			const phase = await this.cycle.execute((progress) => {
+				patchState(this, progress);
 
-			if (this.isReplicaComplete()) {
-				this.open();
-			}
-		});
+				if (this.isReplicaComplete()) {
+					this.open();
+				}
+			});
 
-		patchState(this, {
-			phase,
-			...('ready' === phase ? { lastSyncedAt: new Date() } : {}),
-		});
-		this.open();
+			patchState(this, {
+				phase,
+				...('ready' === phase ? { lastSyncedAt: new Date() } : {}),
+			});
+		} catch (error) {
+			console.error('The sync pass broke instead of ending in a phase', error);
+			patchState(this, { phase: 'failed', error: i18nRef(I18n.common.SYNC_FAILED) });
+		} finally {
+			this.open();
+		}
 	}
 
 	private armGate(): Promise<void> {
