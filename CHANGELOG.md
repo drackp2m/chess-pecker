@@ -1,3 +1,32 @@
+# v1.22.0 (2026-08-18)
+
+## What's Changed
+
+### ✨ Features
+
+- add Russian language support ([97f07f9](https://github.com/drackp2m/chess-pecker/commit/97f07f9583fbd19c6c6d6c2e12b9440f2878cf33)) by Marc Jovaní González
+- client refs and the training push contract ([325a7cc](https://github.com/drackp2m/chess-pecker/commit/325a7cccc9264de7065eeed10ee87fdb9c3eee4a)) by Marc Jovaní González
+- download the training tree from the server ([9be7b10](https://github.com/drackp2m/chess-pecker/commit/9be7b10cc9dfb18ffad0616ad52eb3e549688951)) by Marc Jovaní González
+- store sync state and sync status screen ([d05f8ae](https://github.com/drackp2m/chess-pecker/commit/d05f8aea214be225ef0ac28f7dba45cc5673e6ec)) by Marc Jovaní González
+- sync cycle, boot gate and splash ([e20242d](https://github.com/drackp2m/chess-pecker/commit/e20242d6fe2ee863bc37959bb990919a84818d95)) by Marc Jovaní González
+- sync summary endpoint and one cursor store ([6461b32](https://github.com/drackp2m/chess-pecker/commit/6461b32972129f43098756c6358f3e6dacb5234f)) by Marc Jovaní González
+- upload to the server and pruning of flow endpoints ([313022f](https://github.com/drackp2m/chess-pecker/commit/313022f02c4f788d4e8d8392c3b3bb3ef75ba21c)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- make IndexedDB the only write path ([ac9c041](https://github.com/drackp2m/chess-pecker/commit/ac9c041fc0a5a6b824adb525d3277b993e2893c6)) by Marc Jovaní González
+- split the attempt draft into its own local store ([f5ea628](https://github.com/drackp2m/chess-pecker/commit/f5ea6283b9d56a1d2a7413c8c00155ff97255cc8)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- refuse to train on a partial replica ([bda9299](https://github.com/drackp2m/chess-pecker/commit/bda9299b8df393614fd00ff3705be7a0168cbd5c)) by Marc Jovaní González
+
+### 🚀 Performance Improvements
+
+- trim the tree download with a since cursor ([1bf879d](https://github.com/drackp2m/chess-pecker/commit/1bf879d476f50c156f3624b30cd698cb97908ae3)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.21.0...v1.22.0
+
 # v1.21.0 (2026-08-16)
 
 ## What's Changed
