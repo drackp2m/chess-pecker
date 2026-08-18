@@ -186,7 +186,7 @@ export class SyncCycleUseCase {
  * se vuelve a intentar en la pasada siguiente, y hasta entonces la aplicación funciona con
  * lo que tiene aquí, que es exactamente para lo que existe todo esto.
  */
-function toFailurePhase(error: unknown): SyncPhase {
+export function toFailurePhase(error: unknown): SyncPhase {
 	if (ApiCancelledError.is(error)) {
 		return 'offline';
 	}
