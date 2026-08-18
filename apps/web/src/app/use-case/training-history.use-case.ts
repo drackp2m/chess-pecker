@@ -91,16 +91,17 @@ export class TrainingHistoryUseCase {
 
 		const items = await this.cycles.listItems(pass.uuid);
 		const positions = new Map(items.map((item) => [item.uuid, item.position]));
+		const whole = undefined !== pass.expectedItems && items.length === pass.expectedItems;
 		const opened = pass.createdAt.getTime();
+		const placeOwn = (row: AttemptRow): number | null =>
+			toPlace(undefined === row.cycleItemUuid ? undefined : positions.get(row.cycleItemUuid));
 
 		return {
 			total: items.length,
-			keeps: (row) => opened <= row.updatedAt.getTime(),
-			// El orden del ciclo puede no estar aquí —sólo se espeja el hueco que se sirve—,
-			// así que la fila manda cuando trae su sitio dentro.
-			place: (row) =>
-				toPlace(undefined === row.cycleItemUuid ? undefined : positions.get(row.cycleItemUuid)) ??
-				toPlace(row.position),
+			// Un intento es de la pasada si su hueco está entre los suyos. El criterio por fecha
+			// —y su respaldo a `row.position`— sólo vale para la pasada que no está entera aquí.
+			keeps: (row) => null !== placeOwn(row) || (!whole && opened <= row.updatedAt.getTime()),
+			place: (row) => placeOwn(row) ?? (whole ? null : toPlace(row.position)),
 		};
 	}
 

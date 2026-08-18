@@ -7,6 +7,22 @@
 	min-height: 100dvh;
 }
 
+.logo {
+	color: var(--color-contrast);
+	animation: breathe 2s ease-in-out infinite;
+}
+
 .detail {
 	list-style: none;
+}
+
+@keyframes breathe {
+	0%,
+	100% {
+		opacity: 0.6;
+	}
+
+	50% {
+		opacity: 1;
+	}
 }

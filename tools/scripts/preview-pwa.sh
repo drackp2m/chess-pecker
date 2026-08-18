@@ -26,7 +26,7 @@ mkdir -p "$SERVE_DIR"
 ln -sfn "../chesspecker/browser" "$SERVE_DIR/chesspecker"
 
 echo "🏗️ Building PWA in watch mode (base-href $BASE_HREF)..."
-ng build --watch --base-href "$BASE_HREF" &
+ng build chesspecker --watch --base-href "$BASE_HREF" &
 BUILD_PID=$!
 
 echo "📂 Serving $SERVE_DIR over plain HTTP on port $APP_PORT..."

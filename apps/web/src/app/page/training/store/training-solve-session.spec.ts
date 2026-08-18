@@ -166,7 +166,7 @@ function configure(
 			TrainingSolveSession,
 			{ provide: AttemptRepository, useValue: attempts },
 			{ provide: TrainingRunEngineUseCase, useValue: repository },
-			{ provide: SyncStore, useValue: { isTreeBehind: () => false } },
+			{ provide: SyncStore, useValue: { isTreeBehind: () => false, push: vi.fn() } },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
 		],

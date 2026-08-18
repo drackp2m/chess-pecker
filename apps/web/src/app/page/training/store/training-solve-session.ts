@@ -11,6 +11,7 @@ import {
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
+import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 import {
 	AttemptDraft,
@@ -32,6 +33,7 @@ export class TrainingSolveSession {
 	private readonly board = inject(PuzzleStore);
 	private readonly training = inject(TrainingStore);
 	private readonly drafts = inject(AttemptDraftUseCase);
+	private readonly sync = inject(SyncStore);
 	private readonly timer = new SolveTimer(() => {
 		void this.flush();
 	});
@@ -380,6 +382,10 @@ export class TrainingSolveSession {
 		}
 
 		await this.run.grade(attempt);
+
+		// El ejercicio cerrado sube en cuanto está sellado, sin esperar a la pasada siguiente:
+		// entrenar es justo cuando el dispositivo se puede quedar sin batería o sin pestaña.
+		void this.sync.push();
 	}
 
 	/**

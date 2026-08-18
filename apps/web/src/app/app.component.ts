@@ -18,8 +18,9 @@ export class AppComponent {
 	private readonly sync = inject(SyncStore);
 
 	/**
-	 * La puerta de arranque. Hasta que la sincronización termina —con éxito o sin él— no hay
-	 * nada que servir: lo que se pintara antes se pintaría con una réplica a medias.
+	 * La puerta de arranque. Sólo la cierra una descarga: mientras falte algo por bajar, lo
+	 * que se pintara se pintaría con una réplica a medias. Lo que queda por subir no tiene
+	 * por qué hacer esperar a nadie —ya está aquí—, así que ésa sigue de fondo.
 	 */
 	readonly loading = computed(() => !this.sync.isReady());
 }

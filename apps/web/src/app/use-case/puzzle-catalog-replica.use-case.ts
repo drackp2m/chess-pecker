@@ -46,6 +46,15 @@ export class PuzzleCatalogReplicaUseCase {
 		return this.sweeping;
 	}
 
+	/**
+	 * Si la barrida no tiene nada que hacer. El ciclo lo pregunta antes de empezarla: un
+	 * catálogo al día no es una descarga, y sólo una descarga justifica hacer esperar al
+	 * arranque.
+	 */
+	async isSynced(summary?: SyncCatalogSummary): Promise<boolean> {
+		return this.isUpToDate(await this.cursors.findState(), summary);
+	}
+
 	private async sweep(
 		summary: SyncCatalogSummary | undefined,
 		progress: CatalogProgress | undefined,

@@ -1,5 +1,6 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 
+import { SvgComponent } from '@app/component/svg/svg.component';
 import { SYNC_PHASE_LABEL } from '@app/definition/sync-phase.type';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { I18n } from '@app/i18n';
@@ -16,7 +17,7 @@ import { WatchedDelay } from '@app/util/watched-delay';
 	selector: 'app-sync-splash',
 	templateUrl: './sync-splash.component.html',
 	styleUrl: './sync-splash.component.scss',
-	imports: [I18nPipe],
+	imports: [I18nPipe, SvgComponent],
 })
 export class SyncSplashComponent implements OnDestroy {
 	protected readonly I18n = I18n;

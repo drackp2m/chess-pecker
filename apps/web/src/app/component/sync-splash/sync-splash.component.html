@@ -1,4 +1,6 @@
 <section class="sync-splash flex-col gap-3 align-center justify-center p-4" role="status">
+	<app-svg class="logo" icon="logo" [size]="96" aria-hidden="true" />
+
 	<p class="fs-lg text-center">{{ message() | i18n }}</p>
 
 	@if (sync.error(); as failure) {

@@ -103,11 +103,21 @@
 						}
 					},
 					"defaultConfiguration": "development"
-				},
+				}
+			}
+		},
+		"unit": {
+			"projectType": "application",
+			"root": "",
+			"sourceRoot": "src",
+			"prefix": "app",
+			"architect": {
 				"test": {
 					"builder": "@angular/build:unit-test",
 					"options": {
-						"buildTarget": "chesspecker:build:testing"
+						"buildTarget": "chesspecker:build:testing",
+						"tsConfig": "tsconfig.spec.json",
+						"runnerConfig": "vitest.config.ts"
 					}
 				}
 			}
