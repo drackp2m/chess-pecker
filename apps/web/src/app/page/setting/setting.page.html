@@ -5,51 +5,23 @@
 		<p class="fs-sm color-contrast-mid">{{ I18n.setting.LANGUAGE_INTRO | i18n }}</p>
 
 		<form [formGroup]="form" class="flex-col gap-1">
-			<ng-template #spanishLabel>
-				<span class="language">
-					<img class="flag" [src]="languageFlag['es-ES']" alt="" />
+			@for (language of languages; track language) {
+				<ng-template #languageLabel>
+					<span class="language">
+						<img class="flag" [src]="languageFlag[language]" alt="" />
 
-					<span class="label">{{ languageName['es-ES'] }}</span>
-				</span>
-			</ng-template>
+						<span class="label">{{ languageName[language] }}</span>
+					</span>
+				</ng-template>
 
-			<ng-template #catalanLabel>
-				<span class="language">
-					<img class="flag" [src]="languageFlag['ca-ES']" alt="" />
-
-					<span class="label">{{ languageName['ca-ES'] }}</span>
-				</span>
-			</ng-template>
-
-			<ng-template #englishLabel>
-				<span class="language">
-					<img class="flag" [src]="languageFlag['en-GB']" alt="" />
-
-					<span class="label">{{ languageName['en-GB'] }}</span>
-				</span>
-			</ng-template>
-
-			<input
-				appThemed
-				type="radio"
-				[label]="spanishLabel"
-				value="es-ES"
-				formControlName="language"
-			/>
-			<input
-				appThemed
-				type="radio"
-				[label]="catalanLabel"
-				value="ca-ES"
-				formControlName="language"
-			/>
-			<input
-				appThemed
-				type="radio"
-				[label]="englishLabel"
-				value="en-GB"
-				formControlName="language"
-			/>
+				<input
+					appThemed
+					type="radio"
+					[label]="languageLabel"
+					[value]="language"
+					formControlName="language"
+				/>
+			}
 		</form>
 	</div>
 
