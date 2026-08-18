@@ -67,11 +67,15 @@ export default typescriptEslint.config(
 			parserOptions: {
 				projectService: {
 					// Files that no tsconfig `include` picks up: root-level ambient
-					// declarations belong to no workspace package, and `apps/api/vitest.config.ts`
-					// sits outside that package's `rootDir` of `src`, so adding it to the include
+					// declarations belong to no workspace package, and both `vitest.config.ts`
+					// sit outside their package's `rootDir` of `src`, so adding them to the include
 					// would break `nest build` with TS6059. Type them against the default project
 					// instead of adding a root tsconfig just to satisfy the parser.
-					allowDefaultProject: ['.env.d.ts', 'apps/api/vitest.config.ts'],
+					allowDefaultProject: [
+						'.env.d.ts',
+						'apps/api/vitest.config.ts',
+						'apps/web/vitest.config.ts',
+					],
 				},
 				tsconfigRootDir: import.meta.dirname,
 			},

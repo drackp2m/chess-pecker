@@ -5,12 +5,12 @@
 	"private": true,
 	"scripts": {
 		"ng": "ng",
-		"start": "ng serve",
-		"start:safari": "sh ../../tools/scripts/start-safari.sh --source 4200 -- ng serve --host 0.0.0.0 --port 4201 --ssl=false",
+		"start": "ng serve chesspecker",
+		"start:safari": "sh ../../tools/scripts/start-safari.sh --source 4200 -- ng serve chesspecker --host 0.0.0.0 --port 4201 --ssl=false",
 		"preview:pwa": "sh ../../tools/scripts/preview-pwa.sh",
-		"build": "ng build",
-		"test": "ng test",
-		"typecheck": "ng build --configuration typecheck"
+		"build": "ng build chesspecker",
+		"test": "ng test unit",
+		"typecheck": "ng build chesspecker --configuration typecheck"
 	},
 	"dependencies": {
 		"@angular/common": "22.0.6",
