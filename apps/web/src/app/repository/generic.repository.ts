@@ -54,6 +54,7 @@ export class GenericRepository<T extends DBSchema> {
 		try {
 			result = await operation(transaction);
 		} catch (error) {
+			void transaction.done.catch(() => undefined);
 			this.abort(transaction);
 
 			throw error;
@@ -194,6 +195,8 @@ export class GenericRepository<T extends DBSchema> {
 		const opening = openDB<T>(this.dbName, Repository.getLatestVersion(), {
 			upgrade: (database, oldVersion, newVersion, transaction) => {
 				migrations = this.migrate(database, oldVersion, newVersion, transaction);
+
+				void migrations.catch(() => undefined);
 			},
 
 			// Another tab still holds an older version open, so the upgrade cannot run.
@@ -236,6 +239,7 @@ export class GenericRepository<T extends DBSchema> {
 		try {
 			await Repository.applyMigrations(database, oldVersion, newVersion, transaction);
 		} catch (error) {
+			void transaction.done.catch(() => undefined);
 			this.abort(transaction);
 
 			throw error;
