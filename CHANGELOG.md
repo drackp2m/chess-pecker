@@ -1,3 +1,13 @@
+# v1.22.1 (2026-08-18)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- page the attempt history by row, not by date ([41482ed](https://github.com/drackp2m/chess-pecker/commit/41482edf400e7f81c01a72e8fdcbd514be2d2346)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.22.0...v1.22.1
+
 # v1.22.0 (2026-08-18)
 
 ## What's Changed
