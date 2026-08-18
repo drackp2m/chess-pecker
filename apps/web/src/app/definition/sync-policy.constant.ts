@@ -1,0 +1,38 @@
+export const SyncPolicy = {
+	/**
+	 * Filas pendientes por petición. El árbol entero de una cuenta veterana son miles de
+	 * huecos y sus partidas: lo que no cabe se queda para la pasada siguiente, que es inocuo
+	 * porque la subida es idempotente.
+	 */
+	pushBatchSize: 200,
+
+	/** Tope de peticiones por pasada, para que un árbol que no avanza no gire para siempre. */
+	maxRequestsPerRun: 50,
+
+	/** Espera antes de cada reintento, en orden: su longitud decide cuántos hay. */
+	retryBackoffMs: [1000, 4000],
+
+	/** Tope duro del arranque: pasado esto la puerta se abre, con éxito o sin él. */
+	startupTimeoutMs: 15000,
+
+	/**
+	 * Lo que el splash espera —mirando, no de fondo— antes de contar qué está pasando. Una
+	 * pasada que termina antes es un parpadeo, y un parpadeo no debe enseñar nada.
+	 */
+	splashDetailMs: 600,
+
+	/**
+	 * Cada cuánto vuelve a sincronizarse al volver a la aplicación o al recuperar la red.
+	 * Sin este suelo, alternar de pestaña dispararía una pasada por cambio.
+	 */
+	revisitAfterMs: 5 * 60 * 1000,
+
+	/** A partir de aquí una fila lleva demasiado esperando y hay que decirlo. */
+	staleAfterMs: 7 * 24 * 60 * 60 * 1000,
+
+	/**
+	 * Cuántos motivos de rechazo se guardan por tabla para enseñarlos. El recuento es de
+	 * todas; la lista es una muestra, porque quien la lee busca el patrón, no el inventario.
+	 */
+	rejectionSampleSize: 5,
+} as const;

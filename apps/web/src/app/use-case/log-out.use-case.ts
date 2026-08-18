@@ -8,6 +8,7 @@ import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
 import { ProfileStore } from '@app/store/profile.store';
 import { SessionStore } from '@app/store/session.store';
+import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 
 /**
@@ -22,6 +23,8 @@ export class LogOutUseCase {
 	private readonly modalStore = inject(ModalStore);
 	private readonly sessionStore = inject(SessionStore);
 
+	private readonly syncStore = inject(SyncStore);
+
 	/**
 	 * Todo lo que guarda algo del usuario en memoria. Un store nuevo con datos suyos se
 	 * añade aquí, que es lo único que hay que recordar para que salga con los demás.
@@ -29,6 +32,7 @@ export class LogOutUseCase {
 	private readonly stores: readonly Resettable[] = [
 		inject(ActivityStore),
 		inject(ProfileStore),
+		this.syncStore,
 		inject(TrainingStore),
 	];
 
@@ -48,11 +52,14 @@ export class LogOutUseCase {
 	}
 
 	/**
-	 * Lo que no ha llegado al servidor sólo existe aquí, y el cierre lo borra. Si no hay
-	 * nada pendiente no se pregunta nada; si no se puede ni mirar, se pregunta igual
-	 * antes que borrar a ciegas.
+	 * Lo que no ha llegado al servidor sólo existe aquí, y el cierre lo borra. Así que
+	 * primero se intenta subirlo: el modal sólo aparece si esa subida no pudo con todo, y
+	 * dice cuántas quedaron. Si no se puede ni mirar, se pregunta igual antes que borrar
+	 * a ciegas.
 	 */
 	private async confirmPending(): Promise<boolean> {
+		await this.syncStore.flush();
+
 		if (!(await this.hasPending())) {
 			return true;
 		}

@@ -111,5 +111,13 @@
 	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Some exercises have not been uploaded",
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} exercises from this device have not reached the server yet. Logging out deletes them, with no way to get them back.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Log out anyway",
-	"01KZS8AGRWVYYDY12EVBWAY17D": "Stay"
+	"01KZS8AGRWVYYDY12EVBWAY17D": "Stay",
+	"01M08S2E7Y4N1GH1WEYNE2PHH2": "Checking what changed…",
+	"01M08S2E7Y82F1D1EC3SSESMAC": "Uploading what is on this device…",
+	"01M08S2E7YD0QHYKHGFRKC95KQ": "Downloading your training…",
+	"01M08S2E7Y8DJ8ATJ9EZN9YE5J": "Could not synchronise",
+	"01M08S2E7YX29H2P0CGSW32QMH": "No connection: carrying on with what is on this device",
+	"01M08S2E7YMKHXMG6TBMMFGPP0": "{{ pending }} rows to upload",
+	"01M08S2E7Y945FNNZAKHAVR927": "{{ rows }} rows received",
+	"01M08S2E7YFS94VPQJW770AFBX": "Exercises: {{ done }} of {{ total }}"
 }

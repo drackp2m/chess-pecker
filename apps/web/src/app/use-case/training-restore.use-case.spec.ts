@@ -9,7 +9,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
-import { SessionStore } from '@app/store/session.store';
 import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
 import { TrainingRestoreUseCase } from '@app/use-case/training-restore.use-case';
 
@@ -57,9 +56,7 @@ function page(over: Partial<TrainingAttemptHistory> = {}): TrainingAttemptHistor
 	return { attempts: [attempt()], cursor: 'cursor-1', hasMore: false, ...over };
 }
 
-function configure(
-	options: { stored?: AttemptRow; cursor?: string; authenticated?: boolean } = {},
-) {
+function configure(options: { stored?: AttemptRow; cursor?: string } = {}) {
 	const inserted: { store: string; row: unknown }[] = [];
 	const listAttempts = vi.fn<(uuid: string, query: { since?: string }) => Promise<unknown>>();
 	const save = vi.fn().mockResolvedValue(undefined);
@@ -83,7 +80,6 @@ function configure(
 	TestBed.resetTestingModule();
 	TestBed.configureTestingModule({
 		providers: [
-			{ provide: SessionStore, useValue: { isAuthenticated: () => options.authenticated ?? true } },
 			{ provide: TrainingRepository, useValue: { listAttempts } },
 			{ provide: TrainingLocalRepository, useValue: repository },
 			{ provide: PuzzleCacheUseCase, useValue: { save } },
@@ -105,16 +101,8 @@ describe('TrainingRestoreUseCase', () => {
 		TestBed.resetTestingModule();
 	});
 
-	it('asks for nothing while there is no session', async () => {
-		const { useCase, listAttempts } = configure({ authenticated: false });
-
-		await useCase.execute(TRAINING);
-
-		expect(listAttempts).not.toHaveBeenCalled();
-	});
-
 	it('writes the missing attempt under the slot it belongs to', async () => {
-		const { useCase, listAttempts, save, rows } = configure();
+		const { useCase, listAttempts, save, rows, repository } = configure();
 
 		listAttempts.mockResolvedValue(page());
 
@@ -122,10 +110,10 @@ describe('TrainingRestoreUseCase', () => {
 
 		expect(save).toHaveBeenCalledWith([apiPuzzle('AAA11')]);
 		expect(rows()).toHaveLength(1);
+		expect(repository.findByIndex).toHaveBeenCalledWith('attempt', 'cycleItemUuid', 'item-1');
 		expect(rows()[0]).toMatchObject({
 			uuid: 'server-attempt-1',
 			trainingUuid: TRAINING,
-			slotId: 'item-1',
 			cycleItemUuid: 'item-1',
 			puzzleUuid: 'puzzle-AAA11',
 			lichessId: 'AAA11',
@@ -137,8 +125,8 @@ describe('TrainingRestoreUseCase', () => {
 		expect((rows()[0] as AttemptRow).syncedAt).toBeInstanceOf(Date);
 	});
 
-	it('names a calibration slot by its round and its exercise', async () => {
-		const { useCase, listAttempts, rows } = configure();
+	it('looks a calibration attempt up by its round and its exercise', async () => {
+		const { useCase, listAttempts, repository } = configure();
 
 		listAttempts.mockResolvedValue(
 			page({
@@ -150,12 +138,15 @@ describe('TrainingRestoreUseCase', () => {
 
 		await useCase.execute(TRAINING);
 
-		expect(rows()[0]).toMatchObject({ slotId: `${TRAINING}/round-1/puzzle-AAA11` });
+		expect(repository.findByIndex).toHaveBeenCalledWith('attempt', 'roundUuid-puzzleUuid', [
+			'round-1',
+			'puzzle-AAA11',
+		]);
 	});
 
 	it('leaves alone the slot this device already has', async () => {
 		const { useCase, listAttempts, rows } = configure({
-			stored: { uuid: 'local-attempt-1', slotId: 'item-1', position: 6 } as AttemptRow,
+			stored: { uuid: 'local-attempt-1', cycleItemUuid: 'item-1', position: 6 } as AttemptRow,
 		});
 
 		listAttempts.mockResolvedValue(page());
@@ -167,7 +158,7 @@ describe('TrainingRestoreUseCase', () => {
 
 	it('fills in the place of a row that was written before it travelled', async () => {
 		const { useCase, listAttempts, rows } = configure({
-			stored: { uuid: 'local-attempt-1', slotId: 'item-1', solved: false } as AttemptRow,
+			stored: { uuid: 'local-attempt-1', cycleItemUuid: 'item-1', solved: false } as AttemptRow,
 		});
 
 		listAttempts.mockResolvedValue(page());
@@ -175,7 +166,7 @@ describe('TrainingRestoreUseCase', () => {
 		await useCase.execute(TRAINING);
 
 		expect(rows()).toStrictEqual([
-			{ uuid: 'local-attempt-1', slotId: 'item-1', solved: false, position: 6 },
+			{ uuid: 'local-attempt-1', cycleItemUuid: 'item-1', solved: false, position: 6 },
 		]);
 	});
 
@@ -210,12 +201,20 @@ describe('TrainingRestoreUseCase', () => {
 		expect(rows()).toHaveLength(2);
 	});
 
-	it('says nothing when the server cannot be reached', async () => {
+	it('says it could not finish when the server cannot be reached', async () => {
 		const { useCase, listAttempts, rows } = configure();
 
 		listAttempts.mockRejectedValue(new Error('offline'));
 
-		await expect(useCase.execute(TRAINING)).resolves.toBeUndefined();
+		await expect(useCase.execute(TRAINING)).resolves.toBe(false);
 		expect(rows()).toStrictEqual([]);
+	});
+
+	it('says it finished when the server says there is no more', async () => {
+		const { useCase, listAttempts } = configure();
+
+		listAttempts.mockResolvedValue(page());
+
+		await expect(useCase.execute(TRAINING)).resolves.toBe(true);
 	});
 });

@@ -11,10 +11,10 @@ import { LocalRecord } from '@app/repository/definition/local-record.interface';
 export interface ActivityDayRow extends LocalRecord, TrainingActivityDay {}
 
 /**
- * Hasta dónde llegaba el servidor la última vez que se preguntó. Es una fila única —la
- * clave es constante— y lo que decide si lo guardado sigue valiendo.
+ * Hasta dónde llegaba el servidor la última vez que se preguntó. Congelada: desde la v17
+ * esta fila vive en `syncCursor`, con la llave `activity` y junto a las demás.
  */
-export interface ActivityCursorRow {
+export interface ActivityCursorRowV16 {
 	readonly id: 'training-activity';
 	readonly cursor: string;
 	readonly updatedAt: Date;
@@ -25,8 +25,11 @@ export interface ActivitySchema extends DBSchema {
 		key: string;
 		value: ActivityDayRow;
 	};
+}
+
+export interface ActivityCursorSchemaV16 extends DBSchema {
 	activityCursor: {
 		key: string;
-		value: ActivityCursorRow;
+		value: ActivityCursorRowV16;
 	};
 }

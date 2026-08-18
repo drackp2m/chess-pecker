@@ -3,12 +3,12 @@ import type { SetTrainingGoalRequest, TrainingProgress } from '@chesspecker/api-
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
-import { Resettable } from '@app/definition/resettable.interface';
+import { Syncable } from '@app/definition/syncable.interface';
 import { I18n, i18nRef } from '@app/i18n';
 import { TrainingRow } from '@app/repository/definition/training-schema.interface';
+import { NO_SYNC_STATE, withSyncState } from '@app/store/feature/with-sync-state';
 import { isActiveTraining } from '@app/use-case/local-training.use-case';
 import { TrainingEngineUseCase } from '@app/use-case/training-engine.use-case';
-import { TrainingRestoreUseCase } from '@app/use-case/training-restore.use-case';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { API_FAILURE, HttpError } from '@app/util/http-error';
 
@@ -16,26 +16,20 @@ interface TrainingStoreProps {
 	trainings: readonly TrainingRow[];
 	active: TrainingRow | null;
 	progress: TrainingProgress | null;
-	isLoading: boolean;
-	isSubmitting: boolean;
-	error: TranslationRef | null;
 }
 
 const initialState: TrainingStoreProps = {
 	trainings: [],
 	active: null,
 	progress: null,
-	isLoading: false,
-	isSubmitting: false,
-	error: null,
 };
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TrainingStore
-	extends signalStore({ protectedState: false }, withState(initialState))
-	implements Resettable
+	extends signalStore({ protectedState: false }, withState(initialState), withSyncState())
+	implements Syncable
 {
 	readonly cycles = computed(() => this.progress()?.cycles ?? []);
 
@@ -56,23 +50,19 @@ export class TrainingStore
 	});
 
 	private readonly engine = inject(TrainingEngineUseCase);
-	private readonly restore = inject(TrainingRestoreUseCase);
 
 	/**
-	 * El histórico se restaura aquí y esperando: es lo que hace que al abrir la pizarra los
-	 * ejercicios ya resueltos estén donde se los va a buscar. Sólo cuesta la primera vez —
-	 * después el cursor deja la petición en una página vacía.
+	 * Sólo lee lo que hay aquí. El histórico lo baja el ciclo de sincronización antes de que
+	 * la aplicación sirva datos, así que al llegar aquí los ejercicios ya resueltos están
+	 * donde se los va a buscar.
 	 */
 	async load(): Promise<void> {
 		patchState(this, { isLoading: true, error: null });
+		await this.whenReady();
 
 		try {
 			const trainings = await this.engine.list();
 			const active = trainings.find((training) => isActiveTraining(training)) ?? null;
-
-			if (null !== active) {
-				await this.restore.execute(active.uuid);
-			}
 
 			patchState(this, {
 				trainings,
@@ -125,12 +115,8 @@ export class TrainingStore
 		return this.withActive((uuid) => this.engine.cancel(uuid), i18nRef(I18n.training.CANCEL_ERROR));
 	}
 
-	clearError(): void {
-		patchState(this, { error: null });
-	}
-
 	reset(): void {
-		patchState(this, initialState);
+		patchState(this, initialState, NO_SYNC_STATE);
 	}
 
 	private async withActive(

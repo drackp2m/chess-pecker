@@ -1,13 +1,25 @@
 import { Injectable, inject } from '@angular/core';
+import type { SyncCatalogSummary } from '@chesspecker/api-definitions';
 
-import { CatalogCursorRepository } from '@app/repository/catalog-cursor.repository';
-import { CatalogCursorRow } from '@app/repository/definition/catalog-cursor-schema.interface';
+import {
+	CatalogCursorRepository,
+	CatalogCursorState,
+} from '@app/repository/catalog-cursor.repository';
 import { PuzzleCatalogRepository } from '@app/repository/puzzle-catalog.repository';
 import { PuzzleRepository } from '@app/repository/puzzle.repository';
 import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
 
 const PAGE_SIZE = 500;
 
+/** Cuántos ejercicios lleva la réplica y cuántos hay. Es lo que el splash cuenta. */
+export type CatalogProgress = (done: number, total: number) => void;
+
+/**
+ * El catálogo replicado aquí. No es de nadie —no tiene `pendingSince`, ni conflictos, ni
+ * la regla de «local manda» que sostiene la bajada del entrenamiento—, así que no es una
+ * tabla más del ciclo: es una barrida por páginas que el ciclo dispara con el resumen en
+ * la mano.
+ */
 @Injectable({
 	providedIn: 'root',
 })
@@ -19,8 +31,13 @@ export class PuzzleCatalogReplicaUseCase {
 
 	private sweeping: Promise<void> | null = null;
 
-	async run(): Promise<void> {
-		this.sweeping ??= this.sweep()
+	/**
+	 * `summary` es lo que dice el servidor que tiene. Sin él —sin sesión, que es cuando
+	 * `GET /sync` no se puede pedir— se decide como se decidía antes: con el total contado
+	 * aquí, que no ve una reimportación.
+	 */
+	async run(summary?: SyncCatalogSummary, progress?: CatalogProgress): Promise<void> {
+		this.sweeping ??= this.sweep(summary, progress)
 			.catch(() => undefined)
 			.finally(() => {
 				this.sweeping = null;
@@ -29,15 +46,21 @@ export class PuzzleCatalogReplicaUseCase {
 		return this.sweeping;
 	}
 
-	private async sweep(): Promise<void> {
+	private async sweep(
+		summary: SyncCatalogSummary | undefined,
+		progress: CatalogProgress | undefined,
+	): Promise<void> {
 		const state = await this.cursors.findState();
 
-		if (await this.isUpToDate(state)) {
+		if (await this.isUpToDate(state, summary)) {
 			return;
 		}
 
 		let cursor = this.resumeFrom(state);
+		let done = await this.puzzles.countCatalog();
 		let pending = true;
+
+		progress?.(done, summary?.total ?? state?.total ?? 0);
 
 		while (pending) {
 			const page = await this.catalog.getPage(PAGE_SIZE, cursor);
@@ -46,9 +69,15 @@ export class PuzzleCatalogReplicaUseCase {
 
 			const next = page.nextCursor === cursor ? null : page.nextCursor;
 
+			done += page.items.length;
+			progress?.(done, summary?.total ?? page.total);
+
 			await this.cursors.saveState({
 				cursor: next,
 				total: page.total,
+				// La versión es la de antes de empezar: si el catálogo cambia a mitad de la
+				// barrida, quedarse con la vieja es lo que hace que la pasada siguiente lo vea.
+				version: summary?.version ?? state?.version ?? null,
 				completedAt: null === next ? new Date() : null,
 			});
 
@@ -57,15 +86,28 @@ export class PuzzleCatalogReplicaUseCase {
 		}
 	}
 
-	private resumeFrom(state: CatalogCursorRow | undefined): string | null {
+	private resumeFrom(state: CatalogCursorState | undefined): string | null {
 		return null !== state?.completedAt ? null : state.cursor;
 	}
 
-	private async isUpToDate(state: CatalogCursorRow | undefined): Promise<boolean> {
+	/**
+	 * Con resumen, la versión decide. **Esto arregla un fallo de hoy**: la importación es
+	 * un upsert que refresca rating y popularidad, así que reimportar el mismo CSV deja el
+	 * total idéntico, la barrida se da por cerrada y los ratings de aquí se quedan viejos
+	 * para siempre. La marca es lo único que lo ve.
+	 */
+	private async isUpToDate(
+		state: CatalogCursorState | undefined,
+		summary: SyncCatalogSummary | undefined,
+	): Promise<boolean> {
 		if (undefined === state?.completedAt || null === state.completedAt) {
 			return false;
 		}
 
-		return (await this.puzzles.countCatalog()) === state.total;
+		if (undefined === summary) {
+			return (await this.puzzles.countCatalog()) === state.total;
+		}
+
+		return state.version === summary.version && state.total === summary.total;
 	}
 }

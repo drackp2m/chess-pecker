@@ -1,6 +1,6 @@
 import { Check, Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
-import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
+import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 
 import { CalibrationRoundKind } from './definition/calibration-round-kind.enum';
 import { CalibrationRoundOutcome } from './definition/calibration-round-outcome.enum';
@@ -21,7 +21,7 @@ import { Training } from './training.entity';
 @Entity({ repository: () => TrainingCalibrationRoundRepository })
 @Unique({ properties: ['training', 'index'] })
 @Check({ name: 'calibration_round_rating_bucket_check', expression: 'rating % 100 = 0' })
-export class TrainingCalibrationRound extends CustomBaseEntity<TrainingCalibrationRound> {
+export class TrainingCalibrationRound extends SyncableBaseEntity<TrainingCalibrationRound> {
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
 

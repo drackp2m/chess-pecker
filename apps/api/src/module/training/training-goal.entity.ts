@@ -1,6 +1,6 @@
 import { Check, Entity, Index, ManyToOne, Property } from '@mikro-orm/core';
 
-import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
+import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 
 import { TrainingGoalRepository } from './training-goal.repository';
 import { Training } from './training.entity';
@@ -23,7 +23,7 @@ import { Training } from './training.entity';
 	name: 'training_goal_has_target_check',
 	expression: 'puzzles_per_day is not null or end_date is not null',
 })
-export class TrainingGoal extends CustomBaseEntity<TrainingGoal> {
+export class TrainingGoal extends SyncableBaseEntity<TrainingGoal> {
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
 

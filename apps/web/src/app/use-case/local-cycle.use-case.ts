@@ -11,6 +11,7 @@ import {
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCalibrationUseCase } from '@app/use-case/local-calibration.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
+import { born, touch } from '@app/use-case/sync/local-record';
 import { buildCycleOrder } from '@app/util/cycle-order';
 import { clampRatingBucket, ratingBucketCeiling } from '@app/util/rating-bucket';
 
@@ -38,8 +39,6 @@ export class LocalCycleUseCase {
 		if ('planning' !== training?.status) {
 			throw new Error('The calibration is not finished');
 		}
-
-		this.trainings.assertWritableOffline(training);
 
 		if (0 < (await this.listSet(trainingUuid)).length) {
 			throw new Error('The set is already selected');
@@ -80,7 +79,13 @@ export class LocalCycleUseCase {
 			throw new Error('The set is empty');
 		}
 
-		const cycle = await this.insertCycle(trainingUuid, cycles.length + 1);
+		const last = cycles.at(-1);
+
+		if (undefined !== last && last.expectedItems !== set.length) {
+			throw new Error('The set is not fully replicated on this device');
+		}
+
+		const cycle = await this.insertCycle(trainingUuid, cycles.length + 1, set.length);
 
 		await this.repository.batchInsert('cycleItem', this.toItemRows(cycle, buildCycleOrder(set)));
 		await this.trainings.updateStatus(trainingUuid, 'running');
@@ -106,6 +111,11 @@ export class LocalCycleUseCase {
 		}
 
 		const items = await this.listItems(cycle.uuid);
+
+		if (!isWholeCycle(cycle, items)) {
+			throw new Error('The cycle is not fully replicated on this device');
+		}
+
 		const attempted = new Set(
 			(await this.closedAttempts(trainingUuid)).map((attempt) => attempt.cycleItemUuid),
 		);
@@ -117,7 +127,11 @@ export class LocalCycleUseCase {
 
 		const puzzle = await this.repository.find('puzzle', item.lichessId);
 
-		return undefined === puzzle ? undefined : { cycle, item, puzzle };
+		if (undefined === puzzle) {
+			throw new Error('The next exercise is missing from the local catalog');
+		}
+
+		return { cycle, item, puzzle };
 	}
 
 	async closeIfComplete(trainingUuid: string, cycleUuid: string): Promise<boolean> {
@@ -128,6 +142,11 @@ export class LocalCycleUseCase {
 		}
 
 		const items = await this.listItems(cycleUuid);
+
+		if (!isWholeCycle(cycle, items)) {
+			return false;
+		}
+
 		const attempts = await this.closedAttempts(trainingUuid);
 		const attempted = items.filter((item) =>
 			attempts.some((attempt) => attempt.cycleItemUuid === item.uuid),
@@ -146,20 +165,18 @@ export class LocalCycleUseCase {
 		const running = await this.findRunningCycle(trainingUuid);
 
 		if (undefined !== running) {
-			await this.repository.insert('cycle', {
-				...running,
-				status: 'abandoned',
-				updatedAt: new Date(),
-			});
+			await this.repository.insert(
+				'cycle',
+				touch<TrainingCycleRow>({ ...running, status: 'abandoned' }),
+			);
 		}
 	}
 
 	private async finishCycle(trainingUuid: string, cycle: TrainingCycleRow): Promise<void> {
-		await this.repository.insert('cycle', {
-			...cycle,
-			status: 'finished',
-			updatedAt: new Date(),
-		});
+		await this.repository.insert(
+			'cycle',
+			touch<TrainingCycleRow>({ ...cycle, status: 'finished' }),
+		);
 
 		if (TrainingPolicy.maxCycles <= cycle.index) {
 			await this.trainings.finish(trainingUuid, 'finished', 'max-cycles');
@@ -172,8 +189,6 @@ export class LocalCycleUseCase {
 		if (undefined === training || !['planning', 'running'].includes(training.status)) {
 			throw new Error('The training is not ready for cycles');
 		}
-
-		this.trainings.assertWritableOffline(training);
 
 		const cycles = await this.listCycles(trainingUuid);
 
@@ -202,49 +217,65 @@ export class LocalCycleUseCase {
 		);
 	}
 
-	private async insertCycle(trainingUuid: string, index: number): Promise<TrainingCycleRow> {
+	private async insertCycle(
+		trainingUuid: string,
+		index: number,
+		expectedItems: number,
+	): Promise<TrainingCycleRow> {
 		const now = new Date();
 
-		return this.repository.insert('cycle', {
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			index,
-			status: 'running',
-			createdAt: now,
-			updatedAt: now,
-		});
+		return this.repository.insert(
+			'cycle',
+			born<TrainingCycleRow>({
+				uuid: crypto.randomUUID(),
+				trainingUuid,
+				index,
+				status: 'running',
+				expectedItems,
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private toSetRows(trainingUuid: string, puzzles: readonly PuzzleRow[]): TrainingPuzzleRow[] {
 		const now = new Date();
 
-		return puzzles.map((puzzle) => ({
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			lichessId: puzzle.lichessId,
-			rating: puzzle.rating,
-			createdAt: now,
-			updatedAt: now,
-		}));
+		return puzzles.map((puzzle) =>
+			born<TrainingPuzzleRow>({
+				uuid: crypto.randomUUID(),
+				trainingUuid,
+				lichessId: puzzle.lichessId,
+				rating: puzzle.rating,
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private toItemRows(cycle: TrainingCycleRow, set: readonly TrainingPuzzleRow[]): CycleItemRow[] {
 		const now = new Date();
 
-		return set.map((trainingPuzzle, position) => ({
-			uuid: crypto.randomUUID(),
-			cycleUuid: cycle.uuid,
-			trainingPuzzleUuid: trainingPuzzle.uuid,
-			lichessId: trainingPuzzle.lichessId,
-			position,
-			createdAt: now,
-			updatedAt: now,
-		}));
+		return set.map((trainingPuzzle, position) =>
+			born<CycleItemRow>({
+				uuid: crypto.randomUUID(),
+				cycleUuid: cycle.uuid,
+				trainingPuzzleUuid: trainingPuzzle.uuid,
+				lichessId: trainingPuzzle.lichessId,
+				position,
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	private async closedAttempts(trainingUuid: string): Promise<readonly AttemptRow[]> {
 		const rows = await this.repository.findAllByIndex('attempt', 'trainingUuid', trainingUuid);
 
-		return rows.filter((row) => 'cycle' === row.kind && 'open' !== row.closure);
+		return rows.filter((row) => 'cycle' === row.kind);
 	}
+}
+
+function isWholeCycle(cycle: TrainingCycleRow, items: readonly CycleItemRow[]): boolean {
+	return undefined !== cycle.expectedItems && items.length === cycle.expectedItems;
 }

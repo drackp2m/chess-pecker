@@ -1,15 +1,15 @@
-import type { PuzzleAttemptKind } from '@chesspecker/api-definitions';
+import type { PuzzleAttemptClosure, PuzzleAttemptKind } from '@chesspecker/api-definitions';
 import { DBSchema } from 'idb';
 
 import { PieceColor } from '@app/definition/chess.type';
 import { FreePlayRun, PuzzleClosure, PuzzleEvent } from '@app/definition/puzzle.type';
 import { LocalRecord } from '@app/repository/definition/local-record.interface';
 
+/** Un ejercicio terminado. Espejo exacto de `puzzle_attempt`, y append-only como allí. */
 export interface AttemptRow extends LocalRecord {
 	readonly uuid: string;
 	readonly trainingUuid: string;
 	readonly kind: PuzzleAttemptKind;
-	readonly slotId: string;
 	readonly roundUuid?: string;
 	readonly cycleItemUuid?: string;
 	/**
@@ -19,16 +19,14 @@ export interface AttemptRow extends LocalRecord {
 	readonly position?: number;
 	readonly puzzleUuid: string;
 	readonly lichessId: string;
-	readonly startedAt?: Date;
 	readonly durationMs: number;
 	/** Everything that happened outside free play, in order. */
 	readonly record: readonly PuzzleEvent[];
 	/** Every visit to free play, anchored to a length of `record`. */
 	readonly explorations: readonly FreePlayRun[];
-	/** The verdict, sealed on the first try, or absent while there is none yet. */
-	readonly solved?: boolean;
-	/** Whether the exercise is over, which is what reopening it looks at. */
-	readonly closure: PuzzleClosure;
+	readonly solved: boolean;
+	/** Cómo acabó el ejercicio. Una fila aquí está cerrada por definición. */
+	readonly closure: PuzzleAttemptClosure;
 	readonly hintUsed: boolean;
 	readonly mistakeCount: number;
 }
@@ -37,6 +35,39 @@ export interface AttemptSchema extends DBSchema {
 	attempt: {
 		key: string;
 		value: AttemptRow;
+		indexes: {
+			trainingUuid: string;
+			cycleItemUuid: string;
+			'roundUuid-puzzleUuid': [string, string];
+			pendingSince: Date;
+		};
+	};
+}
+
+export interface AttemptRowV14 extends LocalRecord {
+	readonly uuid: string;
+	readonly trainingUuid: string;
+	readonly kind: PuzzleAttemptKind;
+	readonly slotId: string;
+	readonly roundUuid?: string;
+	readonly cycleItemUuid?: string;
+	readonly position?: number;
+	readonly puzzleUuid: string;
+	readonly lichessId: string;
+	readonly startedAt?: Date;
+	readonly durationMs: number;
+	readonly record: readonly PuzzleEvent[];
+	readonly explorations: readonly FreePlayRun[];
+	readonly solved?: boolean;
+	readonly closure: PuzzleClosure;
+	readonly hintUsed: boolean;
+	readonly mistakeCount: number;
+}
+
+export interface AttemptSchemaV14 extends DBSchema {
+	attempt: {
+		key: string;
+		value: AttemptRowV14;
 		indexes: {
 			slotId: string;
 			trainingUuid: string;

@@ -26,8 +26,7 @@ export class LocalProgressUseCase {
 	private readonly cycles = inject(LocalCycleUseCase);
 
 	async build(trainingUuid: string): Promise<TrainingProgress> {
-		const attempts = await this.repository.findAllByIndex('attempt', 'trainingUuid', trainingUuid);
-		const closed = attempts.filter((attempt) => 'open' !== attempt.closure);
+		const closed = await this.repository.findAllByIndex('attempt', 'trainingUuid', trainingUuid);
 
 		const setSize = (await this.cycles.listSet(trainingUuid)).length;
 		const goal = await this.trainings.currentGoal(trainingUuid);
@@ -175,7 +174,7 @@ const shouldSuggestFinish = (cycles: readonly CycleProgress[]): boolean => {
 };
 
 const countSolved = (attempts: readonly AttemptRow[]): number =>
-	attempts.filter((attempt) => true === attempt.solved).length;
+	attempts.filter((attempt) => attempt.solved).length;
 
 const sumDuration = (attempts: readonly AttemptRow[]): number =>
 	attempts.reduce((total, attempt) => total + attempt.durationMs, 0);

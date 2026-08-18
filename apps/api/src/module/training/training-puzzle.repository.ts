@@ -10,8 +10,14 @@ export class TrainingPuzzleRepository extends CustomRepository<TrainingPuzzle> {
 		return trainingPuzzles;
 	}
 
-	async getManyByTraining(trainingUuid: string): Promise<TrainingPuzzle[]> {
-		return this.getMany({ training: trainingUuid }, { populate: ['puzzle'] });
+	async getManyByTraining(trainingUuid: string, receivedAfter?: Date): Promise<TrainingPuzzle[]> {
+		return this.getMany(
+			{
+				training: trainingUuid,
+				...(undefined === receivedAfter ? {} : { receivedAt: { $gt: receivedAfter } }),
+			},
+			{ populate: ['puzzle'] },
+		);
 	}
 
 	async countByTraining(trainingUuid: string): Promise<number> {

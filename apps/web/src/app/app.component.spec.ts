@@ -1,13 +1,20 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { AppComponent } from '@app/app.component';
+import { SyncStore } from '@app/store/sync.store';
 import { provideTestingI18n } from '@app/testing/i18n.harness';
 
 describe('AppComponent', () => {
 	beforeEach(async () => {
 		await TestBed.configureTestingModule({
 			imports: [AppComponent],
-			providers: [provideTestingI18n()],
+			providers: [
+				provideTestingI18n(),
+				// La puerta de arranque, y nada más: detrás del store real cuelga el ciclo
+				// entero con su HTTP y su IndexedDB, y el componente sólo mira si está abierta.
+				{ provide: SyncStore, useValue: { isReady: signal(true) } },
+			],
 		}).compileComponents();
 	});
 

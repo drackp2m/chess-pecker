@@ -1,0 +1,17 @@
+.entities,
+.reasons {
+	list-style: none;
+}
+
+.entity {
+	padding-block: var(--spacing-2);
+	border-block-end: 1px solid color-mix(in oklab, var(--color-contrast) 12%, transparent);
+
+	&:last-child {
+		border-block-end: none;
+	}
+}
+
+.reasons {
+	overflow-wrap: anywhere;
+}

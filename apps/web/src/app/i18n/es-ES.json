@@ -111,5 +111,13 @@
 	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Quedan ejercicios sin subir",
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Cerrar sesión igualmente",
-	"01KZS8AGRWVYYDY12EVBWAY17D": "Quedarme"
+	"01KZS8AGRWVYYDY12EVBWAY17D": "Quedarme",
+	"01M08S2E7Y4N1GH1WEYNE2PHH2": "Comprobando qué ha cambiado…",
+	"01M08S2E7Y82F1D1EC3SSESMAC": "Subiendo lo de este dispositivo…",
+	"01M08S2E7YD0QHYKHGFRKC95KQ": "Bajando tu entrenamiento…",
+	"01M08S2E7Y8DJ8ATJ9EZN9YE5J": "No se ha podido sincronizar",
+	"01M08S2E7YX29H2P0CGSW32QMH": "Sin conexión: se sigue con lo que hay en este dispositivo",
+	"01M08S2E7YMKHXMG6TBMMFGPP0": "{{ pending }} filas por subir",
+	"01M08S2E7Y945FNNZAKHAVR927": "{{ rows }} filas recibidas",
+	"01M08S2E7YFS94VPQJW770AFBX": "Ejercicios: {{ done }} de {{ total }}"
 }

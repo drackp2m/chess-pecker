@@ -1,18 +1,20 @@
 import { DBSchema } from 'idb';
 
-export const CATALOG_CURSOR_KEY = 'puzzle-catalog';
-
-export interface CatalogCursorRow {
-	readonly id: typeof CATALOG_CURSOR_KEY;
+/**
+ * Por dónde iba la bajada del catálogo. Congelada: desde la v17 esta fila vive en
+ * `syncCursor`, con la llave `catalog`, y su `total` es el `count` de allí.
+ */
+export interface CatalogCursorRowV16 {
+	readonly id: 'puzzle-catalog';
 	readonly cursor: string | null;
 	readonly total: number;
 	readonly completedAt: Date | null;
 	readonly updatedAt: Date;
 }
 
-export interface CatalogCursorSchema extends DBSchema {
+export interface CatalogCursorSchemaV16 extends DBSchema {
 	catalogCursor: {
 		key: string;
-		value: CatalogCursorRow;
+		value: CatalogCursorRowV16;
 	};
 }

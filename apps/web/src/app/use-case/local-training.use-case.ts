@@ -7,6 +7,7 @@ import type {
 
 import { TrainingGoalRow, TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
+import { born, touch } from '@app/use-case/sync/local-record';
 
 const ACTIVE_STATUSES: readonly TrainingStatus[] = ['calibrating', 'planning', 'running'];
 
@@ -41,18 +42,15 @@ export class LocalTrainingUseCase {
 
 		const now = new Date();
 
-		return this.repository.insert('training', {
-			uuid: crypto.randomUUID(),
-			status: 'calibrating',
-			createdAt: now,
-			updatedAt: now,
-		});
-	}
-
-	assertWritableOffline(training: TrainingRow): void {
-		if (undefined !== training.syncedAt) {
-			throw new Error('This training is the server copy and cannot be advanced offline yet');
-		}
+		return this.repository.insert(
+			'training',
+			born<TrainingRow>({
+				uuid: crypto.randomUUID(),
+				status: 'calibrating',
+				createdAt: now,
+				updatedAt: now,
+			}),
+		);
 	}
 
 	async save(training: TrainingRow): Promise<TrainingRow> {
@@ -66,7 +64,7 @@ export class LocalTrainingUseCase {
 			return training;
 		}
 
-		return this.save({ ...training, status, updatedAt: new Date() });
+		return this.save(touch({ ...training, status }));
 	}
 
 	async finish(
@@ -86,7 +84,7 @@ export class LocalTrainingUseCase {
 
 		const now = new Date();
 
-		return this.save({ ...training, status, finishedReason, finishedAt: now, updatedAt: now });
+		return this.save(touch({ ...training, status, finishedReason, finishedAt: now }, now));
 	}
 
 	async listGoals(trainingUuid: string): Promise<readonly TrainingGoalRow[]> {
@@ -102,13 +100,16 @@ export class LocalTrainingUseCase {
 	async setGoal(trainingUuid: string, goal: SetTrainingGoalRequest): Promise<TrainingGoalRow> {
 		const now = new Date();
 
-		return this.repository.insert('trainingGoal', {
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			createdAt: now,
-			updatedAt: now,
-			...(undefined === goal.puzzlesPerDay ? {} : { puzzlesPerDay: goal.puzzlesPerDay }),
-			...(undefined === goal.endDate ? {} : { endDate: goal.endDate }),
-		});
+		return this.repository.insert(
+			'trainingGoal',
+			born<TrainingGoalRow>({
+				uuid: crypto.randomUUID(),
+				trainingUuid,
+				createdAt: now,
+				updatedAt: now,
+				...(undefined === goal.puzzlesPerDay ? {} : { puzzlesPerDay: goal.puzzlesPerDay }),
+				...(undefined === goal.endDate ? {} : { endDate: goal.endDate }),
+			}),
+		);
 	}
 }

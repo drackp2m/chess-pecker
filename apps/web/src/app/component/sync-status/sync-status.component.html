@@ -1,0 +1,97 @@
+<div class="flex-col gap-2">
+	<h4>{{ I18n.setting.SYNC_TITLE | i18n }}</h4>
+
+	<p class="fs-sm color-contrast-mid">{{ I18n.setting.SYNC_INTRO | i18n }}</p>
+
+	@if (!session.isAuthenticated()) {
+		<p class="fs-sm color-contrast-mid">{{ I18n.setting.SYNC_ANONYMOUS | i18n }}</p>
+	} @else {
+		<p class="fs-sm color-contrast-mid" role="status">
+			@if (isBusy()) {
+				{{ phase() | i18n }}
+			} @else if (sync.lastSyncedAt(); as at) {
+				{{ I18n.setting.SYNC_LAST | i18n: { at: format(at) } }}
+			} @else {
+				{{ I18n.setting.SYNC_NEVER | i18n }}
+			}
+		</p>
+
+		@if (sync.error(); as failure) {
+			<p class="fs-sm color-contrast-mid">{{ failure.key | i18n: failure.params }}</p>
+		}
+
+		@if (report(); as status) {
+			<ul class="entities flex-col">
+				@for (entity of status.entities; track entity.entity) {
+					<li class="entity flex-col gap-1">
+						<div class="flex-row gap-2 justify-between align-center">
+							<span>{{ entityLabel[entity.entity] | i18n }}</span>
+
+							<span class="fs-sm color-contrast-mid">
+								@if (0 < entity.pending) {
+									{{ I18n.setting.SYNC_PENDING | i18n: { count: entity.pending } }}
+								} @else if (0 === entity.rejected) {
+									{{ I18n.setting.SYNC_UP_TO_DATE | i18n }}
+								}
+
+								@if (0 < entity.rejected) {
+									{{ I18n.setting.SYNC_REJECTED | i18n: { count: entity.rejected } }}
+								}
+							</span>
+						</div>
+
+						<p class="fs-sm color-contrast-mid">
+							{{ I18n.setting.SYNC_ROWS | i18n: { count: entity.rows } }} ·
+							@if (entity.cursor; as cursor) {
+								{{ I18n.setting.SYNC_CURSOR | i18n: { at: format(cursor) } }}
+							} @else {
+								{{ I18n.setting.SYNC_NO_CURSOR | i18n }}
+							}
+
+							@if (entity.syncedAt; as syncedAt) {
+								· {{ I18n.setting.SYNC_LAST | i18n: { at: format(syncedAt) } }}
+							}
+						</p>
+
+						@if (entity.isStale) {
+							<p class="fs-sm color-contrast-mid">
+								{{ I18n.setting.SYNC_STALE | i18n: { days: staleDays } }}
+							</p>
+						}
+					</li>
+				}
+			</ul>
+
+			@if (0 < status.rejections.length) {
+				<h5>{{ I18n.setting.SYNC_REASONS | i18n }}</h5>
+
+				<ul class="reasons flex-col gap-1 fs-sm color-contrast-mid">
+					@for (rejection of status.rejections; track rejection.uuid) {
+						<li>
+							{{ entityLabel[rejection.entity] | i18n }} · {{ format(rejection.rejectedAt) }} ·
+							{{ rejection.reason }}
+						</li>
+					}
+
+					@if (0 < hidden()) {
+						<li>{{ I18n.setting.SYNC_MORE_REJECTED | i18n: { count: hidden() } }}</li>
+					}
+				</ul>
+			}
+		}
+
+		<div class="flex-row gap-2">
+			<button appThemed [disabled]="isBusy()" (click)="force()">
+				{{ (isBusy() ? I18n.setting.SYNC_BUSY : I18n.setting.SYNC_FORCE) | i18n }}
+			</button>
+
+			@if (report(); as status) {
+				@if (0 < status.rejected) {
+					<button appThemed color="accent" [disabled]="isBusy()" (click)="retryRejected()">
+						{{ I18n.setting.SYNC_RETRY | i18n }}
+					</button>
+				}
+			}
+		</div>
+	}
+</div>

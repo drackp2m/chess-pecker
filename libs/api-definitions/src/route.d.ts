@@ -16,24 +16,22 @@ import {
 	SearchPuzzleRequest,
 } from './puzzle';
 import {
-	CalibrationAttemptResult,
+	GetSyncTrainingTreeRequest,
+	PushTrainingRequest,
+	PushTrainingResult,
+	SyncSummary,
+	SyncTrainingTree,
+} from './sync';
+import {
 	CalibrationRound,
 	CalibrationRoundPuzzles,
-	CalibrationRoundStart,
-	CycleAttemptResult,
 	GetTrainingActivityRequest,
 	GetTrainingAttemptsRequest,
-	SelectTrainingSetRequest,
-	SelectTrainingSetResult,
-	SetTrainingGoalRequest,
-	SubmitCalibrationAttemptRequest,
-	SubmitCycleAttemptRequest,
 	Training,
 	TrainingActivity,
 	TrainingAttemptHistory,
 	TrainingCycle,
 	TrainingCycleItem,
-	TrainingGoal,
 	TrainingProgress,
 } from './training';
 import { SearchUserRequest, UserSummary } from './user';
@@ -56,7 +54,7 @@ export type ApiEndpointMap<M> = Record<keyof M, ApiEndpoint>;
 export type ApiVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type ApiModule =
-	'auth' | 'friendship' | 'puzzle' | 'training' | 'user' | 'userBlock' | 'userSetting';
+	'auth' | 'friendship' | 'puzzle' | 'sync' | 'training' | 'user' | 'userBlock' | 'userSetting';
 
 export interface AuthGetRoutes {
 	'/logout': { response: undefined };
@@ -98,6 +96,21 @@ export interface PuzzlePostRoutes {
 	'/import': { params: ImportPuzzleRequest; response: ImportPuzzleResult };
 }
 
+export interface SyncGetRoutes {
+	/** Qué hay del otro lado, por tabla. Una sola llamada decide qué hay que bajar. */
+	'': { response: SyncSummary };
+	'/training/:uuid': {
+		path: { uuid: string };
+		query: GetSyncTrainingTreeRequest;
+		response: SyncTrainingTree;
+	};
+}
+
+export interface SyncPostRoutes {
+	/** El árbol entero de un entrenamiento. Idempotente por `clientRef`. */
+	'/training': { params: PushTrainingRequest; response: PushTrainingResult };
+}
+
 export interface TrainingGetRoutes {
 	'': { response: readonly Training[] };
 	'/activity': { query: GetTrainingActivityRequest; response: TrainingActivity };
@@ -117,31 +130,13 @@ export interface TrainingGetRoutes {
 	'/:uuid/cycle/next': { path: { uuid: string }; response: TrainingCycleItem };
 }
 
+/**
+ * Lo que se escribe de un entrenamiento entra por `POST /sync/training`: aquí sólo quedan
+ * abrirlo y darlo por completado, que no son pasos del flujo sino los dos extremos.
+ */
 export interface TrainingPostRoutes {
 	'': { response: Training };
-	'/:uuid/set': {
-		path: { uuid: string };
-		params: SelectTrainingSetRequest;
-		response: SelectTrainingSetResult;
-	};
-	'/:uuid/goal': {
-		path: { uuid: string };
-		params: SetTrainingGoalRequest;
-		response: TrainingGoal;
-	};
 	'/:uuid/finish': { path: { uuid: string }; response: undefined };
-	'/:uuid/calibration/round': { path: { uuid: string }; response: CalibrationRoundStart };
-	'/:uuid/calibration/attempt': {
-		path: { uuid: string };
-		params: SubmitCalibrationAttemptRequest;
-		response: CalibrationAttemptResult;
-	};
-	'/:uuid/cycle': { path: { uuid: string }; response: TrainingCycle };
-	'/:uuid/cycle/attempt': {
-		path: { uuid: string };
-		params: SubmitCycleAttemptRequest;
-		response: CycleAttemptResult;
-	};
 }
 
 export interface TrainingDeleteRoutes {

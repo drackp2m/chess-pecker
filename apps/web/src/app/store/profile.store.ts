@@ -3,10 +3,11 @@ import type { FriendUser, Friendship, UserBlock, UserSummary } from '@chesspecke
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
-import { Resettable } from '@app/definition/resettable.interface';
+import { Syncable } from '@app/definition/syncable.interface';
 import { I18n, i18nRef } from '@app/i18n';
 import { FriendshipRepository } from '@app/repository/friendship.repository';
 import { UserRepository } from '@app/repository/user.repository';
+import { NO_SYNC_STATE, withSyncState } from '@app/store/feature/with-sync-state';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
@@ -18,10 +19,7 @@ interface ProfileStoreProps {
 	matches: readonly UserSummary[];
 	/** The term `matches` answers to, so the list can be labelled and cleared. */
 	searchTerm: string;
-	isLoading: boolean;
 	isSearching: boolean;
-	isSubmitting: boolean;
-	error: TranslationRef | null;
 	notice: TranslationRef | null;
 }
 
@@ -32,10 +30,7 @@ const initialState: ProfileStoreProps = {
 	blocked: [],
 	matches: [],
 	searchTerm: '',
-	isLoading: false,
 	isSearching: false,
-	isSubmitting: false,
-	error: null,
 	notice: null,
 };
 
@@ -43,18 +38,19 @@ const initialState: ProfileStoreProps = {
 	providedIn: 'root',
 })
 export class ProfileStore
-	extends signalStore({ protectedState: false }, withState(initialState))
-	implements Resettable
+	extends signalStore({ protectedState: false }, withState(initialState), withSyncState())
+	implements Syncable
 {
 	private readonly friendshipRepository = inject(FriendshipRepository);
 	private readonly userRepository = inject(UserRepository);
 
 	reset(): void {
-		patchState(this, initialState);
+		patchState(this, initialState, NO_SYNC_STATE);
 	}
 
 	async load(): Promise<void> {
 		patchState(this, { isLoading: true, error: null });
+		await this.whenReady();
 
 		try {
 			const [friends, requests, blocked] = await Promise.all([

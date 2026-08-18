@@ -36,11 +36,6 @@ export interface CalibrationRound {
 	readonly outcome: CalibrationRoundOutcome;
 }
 
-export interface CalibrationRoundStart {
-	readonly round: CalibrationRound;
-	readonly puzzles: readonly ApiPuzzle[];
-}
-
 /**
  * Una ronda a medias: lo que queda por intentar no basta para situarse en ella, así que
  * el reparto entero viaja aparte y es lo que cuenta el indicador.
@@ -49,17 +44,6 @@ export interface CalibrationRoundPuzzles {
 	readonly total: number;
 	readonly attempted: number;
 	readonly puzzles: readonly ApiPuzzle[];
-}
-
-export interface PuzzleAttempt {
-	readonly uuid: string;
-	readonly durationMs: number;
-	readonly solved: boolean;
-}
-
-export interface CalibrationAttemptResult {
-	readonly attempt: PuzzleAttempt;
-	readonly outcome: CalibrationRoundOutcome;
 }
 
 export interface TrainingCycle {
@@ -75,25 +59,12 @@ export interface TrainingCycleItem {
 	readonly trainingPuzzle: { readonly uuid: string; readonly puzzle: ApiPuzzle };
 }
 
-export interface CycleAttemptResult {
-	readonly attempt: PuzzleAttempt;
-	readonly cycleFinished: boolean;
-}
-
 export interface TrainingGoal {
 	readonly uuid: string;
 	readonly puzzlesPerDay?: number;
 	readonly endDate?: string;
 	readonly createdAt: string;
 	readonly updatedAt: string;
-}
-
-export interface SelectTrainingSetRequest {
-	size?: number;
-}
-
-export interface SelectTrainingSetResult {
-	readonly size: number;
 }
 
 export interface SetTrainingGoalRequest<TDate = string> extends SyncTimestamps<TDate> {
@@ -125,17 +96,6 @@ export interface PuzzleAttemptRecord {
 	mistakeCount: number;
 	record: PuzzleEvent[];
 	explorations: FreePlayRun[];
-}
-
-export interface SubmitCalibrationAttemptRequest<TDate = string>
-	extends SyncTimestamps<TDate>, PuzzleAttemptRecord {
-	roundUuid: string;
-	puzzleUuid: string;
-}
-
-export interface SubmitCycleAttemptRequest<TDate = string>
-	extends SyncTimestamps<TDate>, PuzzleAttemptRecord {
-	cycleItemUuid: string;
 }
 
 export interface CycleProgress {

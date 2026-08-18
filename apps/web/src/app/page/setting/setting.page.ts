@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { BoardDemoComponent } from '@app/component/board-demo/board-demo.component';
+import { SyncStatusComponent } from '@app/component/sync-status/sync-status.component';
 import {
 	MOVE_ANIMATIONS,
 	MOVE_ANIMATION_LABEL,
@@ -24,7 +25,13 @@ import { bindSetting } from '@app/util/setting-binding';
 @Component({
 	templateUrl: './setting.page.html',
 	styleUrl: './setting.page.scss',
-	imports: [ReactiveFormsModule, RadioCheckboxDirective, BoardDemoComponent, I18nPipe],
+	imports: [
+		ReactiveFormsModule,
+		RadioCheckboxDirective,
+		BoardDemoComponent,
+		SyncStatusComponent,
+		I18nPipe,
+	],
 	providers: [provideI18nScope('setting')],
 })
 export class SettingPage {

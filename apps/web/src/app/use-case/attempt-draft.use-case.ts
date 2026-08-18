@@ -1,9 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import type { PuzzleAttemptKind } from '@chesspecker/api-definitions';
+import type { PuzzleAttemptClosure, PuzzleAttemptKind } from '@chesspecker/api-definitions';
 
-import { PuzzleClosure, PuzzleRecord } from '@app/definition/puzzle.type';
+import { PuzzleRecord } from '@app/definition/puzzle.type';
 import { AttemptRepository } from '@app/repository/attempt.repository';
+import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
+import { born } from '@app/use-case/sync/local-record';
 
 export interface AttemptIdentity {
 	readonly trainingUuid: string;
@@ -25,11 +27,14 @@ export interface AttemptDraft {
 export interface AttemptProgress extends PuzzleRecord {
 	readonly durationMs: number;
 	readonly updatedAt: Date;
-	readonly closure: PuzzleClosure;
 	readonly hintUsed: boolean;
 	readonly mistakeCount: number;
-	readonly startedAt?: Date;
 	readonly solved?: boolean;
+}
+
+export interface AttemptOutcome extends AttemptProgress {
+	readonly closure: PuzzleAttemptClosure;
+	readonly solved: boolean;
 }
 
 export function toSlotId(identity: AttemptIdentity): string {
@@ -46,40 +51,64 @@ export function toSlotId(identity: AttemptIdentity): string {
 export class AttemptDraftUseCase {
 	private readonly repository = inject(AttemptRepository);
 
-	find(identity: AttemptIdentity): Promise<AttemptRow | undefined> {
-		return this.repository.findByIndex('attempt', 'slotId', toSlotId(identity));
-	}
-
-	async save(draft: AttemptDraft, progress: AttemptProgress): Promise<void> {
-		await this.repository.insert('attempt', this.toRow(draft, progress));
+	find(identity: AttemptIdentity): Promise<AttemptDraftRow | undefined> {
+		return this.repository.find('attemptDraft', toSlotId(identity));
 	}
 
 	/**
-	 * El intento ya está en el servidor, así que la copia local deja de ser la única.
-	 * Sin este sello no habría manera de saber qué se perdería al vaciar el dispositivo.
+	 * El hueco que el intento ocupa, que es por lo que se le reconoce: el uuid lo pone cada
+	 * lado por su cuenta, así que casar por él duplicaría lo que ya está aquí.
 	 */
-	async markSynced(draft: AttemptDraft, syncedAt: Date = new Date()): Promise<void> {
-		const row = await this.find(draft.identity);
-
-		if (undefined !== row) {
-			await this.repository.insert('attempt', { ...row, syncedAt });
+	findClosed(identity: AttemptIdentity): Promise<AttemptRow | undefined> {
+		if (undefined !== identity.cycleItemUuid) {
+			return this.repository.findByIndex('attempt', 'cycleItemUuid', identity.cycleItemUuid);
 		}
+
+		if (undefined === identity.roundUuid) {
+			return Promise.resolve(undefined);
+		}
+
+		return this.repository.findByIndex('attempt', 'roundUuid-puzzleUuid', [
+			identity.roundUuid,
+			identity.puzzleUuid,
+		]);
 	}
 
-	private toRow(draft: AttemptDraft, progress: AttemptProgress): AttemptRow {
+	async save(draft: AttemptDraft, progress: AttemptProgress): Promise<void> {
+		await this.repository.insert('attemptDraft', this.toDraftRow(draft, progress));
+	}
+
+	/**
+	 * Cerrar un ejercicio es una sola transacción: el intento entra y el borrador se va, así
+	 * que no hay instante en el que el mismo hueco esté en los dos sitios ni en ninguno.
+	 */
+	async seal(draft: AttemptDraft, outcome: AttemptOutcome): Promise<void> {
+		const row = this.toAttemptRow(draft, outcome);
+		const slotId = toSlotId(draft.identity);
+
+		await this.repository.runInTransaction(
+			['attempt', 'attemptDraft'],
+			'readwrite',
+			async (transaction) => {
+				await transaction.objectStore('attempt').put(row);
+				await transaction.objectStore('attemptDraft').delete(slotId);
+			},
+		);
+	}
+
+	private toDraftRow(draft: AttemptDraft, progress: AttemptProgress): AttemptDraftRow {
 		const { identity } = draft;
 
 		return {
+			slotId: toSlotId(identity),
 			uuid: draft.uuid,
 			trainingUuid: identity.trainingUuid,
 			kind: identity.kind,
-			slotId: toSlotId(identity),
 			puzzleUuid: identity.puzzleUuid,
 			lichessId: identity.lichessId,
 			durationMs: progress.durationMs,
 			record: progress.record,
 			explorations: progress.explorations,
-			closure: progress.closure,
 			hintUsed: progress.hintUsed,
 			mistakeCount: progress.mistakeCount,
 			createdAt: draft.createdAt,
@@ -87,8 +116,31 @@ export class AttemptDraftUseCase {
 			...(undefined === draft.position ? {} : { position: draft.position }),
 			...(undefined === identity.roundUuid ? {} : { roundUuid: identity.roundUuid }),
 			...(undefined === identity.cycleItemUuid ? {} : { cycleItemUuid: identity.cycleItemUuid }),
-			...(undefined === progress.startedAt ? {} : { startedAt: progress.startedAt }),
 			...(undefined === progress.solved ? {} : { solved: progress.solved }),
 		};
+	}
+
+	private toAttemptRow(draft: AttemptDraft, outcome: AttemptOutcome): AttemptRow {
+		const { identity } = draft;
+
+		return born<AttemptRow>({
+			uuid: draft.uuid,
+			trainingUuid: identity.trainingUuid,
+			kind: identity.kind,
+			puzzleUuid: identity.puzzleUuid,
+			lichessId: identity.lichessId,
+			durationMs: outcome.durationMs,
+			record: outcome.record,
+			explorations: outcome.explorations,
+			solved: outcome.solved,
+			closure: outcome.closure,
+			hintUsed: outcome.hintUsed,
+			mistakeCount: outcome.mistakeCount,
+			createdAt: draft.createdAt,
+			updatedAt: outcome.updatedAt,
+			...(undefined === draft.position ? {} : { position: draft.position }),
+			...(undefined === identity.roundUuid ? {} : { roundUuid: identity.roundUuid }),
+			...(undefined === identity.cycleItemUuid ? {} : { cycleItemUuid: identity.cycleItemUuid }),
+		});
 	}
 }

@@ -156,7 +156,7 @@
       "checks": [
         {
           "name": "friendship_check",
-          "columnName": "requester_uuid",
+          "columnName": "addressee_uuid",
           "definition": "CHECK (((requester_uuid)::text <> (addressee_uuid)::text))",
           "expression": "requester_uuid <> addressee_uuid"
         }
@@ -635,11 +635,37 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
         }
       },
       "name": "puzzle_attempt",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "puzzle_attempt_client_ref_unique",
+          "unique": true,
+          "primary": false
+        },
         {
           "columnNames": [
             "cycle_item_uuid"
@@ -872,11 +898,53 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "training",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "training_client_ref_unique",
+          "unique": true,
+          "primary": false
+        },
         {
           "columnNames": [
             "uuid"
@@ -902,7 +970,7 @@
       "checks": [
         {
           "name": "training_abandoned_matches_reason_check",
-          "columnName": "finished_reason",
+          "columnName": "status",
           "definition": "CHECK (((finished_reason IS NULL) OR ((status = 'abandoned'::text) = (finished_reason = 'cancelled'::text))))",
           "expression": "(finished_reason IS NULL) OR ((status = 'abandoned'::text) = (finished_reason = 'cancelled'::text))"
         }
@@ -1022,6 +1090,38 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "integer"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "training_calibration_puzzle",
@@ -1047,6 +1147,16 @@
           "composite": true,
           "constraint": true,
           "keyName": "training_calibration_puzzle_calibration_round_uui_ec26c_unique",
+          "unique": true,
+          "primary": false
+        },
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "training_calibration_puzzle_client_ref_unique",
           "unique": true,
           "primary": false
         },
@@ -1230,11 +1340,53 @@
             "accept"
           ],
           "mappedType": "enum"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "training_calibration_round",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "training_calibration_round_client_ref_unique",
+          "unique": true,
+          "primary": false
+        },
         {
           "columnNames": [
             "uuid"
@@ -1384,11 +1536,53 @@
             "abandoned"
           ],
           "mappedType": "enum"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "training_cycle",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "training_cycle_client_ref_unique",
+          "unique": true,
+          "primary": false
+        },
         {
           "columnNames": [
             "uuid"
@@ -1527,11 +1721,53 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "integer"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "training_cycle_item",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "training_cycle_item_client_ref_unique",
+          "unique": true,
+          "primary": false
+        },
         {
           "columnNames": [
             "cycle_uuid",
@@ -1695,11 +1931,53 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "date"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "training_goal",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "training_goal_client_ref_unique",
+          "unique": true,
+          "primary": false
+        },
         {
           "columnNames": [
             "uuid"
@@ -1725,7 +2003,7 @@
       "checks": [
         {
           "name": "training_goal_has_target_check",
-          "columnName": "end_date",
+          "columnName": "puzzles_per_day",
           "definition": "CHECK (((puzzles_per_day IS NOT NULL) OR (end_date IS NOT NULL)))",
           "expression": "(puzzles_per_day IS NOT NULL) OR (end_date IS NOT NULL)"
         }
@@ -1829,11 +2107,53 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "string"
+        },
+        "client_ref": {
+          "name": "client_ref",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": "now()",
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
         }
       },
       "name": "training_puzzle",
       "schema": "public",
       "indexes": [
+        {
+          "columnNames": [
+            "client_ref"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "training_puzzle_client_ref_unique",
+          "unique": true,
+          "primary": false
+        },
         {
           "columnNames": [
             "uuid"
@@ -2167,7 +2487,7 @@
       "checks": [
         {
           "name": "user_block_check",
-          "columnName": "blocker_uuid",
+          "columnName": "blocked_uuid",
           "definition": "CHECK (((blocker_uuid)::text <> (blocked_uuid)::text))",
           "expression": "blocker_uuid <> blocked_uuid"
         }

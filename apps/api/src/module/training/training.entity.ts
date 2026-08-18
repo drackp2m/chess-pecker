@@ -1,6 +1,6 @@
 import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/core';
 
-import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
+import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 import { User } from '../user/user.entity';
 
 import { TrainingFinishedReason } from './definition/training-finished-reason.enum';
@@ -25,7 +25,7 @@ import { TrainingRepository } from './training.repository';
 	name: 'training_abandoned_matches_reason_check',
 	expression: `finished_reason is null or ((status = 'abandoned') = (finished_reason = 'cancelled'))`,
 })
-export class Training extends CustomBaseEntity<Training> {
+export class Training extends SyncableBaseEntity<Training> {
 	@ManyToOne(() => User, { deleteRule: 'cascade' })
 	user!: User;
 

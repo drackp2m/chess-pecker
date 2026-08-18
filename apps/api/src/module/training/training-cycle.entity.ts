@@ -1,6 +1,6 @@
 import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
 
-import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
+import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 
 import { TrainingCycleStatus } from './definition/training-cycle-status.enum';
 import { TrainingCycleRepository } from './training-cycle.repository';
@@ -18,7 +18,7 @@ import { Training } from './training.entity';
  */
 @Entity({ repository: () => TrainingCycleRepository })
 @Unique({ properties: ['training', 'index'] })
-export class TrainingCycle extends CustomBaseEntity<TrainingCycle> {
+export class TrainingCycle extends SyncableBaseEntity<TrainingCycle> {
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
 

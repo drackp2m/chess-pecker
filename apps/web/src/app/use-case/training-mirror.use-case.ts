@@ -1,163 +1,131 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable } from '@angular/core';
 import type {
 	ApiPuzzle,
-	CalibrationRound,
-	SetTrainingGoalRequest,
-	Training,
-	TrainingCycle,
-	TrainingCycleItem,
+	SyncTreeCycleNode,
+	SyncTreeDealtNode,
+	SyncTreeGoalNode,
+	SyncTreeItemNode,
+	SyncTreeRoundNode,
+	SyncTreeRow,
+	SyncTreeSetNode,
+	SyncTreeTrainingNode,
 } from '@chesspecker/api-definitions';
 
+import { LocalRecord } from '@app/repository/definition/local-record.interface';
 import {
 	CalibrationPuzzleRow,
 	CalibrationRoundRow,
+	CycleItemRow,
 	TrainingCycleRow,
+	TrainingGoalRow,
+	TrainingPuzzleRow,
 	TrainingRow,
 } from '@app/repository/definition/training-schema.interface';
-import { TrainingLocalRepository } from '@app/repository/training-local.repository';
+
+export type PuzzleIndex = ReadonlyMap<string, ApiPuzzle>;
 
 @Injectable({
 	providedIn: 'root',
 })
 export class TrainingMirrorUseCase {
-	private readonly repository = inject(TrainingLocalRepository);
-
-	async trainings(trainings: readonly Training[]): Promise<void> {
-		await Promise.all(trainings.map((training) => this.training(training)));
-	}
-
-	async training(training: Training): Promise<TrainingRow> {
-		const stored = await this.repository.find('training', training.uuid);
-		const row: TrainingRow = {
-			uuid: training.uuid,
-			status: training.status,
-			createdAt: stored?.createdAt ?? new Date(training.createdAt),
-			updatedAt: new Date(training.updatedAt),
-			syncedAt: new Date(),
-			...(undefined === training.finishedReason ? {} : { finishedReason: training.finishedReason }),
-			...(undefined === training.finishedAt ? {} : { finishedAt: new Date(training.finishedAt) }),
-		};
-
-		return this.repository.insert('training', row);
-	}
-
-	async rounds(trainingUuid: string, rounds: readonly CalibrationRound[]): Promise<void> {
-		await Promise.all(rounds.map((round) => this.round(trainingUuid, round)));
-	}
-
-	async round(trainingUuid: string, round: CalibrationRound): Promise<CalibrationRoundRow> {
-		const stored = await this.repository.find('calibrationRound', round.uuid);
-		const now = new Date();
-
-		return this.repository.insert('calibrationRound', {
-			uuid: round.uuid,
-			trainingUuid,
-			index: round.index,
-			kind: round.kind,
-			rating: round.rating,
-			outcome: round.outcome,
-			createdAt: stored?.createdAt ?? now,
-			updatedAt: now,
-			syncedAt: now,
-		});
-	}
-
-	async roundPuzzles(
-		roundUuid: string,
-		puzzles: readonly ApiPuzzle[],
-		attempted: number,
-	): Promise<void> {
-		const stored = await this.repository.findAllByIndex(
-			'calibrationPuzzle',
-			'roundUuid',
-			roundUuid,
-		);
-		const known = new Set(stored.map((row) => row.lichessId));
-		const rows = puzzles
-			.map((puzzle, offset) => this.toDealtRow(roundUuid, puzzle, attempted + offset))
-			.filter((row) => !known.has(row.lichessId));
-
-		if (0 < rows.length) {
-			await this.repository.batchInsert('calibrationPuzzle', rows);
-		}
-	}
-
-	async cycles(trainingUuid: string, cycles: readonly TrainingCycle[]): Promise<void> {
-		await Promise.all(cycles.map((cycle) => this.cycle(trainingUuid, cycle)));
-	}
-
-	async cycle(trainingUuid: string, cycle: TrainingCycle): Promise<TrainingCycleRow> {
-		const stored = await this.repository.find('cycle', cycle.uuid);
-		const now = new Date();
-
-		return this.repository.insert('cycle', {
-			uuid: cycle.uuid,
-			trainingUuid,
-			index: cycle.index,
-			status: cycle.status,
-			createdAt: stored?.createdAt ?? new Date(cycle.createdAt),
-			updatedAt: now,
-			syncedAt: now,
-		});
-	}
-
-	async cycleItem(cycleUuid: string, item: TrainingCycleItem): Promise<void> {
-		const now = new Date();
-		const trainingUuid = (await this.repository.find('cycle', cycleUuid))?.trainingUuid;
-
-		if (undefined === trainingUuid) {
-			return;
-		}
-
-		const stored = await this.repository.find('trainingPuzzle', item.trainingPuzzle.uuid);
-
-		await this.repository.insert('trainingPuzzle', {
-			uuid: item.trainingPuzzle.uuid,
-			trainingUuid,
-			lichessId: item.trainingPuzzle.puzzle.lichessId,
-			rating: item.trainingPuzzle.puzzle.rating,
-			createdAt: stored?.createdAt ?? now,
-			updatedAt: now,
-			syncedAt: now,
-		});
-
-		await this.repository.insert('cycleItem', {
-			uuid: item.uuid,
-			cycleUuid,
-			trainingPuzzleUuid: item.trainingPuzzle.uuid,
-			lichessId: item.trainingPuzzle.puzzle.lichessId,
-			position: item.position,
-			createdAt: (await this.repository.find('cycleItem', item.uuid))?.createdAt ?? now,
-			updatedAt: now,
-			syncedAt: now,
-		});
-	}
-
-	async goal(trainingUuid: string, goal: SetTrainingGoalRequest): Promise<void> {
-		const now = new Date();
-
-		await this.repository.insert('trainingGoal', {
-			uuid: crypto.randomUUID(),
-			trainingUuid,
-			createdAt: now,
-			updatedAt: now,
-			syncedAt: now,
-			...(undefined === goal.puzzlesPerDay ? {} : { puzzlesPerDay: goal.puzzlesPerDay }),
-			...(undefined === goal.endDate ? {} : { endDate: goal.endDate }),
-		});
-	}
-
-	private toDealtRow(roundUuid: string, puzzle: ApiPuzzle, position: number): CalibrationPuzzleRow {
-		const now = new Date();
+	training(node: SyncTreeTrainingNode): TrainingRow {
+		const finishedReason = node.finishedReason ?? undefined;
+		const finishedAt = node.finishedAt ?? undefined;
 
 		return {
-			uuid: crypto.randomUUID(),
-			roundUuid,
-			lichessId: puzzle.lichessId,
-			position,
-			createdAt: now,
-			updatedAt: now,
-			syncedAt: now,
+			...marks(node),
+			uuid: node.uuid,
+			status: node.status,
+			...(undefined === finishedReason ? {} : { finishedReason }),
+			...(undefined === finishedAt ? {} : { finishedAt: new Date(finishedAt) }),
 		};
 	}
+
+	goal(trainingUuid: string, node: SyncTreeGoalNode): TrainingGoalRow {
+		const puzzlesPerDay = node.puzzlesPerDay ?? undefined;
+		const endDate = node.endDate ?? undefined;
+
+		return {
+			...marks(node),
+			uuid: node.uuid,
+			trainingUuid,
+			...(undefined === puzzlesPerDay ? {} : { puzzlesPerDay }),
+			...(undefined === endDate ? {} : { endDate }),
+		};
+	}
+
+	round(trainingUuid: string, node: SyncTreeRoundNode): CalibrationRoundRow {
+		return {
+			...marks(node),
+			uuid: node.uuid,
+			trainingUuid,
+			index: node.index,
+			kind: node.kind,
+			rating: node.rating,
+			outcome: node.outcome,
+		};
+	}
+
+	dealt(roundUuid: string, node: SyncTreeDealtNode): CalibrationPuzzleRow {
+		return {
+			...marks(node),
+			uuid: node.uuid,
+			roundUuid,
+			lichessId: node.lichessId,
+			position: node.position,
+		};
+	}
+
+	setEntry(
+		trainingUuid: string,
+		node: SyncTreeSetNode,
+		puzzles: PuzzleIndex,
+	): TrainingPuzzleRow | undefined {
+		const puzzle = puzzles.get(node.lichessId);
+
+		if (undefined === puzzle) {
+			return undefined;
+		}
+
+		return {
+			...marks(node),
+			uuid: node.uuid,
+			trainingUuid,
+			lichessId: node.lichessId,
+			rating: puzzle.rating,
+		};
+	}
+
+	cycle(trainingUuid: string, node: SyncTreeCycleNode): TrainingCycleRow {
+		return {
+			...marks(node),
+			uuid: node.uuid,
+			trainingUuid,
+			index: node.index,
+			status: node.status,
+			expectedItems: node.itemCount,
+		};
+	}
+
+	cycleItem(cycleUuid: string, node: SyncTreeItemNode): CycleItemRow {
+		return {
+			...marks(node),
+			uuid: node.uuid,
+			cycleUuid,
+			trainingPuzzleUuid: node.trainingPuzzleUuid,
+			lichessId: node.lichessId,
+			position: node.position,
+		};
+	}
+}
+
+function marks(node: SyncTreeRow): LocalRecord {
+	const clientRef = node.clientRef ?? undefined;
+
+	return {
+		createdAt: new Date(node.createdAt),
+		updatedAt: new Date(node.updatedAt),
+		syncedAt: new Date(node.receivedAt),
+		...(undefined === clientRef ? {} : { clientRef }),
+	};
 }

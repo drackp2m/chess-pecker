@@ -17,6 +17,19 @@ export class TrainingCalibrationPuzzleRepository extends CustomRepository<Traini
 			.count(TrainingCalibrationPuzzle, { calibrationRound: roundUuid });
 	}
 
+	async getManyByTraining(
+		trainingUuid: string,
+		receivedAfter?: Date,
+	): Promise<TrainingCalibrationPuzzle[]> {
+		return this.getMany(
+			{
+				calibrationRound: { training: trainingUuid },
+				...(undefined === receivedAfter ? {} : { receivedAt: { $gt: receivedAfter } }),
+			},
+			{ orderBy: { position: 'asc' }, populate: ['puzzle'] },
+		);
+	}
+
 	async getManyByRound(roundUuid: string): Promise<TrainingCalibrationPuzzle[]> {
 		return this.getMany(
 			{ calibrationRound: roundUuid },

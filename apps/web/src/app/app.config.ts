@@ -13,8 +13,8 @@ import { ThemeService } from '@app/service/theme.service';
 import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
 import { SessionStore } from '@app/store/session.store';
+import { SyncStore } from '@app/store/sync.store';
 import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.strategy';
-import { PuzzleCatalogReplicaUseCase } from '@app/use-case/puzzle-catalog-replica.use-case';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -28,15 +28,17 @@ export const appConfig: ApplicationConfig = {
 			// The session restore is a background refresh, not a boot gate: the app
 			// starts as `unknown` and whatever reads the store reacts when it settles,
 			// so the initializer fires it without awaiting the result.
+			//
+			// El ciclo de sincronización sí es una puerta, y va detrás: quién ha entrado
+			// decide si hay resumen que pedir, y hasta que la pasada termina la aplicación
+			// enseña el splash en vez de datos a medias.
 			const sessionStore = inject(SessionStore);
-			const catalogReplica = inject(PuzzleCatalogReplicaUseCase);
+			const syncStore = inject(SyncStore);
 
 			sessionStore.watch();
-			void sessionStore.restore().then(() => {
-				if (!sessionStore.isUnreachable()) {
-					void catalogReplica.run();
-				}
-			});
+			syncStore.watch();
+
+			void sessionStore.restore().then(() => syncStore.start());
 		}),
 		provideRouter(
 			APP_ROUTES,

@@ -1,0 +1,12 @@
+:host {
+	display: flex;
+	flex-grow: 1;
+	align-items: center;
+	justify-content: center;
+
+	min-height: 100dvh;
+}
+
+.detail {
+	list-style: none;
+}
