@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import {
 	TrainingAttempt,
 	TrainingAttemptHistory,
@@ -16,44 +15,43 @@ export class ListTrainingAttemptsUseCase {
 	constructor(private readonly puzzleAttemptRepository: PuzzleAttemptRepository) {}
 
 	/**
-	 * El corte se lee antes que las filas, igual que en la actividad: lo que entre entre las
-	 * dos consultas viaja ya en la siguiente página o en la siguiente visita. Repetir un
-	 * intento es gratis —el dispositivo lo reconoce por su hueco—, perdérselo no.
+	 * El corte es la última fila servida, no una marca de tiempo: dos intentos pueden
+	 * compartir el instante en que llegaron —los sube un mismo push, o los sella de golpe la
+	 * migración que añadió `receivedAt`— y entre dos fechas iguales no hay por dónde cortar.
+	 * Con la fila, sí: el orden se completa con el `uuid` y la página siguiente empieza justo
+	 * después de la anterior, aunque las 500 que quedan lleven todas la misma fecha.
 	 *
 	 * Una página llena no dice que queden más, dice que puede que queden: el cliente pide
 	 * otra y se encuentra con que está vacía, que es una petición de más y ninguna fila de
-	 * menos.
+	 * menos. Y una vacía devuelve el cursor que le dieron, porque nada ha avanzado.
 	 */
 	async execute(
 		training: Training,
 		request: GetTrainingAttemptsRequestDto,
 	): Promise<TrainingAttemptHistory> {
-		const size = Math.min(request.limit ?? TrainingPolicy.attemptPageSize, PAGE_SIZE);
-		const received =
-			(await this.puzzleAttemptRepository.lastReceivedAtByTraining(training.uuid)) ??
-			new GenerateNowDateUseCase().execute();
-
-		const attempts = await this.puzzleAttemptRepository.getManyByTrainingReceivedAfter(
+		const size = Math.min(request.limit ?? PAGE_SIZE, PAGE_SIZE);
+		const after = toCursor(request.since);
+		const attempts = await this.puzzleAttemptRepository.getPageByTraining(
 			training.uuid,
 			size,
-			request.since,
+			after,
 		);
-
-		const hasMore = attempts.length === size;
 
 		return {
 			attempts: attempts.map((attempt) => toHistoryEntry(attempt)),
-			cursor: (hasMore ? endOfPage(attempts, received) : received).toISOString(),
-			hasMore,
+			cursor: attempts.at(-1)?.uuid ?? after ?? '',
+			hasMore: attempts.length === size,
 		};
 	}
 }
 
 const PAGE_SIZE = TrainingPolicy.attemptPageSize;
 
-/** Dónde acaba la página, que es por donde sigue la siguiente. */
-function endOfPage(attempts: PuzzleAttempt[], fallback: Date): Date {
-	return attempts.at(-1)?.receivedAt ?? fallback;
+/** Un cursor en blanco es no traer ninguno: el dispositivo empieza por el principio. */
+function toCursor(since?: string): string | undefined {
+	const cursor = since?.trim();
+
+	return undefined === cursor || 0 === cursor.length ? undefined : cursor;
 }
 
 /**
