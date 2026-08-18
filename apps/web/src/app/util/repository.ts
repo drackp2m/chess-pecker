@@ -87,17 +87,31 @@ export abstract class Repository {
 		transaction: IDBPTransaction<T, StoreNames<T>[], 'versionchange'>,
 	): Promise<void> {
 		const migrations = this.migrations as unknown as Migration<T>[];
+		const pending = migrations.filter((migration) => migration.version > oldVersion);
 
-		console.log('Applying IndexedDB migrations:');
+		if (0 < pending.length && 'undefined' !== typeof APP_DEBUG && APP_DEBUG) {
+			const target = newVersion ?? oldVersion;
+			const versions = pending.map((migration) => migration.version.toString()).join(', ');
 
-		for (const migration of migrations) {
-			if (migration.version > oldVersion) {
-				console.log(
-					`Updating to version ${migration.version.toString()}: ${migration.description}...`,
-				);
-
-				await migration.apply({ database, oldVersion, newVersion, transaction });
-			}
+			console.log(`IndexedDB v${oldVersion.toString()} → v${target.toString()}: ${versions}`);
 		}
+
+		for (const migration of pending) {
+			await applyMigration(migration, { database, oldVersion, newVersion, transaction });
+		}
+	}
+}
+
+async function applyMigration<T>(
+	migration: Migration<T>,
+	context: Parameters<Migration<T>['apply']>[0],
+): Promise<void> {
+	try {
+		await migration.apply(context);
+	} catch (error) {
+		throw new Error(
+			`IndexedDB migration v${migration.version.toString()} failed: ${migration.description}`,
+			{ cause: error },
+		);
 	}
 }
