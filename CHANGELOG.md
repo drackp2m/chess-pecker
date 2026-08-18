@@ -1,3 +1,44 @@
+# v1.23.0 (2026-08-18)
+
+## What's Changed
+
+### ✨ Features
+
+- wait only for downloads, and upload as you solve ([1e2a82a](https://github.com/drackp2m/chess-pecker/commit/1e2a82ad004035de5ebe2e195b520c441865fae8)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- pin a pass to the exercises that are its own ([a198190](https://github.com/drackp2m/chess-pecker/commit/a198190c416ceb7767b55aa6b8b31f9e045e92b7)) by Marc Jovaní González
+- pin each state, the branch turned down and the tally ([e0fee67](https://github.com/drackp2m/chess-pecker/commit/e0fee67d4f77efd3b07de18529e7ff899594e496)) by Marc Jovaní González
+- pin that a download waits for what has not gone up ([d3a58ad](https://github.com/drackp2m/chess-pecker/commit/d3a58ad245dc035ca09c8f9203633a44852b0957)) by Marc Jovaní González
+- pin that a repeated push does not duplicate ([4712703](https://github.com/drackp2m/chess-pecker/commit/4712703a946a5d564a74d6fc90eb397a1601eb8a)) by Marc Jovaní González
+- pin the gate that lets the app start ([6ca35c7](https://github.com/drackp2m/chess-pecker/commit/6ca35c705438a43eff9b3d80a4d5a7b5c9583c1c)) by Marc Jovaní González
+- pin the marks a synced row carries ([3fdfc79](https://github.com/drackp2m/chess-pecker/commit/3fdfc79a830df8bbd9aa6b92737a9224e6c601fd)) by Marc Jovaní González
+- pin the rekey whole and the seal to its manifest ([39d6a5e](https://github.com/drackp2m/chess-pecker/commit/39d6a5eea726bcee96f4f942760dfd311a0ead6d)) by Marc Jovaní González
+- pin the tree order and what its budget leaves out ([78bd89c](https://github.com/drackp2m/chess-pecker/commit/78bd89c4666563bc6a153236cf28344c7ec034b8)) by Marc Jovaní González
+- pin what a cut upload must not mark as lost ([1e604b0](https://github.com/drackp2m/chess-pecker/commit/1e604b053b7ff997cec6fce880f2a5cc9de0ff54)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- dynamic languages on setting page ([75c24cd](https://github.com/drackp2m/chess-pecker/commit/75c24cd238681584fbfbc83121ddfc138cb9dfc6)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- keep a crippled pass out of the next one ([2ac2c25](https://github.com/drackp2m/chess-pecker/commit/2ac2c25b7073ec48da9532820beb54bdfed8958b)) by Marc Jovaní González
+- let an aborted transaction die without a scream ([8c84c73](https://github.com/drackp2m/chess-pecker/commit/8c84c73124486e07b10af8a25bba48b386e4791b)) by Marc Jovaní González
+- open the gate even if the pass breaks ([8fba34e](https://github.com/drackp2m/chess-pecker/commit/8fba34e9c5f18df84ca9b139b722d226d0abe7a3)) by Marc Jovaní González
+- say which migration blew up, and quiet the rest ([d124e56](https://github.com/drackp2m/chess-pecker/commit/d124e56943bc986a139f5c2cac420758012a8f33)) by Marc Jovaní González
+
+### 🏗️‍ Build System
+
+- add fake-indexeddb to test the local tree ([12fb6c1](https://github.com/drackp2m/chess-pecker/commit/12fb6c12c147f37057e4e4e38d1294911a1ee328)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- split Angular app and unit test projects ([4b0524c](https://github.com/drackp2m/chess-pecker/commit/4b0524c61fbc6f89e4b62dc3d7884d3a48f22d96)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.22.1...v1.23.0
+
 # v1.22.1 (2026-08-18)
 
 ## What's Changed
