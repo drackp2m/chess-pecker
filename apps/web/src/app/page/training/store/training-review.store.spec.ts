@@ -8,6 +8,7 @@ import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { PuzzleRow } from '@app/repository/definition/puzzle-schema.interface';
 import { CycleItemRow } from '@app/repository/definition/training-schema.interface';
+import { SyncStore } from '@app/store/sync.store';
 import { SolvedAttempt, TrainingHistoryUseCase } from '@app/use-case/training-history.use-case';
 import { TrainingRunEngineUseCase } from '@app/use-case/training-run-engine.use-case';
 
@@ -59,6 +60,7 @@ async function configure(entries: readonly SolvedAttempt[], solving = 'puzzle-3'
 			TrainingRunStore,
 			TrainingReviewStore,
 			{ provide: TrainingRunEngineUseCase, useValue: {} },
+			{ provide: SyncStore, useValue: { isTreeBehind: () => false } },
 			{ provide: TrainingHistoryUseCase, useValue: { list } },
 		],
 	});

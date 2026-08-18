@@ -79,7 +79,13 @@ export class LocalCycleUseCase {
 			throw new Error('The set is empty');
 		}
 
-		const cycle = await this.insertCycle(trainingUuid, cycles.length + 1);
+		const last = cycles.at(-1);
+
+		if (undefined !== last && last.expectedItems !== set.length) {
+			throw new Error('The set is not fully replicated on this device');
+		}
+
+		const cycle = await this.insertCycle(trainingUuid, cycles.length + 1, set.length);
 
 		await this.repository.batchInsert('cycleItem', this.toItemRows(cycle, buildCycleOrder(set)));
 		await this.trainings.updateStatus(trainingUuid, 'running');
@@ -105,6 +111,11 @@ export class LocalCycleUseCase {
 		}
 
 		const items = await this.listItems(cycle.uuid);
+
+		if (!isWholeCycle(cycle, items)) {
+			throw new Error('The cycle is not fully replicated on this device');
+		}
+
 		const attempted = new Set(
 			(await this.closedAttempts(trainingUuid)).map((attempt) => attempt.cycleItemUuid),
 		);
@@ -116,7 +127,11 @@ export class LocalCycleUseCase {
 
 		const puzzle = await this.repository.find('puzzle', item.lichessId);
 
-		return undefined === puzzle ? undefined : { cycle, item, puzzle };
+		if (undefined === puzzle) {
+			throw new Error('The next exercise is missing from the local catalog');
+		}
+
+		return { cycle, item, puzzle };
 	}
 
 	async closeIfComplete(trainingUuid: string, cycleUuid: string): Promise<boolean> {
@@ -127,6 +142,11 @@ export class LocalCycleUseCase {
 		}
 
 		const items = await this.listItems(cycleUuid);
+
+		if (!isWholeCycle(cycle, items)) {
+			return false;
+		}
+
 		const attempts = await this.closedAttempts(trainingUuid);
 		const attempted = items.filter((item) =>
 			attempts.some((attempt) => attempt.cycleItemUuid === item.uuid),
@@ -197,7 +217,11 @@ export class LocalCycleUseCase {
 		);
 	}
 
-	private async insertCycle(trainingUuid: string, index: number): Promise<TrainingCycleRow> {
+	private async insertCycle(
+		trainingUuid: string,
+		index: number,
+		expectedItems: number,
+	): Promise<TrainingCycleRow> {
 		const now = new Date();
 
 		return this.repository.insert(
@@ -207,6 +231,7 @@ export class LocalCycleUseCase {
 				trainingUuid,
 				index,
 				status: 'running',
+				expectedItems,
 				createdAt: now,
 				updatedAt: now,
 			}),
@@ -249,4 +274,8 @@ export class LocalCycleUseCase {
 
 		return rows.filter((row) => 'cycle' === row.kind);
 	}
+}
+
+function isWholeCycle(cycle: TrainingCycleRow, items: readonly CycleItemRow[]): boolean {
+	return undefined !== cycle.expectedItems && items.length === cycle.expectedItems;
 }

@@ -29,22 +29,28 @@ export type PuzzleIndex = ReadonlyMap<string, ApiPuzzle>;
 })
 export class TrainingMirrorUseCase {
 	training(node: SyncTreeTrainingNode): TrainingRow {
+		const finishedReason = node.finishedReason ?? undefined;
+		const finishedAt = node.finishedAt ?? undefined;
+
 		return {
 			...marks(node),
 			uuid: node.uuid,
 			status: node.status,
-			...(undefined === node.finishedReason ? {} : { finishedReason: node.finishedReason }),
-			...(undefined === node.finishedAt ? {} : { finishedAt: new Date(node.finishedAt) }),
+			...(undefined === finishedReason ? {} : { finishedReason }),
+			...(undefined === finishedAt ? {} : { finishedAt: new Date(finishedAt) }),
 		};
 	}
 
 	goal(trainingUuid: string, node: SyncTreeGoalNode): TrainingGoalRow {
+		const puzzlesPerDay = node.puzzlesPerDay ?? undefined;
+		const endDate = node.endDate ?? undefined;
+
 		return {
 			...marks(node),
 			uuid: node.uuid,
 			trainingUuid,
-			...(undefined === node.puzzlesPerDay ? {} : { puzzlesPerDay: node.puzzlesPerDay }),
-			...(undefined === node.endDate ? {} : { endDate: node.endDate }),
+			...(undefined === puzzlesPerDay ? {} : { puzzlesPerDay }),
+			...(undefined === endDate ? {} : { endDate }),
 		};
 	}
 
@@ -97,6 +103,7 @@ export class TrainingMirrorUseCase {
 			trainingUuid,
 			index: node.index,
 			status: node.status,
+			expectedItems: node.itemCount,
 		};
 	}
 
@@ -113,10 +120,12 @@ export class TrainingMirrorUseCase {
 }
 
 function marks(node: SyncTreeRow): LocalRecord {
+	const clientRef = node.clientRef ?? undefined;
+
 	return {
 		createdAt: new Date(node.createdAt),
 		updatedAt: new Date(node.updatedAt),
 		syncedAt: new Date(node.receivedAt),
-		...(undefined === node.clientRef ? {} : { clientRef: node.clientRef }),
+		...(undefined === clientRef ? {} : { clientRef }),
 	};
 }

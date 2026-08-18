@@ -53,6 +53,7 @@ export interface SyncTreeSetNode extends SyncTreeRow {
 export interface SyncTreeCycleNode extends SyncTreeRow {
 	index: number;
 	status: TrainingCycleStatus;
+	itemCount: number;
 	items: SyncTreeItemNode[];
 }
 

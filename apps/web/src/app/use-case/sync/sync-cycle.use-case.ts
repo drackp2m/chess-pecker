@@ -120,7 +120,7 @@ export class SyncCycleUseCase {
 
 		const pulled = await this.puller.execute(status);
 
-		report({ downloaded: pulled.rows });
+		report({ downloaded: pulled.rows, ...(pulled.interrupted ? {} : { behind: [] }) });
 
 		// El catálogo va el último a propósito: son ~22.000 ejercicios contra las decenas
 		// del árbol, y quien mira el splash prefiere tener lo suyo antes que lo de todos.

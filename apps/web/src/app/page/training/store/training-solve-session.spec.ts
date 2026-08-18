@@ -15,6 +15,7 @@ import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { CycleItemRow, TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 import { TrainingRunEngineUseCase } from '@app/use-case/training-run-engine.use-case';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
@@ -165,6 +166,7 @@ function configure(
 			TrainingSolveSession,
 			{ provide: AttemptRepository, useValue: attempts },
 			{ provide: TrainingRunEngineUseCase, useValue: repository },
+			{ provide: SyncStore, useValue: { isTreeBehind: () => false } },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
 		],

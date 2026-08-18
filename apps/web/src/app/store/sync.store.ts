@@ -4,6 +4,7 @@ import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { Resettable } from '@app/definition/resettable.interface';
+import { TREE_SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { SyncPhase, isSettledPhase } from '@app/definition/sync-phase.type';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { NO_PENDING, PendingCount } from '@app/repository/local-data.repository';
@@ -58,6 +59,10 @@ export class SyncStore
 	readonly isSyncing = computed(() => 'idle' !== this.phase() && !isSettledPhase(this.phase()));
 
 	readonly hasPending = computed(() => 0 < this.pending());
+
+	readonly isTreeBehind = computed(() =>
+		TREE_SYNC_ENTITIES.some((entity) => this.behind().includes(entity)),
+	);
 
 	private readonly cycle = inject(SyncCycleUseCase);
 	private readonly session = inject(SessionStore);

@@ -60,11 +60,16 @@ export class GetTrainingTreeUseCase {
 	private async goalNodes(trainingUuid: string): Promise<SyncTreeGoalNode[]> {
 		const goals = await this.trainingGoalRepository.getManyByTraining(trainingUuid);
 
-		return goals.map((goal) => ({
-			...toRow(goal),
-			...(undefined === goal.puzzlesPerDay ? {} : { puzzlesPerDay: goal.puzzlesPerDay }),
-			...(undefined === goal.endDate ? {} : { endDate: toDateString(goal.endDate) }),
-		}));
+		return goals.map((goal) => {
+			const puzzlesPerDay = goal.puzzlesPerDay ?? undefined;
+			const endDate = goal.endDate ?? undefined;
+
+			return {
+				...toRow(goal),
+				...(undefined === puzzlesPerDay ? {} : { puzzlesPerDay }),
+				...(undefined === endDate ? {} : { endDate: toDateString(endDate) }),
+			};
+		});
 	}
 
 	private async roundNodes(
@@ -89,19 +94,24 @@ export class GetTrainingTreeUseCase {
 		const items = await this.trainingCycleItemRepository.getManyByTraining(trainingUuid, since);
 		const byCycle = groupBy(items, (row) => row.cycle.uuid);
 
-		return cycles.map((cycle) => ({
-			...toRow(cycle),
-			index: cycle.index,
-			status: cycle.status,
-			items: (byCycle.get(cycle.uuid) ?? []).map((row) => toItemNode(row)),
-		}));
+		return Promise.all(
+			cycles.map(async (cycle) => ({
+				...toRow(cycle),
+				index: cycle.index,
+				status: cycle.status,
+				itemCount: await this.trainingCycleItemRepository.countByCycle(cycle.uuid),
+				items: (byCycle.get(cycle.uuid) ?? []).map((row) => toItemNode(row)),
+			})),
+		);
 	}
 }
 
 function toRow(entity: SyncedEntity): SyncTreeRow {
+	const clientRef = entity.clientRef ?? undefined;
+
 	return {
 		uuid: entity.uuid,
-		...(undefined === entity.clientRef ? {} : { clientRef: entity.clientRef }),
+		...(undefined === clientRef ? {} : { clientRef }),
 		createdAt: entity.createdAt.toISOString(),
 		updatedAt: entity.updatedAt.toISOString(),
 		receivedAt: entity.receivedAt.toISOString(),
@@ -109,11 +119,14 @@ function toRow(entity: SyncedEntity): SyncTreeRow {
 }
 
 function toTrainingNode(training: Training): SyncTreeTrainingNode {
+	const finishedReason = training.finishedReason ?? undefined;
+	const finishedAt = training.finishedAt ?? undefined;
+
 	return {
 		...toRow(training),
 		status: training.status,
-		...(undefined === training.finishedReason ? {} : { finishedReason: training.finishedReason }),
-		...(undefined === training.finishedAt ? {} : { finishedAt: training.finishedAt.toISOString() }),
+		...(undefined === finishedReason ? {} : { finishedReason }),
+		...(undefined === finishedAt ? {} : { finishedAt: finishedAt.toISOString() }),
 	};
 }
 

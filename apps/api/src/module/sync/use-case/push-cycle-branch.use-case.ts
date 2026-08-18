@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
+import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
+import { PuzzleAttempt } from '../../training/puzzle-attempt.entity';
 import { TrainingCycleItem } from '../../training/training-cycle-item.entity';
 import { TrainingCycle } from '../../training/training-cycle.entity';
 import { TrainingPuzzle } from '../../training/training-puzzle.entity';
@@ -27,14 +29,18 @@ export class PushCycleBranchUseCase {
 		set: ReadonlyMap<string, TrainingPuzzle>,
 	): Promise<void> {
 		for (const node of nodes) {
-			const cycle = await this.pushCycle(context, training, node);
+			const pushed = await this.pushCycle(context, training, node);
 
-			if (undefined === cycle) {
+			if (undefined === pushed) {
 				continue;
 			}
 
 			for (const itemNode of node.items) {
-				await this.pushItem(context, training, cycle, itemNode, set);
+				await this.pushItem(context, training, pushed.row, itemNode, set);
+			}
+
+			if (pushed.closedHere) {
+				await this.reopenIfUnfinished(context, pushed.row);
 			}
 		}
 	}
@@ -43,18 +49,18 @@ export class PushCycleBranchUseCase {
 		context: SyncPushContext,
 		training: Training,
 		node: PushCycleNodeDto,
-	): Promise<TrainingCycle | undefined> {
+	): Promise<PushedCycle | undefined> {
 		const existing = await context.entityManager.findOne(TrainingCycle, syncKey(node, 'cycle'));
 
 		if (null !== existing) {
 			const belongsHere = existing.training.uuid === training.uuid;
 			const reused = reuseSyncRow(context, 'cycle', node, existing, belongsHere, OTHER_TREE);
 
-			if (undefined !== reused) {
-				this.refreshCycle(reused, node);
+			if (undefined === reused) {
+				return undefined;
 			}
 
-			return reused;
+			return { row: reused, closedHere: this.refreshCycle(reused, node) };
 		}
 
 		const cycle = this.applySyncTimestampsUseCase.execute(
@@ -62,18 +68,58 @@ export class PushCycleBranchUseCase {
 			node,
 		);
 
-		return claimSyncRow(context, 'cycle', node, cycle);
+		return {
+			row: claimSyncRow(context, 'cycle', node, cycle),
+			closedHere: TrainingCycleStatus.Finished === node.status,
+		};
 	}
 
-	/** La pasada sube abierta y se cierra —o se abandona— cuando el dispositivo lo decide. */
-	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto): void {
+	/**
+	 * La pasada sube abierta y se cierra —o se abandona— cuando el dispositivo lo decide.
+	 * Devuelve si ha sido esta subida la que la ha dado por terminada, que es lo único que
+	 * el servidor va a contrastar después.
+	 */
+	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto): boolean {
 		if (!isFresherNode(node, row)) {
-			return;
+			return false;
 		}
 
 		row.status = node.status;
 
 		this.applySyncTimestampsUseCase.execute(row, node);
+
+		return TrainingCycleStatus.Finished === node.status;
+	}
+
+	/**
+	 * «Terminado» es lo único que el dispositivo afirma y el servidor comprueba: abandonar
+	 * es voluntad del usuario y vale siempre, pero un ciclo sólo está hecho cuando todos sus
+	 * huecos tienen intento, y aquí están todos para contarlos. Va después de los huecos y
+	 * con un `flush` delante porque los intentos que lo cierran suben en esta misma petición.
+	 *
+	 * Un cierre que no cuadra deja el ciclo abierto en vez de rechazar la fila: la bajada
+	 * siguiente le devuelve al dispositivo el estado bueno sin tirar nada de lo que subió.
+	 */
+	private async reopenIfUnfinished(context: SyncPushContext, row: TrainingCycle): Promise<void> {
+		await context.entityManager.flush();
+
+		const items = await context.entityManager.find(
+			TrainingCycleItem,
+			{ cycle: row.uuid },
+			{ fields: ['uuid'] },
+		);
+		const attempts = await context.entityManager.find(
+			PuzzleAttempt,
+			{ cycleItem: { cycle: row.uuid } },
+			{ fields: ['cycleItem'] },
+		);
+		const attempted = new Set(attempts.map((attempt) => attempt.cycleItem?.uuid));
+
+		if (0 < items.length && items.every((item) => attempted.has(item.uuid))) {
+			return;
+		}
+
+		row.status = TrainingCycleStatus.Running;
 	}
 
 	private async pushItem(
@@ -130,6 +176,11 @@ export class PushCycleBranchUseCase {
 
 		return claimSyncRow(context, 'cycleItem', node, item);
 	}
+}
+
+interface PushedCycle {
+	readonly row: TrainingCycle;
+	readonly closedHere: boolean;
 }
 
 const OTHER_TREE = 'belongs to another training';

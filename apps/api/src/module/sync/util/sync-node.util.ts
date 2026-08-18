@@ -15,12 +15,15 @@ export type SyncKey = { uuid: string } | { clientRef: string };
  * idempotencia de la subida.
  */
 export function syncKey(node: SyncNodeDto, entity: SyncEntity): SyncKey {
-	if (undefined !== node.uuid) {
-		return { uuid: node.uuid };
+	const uuid = node.uuid ?? undefined;
+	const clientRef = node.clientRef ?? undefined;
+
+	if (undefined !== uuid) {
+		return { uuid };
 	}
 
-	if (undefined !== node.clientRef) {
-		return { clientRef: node.clientRef };
+	if (undefined !== clientRef) {
+		return { clientRef };
 	}
 
 	throw new BadRequestException('clientRef or uuid is required', entity);
@@ -34,7 +37,9 @@ export function syncKey(node: SyncNodeDto, entity: SyncEntity): SyncKey {
  * que ya hay.
  */
 export function isFresherNode(node: SyncNodeDto, row: { updatedAt: Date }): boolean {
-	return undefined !== node.updatedAt && node.updatedAt.getTime() > row.updatedAt.getTime();
+	const updatedAt = node.updatedAt ?? undefined;
+
+	return undefined !== updatedAt && updatedAt.getTime() > row.updatedAt.getTime();
 }
 
 /**
@@ -71,8 +76,10 @@ export function claimSyncRow<T extends { uuid: string; receivedAt: Date; clientR
 	node: SyncNodeDto,
 	row: T,
 ): T {
-	if (undefined !== node.clientRef) {
-		row.clientRef = node.clientRef;
+	const clientRef = node.clientRef ?? undefined;
+
+	if (undefined !== clientRef) {
+		row.clientRef = clientRef;
 	}
 
 	row.receivedAt = context.receivedAt;

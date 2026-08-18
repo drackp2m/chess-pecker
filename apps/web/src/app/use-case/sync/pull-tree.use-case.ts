@@ -41,7 +41,7 @@ export class PullTreeUseCase {
 	}
 
 	private async localTrainingUuid(tree: SyncTrainingTree): Promise<string> {
-		const clientRef = tree.training.clientRef;
+		const clientRef = tree.training.clientRef ?? undefined;
 
 		if (undefined === clientRef) {
 			return tree.training.uuid;
@@ -152,8 +152,10 @@ function toRemap(tree: SyncTrainingTree): Remap {
 
 function claim(remap: Remap, entity: SyncEntity, nodes: readonly SyncTreeRow[]): void {
 	for (const node of nodes) {
-		if (undefined !== node.clientRef) {
-			remap[entity][node.clientRef] = node.uuid;
+		const clientRef = node.clientRef ?? undefined;
+
+		if (undefined !== clientRef) {
+			remap[entity][clientRef] = node.uuid;
 		}
 	}
 }

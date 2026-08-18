@@ -155,6 +155,7 @@ export interface SyncTreeSetNode<TDate = string> extends SyncTreeRow<TDate> {
 export interface SyncTreeCycleNode<TDate = string> extends SyncTreeRow<TDate> {
 	readonly index: number;
 	readonly status: TrainingCycleStatus;
+	readonly itemCount: number;
 	readonly items: readonly SyncTreeItemNode<TDate>[];
 }
 

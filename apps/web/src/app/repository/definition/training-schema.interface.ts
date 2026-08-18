@@ -51,6 +51,7 @@ export interface TrainingCycleRow extends LocalRecord {
 	readonly trainingUuid: string;
 	readonly index: number;
 	readonly status: TrainingCycleStatus;
+	readonly expectedItems?: number;
 }
 
 export interface CycleItemRow extends LocalRecord {

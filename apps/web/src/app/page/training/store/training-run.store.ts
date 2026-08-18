@@ -14,6 +14,7 @@ import {
 	CalibrationRoundRow,
 	TrainingRow,
 } from '@app/repository/definition/training-schema.interface';
+import { SyncStore } from '@app/store/sync.store';
 import {
 	RunRoundPuzzles,
 	TrainingRunEngineUseCase,
@@ -46,6 +47,7 @@ export class TrainingRunStore extends signalStore(
 	readonly isCalibrated = computed(() => 'accept' === this.roundOutcome());
 
 	private readonly engine = inject(TrainingRunEngineUseCase);
+	private readonly sync = inject(SyncStore);
 
 	async begin(training: TrainingRow): Promise<void> {
 		patchState(this, { ...initialState, trainingUuid: training.uuid, isLoading: true });
@@ -53,6 +55,8 @@ export class TrainingRunStore extends signalStore(
 		try {
 			if ('calibrating' === training.status) {
 				await this.beginCalibration(training.uuid);
+			} else if (this.sync.isTreeBehind()) {
+				patchState(this, { error: i18nRef(I18n.training.REPLICA_INCOMPLETE) });
 			} else {
 				patchState(this, { mode: 'cycle', current: await this.fetchNextSlot(training.uuid) });
 			}
