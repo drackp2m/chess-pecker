@@ -22,6 +22,8 @@ interface SyncStoreProps {
 	downloaded: number;
 	behind: readonly SyncEntity[];
 	canPush: boolean;
+	/** No queda nada por bajar: lo que hay aquí es todo lo que hay arriba. */
+	isReplicaComplete: boolean;
 	catalogDone: number;
 	catalogTotal: number;
 	lastSyncedAt: Date | null;
@@ -38,6 +40,7 @@ const initialState: SyncStoreProps = {
 	downloaded: 0,
 	behind: [],
 	canPush: true,
+	isReplicaComplete: false,
 	catalogDone: 0,
 	catalogTotal: 0,
 	lastSyncedAt: null,
@@ -69,6 +72,7 @@ export class SyncStore
 	private readonly injector = inject(Injector);
 
 	private running: Promise<void> | null = null;
+	private pushing: Promise<void> | null = null;
 	private gate: Promise<void> | null = null;
 	private resolveGate: (() => void) | undefined;
 	private lastRunAt = 0;
@@ -84,9 +88,11 @@ export class SyncStore
 	}
 
 	/**
-	 * Lo que hay que esperar antes de servir datos. `failed` y `offline` la abren igual que
-	 * `ready`, y el tope de `SyncPolicy` la abre aunque la pasada siga: si no, la aplicación
-	 * se colgaría justo en el caso para el que existe todo esto.
+	 * Lo que hay que esperar antes de servir datos, que es sólo una cosa: que falte algo por
+	 * bajar. Subir no cambia lo que se va a pintar, así que en cuanto la pasada dice que la
+	 * réplica está completa la puerta se abre y lo demás sigue de fondo. `failed` y `offline`
+	 * la abren igual que `ready`, y el tope de `SyncPolicy` la abre aunque la pasada siga: si
+	 * no, la aplicación se colgaría justo en el caso para el que existe todo esto.
 	 */
 	async whenReady(): Promise<void> {
 		if (this.isReady()) {
@@ -121,8 +127,25 @@ export class SyncStore
 				patchState(this, progress);
 			});
 		} catch (error) {
-			console.error('Could not upload what was pending before logging out', error);
+			console.error('Could not upload what was pending', error);
 		}
+	}
+
+	/**
+	 * Lo que se acaba de cerrar, subido ya. Un intento sellado no vuelve a cambiar, así que
+	 * hacerle esperar a la pasada siguiente sólo sirve para perderlo si el dispositivo se
+	 * apaga antes. Sin sesión no hay dónde subirlo, y con una pasada corriendo ya va dentro.
+	 */
+	async push(): Promise<void> {
+		if (!this.session.isAuthenticated() || null !== this.running) {
+			return;
+		}
+
+		this.pushing ??= this.flush().finally(() => {
+			this.pushing = null;
+		});
+
+		return this.pushing;
 	}
 
 	/**
@@ -169,6 +192,10 @@ export class SyncStore
 
 		const phase = await this.cycle.execute((progress) => {
 			patchState(this, progress);
+
+			if (this.isReplicaComplete()) {
+				this.open();
+			}
 		});
 
 		patchState(this, {

@@ -32,6 +32,11 @@ export interface SyncCycleProgress {
 	readonly behind: readonly SyncEntity[];
 	/** El servidor corre un modelo más nuevo: se baja, pero no se sube. */
 	readonly canPush: boolean;
+	/**
+	 * No queda nada por bajar: ni tablas por detrás, ni catálogo a medias. Es lo único que
+	 * obliga al arranque a esperar, porque es lo único que cambia lo que se va a pintar.
+	 */
+	readonly isReplicaComplete: boolean;
 	readonly catalogDone: number;
 	readonly catalogTotal: number;
 	readonly error: TranslationRef | null;
@@ -93,7 +98,9 @@ export class SyncCycleUseCase {
 		// `GET /sync` es de un usuario, así que sin sesión no hay resumen que contrastar.
 		// El catálogo sí se replica igual: es global y no es de nadie.
 		if (!this.session.isAuthenticated()) {
+			report({ isReplicaComplete: await this.catalog.isSynced() });
 			await this.sweepCatalog(undefined, report);
+			report({ isReplicaComplete: await this.catalog.isSynced() });
 
 			return 'ready';
 		}
@@ -108,7 +115,11 @@ export class SyncCycleUseCase {
 			return toFailurePhase(error);
 		}
 
-		report({ behind: status.behind, canPush: status.canPush });
+		report({
+			behind: status.behind,
+			canPush: status.canPush,
+			isReplicaComplete: await this.isReplicaComplete(status),
+		});
 
 		return this.transfer(status, report);
 	}
@@ -126,7 +137,20 @@ export class SyncCycleUseCase {
 		// del árbol, y quien mira el splash prefiere tener lo suyo antes que lo de todos.
 		await this.sweepCatalog(status.summary.catalog, report);
 
+		const swept = await this.catalog.isSynced(status.summary.catalog);
+
+		report({ isReplicaComplete: !pulled.interrupted && swept });
+
 		return cut || pulled.interrupted ? 'offline' : 'ready';
+	}
+
+	/**
+	 * Nada por bajar es nada que esperar: con esto en la mano, el arranque abre la puerta sin
+	 * llegar a mirar lo que la pasada haga después, que es todo trabajo que no cambia lo que
+	 * hay aquí para pintar.
+	 */
+	private async isReplicaComplete(status: SyncStatus): Promise<boolean> {
+		return 0 === status.behind.length && (await this.catalog.isSynced(status.summary.catalog));
 	}
 
 	/** `true` si algo pasajero cortó la subida y queda trabajo para la pasada siguiente. */
