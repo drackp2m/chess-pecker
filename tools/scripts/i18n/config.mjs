@@ -34,6 +34,10 @@ export const DEFAULTS = {
 	rootScope: 'common',
 };
 
+// Directories under i18n/ that are not scopes: the hand-written context that
+// feeds the translator, and the generated freshness state.
+export const RESERVED_DIRS = new Set(['context', 'state']);
+
 const ULID_PATTERN = /^[0-7][0-9A-HJKMNP-TV-Z]{25}$/;
 
 export const isUlid = (value) => ULID_PATTERN.test(value);

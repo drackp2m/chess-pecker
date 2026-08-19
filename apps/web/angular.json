@@ -32,7 +32,8 @@
 							{
 								"glob": "**/*.json",
 								"input": "src/app/i18n",
-								"output": "i18n"
+								"output": "i18n",
+								"ignore": ["context/**", "state/**"]
 							}
 						],
 						"styles": ["src/styles.scss"],

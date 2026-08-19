@@ -1,5 +1,6 @@
 import { readBarrel } from './collect.mjs';
 import { isUlid, toPascalCase } from './config.mjs';
+import { matchesKey, readContext } from './context.mjs';
 import { buildScopeParams, entryLineOf, paramsName } from './params.mjs';
 
 const PARAM_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
@@ -283,6 +284,66 @@ function barrelFindings(scope, barrel, params) {
 	return findings;
 }
 
+const GLOSSARY = 'glossary';
+
+// A heading nobody can reach: the constant was renamed, or the pattern never
+// caught anything. Silent otherwise, so a scope with no context file is fine.
+function checkContextKeys(context, scopes) {
+	const findings = [];
+
+	for (const [name, file] of context.scopes) {
+		const scope = scopes.find((entry) => entry.name === name);
+		const names = scope?.keys?.entries.map((entry) => entry.name) ?? [];
+
+		for (const { heading, line } of file.sections) {
+			if (names.some((key) => matchesKey(heading, key))) {
+				continue;
+			}
+
+			const message = `"${heading}" matches no key of the "${name}" scope`;
+
+			findings.push(finding('unknown-context-key', name, file.file, message, { line, col: 1 }));
+		}
+	}
+
+	return findings;
+}
+
+// A term with no entry for a language is not an error — it is the glossary's
+// own to-do list, in the column of the language that still needs the word.
+function checkGlossary({ glossary }, langs, defaultLang) {
+	if (glossary.error) {
+		return [finding('invalid-json', GLOSSARY, glossary.file, glossary.error)];
+	}
+
+	return glossary.terms.flatMap(({ term, translations, line, col }) =>
+		langs
+			.filter((lang) => lang !== defaultLang && '' === String(translations?.[lang] ?? '').trim())
+			.map((lang) => {
+				const message = `"${term}" has no "${lang}" translation`;
+
+				return finding('glossary-term-missing-lang', GLOSSARY, glossary.file, message, {
+					line,
+					col,
+					lang,
+				});
+			}),
+	);
+}
+
+function checkContext(options, scopes) {
+	const context = readContext(options);
+
+	if (!context.exists) {
+		return [];
+	}
+
+	return [
+		...checkContextKeys(context, scopes),
+		...checkGlossary(context, options.langs, options.defaultLang),
+	];
+}
+
 function checkBarrel(scopes, barrel, paramsOfScope) {
 	if (!barrel.exists) {
 		return [finding('missing-barrel', 'all', barrel.file, 'index.ts not found')];
@@ -301,6 +362,8 @@ export function buildFindings({ scopes, usages, commented, langs, defaultLang, i
 			.map((scope) => [scope.name, buildScopeParams(scope, defaultLang)]),
 	);
 	const findings = checkBarrel(scopes, readBarrel(i18nDir), paramsOfScope);
+
+	findings.push(...checkContext({ i18nDir, langs, defaultLang }, scopes));
 
 	for (const scope of scopes) {
 		findings.push(...checkStructure(scope, langs));
