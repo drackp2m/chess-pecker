@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { isUlid } from './config.mjs';
+import { hashOf, readState, sealed, writeState } from './freshness.mjs';
 import { noteOf } from './xliff.mjs';
 
 const KEYS_END = '} as const;';
@@ -47,13 +48,26 @@ function nameFor(unit, ulid, taken) {
 	return name;
 }
 
-const addedOf = (unit, ulid, { scope, taken }) => ({
+const addedOf = (unit, ulid, { scope, taken, lang }) => ({
 	scope: scope.name,
 	ulid,
+	lang,
 	name: nameFor(unit, ulid, taken),
 	source: unit.source,
 	target: unit.target,
 });
+
+function sealingOf(unit, ulid, entry, context) {
+	const { scope, lang, source } = context;
+	const hash = hashOf(source[ulid] ?? '');
+	const declared = noteOf(unit, 'srcHash');
+
+	if (null !== declared && declared !== hash) {
+		return { outdated: { scope: scope.name, ulid, key: entry.name, lang } };
+	}
+
+	return { seal: { scope: scope.name, ulid, lang, hash } };
+}
 
 function updateOf(unit, ulid, entry, context) {
 	const { scope, lang, current, source } = context;
@@ -86,14 +100,24 @@ function unitOutcome(unit, context) {
 		return { kind: 'empty' };
 	}
 
+	const sealing = sealingOf(unit, ulid, entry, context);
+
 	if (unit.target === (context.current[ulid] ?? '')) {
-		return { kind: 'unchanged' };
+		return { kind: 'unchanged', ...sealing };
 	}
 
-	return { kind: 'update', ...updateOf(unit, ulid, entry, context) };
+	return { kind: 'update', ...sealing, ...updateOf(unit, ulid, entry, context) };
 }
 
 function collect(result, outcome) {
+	if (outcome.seal) {
+		result.seals.push(outcome.seal);
+	}
+
+	if (outcome.outdated) {
+		result.outdated.push(outcome.outdated);
+	}
+
 	if ('unchanged' === outcome.kind || 'empty' === outcome.kind) {
 		result[outcome.kind] += 1;
 	} else if ('problem' === outcome.kind) {
@@ -114,7 +138,15 @@ function readUnits(scope, file, lang, taken) {
 		current: scope.translations.get(lang)?.data ?? {},
 		source: scope.translations.get(scope.defaultLang)?.data ?? {},
 	};
-	const result = { updates: [], unchanged: 0, empty: 0, added: [], problems: [] };
+	const result = {
+		updates: [],
+		unchanged: 0,
+		empty: 0,
+		added: [],
+		problems: [],
+		seals: [],
+		outdated: [],
+	};
 
 	for (const unit of file.units) {
 		collect(result, unitOutcome(unit, context));
@@ -129,6 +161,8 @@ function mergeInto(plan, part, lang) {
 	plan.updates.push(...part.updates);
 	plan.added.push(...part.added);
 	plan.problems.push(...part.problems);
+	plan.seals.push(...part.seals);
+	plan.outdated.push(...part.outdated);
 	plan.counts.set(lang, {
 		updated: counts.updated + part.updates.length,
 		unchanged: counts.unchanged + part.unchanged,
@@ -163,7 +197,15 @@ function readDocument({ file, xliff }, plan, context) {
 }
 
 export function planImport({ scopes, langs, defaultLang, documents }) {
-	const plan = { updates: [], added: [], problems: [], counts: new Map(), langs: new Set() };
+	const plan = {
+		updates: [],
+		added: [],
+		problems: [],
+		seals: [],
+		outdated: [],
+		counts: new Map(),
+		langs: new Set(),
+	};
 	const context = { scopes, defaultLang, taken: new Map() };
 
 	for (const document of documents) {
@@ -230,14 +272,29 @@ function valuesFor({ plan, accepted, scope, lang, defaultLang }) {
 	return values;
 }
 
+function writeSeals(scope, added, { plan, i18nDir, langs }) {
+	const entries = [
+		...scope.keys.entries,
+		...added.map(({ name, ulid }) => ({ name, ulid, value: ulid })),
+	];
+	const mine = plan.seals.filter((seal) => seal.scope === scope.name);
+	const fresh = added
+		.filter((entry) => '' !== String(entry.target ?? '').trim())
+		.map((entry) => ({ ulid: entry.ulid, lang: entry.lang, hash: hashOf(entry.source) }));
+	const state = readState(i18nDir, scope.name);
+	const data = sealed(state.data, [...mine, ...fresh]);
+
+	return writeState({ ...scope, keys: { ...scope.keys, entries } }, { i18nDir, langs, data });
+}
+
 function applyScope(scope, context) {
-	const { plan, accepted, defaultLang, langs } = context;
+	const { plan, accepted, defaultLang, writeLangs } = context;
 	const added = accepted.filter((entry) => entry.scope === scope.name);
 	const written = 0 === added.length ? [] : [appendKeys(scope, added)];
 	const existing = scope.keys.entries.filter((entry) => isUlid(entry.ulid));
 	const order = [...existing.map((entry) => entry.ulid), ...added.map((entry) => entry.ulid)];
 
-	for (const lang of langs) {
+	for (const lang of writeLangs) {
 		const values = valuesFor({ plan, accepted, scope, lang, defaultLang });
 		const file = writeTranslation(scope, lang, order, values);
 
@@ -246,17 +303,22 @@ function applyScope(scope, context) {
 		}
 	}
 
-	return written;
+	const state = writeSeals(scope, added, context);
+
+	return null === state ? written : [...written, state];
 }
 
-export function applyImport({ plan, scopes, defaultLang, accepted }) {
+export function applyImport({ plan, scopes, defaultLang, accepted, langs, i18nDir }) {
 	const extra = 0 === accepted.length ? [] : [defaultLang];
-	const langs = [...new Set([...plan.langs, ...extra])];
+	const writeLangs = [...new Set([...plan.langs, ...extra])];
 	const touched = (scope) =>
 		accepted.some((entry) => entry.scope === scope.name) ||
-		plan.updates.some((update) => update.scope === scope.name);
+		plan.updates.some((update) => update.scope === scope.name) ||
+		plan.seals.some((seal) => seal.scope === scope.name);
 
 	return scopes
 		.filter((scope) => scope.keys && touched(scope))
-		.flatMap((scope) => applyScope(scope, { plan, accepted, defaultLang, langs }));
+		.flatMap((scope) =>
+			applyScope(scope, { plan, accepted, defaultLang, writeLangs, langs, i18nDir }),
+		);
 }

@@ -1,6 +1,7 @@
 import { readBarrel } from './collect.mjs';
 import { isUlid, toPascalCase } from './config.mjs';
 import { matchesKey, readContext } from './context.mjs';
+import { freshnessOf, readState } from './freshness.mjs';
 import { buildScopeParams, entryLineOf, paramsName } from './params.mjs';
 
 const PARAM_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
@@ -151,6 +152,26 @@ function checkTranslations(scope, langs, defaultLang) {
 	}
 
 	return findings;
+}
+
+function staleFinding(scope, { ulid, name, lang }, defaultLang) {
+	const translation = scope.translations.get(lang);
+	const message = `${name} (${ulid}) was translated from an older "${defaultLang}"`;
+	const at = { ...positionOf(translation.text, ulid), lang };
+
+	return finding('stale-translation', scope.name, translation.file, message, at);
+}
+
+function checkFreshness(scope, { langs, defaultLang, i18nDir }) {
+	const state = readState(i18nDir, scope.name);
+
+	if (state.error) {
+		return [finding('invalid-json', scope.name, state.file, state.error)];
+	}
+
+	return freshnessOf(scope, state, { langs, defaultLang })
+		.filter((entry) => 'stale' === entry.status)
+		.map((entry) => staleFinding(scope, entry, defaultLang));
 }
 
 function checkUsage(scope, usages, commented) {
@@ -376,6 +397,7 @@ export function buildFindings({ scopes, usages, commented, langs, defaultLang, i
 
 		findings.push(...checkKeys(scope, seenUlids));
 		findings.push(...checkTranslations(scope, langs, defaultLang));
+		findings.push(...checkFreshness(scope, { langs, defaultLang, i18nDir }));
 		findings.push(...checkUsage(scope, usages, commented));
 		findings.push(...checkParams(scope, langs, defaultLang, params));
 		findings.push(...checkParamsFile(scope, params));

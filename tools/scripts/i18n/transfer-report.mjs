@@ -10,17 +10,23 @@ export function printExportHeader(langs, defaultLang) {
 	console.log(`${c.bold}Exporting i18n...${c.reset} ${c.dim}(${details})${c.reset}\n`);
 }
 
+function stateOf({ untranslated, outdated }) {
+	const parts = [
+		...(0 === untranslated ? [] : [`${c.yellow}${untranslated} untranslated${c.reset}`]),
+		...(0 === outdated ? [] : [`${c.yellow}${outdated} outdated${c.reset}`]),
+	];
+
+	return 0 === parts.length ? `${c.green}complete${c.reset}` : parts.join(` ${c.dim}·${c.reset} `);
+}
+
 export function printExported(documents) {
 	const width = Math.max(...documents.map(({ file }) => file.length));
 
-	for (const { file, total, untranslated } of documents) {
-		const left = `${plural(total, 'unit')}`;
-		const right =
-			0 === untranslated
-				? `${c.green}complete${c.reset}`
-				: `${c.yellow}${untranslated} untranslated${c.reset}`;
+	for (const document of documents) {
+		const { file, total } = document;
+		const left = `${c.cyan}${file.padEnd(width)}${c.reset}`;
 
-		console.log(`  ${c.cyan}${file.padEnd(width)}${c.reset}  ${left} · ${right}`);
+		console.log(`  ${left}  ${plural(total, 'unit')} · ${stateOf(document)}`);
 	}
 
 	console.log(`\n  ${c.green}✔ ${plural(documents.length, 'file')} written${c.reset}`);
@@ -106,6 +112,24 @@ export function printWrittenFiles(written) {
 	}
 
 	console.log(`\n  ${c.green}✔ ${plural(new Set(written).size, 'file')} updated${c.reset}`);
+}
+
+export function printOutdated(outdated, limit) {
+	if (0 === outdated.length) {
+		return;
+	}
+
+	const message = `${plural(outdated.length, 'unit')} came back translated from an older source`;
+
+	console.log(`\n  ${c.yellow}⚠ ${message} — left outdated${c.reset}`);
+
+	for (const { scope, key, lang } of outdated.slice(0, limit)) {
+		console.log(`      ${c.dim}${scope}.${key} · ${lang}${c.reset}`);
+	}
+
+	if (outdated.length > limit) {
+		console.log(`      ${c.dim}… and ${outdated.length - limit} more${c.reset}`);
+	}
 }
 
 export const printHint = (message) => console.log(`\n  ${c.dim}${message}${c.reset}`);

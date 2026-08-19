@@ -65,6 +65,11 @@ function notesOf(notes, depth) {
 	return [`${indent(depth)}<notes>`, ...entries, `${indent(depth)}</notes>`];
 }
 
+const subStateOf = (unit) =>
+	undefined === unit.subState || null === unit.subState
+		? ''
+		: ` subState="${encodeXml(unit.subState)}"`;
+
 function unitOf(unit, depth) {
 	const data = dataOf([unit.source, unit.target]);
 	const state = '' === String(unit.target ?? '').trim() ? 'initial' : (unit.state ?? 'translated');
@@ -73,7 +78,7 @@ function unitOf(unit, depth) {
 		`${indent(depth)}<unit id="${encodeXml(unit.id)}">`,
 		...notesOf(unit.notes ?? [], depth + 1),
 		...originalDataOf(data, depth + 1),
-		`${indent(depth + 1)}<segment state="${state}">`,
+		`${indent(depth + 1)}<segment state="${state}"${subStateOf(unit)}>`,
 		`${indent(depth + 2)}<source>${inlineOf(unit.source ?? '', data, 's')}</source>`,
 		`${indent(depth + 2)}<target>${inlineOf(unit.target ?? '', data, 't')}</target>`,
 		`${indent(depth + 1)}</segment>`,
@@ -81,11 +86,15 @@ function unitOf(unit, depth) {
 	];
 }
 
+// The <file> notes carry what every unit below them shares — the app, the
+// language, the scope and the glossary — so the block is allowed to be long
+// where a unit note is not.
 function fileOf(file, depth) {
 	const original = undefined === file.original ? '' : ` original="${encodeXml(file.original)}"`;
 
 	return [
 		`${indent(depth)}<file id="${encodeXml(file.id)}"${original} xml:space="preserve">`,
+		...notesOf(file.notes ?? [], depth + 1),
 		...file.units.flatMap((unit) => unitOf(unit, depth + 1)),
 		`${indent(depth)}</file>`,
 	];
@@ -142,19 +151,40 @@ function segmentsOf(unit, data) {
 	const states = segments
 		.map((segment) => segment.attrs.state)
 		.filter((state) => STATES.has(state));
+	const subStates = segments
+		.map((segment) => segment.attrs.subState)
+		.filter((state) => undefined !== state);
 
-	return { source: read('source').join(''), target: read('target').join(''), states };
+	return { source: read('source').join(''), target: read('target').join(''), states, subStates };
+}
+
+const noteEntry = (note) => ({
+	category: note.attrs.category ?? '',
+	text: textOf(note, new Map()),
+});
+
+// Read from the element's own <notes> block rather than with findAll, which
+// recurses: a <file> asked for its notes would otherwise collect every note of
+// every unit below it.
+function ownNotes(node) {
+	const block = firstNamed(node, 'notes');
+
+	return null === block ? [] : childrenNamed(block, 'note').map((note) => noteEntry(note));
 }
 
 function readUnit(unit) {
 	const data = dataMapOf(unit);
-	const { source, target, states } = segmentsOf(unit, data);
-	const notes = findAll(unit, 'note').map((note) => ({
-		category: note.attrs.category ?? '',
-		text: textOf(note, new Map()),
-	}));
+	const { source, target, states, subStates } = segmentsOf(unit, data);
+	const notes = findAll(unit, 'note').map((note) => noteEntry(note));
 
-	return { id: unit.attrs.id ?? '', notes, source, target, state: states[0] ?? 'initial' };
+	return {
+		id: unit.attrs.id ?? '',
+		notes,
+		source,
+		target,
+		state: states[0] ?? 'initial',
+		subState: subStates[0] ?? null,
+	};
 }
 
 export function readXliff(text) {
@@ -171,6 +201,7 @@ export function readXliff(text) {
 		files: findAll(document, 'file').map((file) => ({
 			id: file.attrs.id ?? '',
 			original: file.attrs.original ?? null,
+			notes: ownNotes(file),
 			units: findAll(file, 'unit').map((unit) => readUnit(unit)),
 		})),
 	};

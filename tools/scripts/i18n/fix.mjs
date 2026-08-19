@@ -4,6 +4,7 @@ import ts from 'typescript';
 
 import { parseBarrelSource } from './collect.mjs';
 import { isUlid, toKebabCase, toPascalCase } from './config.mjs';
+import { readState, writeState } from './freshness.mjs';
 import { buildParams } from './params.mjs';
 
 // Keys no longer declared are dropped: a translation is either backed by a
@@ -73,24 +74,38 @@ function fixBarrel(i18nDir, scopes) {
 	return { file: parsed.file, content: nextBarrelContent(parsed, missing) };
 }
 
+function writeTranslations(scope, langs, written) {
+	for (const lang of langs) {
+		const translation = scope.translations.get(lang);
+
+		if (translation.error) {
+			continue;
+		}
+
+		const content = nextContent(scope, translation);
+		const current = translation.exists ? readFileSync(translation.file, 'utf8') : null;
+
+		if (content !== current) {
+			writeFileSync(translation.file, content, 'utf8');
+			written.push(translation.file);
+		}
+	}
+}
+
 export function applyFix({ scopes, langs, defaultLang, i18nDir }) {
 	const written = [];
+	const owned = scopes.filter((entry) => entry.keys);
 
-	for (const scope of scopes.filter((entry) => entry.keys)) {
-		for (const lang of langs) {
-			const translation = scope.translations.get(lang);
+	for (const scope of owned) {
+		writeTranslations(scope, langs, written);
+	}
 
-			if (translation.error) {
-				continue;
-			}
+	for (const scope of owned) {
+		const state = readState(i18nDir, scope.name);
+		const file = state.error ? null : writeState(scope, { i18nDir, langs, data: state.data });
 
-			const content = nextContent(scope, translation);
-			const current = translation.exists ? readFileSync(translation.file, 'utf8') : null;
-
-			if (content !== current) {
-				writeFileSync(translation.file, content, 'utf8');
-				written.push(translation.file);
-			}
+		if (null !== file) {
+			written.push(file);
 		}
 	}
 

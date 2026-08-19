@@ -134,6 +134,33 @@ function resolve({ app, languages, scopes }, scopeName, keyName, lang) {
 	].filter((layer) => '' !== layer.text);
 }
 
+const patterns = new Map();
+
+// A glossary term is a hint for whoever translates, not a rule to enforce, so
+// it matches whole words case-insensitively and tolerates the plural: a source
+// saying "jugadas" still pulls in "jugada".
+function termPattern(term) {
+	if (!patterns.has(term)) {
+		const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, (char) => `\\${char}`);
+
+		patterns.set(term, new RegExp(`(?<!\\p{L})${escaped}(?:e?s)?(?!\\p{L})`, 'iu'));
+	}
+
+	return patterns.get(term);
+}
+
+export function termsIn(glossary, texts) {
+	const matched = glossary.terms.filter((entry) =>
+		texts.some((text) => termPattern(entry.term).test(String(text ?? ''))),
+	);
+
+	// "jaque mate" drags "jaque" in with it; the longer term is the one that
+	// carries the meaning, so the one it swallows drops out.
+	return matched.filter(
+		(entry) => !matched.some((other) => other !== entry && other.term.includes(entry.term)),
+	);
+}
+
 export function readContext({ i18nDir }) {
 	const dir = path.join(i18nDir, CONTEXT_DIR);
 	const app = readMarkdown(path.join(dir, APP_FILE));
