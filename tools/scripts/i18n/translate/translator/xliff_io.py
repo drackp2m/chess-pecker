@@ -105,6 +105,16 @@ def expected_markers_for(source_element) -> list[str]:
     return markers
 
 
+def ph_map(source_element) -> dict[str, object]:
+    templates = {}
+
+    for child in source_element:
+        if local_name(child) == "ph":
+            templates[f"__PH_{child.get('id')}__"] = child
+
+    return templates
+
+
 def build_target(source_element, translated_text: str):
     """
     Reconstruct a <target> preserving the <ph> elements.
@@ -124,20 +134,13 @@ def build_target(source_element, translated_text: str):
         )
 
     target = etree.Element(f"{{{XLIFF_NS}}}target")
-
-    # Map marker -> original <ph> template.
-    ph_templates = {}
-
-    for child in source_element:
-        if local_name(child) == "ph":
-            ph_id = child.get("id")
-            marker = f"__PH_{ph_id}__"
-            ph_templates[marker] = child
+    ph_templates = ph_map(source_element)
 
     # Split while keeping markers.
     tokens = re.split(r"(__PH_[A-Za-z0-9_.-]+__)", translated_text)
 
     previous_node = None
+    count = 0
 
     for token in tokens:
         if not token:
@@ -154,6 +157,9 @@ def build_target(source_element, translated_text: str):
             for key, value in original_ph.attrib.items():
                 ph.set(key, value)
 
+            count += 1
+            ph.set("id", f"t{count}")
+
             previous_node = ph
 
         else:
@@ -163,6 +169,34 @@ def build_target(source_element, translated_text: str):
                 previous_node.tail = (previous_node.tail or "") + token
 
     return target
+
+
+def target_to_prompt_text(source_element, target_element) -> str | None:
+    by_ref: dict[str, list[str]] = {}
+
+    for marker, ph in ph_map(source_element).items():
+        by_ref.setdefault(ph.get("dataRef") or marker, []).append(marker)
+
+    parts: list[str] = []
+
+    if target_element.text:
+        parts.append(target_element.text)
+
+    for child in target_element:
+        if local_name(child) != "ph":
+            return None
+
+        candidates = by_ref.get(child.get("dataRef") or "", [])
+
+        if not candidates:
+            return None
+
+        parts.append(candidates.pop(0))
+
+        if child.tail:
+            parts.append(child.tail)
+
+    return "".join(parts)
 
 
 def find_segments(root):
@@ -220,3 +254,60 @@ def save_tree(tree, output_path: Path):
         xml_declaration=True,
         pretty_print=False,
     )
+
+
+def find_files(root):
+    return root.xpath(".//x:file", namespaces=NS)
+
+
+def find_units(file_element):
+    return file_element.xpath("./x:unit", namespaces=NS)
+
+
+def first_segment(unit):
+    segments = unit.xpath(".//x:segment", namespaces=NS)
+
+    return segments[0] if segments else None
+
+
+def segment_source(segment):
+    return segment.find(f"{{{XLIFF_NS}}}source")
+
+
+def segment_target(segment):
+    targets = segment.xpath("./x:target", namespaces=NS)
+
+    return targets[0] if targets else None
+
+
+# Read the element's own <notes> block, never with a recursive search: a <file>
+# asked for its notes would otherwise collect the notes of every unit below it.
+def notes_of(element) -> dict[str, list[str]]:
+    grouped: dict[str, list[str]] = {}
+
+    for note in element.xpath("./x:notes/x:note", namespaces=NS):
+        category = note.get("category") or ""
+        grouped.setdefault(category, []).append("".join(note.itertext()))
+
+    return grouped
+
+
+def note_text(notes: dict[str, list[str]], category: str) -> str:
+    return "\n".join(notes.get(category, [])).strip()
+
+
+def state_of(segment) -> str:
+    return segment.get("state") or "initial"
+
+
+def sub_state_of(segment) -> str | None:
+    return segment.get("subState")
+
+
+def set_state(segment, state: str, sub_state: str | None = None) -> None:
+    segment.set("state", state)
+
+    if sub_state:
+        segment.set("subState", sub_state)
+    elif "subState" in segment.attrib:
+        del segment.attrib["subState"]

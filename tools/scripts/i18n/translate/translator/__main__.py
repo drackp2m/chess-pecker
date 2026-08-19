@@ -1,68 +1,54 @@
 #!/usr/bin/env python3
-"""Translate empty XLIFF 2.0 targets with a local model."""
 
 from __future__ import annotations
 
 import argparse
 import sys
-import time
 from pathlib import Path
 
-from .environment import HostUnsupportedError, require_mlx_runtime
-from .glossary import (
-    build_or_load_glossary,
-    glossary_terms_for_text,
+from .engine import DEFAULT_MLX_MODEL, build_engine
+from .environment import HostUnsupportedError
+from .memory import TranslationMemory
+from .ollama_client import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
+from .prompting import (
+    INJECTIONS,
+    PROFILES,
+    REVIEW_SUB_STATE,
+    blocks_of,
+    build_messages,
+    fenced,
+    is_pending,
 )
-from .ollama_client import (
-    BIG_MODEL,
-    DEFAULT_GLOSSARY_MODEL,
-    DEFAULT_MODEL,
-    ollama_translate,
-)
-from .placeholders import (
-    salvage_missing_markers,
-    strip_hallucinated_placeholders,
-)
+from .report import Record, Reporter, write_report
+from .validate import clean, reason_of, repair, validate
 from .xliff_io import (
-    XLIFF_NS,
     build_target,
-    expected_markers_for,
-    find_segments,
+    find_files,
     get_languages,
     read_xliff,
     replace_target,
     save_tree,
-    source_to_prompt_text,
-    target_is_empty,
+    set_state,
 )
+
+RETRIES = 2
+MAX_TOKENS_FACTOR = 4
+MAX_TOKENS_FLOOR = 48
+MAX_TOKENS_CEILING = 640
 
 EPILOG = """\
 examples:
-  # Translate translations/fr-FR.xlf, writing translations/fr-FR.translated.xlf
-  uv run --project tools/scripts/i18n/translate translate translations/fr-FR.xlf
+  # Every pending unit of every exported file, with the model loaded once
+  uv run --project tools/scripts/i18n/translate translate translations/*.xlf
 
-  # From inside the tool directory the --project flag is not needed
-  cd tools/scripts/i18n/translate && uv run translate translations/fr-FR.xlf
+  # One language, only what the source outgrew
+  uv run translate translations/fr-FR.xlf --only-stale
 
-  # Re-run later: automatically resumes from the existing output
-  uv run translate translations/fr-FR.xlf
+  # Try the prompts on three units without loading a model
+  uv run translate translations/fr-FR.xlf --limit 3 --dry-run
 
-  # Use the bigger 12b model
-  uv run translate translations/fr-FR.xlf --12b
-
-  # Skip the glossary pass entirely
-  uv run translate translations/fr-FR.xlf --no-glossary
-
-  # Give the model domain context for every translation (not just
-  # the glossary) — helps with ambiguous words like chess pieces
-  uv run translate translations/fr-FR.xlf \\
-      --context "aplicación de ajedrez, método Woodpecker"
-
-  # Force the glossary to be recomputed
-  uv run translate translations/fr-FR.xlf --rebuild-glossary
-
-  # Only translate the next 20 pending segments
-  uv run translate translations/fr-FR.xlf --limit 20
+  # Compare the new engine against the prototype on the same prompts
+  uv run translate translations/fr-FR.xlf --backend ollama --report ollama.md
 """
 
 
@@ -70,376 +56,382 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="translate",
         description=(
-            "Translate empty <target> segments in an XLIFF 2.0 file "
-            "using a local model. Runs on the host (macOS), never "
-            "inside the devcontainer. "
-            "Placeholders (<ph>) are preserved, progress is saved "
-            "after every segment, and re-running the same command "
-            "resumes automatically from the existing output file."
+            "Translate the pending units of exported XLIFF 2.0 files with a "
+            "local model. Runs on the host (macOS, Apple Silicon), never "
+            "inside the devcontainer. The model is loaded once for every file "
+            "given, placeholders are preserved, progress is saved after every "
+            "unit, and re-running the same command resumes from the existing "
+            "output."
         ),
         epilog=EPILOG,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    parser.add_argument(
-        "input",
-        type=Path,
-        help="Input XLIFF file",
-    )
+    parser.add_argument("inputs", type=Path, nargs="+", help="Input XLIFF files")
 
     parser.add_argument(
         "-o",
         "--output",
         type=Path,
-        help="Output XLIFF file. Defaults to <input>.translated.xlf",
+        help=(
+            "Output file, only with a single input. Defaults to "
+            "<input>.translated.xlf"
+        ),
     )
 
     parser.add_argument(
         "--backend",
         choices=("mlx", "ollama"),
-        default="ollama",
+        default="mlx",
         help=(
-            "Translation engine. 'ollama' is the prototype engine and "
-            "the current default; 'mlx' is the resident in-process "
-            "engine and is not wired up yet. (default: ollama)"
+            "Translation engine: 'mlx' is the resident in-process engine, "
+            "'ollama' the prototype kept for comparison. (default: mlx)"
         ),
-    )
-
-    parser.add_argument(
-        "--12b",
-        dest="use_12b",
-        action="store_true",
-        help=f"Use {BIG_MODEL} instead of the default {DEFAULT_MODEL}.",
     )
 
     parser.add_argument(
         "--model",
         default=None,
         help=(
-            "Ollama model used for the actual translations. Overrides "
-            f"--12b. (default: {DEFAULT_MODEL})"
+            f"Model to translate with. (default: {DEFAULT_MLX_MODEL} for mlx, "
+            f"{DEFAULT_OLLAMA_MODEL} for ollama)"
         ),
     )
 
     parser.add_argument(
-        "--delay",
-        type=float,
-        default=0,
-        help="Seconds to wait between translations (default: 0).",
+        "--profile",
+        choices=("auto", *PROFILES),
+        default="auto",
+        help=(
+            "How the prompt is shaped. 'instruct' layers the catalogue context "
+            "into a system prompt; 'translate' uses the fixed structured turn a "
+            "translation-only model such as TranslateGemma expects. 'auto' picks "
+            "'translate' for a model whose name says so. (default: auto)"
+        ),
+    )
+
+    parser.add_argument(
+        "--inject",
+        choices=INJECTIONS,
+        default="terms",
+        help=(
+            "How much context to smuggle into the text itself under --profile "
+            "translate, whose template has room for nothing else: 'terms' the "
+            "glossary terms of that string, 'full' those plus its context note, "
+            "'none' the bare source. (default: terms)"
+        ),
+    )
+
+    parser.add_argument(
+        "--scope",
+        action="append",
+        default=[],
+        help="Only translate this scope (the <file> id). Repeatable.",
     )
 
     parser.add_argument(
         "--limit",
         type=int,
         default=None,
-        help="Translate at most N segments in this run.",
+        help="Translate at most N units in this run, across every file.",
     )
 
     parser.add_argument(
-        "--context",
-        default=None,
-        help=(
-            "Free-text domain context applied to EVERY translation "
-            "(not just the glossary), e.g. 'aplicación de ajedrez, "
-            "método Woodpecker'. Helps disambiguate words with "
-            "multiple meanings (e.g. chess pieces vs. their everyday "
-            "sense)."
-        ),
-    )
-
-    glossary_group = parser.add_argument_group(
-        "glossary options",
-        "Pre-pass that finds recurring words, translates them once, "
-        "and reuses that glossary as context in every prompt so "
-        "terminology stays consistent across the document.",
-    )
-
-    glossary_group.add_argument(
-        "--no-glossary",
-        dest="use_glossary",
-        action="store_false",
-        help="Disable the repeated-terms glossary pass.",
-    )
-
-    glossary_group.add_argument(
-        "--glossary-model",
-        default=DEFAULT_GLOSSARY_MODEL,
-        help=(
-            "Lightweight Ollama model used to pick which candidate "
-            "words are real terminology. (default: "
-            f"{DEFAULT_GLOSSARY_MODEL})"
-        ),
-    )
-
-    glossary_group.add_argument(
-        "--glossary-min-count",
-        type=int,
-        default=2,
-        help=(
-            "Minimum occurrences for a word to be a glossary "
-            "candidate (default: 2)."
-        ),
-    )
-
-    glossary_group.add_argument(
-        "--glossary-top-n",
-        type=int,
-        default=80,
-        help="Max number of glossary candidate words to consider (default: 80).",
-    )
-
-    glossary_group.add_argument(
-        "--glossary-context",
-        default=None,
-        help=(
-            "Free-text context for the glossary-building steps "
-            "specifically (filtering and translating terms). "
-            "Defaults to --context if not given separately."
-        ),
-    )
-
-    glossary_group.add_argument(
-        "--no-glossary-interactive",
-        dest="glossary_interactive",
-        action="store_false",
-        help=(
-            "Skip the terminal prompt to manually review/edit the "
-            "glossary term list before translating it."
-        ),
-    )
-
-    glossary_group.add_argument(
-        "--rebuild-glossary",
+        "--only-stale",
         action="store_true",
-        help="Recompute the glossary even if a cached one exists.",
+        help=(
+            "Only retranslate units whose source changed after they were "
+            "translated, leaving the untranslated ones alone."
+        ),
     )
 
-    parser.set_defaults(use_glossary=True, glossary_interactive=True)
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the prompts that would be sent and write nothing.",
+    )
+
+    parser.add_argument(
+        "--no-tm",
+        dest="memory",
+        action="store_false",
+        help=(
+            "Disable the run translation memory, which reuses the translation "
+            "of a source string already resolved in this run."
+        ),
+    )
+
+    parser.add_argument(
+        "--json",
+        dest="as_json",
+        action="store_true",
+        help="Print NDJSON progress on stdout instead of the human log.",
+    )
+
+    parser.add_argument(
+        "--report",
+        type=Path,
+        default=None,
+        help="Write a markdown summary of the run to this file.",
+    )
+
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.0,
+        help="Sampling temperature (default: 0, deterministic).",
+    )
+
+    parser.set_defaults(memory=True)
 
     return parser
 
 
-def resolve_model(args) -> str:
-    if args.model:
-        return args.model
-    if args.use_12b:
-        return BIG_MODEL
-    return DEFAULT_MODEL
+def output_for(path: Path, requested: Path | None) -> Path:
+    if requested is not None:
+        return requested
+
+    return path.with_name(f"{path.stem}.translated{path.suffix}")
 
 
-def translate_segment(
-    segment,
-    source,
-    source_lang: str,
-    target_lang: str,
-    model: str,
-    glossary: dict[str, str],
-    context: str | None = None,
-):
-    """
-    Translate one segment, retrying with progressively stronger
-    prompts, and finally salvaging dropped placeholders as a last
-    resort. Returns the new <target> element.
-    """
-    source_text, _ = source_to_prompt_text(source)
-    expected_markers = expected_markers_for(source)
-    relevant_glossary = glossary_terms_for_text(glossary, source_text)
+def max_tokens_for(engine, source: str) -> int:
+    estimate = engine.count_tokens(source) * MAX_TOKENS_FACTOR
 
-    print(f"    Translating: {source_text!r}")
+    return max(MAX_TOKENS_FLOOR, min(MAX_TOKENS_CEILING, estimate))
 
-    translated = ollama_translate(
-        source_text,
-        source_lang,
-        target_lang,
-        model,
-        expected_markers,
-        glossary_terms=relevant_glossary,
-        context=context,
+
+def attempt(engine, block, unit, index: int, reason: str) -> tuple[str, list]:
+    text = engine.generate(
+        build_messages(block, unit, index, reason),
+        max_tokens_for(engine, unit.source),
     )
-    translated = strip_hallucinated_placeholders(translated, expected_markers)
-    print(f"    → {translated!r}")
-
-    try:
-        return build_target(source, translated)
-    except RuntimeError:
-        pass
-
-    # Retry 1: stricter prompt (temperature is 0, so the retry must
-    # change the prompt to be useful).
-    print("    Retrying with stricter prompt...")
-    translated = ollama_translate(
-        source_text,
-        source_lang,
-        target_lang,
-        model,
-        expected_markers,
-        strict=True,
-        glossary_terms=relevant_glossary,
-        context=context,
-    )
-    translated = strip_hallucinated_placeholders(translated, expected_markers)
-    print(f"    → {translated!r}")
-
-    try:
-        return build_target(source, translated)
-    except RuntimeError:
-        pass
-
-    # Retry 2: example-based prompt. Useful for placeholders in the
-    # middle of the sentence, which small models tend to drop.
-    print("    Retrying with example-based prompt...")
-    translated = ollama_translate(
-        source_text,
-        source_lang,
-        target_lang,
-        model,
-        expected_markers,
-        strict=True,
-        with_example=True,
-        glossary_terms=relevant_glossary,
-        context=context,
-    )
-    translated = strip_hallucinated_placeholders(translated, expected_markers)
-    print(f"    → {translated!r}")
-
-    try:
-        return build_target(source, translated)
-    except RuntimeError:
-        pass
-
-    # Last resort: re-attach dropped markers. Start/end markers go
-    # back exactly where they were; mid-sentence markers are placed
-    # with a best-effort heuristic (prints its own WARNING) since
-    # there's no way to know the correct grammatical spot for
-    # certain.
-    salvaged = salvage_missing_markers(source_text, translated, expected_markers)
-    return build_target(source, salvaged)
-
-
-def main():
-    parser = build_arg_parser()
-    args = parser.parse_args()
-
-    if args.backend == "mlx":
-        try:
-            require_mlx_runtime()
-        except HostUnsupportedError as exc:
-            print(f"ERROR: {exc}", file=sys.stderr)
-            sys.exit(1)
-
-        print(
-            "ERROR: the MLX backend is not implemented yet. "
-            "Use --backend ollama until then.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    model = resolve_model(args)
-    glossary_context = args.glossary_context or args.context
-
-    if not args.input.exists():
-        print(f"ERROR: File does not exist: {args.input}", file=sys.stderr)
-        sys.exit(1)
-
-    output_path = args.output or args.input.with_name(
-        f"{args.input.stem}.translated{args.input.suffix}"
+    candidate = clean(text, unit.source, "last" if fenced(block, unit) else "first")
+    issues = validate(
+        candidate,
+        unit.source,
+        unit.markers,
+        unit.terms,
+        lang=block.target_lang,
+        keep=block.keep,
     )
 
-    if output_path.exists():
-        print(f"Resuming from existing output: {output_path}")
-        tree = read_xliff(output_path)
-    else:
-        tree = read_xliff(args.input)
+    return candidate, issues
 
+
+def translate_unit(engine, block, unit) -> tuple[str, list[str], bool]:
+    candidate, issues = attempt(engine, block, unit, 0, "")
+
+    for index in range(1, RETRIES + 1):
+        if not issues:
+            return candidate, [], False
+
+        candidate, issues = attempt(engine, block, unit, index, reason_of(issues))
+
+    if not issues:
+        return candidate, [], False
+
+    if any(issue.hard for issue in issues):
+        candidate = repair(candidate, unit.source, unit.markers)
+
+    return candidate, [f"{issue.code}: {issue.detail}" for issue in issues], True
+
+
+def resolve(engine, block, unit, memory) -> tuple[str, str, list[str], bool]:
+    remembered = memory.get(block.target_lang, unit.source)
+
+    if remembered is not None:
+        return remembered, "memory", [], False
+
+    text, issues, review = translate_unit(engine, block, unit)
+
+    if not review:
+        memory.remember(block.target_lang, unit.source, text)
+
+    return text, "model", issues, review
+
+
+def wanted(unit, args) -> bool:
+    if args.scope and unit.scope not in args.scope:
+        return False
+
+    if args.only_stale:
+        return unit.outdated
+
+    return is_pending(unit)
+
+
+def profile_for(args, model: str) -> str:
+    if args.profile != "auto":
+        return args.profile
+
+    return "translate" if "translategemma" in model.lower() else "instruct"
+
+
+def plan_file(root, args, shape) -> tuple[list, int]:
+    jobs = []
+    total = 0
+
+    for element in find_files(root):
+        block, units = blocks_of(element, *get_languages(root), **shape)
+        total += len(units)
+
+        for unit in units:
+            if wanted(unit, args):
+                jobs.append((block, unit))
+
+    return jobs, total
+
+
+def seed_memory(root, memory, source_lang, target_lang) -> None:
+    for element in find_files(root):
+        block, units = blocks_of(element, source_lang, target_lang)
+
+        for unit in units:
+            if not unit.outdated and unit.previous.strip():
+                memory.seed(target_lang, unit.source, unit.previous)
+
+
+def apply_unit(unit, text: str, review: bool) -> None:
+    replace_target(unit.segment, build_target(unit.source_element, text))
+    set_state(unit.segment, "translated", REVIEW_SUB_STATE if review else None)
+
+
+def show_prompts(block, unit, reporter) -> None:
+    reporter.say(f"\n----- {unit.scope}/{unit.key}")
+
+    for message in build_messages(block, unit):
+        reporter.say(f"[{message['role']}]")
+        reporter.say(str(message["content"]))
+
+
+def run_file(path: Path, engine, args, memory, reporter, budget: int | None, shape=None) -> int:
+    shape = shape or {}
+    output = output_for(path, args.output)
+    tree = read_xliff(output if output.exists() else path)
     root = tree.getroot()
     source_lang, target_lang = get_languages(root)
 
-    print(f"Source language: {source_lang}")
-    print(f"Target language: {target_lang}")
-    print(f"Backend:        {args.backend}")
-    print(f"Model:          {model}")
-    print(f"Input:          {args.input}")
-    print(f"Output:         {output_path}")
-    if args.context:
-        print(f"Context:        {args.context}")
-    print()
+    seed_memory(root, memory, source_lang, target_lang)
 
-    segments = find_segments(root)
-    pending = [s for s in segments if target_is_empty(s)]
+    jobs, total = plan_file(root, args, shape)
+    pending = len(jobs) if budget is None else min(len(jobs), budget)
 
-    print(f"Total segments: {len(segments)}")
-    print(f"Pending:        {len(pending)}")
-    print()
+    reporter.file_started(path, output, pending, total)
 
-    glossary: dict[str, str] = {}
+    done = 0
+    current = None
 
-    if args.use_glossary:
-        glossary_path = output_path.with_name(
-            f"{args.input.stem}.glossary.json"
-        )
-        glossary = build_or_load_glossary(
-            segments,
-            source_lang,
-            target_lang,
-            model,
-            args.glossary_model,
-            glossary_path,
-            min_count=args.glossary_min_count,
-            top_n=args.glossary_top_n,
-            rebuild=args.rebuild_glossary,
-            context=glossary_context,
-            interactive=args.glossary_interactive,
-        )
-        print()
+    for block, unit in jobs[:pending]:
+        if (block.target_lang, block.scope) != current:
+            engine.start_block()
+            current = (block.target_lang, block.scope)
 
-    translated_count = 0
-
-    for index, segment in enumerate(pending, start=1):
-        source = segment.find(f"{{{XLIFF_NS}}}source")
-
-        if source is None:
-            print(
-                f"[{index}/{len(pending)}] WARNING: "
-                "segment without <source>, skipping."
-            )
+        if args.dry_run:
+            show_prompts(block, unit, reporter)
+            done += 1
             continue
 
-        print(f"[{index}/{len(pending)}]")
+        started = reporter.elapsed
+        text, origin, issues, review = resolve(engine, block, unit, memory)
+
+        if not text.strip():
+            reporter.warn(f"  {unit.scope}/{unit.key}: no translation, left pending.")
+            continue
 
         try:
-            new_target = translate_segment(
-                segment, source, source_lang, target_lang, model, glossary,
-                context=args.context,
-            )
+            apply_unit(unit, text, review)
+        except RuntimeError as exc:
+            reporter.warn(f"  {unit.scope}/{unit.key}: {exc}")
+            reporter.warn("  Left pending.")
+            continue
 
-            replace_target(segment, new_target)
+        save_tree(tree, output)
 
-            # VERY IMPORTANT: save after every translation.
-            save_tree(tree, output_path)
+        done += 1
+        reporter.unit_done(
+            Record(
+                scope=unit.scope,
+                key=unit.key,
+                unit=unit.id,
+                source=unit.source,
+                target=text,
+                origin=origin,
+                issues=issues,
+                review=review,
+                seconds=reporter.elapsed - started,
+            ),
+            done,
+            pending,
+        )
 
-            translated_count += 1
-            print("    Saved.")
+    return done
 
-        except Exception as exc:
-            print(f"    ERROR: {exc}", file=sys.stderr)
-            print(
-                f"\nStopped after {translated_count} translations.\n"
-                f"The already translated segments are saved in:\n"
-                f"{output_path}\n",
-                file=sys.stderr,
-            )
-            sys.exit(1)
 
-        if args.limit is not None and translated_count >= args.limit:
-            print(f"\nReached --limit {args.limit}.")
+def run(args, reporter) -> int:
+    engine = build_engine(args.backend, args.model, args.temperature)
+    memory = TranslationMemory(enabled=args.memory)
+
+    if not args.dry_run:
+        reporter.say(f"Loading {engine.name} model {engine.model}…")
+        engine.load()
+
+        if engine.load_seconds:
+            reporter.say(f"Loaded in {engine.load_seconds:.1f}s")
+
+        reporter.reset()
+
+    shape = {"profile": profile_for(args, engine.model), "injection": args.inject}
+    reporter.say(f"Prompt profile: {shape['profile']} (inject: {shape['injection']})")
+
+    budget = args.limit
+
+    for path in args.inputs:
+        if budget is not None and budget <= 0:
             break
 
-        if args.delay:
-            time.sleep(args.delay)
+        done = run_file(path, engine, args, memory, reporter, budget, shape)
 
-    print()
-    print(f"Done. Translated: {translated_count}")
-    print(f"Output: {output_path}")
+        if budget is not None:
+            budget -= done
+
+    if args.dry_run:
+        return 0
+
+    summary = reporter.finish(engine, memory)
+
+    if args.report is not None:
+        write_report(args.report, summary, reporter)
+        reporter.say(f"\nReport: {args.report}")
+
+    return 0
+
+
+def main() -> None:
+    args = build_arg_parser().parse_args()
+    reporter = Reporter(as_json=args.as_json)
+
+    missing = [path for path in args.inputs if not path.exists()]
+
+    if missing:
+        reporter.warn(f"ERROR: file does not exist: {', '.join(str(p) for p in missing)}")
+        sys.exit(1)
+
+    if args.output is not None and len(args.inputs) > 1:
+        reporter.warn("ERROR: --output only makes sense with a single input file.")
+        sys.exit(1)
+
+    try:
+        sys.exit(run(args, reporter))
+    except HostUnsupportedError as exc:
+        reporter.warn(f"ERROR: {exc}")
+        sys.exit(1)
+    except KeyboardInterrupt:
+        reporter.warn("\nInterrupted. Everything translated so far is saved.")
+        sys.exit(130)
+    except RuntimeError as exc:
+        reporter.warn(f"ERROR: {exc}")
+        reporter.warn("Everything translated so far is saved in the output file.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
