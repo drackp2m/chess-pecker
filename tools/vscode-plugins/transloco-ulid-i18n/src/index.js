@@ -97,6 +97,10 @@ class I18nIndex {
 		};
 	}
 
+	load(file) {
+		return loadModule(this.root, file);
+	}
+
 	async loadModules() {
 		const files = ['checks.mjs', 'collect.mjs', 'config.mjs', 'findings.mjs', 'params.mjs'];
 		const [checks, collect, config, findings, params] = await Promise.all(

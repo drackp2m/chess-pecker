@@ -35,6 +35,16 @@
 				"command": "translocoUlidI18n.toggleInlineText",
 				"title": "Toggle inline translations",
 				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.exportTranslations",
+				"title": "Export translations to XLIFF",
+				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.importTranslations",
+				"title": "Import translations from XLIFF",
+				"category": "i18n"
 			}
 		],
 		"configurationDefaults": {
@@ -60,6 +70,11 @@
 					"type": "boolean",
 					"default": true,
 					"description": "Render the default language translation in place of every key usage."
+				},
+				"translocoUlidI18n.transferDir": {
+					"type": "string",
+					"default": "translations",
+					"description": "Where the XLIFF export lands and the import dialog opens. Relative paths resolve from the workspace root."
 				},
 				"translocoUlidI18n.inlineTextMaxLength": {
 					"type": "number",

@@ -1,9 +1,19 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const LANGUAGE_FILE = path.join('apps', 'web', 'src', 'app', 'definition', 'language.type.ts');
+const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..');
+const LANGUAGE_FILE = path.join(
+	ROOT,
+	'apps',
+	'web',
+	'src',
+	'app',
+	'definition',
+	'language.type.ts',
+);
 
-function readLanguages(file) {
+export function readLanguages(file) {
 	const source = readFileSync(file, 'utf8');
 	const list = /LANGUAGES[^=]*=\s*\[([^\]]*)\]/.exec(source)?.[1] ?? '';
 	const langs = [...list.matchAll(/'([^']+)'/g)].map(([, lang]) => lang);
@@ -33,12 +43,16 @@ export const toPascalCase = (name) =>
 
 export const toKebabCase = (name) => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
-export function parseArgs(argv) {
-	const value = (flag) => {
-		const index = argv.indexOf(flag);
+export function valueOf(argv, flag) {
+	const index = argv.indexOf(flag);
 
-		return -1 === index ? null : argv[index + 1];
-	};
+	return -1 === index ? null : (argv[index + 1] ?? null);
+}
+
+export const listOf = (argv, flag) => valueOf(argv, flag)?.split(',').filter(Boolean) ?? null;
+
+export function parseArgs(argv) {
+	const value = (flag) => valueOf(argv, flag);
 
 	const langs = value('--langs')?.split(',').filter(Boolean);
 	const languageFile = value('--languages');

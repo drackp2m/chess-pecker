@@ -6,6 +6,7 @@ const { Findings } = require('./findings');
 const { i18nDefinitionProvider, i18nReferenceProvider } = require('./navigation');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
 const { ensureTemplateSetup } = require('./setup');
+const { exportTranslations, importTranslations } = require('./transfer');
 const { UsageIndex } = require('./usages');
 
 const { I18nIndex } = require('./index');
@@ -74,8 +75,19 @@ function watchEditors(annotations) {
 	];
 }
 
-function registerCommands(state) {
+function commandTable(state) {
 	const { index, annotations } = state;
+
+	return {
+		createKey: () => createKey(index, annotations),
+		reload: () => reload(state, true),
+		toggleInlineText: () => toggleInlineText(annotations),
+		exportTranslations: () => exportTranslations(index),
+		importTranslations: () => importTranslations(index, annotations),
+	};
+}
+
+function registerCommands(state) {
 	const run = (task) => () => {
 		task().catch((error) =>
 			vscode.window.showErrorMessage(`Transloco ULID i18n: ${error.message}`),
@@ -83,17 +95,8 @@ function registerCommands(state) {
 	};
 
 	return [
-		vscode.commands.registerCommand(
-			'translocoUlidI18n.createKey',
-			run(() => createKey(index, annotations)),
-		),
-		vscode.commands.registerCommand(
-			'translocoUlidI18n.reload',
-			run(() => reload(state, true)),
-		),
-		vscode.commands.registerCommand(
-			'translocoUlidI18n.toggleInlineText',
-			run(() => toggleInlineText(annotations)),
+		...Object.entries(commandTable(state)).map(([name, task]) =>
+			vscode.commands.registerCommand(`translocoUlidI18n.${name}`, run(task)),
 		),
 		vscode.commands.registerCommand('translocoUlidI18n.ensureTemplateSetup', (uri) =>
 			run(() => ensureTemplateSetup(uri))(),

@@ -10,6 +10,8 @@
 		"lint": "node tools/scripts/lint/lint.mjs --max-warnings 0",
 		"lint:fix": "node tools/scripts/lint/lint.mjs --fix --max-warnings 0 --verbose",
 		"i18n:check": "node tools/scripts/i18n/index.mjs",
+		"i18n:export": "node tools/scripts/i18n/export.mjs",
+		"i18n:import": "node tools/scripts/i18n/import.mjs",
 		"test:lock": "node tools/scripts/test-lock/index.mjs",
 		"test:lock:select": "node tools/scripts/test-lock/index.mjs --select",
 		"update:deps": "sh tools/scripts/update-deps.sh",
