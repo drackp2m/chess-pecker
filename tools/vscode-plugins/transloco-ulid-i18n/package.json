@@ -64,7 +64,7 @@
 						"type": "string"
 					},
 					"default": [],
-					"description": "Languages to resolve. Empty means the defaults from tools/scripts/i18n/config.mjs."
+					"description": "Languages to resolve. Empty means the defaults from tools/scripts/i18n/catalogue/config.mjs."
 				},
 				"translocoUlidI18n.inlineText": {
 					"type": "boolean",

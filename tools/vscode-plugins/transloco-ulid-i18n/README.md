@@ -116,12 +116,12 @@ Opening the repo natively instead (no container) is the same command against `~/
 
 ## Settings
 
-| Setting                                 | Default        | Meaning                                                           |
-| --------------------------------------- | -------------- | ----------------------------------------------------------------- |
-| `translocoUlidI18n.langs`               | `[]`           | Languages to resolve; empty uses `tools/scripts/i18n/config.mjs`. |
-| `translocoUlidI18n.inlineText`          | `true`         | Show the inline translation.                                      |
-| `translocoUlidI18n.inlineTextMaxLength` | `60`           | Where the inline text is ellipsised.                              |
-| `translocoUlidI18n.transferDir`         | `translations` | Where the XLIFF export lands and the import dialog opens.         |
+| Setting                                 | Default        | Meaning                                                                     |
+| --------------------------------------- | -------------- | --------------------------------------------------------------------------- |
+| `translocoUlidI18n.langs`               | `[]`           | Languages to resolve; empty uses `tools/scripts/i18n/catalogue/config.mjs`. |
+| `translocoUlidI18n.inlineText`          | `true`         | Show the inline translation.                                                |
+| `translocoUlidI18n.inlineTextMaxLength` | `60`           | Where the inline text is ellipsised.                                        |
+| `translocoUlidI18n.transferDir`         | `translations` | Where the XLIFF export lands and the import dialog opens.                   |
 
 It also ships a `configurationDefaults` block turning `editor.suggest.showWords` off for `html` and
 `typescript`, so VSCode's word-based guesses (the ones that offered `solved` or `percentage`, scraped

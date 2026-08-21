@@ -59,6 +59,27 @@ async function revealed(written, outDir) {
 	}
 }
 
+async function writeExports(index, langs, missingOnly, outDir) {
+	const [transfer, collect] = await Promise.all([
+		index.load('transfer/build.mjs'),
+		index.load('catalogue/collect.mjs'),
+	]);
+	const { usages } = collect.collectUsages(index.sourceDirs);
+	const base = {
+		scopes: index.rawScopes,
+		defaultLang: index.defaultLang,
+		langs: index.langs,
+		i18nDir: index.i18nDir,
+		root: index.root,
+		filter: missingOnly ? 'missing' : 'all',
+	};
+
+	return langs
+		.map((lang) => transfer.buildExport({ ...base, lang, usages }))
+		.filter((document) => 0 !== document.total)
+		.map((document) => transfer.writeExport(document, outDir).file);
+}
+
 async function exportTranslations(index) {
 	const langs = await pickLangs(index);
 
@@ -72,17 +93,8 @@ async function exportTranslations(index) {
 		return;
 	}
 
-	const [transfer, collect] = await Promise.all([
-		index.load('transfer.mjs'),
-		index.load('collect.mjs'),
-	]);
-	const { usages } = collect.collectUsages(index.sourceDirs);
 	const outDir = transferDir(index.root);
-	const base = { scopes: index.rawScopes, defaultLang: index.defaultLang, root: index.root };
-	const written = langs
-		.map((lang) => transfer.buildExport({ ...base, lang, missingOnly, usages }))
-		.filter((document) => 0 !== document.total)
-		.map((document) => transfer.writeExport(document, outDir).file);
+	const written = await writeExports(index, langs, missingOnly, outDir);
 
 	if (0 === written.length) {
 		vscode.window.showInformationMessage('i18n: nothing to export');
@@ -122,7 +134,7 @@ async function pickNewKeys(added) {
 }
 
 async function readDocuments(index, uris) {
-	const xliff = await index.load('xliff.mjs');
+	const xliff = await index.load('transfer/xliff.mjs');
 
 	return uris.map((uri) => ({
 		file: uri.fsPath,
@@ -169,10 +181,15 @@ async function importTranslations(index, annotations) {
 		return;
 	}
 
-	const merge = await index.load('merge.mjs');
+	const merge = await index.load('transfer/merge.mjs');
 	const documents = await readDocuments(index, uris);
-	const base = { scopes: index.rawScopes, defaultLang: index.defaultLang };
-	const plan = merge.planImport({ ...base, langs: index.langs, documents });
+	const base = {
+		scopes: index.rawScopes,
+		defaultLang: index.defaultLang,
+		langs: index.langs,
+		i18nDir: index.i18nDir,
+	};
+	const plan = merge.planImport({ ...base, documents });
 	const accepted = await pickNewKeys(plan.added);
 
 	if (null === accepted) {
