@@ -1,10 +1,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { isUlid } from './config.mjs';
-import { readContext, termsIn } from './context.mjs';
-import { hashOf, readStates, statusOf } from './freshness.mjs';
-import { paramsFile, readDeclaredParams } from './params.mjs';
+import { isUlid } from '../catalogue/config.mjs';
+import { readContext, termsIn } from '../catalogue/context.mjs';
+import { hashOf, readStates, statusOf } from '../catalogue/freshness.mjs';
+import { paramsFile, readDeclaredParams } from '../catalogue/params.mjs';
+
 import { buildXliff } from './xliff.mjs';
 
 export const DEFAULT_OUT_DIR = 'translations';

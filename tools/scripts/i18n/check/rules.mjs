@@ -1,8 +1,8 @@
-import { readBarrel } from './collect.mjs';
-import { isUlid, toPascalCase } from './config.mjs';
-import { matchesKey, readContext } from './context.mjs';
-import { freshnessOf, readState } from './freshness.mjs';
-import { buildScopeParams, entryLineOf, paramsName } from './params.mjs';
+import { readBarrel } from '../catalogue/collect.mjs';
+import { isUlid, toPascalCase } from '../catalogue/config.mjs';
+import { matchesKey, readContext } from '../catalogue/context.mjs';
+import { freshnessOf, readState } from '../catalogue/freshness.mjs';
+import { buildScopeParams, entryLineOf, paramsName } from '../catalogue/params.mjs';
 
 const PARAM_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
 const PARAMS = 'params';

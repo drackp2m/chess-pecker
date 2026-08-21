@@ -2,10 +2,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 
 import ts from 'typescript';
 
-import { parseBarrelSource } from './collect.mjs';
-import { isUlid, toKebabCase, toPascalCase } from './config.mjs';
-import { readState, writeState } from './freshness.mjs';
-import { buildParams } from './params.mjs';
+import { parseBarrelSource } from '../catalogue/collect.mjs';
+import { isUlid, toKebabCase, toPascalCase } from '../catalogue/config.mjs';
+import { readState, writeState } from '../catalogue/freshness.mjs';
+import { buildParams } from '../catalogue/params.mjs';
 
 // Keys no longer declared are dropped: a translation is either backed by a
 // keys.ts entry or it is dead weight nobody can reach through I18n.

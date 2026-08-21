@@ -1,11 +1,11 @@
 import { c, plural } from '../lint/lint-report.mjs';
 
-import { buildFindings } from './checks.mjs';
-import { collectUsages, readScopes } from './collect.mjs';
-import { parseArgs } from './config.mjs';
-import { applyFix } from './fix.mjs';
-import { writeI18nSummary, writeSkippedSummary } from './github-summary.mjs';
-import { printFindings, printWritten } from './report.mjs';
+import { collectUsages, readScopes } from './catalogue/collect.mjs';
+import { parseArgs } from './catalogue/config.mjs';
+import { applyFix } from './check/fix.mjs';
+import { writeI18nSummary, writeSkippedSummary } from './check/github-summary.mjs';
+import { printFindings, printWritten } from './check/report.mjs';
+import { buildFindings } from './check/rules.mjs';
 
 const options = parseArgs(process.argv.slice(2));
 const scopes = readScopes(options);

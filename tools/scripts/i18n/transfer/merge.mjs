@@ -1,7 +1,8 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
-import { isUlid } from './config.mjs';
-import { hashOf, readState, sealed, writeState } from './freshness.mjs';
+import { isUlid } from '../catalogue/config.mjs';
+import { hashOf, readState, sealed, writeState } from '../catalogue/freshness.mjs';
+
 import { noteOf } from './xliff.mjs';
 
 const KEYS_END = '} as const;';
