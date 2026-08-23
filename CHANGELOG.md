@@ -1,3 +1,42 @@
+# v1.24.0 (2026-08-23)
+
+## What's Changed
+
+### ✨ Features
+
+- choose between the specialist and the one who sees the bigger picture ([9de8c35](https://github.com/drackp2m/chess-pecker/commit/9de8c35ffa49f9bd3555d54df931adc080f06ff8)) by Marc Jovaní González
+- dress a radio group as a segmented control ([b54da24](https://github.com/drackp2m/chess-pecker/commit/b54da24d5d1226e9d51adc3f2399ba3a33123e36)) by Marc Jovaní González
+- let a language go back to being untranslated ([052f808](https://github.com/drackp2m/chess-pecker/commit/052f8089876763f34399c45728e12faeab7554e7)) by Marc Jovaní González
+- mark a translation stale when its source moves ([88f7333](https://github.com/drackp2m/chess-pecker/commit/88f7333452a8091c8f202555b33f7513df3feb1e)) by Marc Jovaní González
+- send the translator a file that cannot cheat ([c936970](https://github.com/drackp2m/chess-pecker/commit/c936970f4651c4a0602fcd89c280ca5df6c50305)) by Marc Jovaní González
+- split the translator and give it a second opinion ([48a35c8](https://github.com/drackp2m/chess-pecker/commit/48a35c847d3205e106ac0300bc3916ef078254a9)) by Marc Jovaní González
+- tell the translator what the words mean ([f2d0574](https://github.com/drackp2m/chess-pecker/commit/f2d0574e7f5bcb087692b6a2ef7cc8337a3da55d)) by Marc Jovaní González
+
+### 🎨 Styles
+
+- unwrap the paragraphs of the i18n context ([9093dd4](https://github.com/drackp2m/chess-pecker/commit/9093dd48158e670d35b0ef1d5b740625bff43b9d)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- lock what the board draws while a move crosses it ([2ffa633](https://github.com/drackp2m/chess-pecker/commit/2ffa63383542bb216d5b8e7a3de8dbb68e9bbb74)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- give each i18n command its own drawer ([00bdb49](https://github.com/drackp2m/chess-pecker/commit/00bdb49f65728b8f287a0081aa9c2bcacf6e365a)) by Marc Jovaní González
+- point the extension at the new module paths ([644d0cd](https://github.com/drackp2m/chess-pecker/commit/644d0cd62d667198f01342bac531c4962ab09fbc)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- hold everything a move brings until the piece lands ([431b490](https://github.com/drackp2m/chess-pecker/commit/431b4902bbaa58a0960b67243400d5fd6835d44a)) by Marc Jovaní González
+- settle how the board stacks and drop slides it left behind ([456305b](https://github.com/drackp2m/chess-pecker/commit/456305b6e136db9ce4bfcf85bf51efc7c3b61f9a)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- give the translator its own home and env ([0b37878](https://github.com/drackp2m/chess-pecker/commit/0b37878e78ecc596fa8a00fdbb2f791fffa3a78c)) by Marc Jovaní González
+- refresh the French training strings ([8d07136](https://github.com/drackp2m/chess-pecker/commit/8d071367930a2cb9ec299cbdaf2e6cdcf6291359)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.23.0...v1.24.0
+
 # v1.23.0 (2026-08-18)
 
 ## What's Changed
