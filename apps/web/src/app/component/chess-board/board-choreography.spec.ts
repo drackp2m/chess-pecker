@@ -186,4 +186,34 @@ describe('the board as a move crosses it', () => {
 
 		expect(board.picked()).toEqual(['e1']);
 	});
+
+	it('refuses a piece pressed while a move is only lit and has not set off', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.presenter.isBusy.set(true);
+		board.announce('e4d4');
+		board.click('e1');
+
+		expect(board.picked()).toEqual([]);
+	});
+
+	it('refuses a piece pressed in the pause between the beats of a line', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.presenter.isBusy.set(true);
+		board.play('e4d4');
+		board.advance(SLIDE_DURATION);
+
+		expect(board.sliding()).toEqual([]);
+
+		board.click('e1');
+
+		expect(board.picked()).toEqual([]);
+
+		board.presenter.isBusy.set(false);
+		board.render();
+		board.click('e1');
+
+		expect(board.picked()).toEqual(['e1']);
+	});
 });

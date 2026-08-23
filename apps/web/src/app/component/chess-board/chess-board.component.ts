@@ -114,6 +114,10 @@ export class ChessBoardComponent {
 
 	readonly promotionColor = computed(() => this.store.position().turn);
 
+	private readonly isRefusingInput = computed(
+		() => this.playback.isSliding() || this.store.isBusy(),
+	);
+
 	private readonly board = viewChild.required<ElementRef<HTMLElement>>('board');
 
 	/**
@@ -137,7 +141,7 @@ export class ChessBoardComponent {
 	}
 
 	pressSquare(square: BoardSquare, event: PointerEvent): void {
-		if (this.playback.isSliding()) {
+		if (this.isRefusingInput()) {
 			return;
 		}
 
@@ -189,9 +193,15 @@ export class ChessBoardComponent {
 	 * played into the middle of one already being played is refused here rather than by
 	 * whoever is driving the board: the beats are the view's own, and a store has ended
 	 * its part of a move long before the piece it sent has finished crossing.
+	 *
+	 * Crossing is not the whole of it, though. A move played for you is lit on its square
+	 * before it travels and a line played out pauses between its moves, and in neither is
+	 * anything sliding — so the board is also closed for as long as the store says it is
+	 * busy, or a press landing in one of those gaps would reach a store that takes it as
+	 * the player interrupting and drops what it was in the middle of showing.
 	 */
 	private pickSquare(square: Square): void {
-		if (this.playback.isSliding()) {
+		if (this.isRefusingInput()) {
 			return;
 		}
 

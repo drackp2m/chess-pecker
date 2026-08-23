@@ -2,7 +2,11 @@
 	"version": 1,
 	"algorithm": "sha256",
 	"files": {
+		"apps/web/src/app/component/chess-board/board-choreography.spec.ts": "a54a228eba1cfe3956bd12a307e493e538b31996a2d4d7b7268cb390b4892a10",
+		"apps/web/src/app/component/chess-board/board-playback.spec.ts": "6ae9f2297c5b2b1e035d5f94e151266478dc4d8540e59f1a17f4ca9558b35cba",
+		"apps/web/src/app/component/chess-piece/chess-piece.component.spec.ts": "d509352b594ff29cb79e4d0580dcbaea7bfa0913f73c6e30cb9572d7bc5404e2",
 		"apps/web/src/app/page/puzzle/store/puzzle/exploration.spec.ts": "1af0ebdf2f77df590999b83bb11101ba50186155d81db60a9a2a7c7b4cbe24b4",
-		"apps/web/src/app/page/puzzle/store/puzzle/main-line.spec.ts": "4716c70a0be3103b069c573d0a7c0d503eb02da7b8d4b1f8f5103614dd8329a0"
+		"apps/web/src/app/page/puzzle/store/puzzle/main-line.spec.ts": "4716c70a0be3103b069c573d0a7c0d503eb02da7b8d4b1f8f5103614dd8329a0",
+		"apps/web/src/app/util/chess/board-transition.spec.ts": "b1d24cb683cb6a13b18d7e5d033217a7287cd082f567fba4fd9fc633c33bdbcf"
 	}
 }
