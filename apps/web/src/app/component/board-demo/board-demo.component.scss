@@ -8,6 +8,9 @@
 	--square-mistake: rgb(196 48 38 / 45%);
 	--square-announced: color-mix(in oklab, var(--color-accent) 85%, rgb(255 255 255));
 
+	// Clear of every level a piece can be given, the way the full board keeps it.
+	--layer-ghost: 90;
+
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
@@ -16,6 +19,8 @@
 // Only the strip runs edge to edge, the way the full board does on the pages that
 // show one; the hint and the controls under it stay in the text column.
 .strip {
+	// Settled inside the strip, exactly as the full board settles it.
+	isolation: isolate;
 	position: relative;
 
 	display: grid;
@@ -109,9 +114,10 @@
 		outline-offset: -2px;
 	}
 
+	// The level itself is bound per piece, so the one that matters rides over the one
+	// that does not while they share a square.
 	app-chess-piece {
 		position: relative;
-		z-index: 1;
 	}
 }
 
@@ -151,11 +157,12 @@
 	}
 }
 
-// Follows the pointer while a piece is being dragged.
+// Follows the pointer while a piece is being dragged, clear of every piece it is
+// being carried over.
 .ghost {
 	pointer-events: none;
 	position: fixed;
-	z-index: 2;
+	z-index: var(--layer-ghost);
 }
 
 @media (prefers-reduced-motion: reduce) {

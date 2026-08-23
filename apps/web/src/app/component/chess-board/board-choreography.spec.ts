@@ -108,6 +108,21 @@ describe('the board as a move crosses it', () => {
 		expect(board.slideCount()).toBe(1);
 	});
 
+	/**
+	 * The square keeps its element from one position to the next, so a slide left
+	 * running over a board that has jumped would be drawn on whatever piece stands
+	 * there now: the mover seen turning into the piece it was taking.
+	 */
+	it('calls off a slide when the board jumps out from under it', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.play('e4d4');
+		board.jumpTo(CAPTURE);
+
+		expect(board.pieceAt('d4')).toBe('black rook');
+		expect(board.sliding()).toEqual([]);
+	});
+
 	it('offers the promotion picker while one is pending', () => {
 		const board = mountBoard(PROMOTION);
 
@@ -162,21 +177,6 @@ describe('the board as a move crosses it', () => {
 			board.click('e1');
 
 			expect(board.picked()).toEqual(['e1']);
-		});
-
-		/**
-		 * The square keeps its element from one position to the next, so a slide left
-		 * running over a board that has jumped is drawn on whatever piece stands there
-		 * now: the mover is seen turning into the piece it was taking.
-		 */
-		it.fails('calls off a slide when the board jumps out from under it', () => {
-			const board = mountBoard(CAPTURE);
-
-			board.play('e4d4');
-			board.jumpTo(CAPTURE);
-
-			expect(board.pieceAt('d4')).toBe('black rook');
-			expect(board.sliding()).toEqual([]);
 		});
 	});
 });

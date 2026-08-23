@@ -8,6 +8,7 @@ import {
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
+import { pieceElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import {
@@ -38,6 +39,8 @@ interface BoardSquare {
 	/** Origin of a move that is about to be played for you. */
 	readonly isAnnounced: boolean;
 	readonly slide: PieceSlide | undefined;
+	/** Which piece is drawn over which while one of them is crossing the other. */
+	readonly elevation: number | undefined;
 	readonly fileLabel: string | undefined;
 	readonly rankLabel: string | undefined;
 }
@@ -193,10 +196,11 @@ export class ChessBoardComponent {
 		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
 		const announced = this.store.announcedMove();
+		const piece = this.position().board[index];
 
 		return {
 			square,
-			piece: this.position().board[index],
+			piece,
 			isLight: ChessSquare.isLight(index),
 			isSelected: square === this.store.selected(),
 			isTarget: undefined !== target,
@@ -206,6 +210,7 @@ export class ChessBoardComponent {
 			isMistake: undefined !== mistake && (square === mistake.from || square === mistake.to),
 			isAnnounced: square === announced?.from,
 			slide: this.describeSlide(square),
+			elevation: undefined === piece ? undefined : pieceElevation(piece),
 			fileLabel: 56 <= order ? FILES[ChessSquare.fileOf(index)] : undefined,
 			rankLabel: 0 === order % 8 ? RANKS[ChessSquare.rowOf(index)] : undefined,
 		};

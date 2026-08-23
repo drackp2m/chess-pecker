@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
+import { PieceColor, PieceType } from '@app/definition/chess.type';
 import { MoveSpeed, SLIDE_DURATION, scaleForSpeed } from '@app/definition/move-speed.type';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 
@@ -21,7 +22,10 @@ function createPiece(speed: MoveSpeed = 'normal') {
 	});
 
 	const fixture = TestBed.createComponent(ChessPieceComponent);
+	const cancel = vi.fn();
 	const animate = vi.fn();
+
+	animate.mockReturnValue({ cancel });
 
 	(fixture.nativeElement as { animate: unknown }).animate = animate;
 	fixture.componentRef.setInput('type', 'rook');
@@ -30,10 +34,18 @@ function createPiece(speed: MoveSpeed = 'normal') {
 
 	return {
 		animate,
+		cancel,
 
 		/** A fresh object every time, the way a recomputed board square hands one over. */
 		show(slide: PieceSlide | undefined): void {
 			fixture.componentRef.setInput('slide', undefined === slide ? undefined : { ...slide });
+			fixture.detectChanges();
+		},
+
+		/** The square drawing somebody else, which is all a jumped board leaves behind. */
+		redraw(type: PieceType, color: PieceColor): void {
+			fixture.componentRef.setInput('type', type);
+			fixture.componentRef.setInput('color', color);
 			fixture.detectChanges();
 		},
 	};
@@ -91,6 +103,43 @@ describe('ChessPieceComponent', () => {
 		piece.show(slideFrom(2));
 
 		expect(piece.animate).toHaveBeenCalledTimes(2);
+	});
+
+	/**
+	 * The square keeps its element from one position to the next, so a journey left
+	 * running over a board that has jumped away — a restart, a rewind — would be drawn
+	 * on whatever piece stands there now, and the mover would be seen turning into the
+	 * piece it was taking.
+	 */
+	it('calls the slide off when the board jumps out from under it', () => {
+		const piece = createPiece();
+
+		piece.show(slideFrom(1));
+
+		expect(piece.cancel).not.toHaveBeenCalled();
+
+		piece.show(undefined);
+
+		expect(piece.cancel).toHaveBeenCalledTimes(1);
+	});
+
+	it('calls it off when the square it stands on changes piece mid-flight', () => {
+		const piece = createPiece();
+
+		piece.show(slideFrom(1));
+		piece.redraw('queen', 'white');
+
+		expect(piece.cancel).toHaveBeenCalledTimes(1);
+	});
+
+	it('leaves a slide alone while the piece running it is still the one drawn', () => {
+		const piece = createPiece();
+
+		piece.show(slideFrom(1));
+		piece.show(slideFrom(1));
+		piece.redraw('rook', 'black');
+
+		expect(piece.cancel).not.toHaveBeenCalled();
 	});
 
 	it('takes as long over it as the chosen move speed says', () => {

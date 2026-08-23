@@ -28,7 +28,12 @@
 			(click)="activate(square, $event)"
 		>
 			@if (square.piece; as piece) {
-				<app-chess-piece [type]="piece.type" [color]="piece.color" [slide]="square.slide" />
+				<app-chess-piece
+					[type]="piece.type"
+					[color]="piece.color"
+					[slide]="square.slide"
+					[style.z-index]="square.elevation"
+				/>
 			}
 
 			@if (square.rankLabel; as rank) {

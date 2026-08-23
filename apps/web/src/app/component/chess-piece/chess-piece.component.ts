@@ -38,9 +38,13 @@ export class ChessPieceComponent {
 
 	private animatedKey: number | undefined;
 
+	private animatedPiece: string | undefined;
+
+	private running: Animation | undefined;
+
 	constructor() {
 		effect(() => {
-			this.playSlide(this.slide());
+			this.playSlide(this.slide(), `${this.color()} ${this.type()}`);
 		});
 	}
 
@@ -48,13 +52,24 @@ export class ChessPieceComponent {
 	 * Slides the piece in from the square it came from. Driven by the Web Animations
 	 * API rather than a CSS class, because it has to restart on every move while the
 	 * element itself is reused between them.
+	 *
+	 * That reuse is why a slide is called off rather than left to run out: the square
+	 * keeps its element from one position to the next, so a board that jumps away mid
+	 * flight — a restart, a rewind — would otherwise leave the journey playing over
+	 * whatever piece stands there now, and the mover is seen turning into the piece it
+	 * was taking.
 	 */
-	private playSlide(slide: PieceSlide | undefined): void {
+	private playSlide(slide: PieceSlide | undefined, piece: string): void {
+		if (undefined === slide || piece !== this.animatedPiece) {
+			this.stopSlide();
+		}
+
 		if (undefined === slide || slide.key === this.animatedKey) {
 			return;
 		}
 
 		this.animatedKey = slide.key;
+		this.animatedPiece = piece;
 
 		const element = this.host.nativeElement;
 		const canAnimate = 'function' === typeof (element as { animate?: unknown }).animate;
@@ -63,12 +78,18 @@ export class ChessPieceComponent {
 			return;
 		}
 
-		element.animate(
+		this.running = element.animate(
 			[
 				{ transform: `translate(${slide.x.toString()}%, ${slide.y.toString()}%)` },
 				{ transform: 'none' },
 			],
 			{ duration: scaleForSpeed(SLIDE_DURATION, this.speed()), easing: 'ease-out' },
 		);
+	}
+
+	/** The key is deliberately kept: a journey called off is still one already run. */
+	private stopSlide(): void {
+		this.running?.cancel();
+		this.running = undefined;
 	}
 }
