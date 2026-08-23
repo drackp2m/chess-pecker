@@ -27,9 +27,8 @@ export interface ProgramSummary {
 }
 
 /**
- * The program read as a single sequence: every calibration round and every cycle in the
- * order they were played, each one saying how much of it was solved and where it left the
- * training. Null until there is anything to show, which is what hides the table.
+ * The programme as one sequence: every round and cycle in the order played. Null until
+ * there is anything to show, which is what hides the table.
  */
 export function toProgramSummary(progress: TrainingProgress | null): ProgramSummary | null {
 	if (null === progress) {

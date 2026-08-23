@@ -15,9 +15,8 @@ interface PuzzleGatingInput {
 type GatingStore = StateSignals<PuzzleStoreProps> & PuzzleGatingInput;
 
 /**
- * The hint: whether it is still there to be taken, and what taking it uncovers. It is
- * not on offer from the first second — the exercise has to have been looked at for
- * `HINT_DELAY_MS` before the button does anything at all.
+ * The hint: whether it can still be taken, and what it uncovers. Not on offer until the
+ * exercise has been looked at for `HINT_DELAY_MS`.
  */
 function hintComputed(store: GatingStore, isOpen: Signal<boolean>) {
 	return {
@@ -31,9 +30,8 @@ function hintComputed(store: GatingStore, isOpen: Signal<boolean>) {
 }
 
 /**
- * Giving up is asking for the answer, so it takes a miss to have earned it. Once earned
- * it stays on offer: the first ask closes the exercise, and every one after it only
- * plays the line out again.
+ * Giving up takes a miss to have earned it, and stays on offer once earned: the first ask
+ * closes the exercise, and the rest only replay the line.
  */
 function canGiveUp(store: GatingStore): boolean {
 	return (
@@ -45,17 +43,8 @@ function canGiveUp(store: GatingStore): boolean {
 }
 
 /**
- * What the board still accepts. Nothing here is a preference any more: a miss can
- * always be tried again, the themes are yours to ask for, and so is the answer once the
- * exercise has been missed.
- *
- * Two things it refuses. A move played into the middle of the line: stepping back
- * through the exercise is reading it, not resuming it, and the plies ahead of the cursor
- * were reached once and are not on offer to be reached differently. And a move played
- * from a position the line has already been refuted on: the wrong move is standing on
- * the board to be seen and taken back, and the exercise goes on from where it broke,
- * not from where it strayed to. Free play is where either is allowed, and it is entered
- * on purpose.
+ * What the board still accepts. It refuses two things: a move into the middle of the line,
+ * and one from a refuted position. Free play allows both, and is entered on purpose.
  */
 export function withPuzzleGating() {
 	return signalStoreFeature(

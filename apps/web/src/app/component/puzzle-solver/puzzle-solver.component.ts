@@ -8,10 +8,8 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 
 /**
- * The solving view itself: the board, the line controls, free play, the themes panel
- * and the scoresheet. Whoever hosts it owns the exercise around it — the library on
- * `/puzzle`, the run on `/training` — and steps through it with the two arrows pinned
- * to the ends of the control row, which are theirs to label, gate and answer.
+ * The solving view: board, line controls, free play, themes and scoresheet. Whoever hosts it
+ * owns the exercise around it, and the two arrows at the ends of the row are theirs.
  */
 @Component({
 	selector: 'app-puzzle-solver',

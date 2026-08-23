@@ -2,9 +2,8 @@ import type { UpsertUserSettingRequest } from '@chesspecker/api-definitions';
 import { IsDefined } from 'class-validator';
 
 /**
- * El cuerpo es `{ "value": ... }` y el payload se guarda tal cual, envuelto: la base de
- * datos no valida qué hay dentro porque no sabe qué temas de tablero existen. Esa parte la
- * valida el front con `SettingPayload` y, cuando haga falta, un validador por clave aquí.
+ * The payload is stored as it comes: the database cannot know which board themes exist, so
+ * the front validates it with `SettingPayload`.
  */
 export class UpsertUserSettingRequestDto implements UpsertUserSettingRequest {
 	@IsDefined()

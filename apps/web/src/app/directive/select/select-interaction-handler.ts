@@ -57,9 +57,8 @@ export class SelectInteractionHandler {
 	}
 
 	/**
-	 * Escape only belongs to the select while its dropdown is open — and then
-	 * it must not leak further (one press closes a single layer, e.g. not
-	 * also a surrounding modal). Closed, it passes through untouched.
+	 * Escape belongs to the select only while the dropdown is open, and must not leak: one
+	 * press closes one layer. Closed, it passes through untouched.
 	 */
 	private handleEscape(event: KeyboardEvent): void {
 		if (!this.store.isOpen()) {
@@ -81,12 +80,8 @@ export class SelectInteractionHandler {
 	}
 
 	/**
-	 * Space only toggles/confirms while the search box is empty; once the
-	 * user is typing it stays a regular character, handled natively by the
-	 * search input. Mid type-ahead it is one more character of the query
-	 * ("new york"), not a toggle. But arrowing through the options declares
-	 * the intent to pick one, and Space then confirms the highlight even
-	 * mid-search / mid-type-ahead.
+	 * Space only toggles while the search box is empty; typing keeps it a character ("new
+	 * york"). Arrowing declares the intent to pick, so it confirms the highlight from then on.
 	 */
 	private handleSpace(event: KeyboardEvent): void {
 		if (this.store.isOpen() && this.store.arrowNavigated()) {
@@ -136,13 +131,8 @@ export class SelectInteractionHandler {
 	}
 
 	/**
-	 * Printable keys, minus modifier chords — which are left to the browser,
-	 * except AltGr (reported as ctrl+alt), which is how several layouts type
-	 * regular characters. Non-searchable fields turn them into type-ahead.
-	 * Searchable ones let them reach the real search input natively while
-	 * open; closed, the key opens the dropdown seeded with that character —
-	 * the input still displays the selected value at that moment, so the
-	 * default insertion must be suppressed.
+	 * Printable keys, minus modifier chords but including AltGr, which several layouts type
+	 * ordinary characters with. Closed, the key opens the dropdown seeded with that character.
 	 */
 	private handleSearchKey(event: KeyboardEvent): void {
 		const isAltGr = event.ctrlKey && event.altKey;
@@ -168,11 +158,8 @@ export class SelectInteractionHandler {
 	}
 
 	/**
-	 * Native-select style type-ahead: the readonly input can't receive the
-	 * text, so printable keys accumulate in a query that highlights the
-	 * first matching option — opening the dropdown first when needed. The
-	 * keyboard takes ownership of the highlight so the mousemove echo of
-	 * the follow-up scroll can't hand it back to the mouse.
+	 * Native-style type-ahead, since a readonly input cannot take the text. The keyboard takes
+	 * the highlight so the scroll's mousemove echo cannot hand it back to the mouse.
 	 */
 	private handleTypeaheadKey(event: KeyboardEvent): void {
 		event.preventDefault();

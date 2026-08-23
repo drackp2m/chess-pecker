@@ -101,9 +101,8 @@ export class ActivityChartComponent {
 	protected readonly endAxisPx = computed(() => `${this.endGutter().toString()}px`);
 
 	/**
-	 * The gutters pad the host, so the plot gets the border box less whatever they take rather
-	 * than the content box the browser hands back a layout later — the width a gutter changes
-	 * lands in the same pass that changed it, and the geometry is never a paint behind.
+	 * The plot takes the border box less the gutters, not the content box the browser hands
+	 * back a layout later, so the geometry is never a paint behind.
 	 */
 	private readonly plotWidth = computed(() =>
 		Math.max(0, this.hostBox() - this.startGutter() - this.endGutter()),
@@ -327,9 +326,8 @@ export class ActivityChartComponent {
 	}
 
 	/**
-	 * A plot read backwards opens on its first point, the way the heatmap opens on today. The
-	 * strip is re-pinned whenever it is re-measured — a viewport that moves under a scroll left
-	 * where it was hides the opening point.
+	 * A plot read backwards opens on its first point. It is re-pinned on every measurement:
+	 * a viewport moving under a stale scroll would hide that point.
 	 */
 	private pinScroll(): void {
 		const element = this.scroller()?.nativeElement;
@@ -343,10 +341,8 @@ export class ActivityChartComponent {
 	}
 
 	/**
-	 * Text is the one thing only the browser can size, so a pass reads the ticks and the labels
-	 * back and reopens the loop until what it reads is what the geometry already assumed. Only
-	 * a geometry that survived such a pass is handed over to be painted, so a later measurement
-	 * — a resize, a font swap, the data landing — reopens the loop out of sight.
+	 * Only the browser can size text, so the pass re-reads the ticks and labels and reopens the
+	 * loop until they match what the geometry assumed. Only a survivor is painted.
 	 */
 	private measurePlot(): void {
 		if (0 === this.plotWidth() || this.awaitsView()) {

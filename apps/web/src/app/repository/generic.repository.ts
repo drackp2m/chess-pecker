@@ -19,14 +19,8 @@ export type RepositoryTransaction<
 > = IDBPTransaction<T, StoreNames<T>[], M>;
 
 /**
- * Data access over IndexedDB.
- *
- * Every operation runs inside exactly one transaction, opened and awaited in the
- * same call. IndexedDB commits a transaction as soon as its microtask queue drains,
- * so one held across an `await` that is not itself a database request is already
- * closed by the time anything else reaches it. A transaction therefore cannot be
- * kept in a field and reused between calls — `runInTransaction` is the only way to
- * span several operations, and everything it needs has to happen inside its callback.
+ * Data access over IndexedDB. A transaction commits as soon as its microtask queue drains,
+ * so one cannot be kept in a field: `runInTransaction` is the only way to span operations.
  */
 export class GenericRepository<T extends DBSchema> {
 	private readonly dbName = 'chess-pecker';
@@ -38,9 +32,8 @@ export class GenericRepository<T extends DBSchema> {
 	private database: Promise<IDBPDatabase<T>> | undefined;
 
 	/**
-	 * Runs several operations against one transaction, so they commit or fail as a
-	 * unit. The callback may only await database requests: awaiting anything else
-	 * lets the transaction commit early and the next request throws.
+	 * Runs several operations as one unit. The callback may only await database requests, or
+	 * the transaction commits early and the next request throws.
 	 */
 	async runInTransaction<R, M extends 'readonly' | 'readwrite'>(
 		storeNames: StoreNames<T>[],
@@ -157,10 +150,8 @@ export class GenericRepository<T extends DBSchema> {
 	}
 
 	/**
-	 * Turns a stored record back into whatever the caller expects to read. IndexedDB
-	 * structured-clones on write, so every read comes back as plain data however it
-	 * was stored; a repository holding class instances overrides this to rebuild them
-	 * on all five read paths at once.
+	 * Turns a stored record back into what the caller reads. IndexedDB structured-clones on
+	 * write, so a repository holding class instances overrides this to rebuild them.
 	 */
 	protected hydrate<K extends StoreNames<T>>(
 		_storeName: K,

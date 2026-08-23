@@ -14,7 +14,7 @@ import { SyncCycleUseCase } from '@app/use-case/sync/sync-cycle.use-case';
 
 interface SyncStoreProps {
 	phase: SyncPhase;
-	/** La puerta de arranque. Se abre una vez y no se vuelve a cerrar. */
+	/** The boot gate. It opens once and never closes again. */
 	isReady: boolean;
 	pending: number;
 	pendingByEntity: PendingCount;
@@ -23,7 +23,7 @@ interface SyncStoreProps {
 	downloaded: number;
 	behind: readonly SyncEntity[];
 	canPush: boolean;
-	/** No queda nada por bajar: lo que hay aquí es todo lo que hay arriba. */
+	/** Nothing left to pull: what is here is everything that is up there. */
 	isReplicaComplete: boolean;
 	catalogDone: number;
 	catalogTotal: number;
@@ -49,9 +49,8 @@ const initialState: SyncStoreProps = {
 };
 
 /**
- * La puerta por la que pasa el arranque, y lo único que hay que mirar para saber si la
- * réplica está al día. El ciclo lo corre `SyncCycleUseCase`; aquí sólo vive su estado, que
- * es lo que pintan el splash y —desde S7— la pantalla de ajustes.
+ * The gate boot passes through, and the only thing to read to know the replica is current.
+ * `SyncCycleUseCase` runs the cycle; only its state lives here.
  */
 @Injectable({
 	providedIn: 'root',
@@ -78,10 +77,7 @@ export class SyncStore
 	private resolveGate: (() => void) | undefined;
 	private lastRunAt = 0;
 
-	/**
-	 * El arranque: una pasada, y la puerta abierta cuando termine —o cuando se acabe el
-	 * plazo, que para eso está—.
-	 */
+	/** Boot: one pass, and the gate open when it ends or when the deadline runs out. */
 	start(): Promise<void> {
 		void this.sync();
 
@@ -89,11 +85,8 @@ export class SyncStore
 	}
 
 	/**
-	 * Lo que hay que esperar antes de servir datos, que es sólo una cosa: que falte algo por
-	 * bajar. Subir no cambia lo que se va a pintar, así que en cuanto la pasada dice que la
-	 * réplica está completa la puerta se abre y lo demás sigue de fondo. `failed` y `offline`
-	 * la abren igual que `ready`, y el tope de `SyncPolicy` la abre aunque la pasada siga: si
-	 * no, la aplicación se colgaría justo en el caso para el que existe todo esto.
+	 * The only thing worth waiting for is something left to pull; pushing changes nothing that
+	 * is about to be painted. `failed`, `offline` and the `SyncPolicy` cap all open it too.
 	 */
 	async whenReady(): Promise<void> {
 		if (this.isReady()) {
@@ -105,7 +98,7 @@ export class SyncStore
 		return this.gate;
 	}
 
-	/** Una pasada. La que ya esté corriendo vale por la que se pida mientras. */
+	/** One pass. A pass already running stands in for any asked for meanwhile. */
 	async sync(): Promise<void> {
 		this.running ??= this.runCycle().finally(() => {
 			this.running = null;
@@ -114,10 +107,7 @@ export class SyncStore
 		return this.running;
 	}
 
-	/**
-	 * La subida sola, para antes de borrar. Un servidor que corre un modelo más nuevo no
-	 * recibe nada, igual que en el ciclo.
-	 */
+	/** Push only, for just before wiping. A server on a newer model receives nothing. */
 	async flush(): Promise<void> {
 		if (!this.canPush()) {
 			return;
@@ -133,9 +123,8 @@ export class SyncStore
 	}
 
 	/**
-	 * Lo que se acaba de cerrar, subido ya. Un intento sellado no vuelve a cambiar, así que
-	 * hacerle esperar a la pasada siguiente sólo sirve para perderlo si el dispositivo se
-	 * apaga antes. Sin sesión no hay dónde subirlo, y con una pasada corriendo ya va dentro.
+	 * What just closed, uploaded now: a sealed attempt never changes again, so making it wait
+	 * for the next pass only risks losing it if the device goes down first.
 	 */
 	async push(): Promise<void> {
 		if (!this.session.isAuthenticated() || null !== this.running) {
@@ -150,8 +139,8 @@ export class SyncStore
 	}
 
 	/**
-	 * Entrar es la subida grande —todo lo entrenado sin cuenta sube de golpe—, y volver a
-	 * la aplicación o recuperar la red es la ocasión de mirar si hay algo nuevo.
+	 * Logging in is the big push: everything trained without an account goes up at once.
+	 * Coming back to the app or regaining the network is the moment to look for more.
 	 */
 	watch(): void {
 		effect(
@@ -174,7 +163,7 @@ export class SyncStore
 		});
 	}
 
-	/** Los recuentos son de quien se va. La puerta no: abierta se queda. */
+	/** The counts belong to whoever is leaving. The gate does not: it stays open. */
 	reset(): void {
 		patchState(this, { ...initialState, isReady: this.isReady() });
 	}

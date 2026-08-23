@@ -15,9 +15,8 @@ import {
 import { elementOffsetHeight, elementOffsetWidth } from '@app/util/element-size';
 import { createTypedElement } from '@app/util/renderer';
 
-// ToDo => no `date`, which is why the training goal can only be expressed as exercises
-// per day and not as the end date the API also accepts. The floating label would have
-// to account for the native picker, which is always "filled".
+// ToDo => no `date`, so a training goal cannot use the end date the API accepts: the
+// floating label would have to account for the native picker, which is always filled.
 type InputDirectiveType = 'email' | 'number' | 'password' | 'search' | 'tel' | 'text' | 'url';
 let nextInputId = 0;
 
@@ -50,11 +49,8 @@ export class InputDirective implements OnInit, AfterViewInit {
 	private readonly borderContainerElement: HTMLDivElement = this.createBorderContainer();
 
 	/**
-	 * Same rationale as the select shell: the label width is not static
-	 * (async translations, runtime language changes, late-loading web fonts),
-	 * so the hidden measure span and the wrapper are re-measured on every
-	 * size change — including the initial layout, since observers fire once
-	 * on `observe()`.
+	 * The label width is not static — async translations, language changes, late web fonts —
+	 * so the measure span and the wrapper are re-measured on every size change.
 	 */
 	private readonly labelWidth = elementOffsetWidth(() => this.labelSpanElement);
 	private readonly wrapperHeight = elementOffsetHeight(() => this.wrapperElement);
@@ -110,10 +106,8 @@ export class InputDirective implements OnInit, AfterViewInit {
 	}
 
 	/**
-	 * The `disabled` attribute lives on the native input (reactive forms,
-	 * `[disabled]` bindings), but the themed styles hang off the wrapper the
-	 * directive builds around it, so attribute changes are mirrored as a
-	 * `.disabled` class.
+	 * `disabled` lives on the native input, but the themed styles hang off the wrapper, so
+	 * the attribute is mirrored as a `.disabled` class.
 	 */
 	private observeDisabledChanges(): void {
 		const observer = new MutationObserver(() => {
@@ -140,9 +134,8 @@ export class InputDirective implements OnInit, AfterViewInit {
 		}
 	}
 
-	// Same mechanism as the select shell: keep any id provided by the
-	// consumer, otherwise generate one so the label can point at the input
-	// explicitly (on top of the implicit wrapping association).
+	// Keeps a consumer-provided id, otherwise generates one so the label can point at the
+	// input explicitly on top of the implicit wrapping association.
 	private ensureId(): void {
 		const inputElement = this.elementRef.nativeElement;
 
@@ -185,9 +178,8 @@ export class InputDirective implements OnInit, AfterViewInit {
 		return element;
 	}
 
-	// The measure span lives inside the real label (which wraps the input),
-	// so the label keeps its text content while the visible floating label
-	// is the sibling `.label` element.
+	// The measure span lives inside the real label, so it keeps its text while the visible
+	// floating label is the sibling `.label` element.
 	private createLabel(): HTMLLabelElement {
 		const element = createTypedElement(this.renderer2, 'label');
 		this.renderer2.appendChild(element, this.labelSpanElement);

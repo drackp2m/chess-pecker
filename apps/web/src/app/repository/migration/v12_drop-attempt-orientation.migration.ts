@@ -2,9 +2,8 @@ import { AppSchemaV14 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
- * La orientación deja de guardarse: el color del jugador sale del FEN —es el contrario al
- * del turno, porque la posición es la de antes de la jugada del rival— y lo único que la
- * fila añadía era el volteo manual, que es del momento y no del ejercicio.
+ * Orientation stops being stored: the player's colour comes from the FEN, and all the field
+ * added was the manual flip, which belongs to the moment and not to the exercise.
  */
 export const dropAttemptOrientationMigration: Migration<AppSchemaV14> = {
 	version: 12,

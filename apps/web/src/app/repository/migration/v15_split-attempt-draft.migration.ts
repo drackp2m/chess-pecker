@@ -15,10 +15,8 @@ type AttemptStoreV14 = IDBPObjectStore<
 >;
 
 /**
- * El borrador se va de la tabla del intento a la suya. `closure: 'open'` era el estado
- * inventado para que cupiera, y con él se van `slotId` —que es la clave del borrador y no
- * un campo del intento— y `startedAt`, que no leía nadie. Lo que queda en `attempt` es lo
- * que sube: un ejercicio terminado, con veredicto.
+ * The draft moves out of the attempt table into its own. `closure: 'open'` was the state
+ * invented to fit it, and it leaves with `slotId` and `startedAt`.
  */
 export const splitAttemptDraftMigration: Migration<AppSchema> = {
 	version: 15,
@@ -41,8 +39,8 @@ export const splitAttemptDraftMigration: Migration<AppSchema> = {
 };
 
 /**
- * Lo pendiente se pregunta por índice y no recorriendo la tabla: IndexedDB no indexa las
- * filas a las que les falta el campo, así que el índice ya es la lista.
+ * Pending rows are asked for by index and not by walking the table: IndexedDB does not index
+ * rows missing the field, so the index already is the list.
  */
 function indexPendingRows(transaction: VersionChange): void {
 	transaction.objectStore('training').createIndex('pendingSince', 'pendingSince');
@@ -95,9 +93,8 @@ function toDraft(row: AttemptRowV14): AttemptDraftRow {
 }
 
 /**
- * Una fila cerrada sin veredicto es un fallo y no un hueco, y una que nunca llegó al
- * servidor queda pendiente con la clave de reintento que le corresponde: su propio uuid,
- * que es el que le puso este dispositivo.
+ * A closed row with no verdict is a failure and not a gap, and one that never reached the
+ * server stays pending under its own uuid as the retry key.
  */
 function toAttempt(row: AttemptRowV14): AttemptRow {
 	const { slotId: _slotId, startedAt: _startedAt, ...kept } = row;

@@ -197,17 +197,8 @@ function run(context: PlayerContext, program: PlaybackProgram, hooks: PlaybackHo
 }
 
 /**
- * Abandons the programme. The clock is only put out when there was something on it to put
- * out: it is shared with the take-back a refuted move is waiting for, and a programme that
- * was never running has no business cancelling that.
- *
- * What the programme was holding the board back by is given back with it, so the board lands
- * where the log leaves it — without the beats, which is the whole of what is dropped. Held
- * back is a promise to move on, and everything that writes takes the board being where the
- * log left it for granted: a move played onto a board a ply behind is written where it was
- * never played. A closed record is the one place the offset is not a promise but the head
- * itself, walking an answer that was played out after the log was sealed, and nothing here
- * may move it.
+ * Abandons the programme, giving back whatever it was holding the board behind by, since a
+ * move played onto a board a ply behind would be written where it was never played.
  */
 function stop(context: PlayerContext): void {
 	if (undefined === context.running) {
@@ -230,10 +221,8 @@ function settle(context: PlayerContext): void {
 }
 
 /**
- * The one clock the board plays on, which is why it is handed out rather than kept: the
- * replay, the take-back and everything a programme waits on all queue on the same timeout,
- * so starting any of them puts out whatever was pending without anyone having to ask. A
- * second timer beside it would let a rewind stay alive inside a reveal.
+ * The one clock the board plays on: everything queues on the same timeout, so starting any
+ * of it cancels what was pending. A second timer would let a rewind survive inside a reveal.
  */
 function createClock(): ScheduledAction {
 	const clock = new ScheduledAction();

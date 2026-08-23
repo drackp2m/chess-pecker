@@ -1,6 +1,5 @@
 /**
- * Scroll behavior of the dropdown's options scroller. It works against the
- * live DOM rows (the list changes with the search filter) and relies on the
+ * Scroll behaviour of the dropdown, working against the live DOM rows and relying on the
  * mandatory scroll snap to settle every movement on a row boundary.
  */
 export class SelectDropdownScroller {
@@ -25,9 +24,8 @@ export class SelectDropdownScroller {
 	}
 
 	/**
-	 * Opening the dropdown starts the list centered on the highlighted option
-	 * — the current selection, or the type-ahead match when a keystroke
-	 * opened the dropdown — or back at the top when there is none.
+	 * Opening centres the list on the highlighted option — the selection, or the type-ahead
+	 * match when a keystroke opened it — or starts at the top when there is none.
 	 */
 	centerHighlighted(): void {
 		const scroller = this.getScroller();
@@ -76,9 +74,8 @@ export class SelectDropdownScroller {
 	}
 
 	/**
-	 * Keeps a lookahead of two rows while navigating with the arrows: the
-	 * scroll only moves once fewer than two options remain visible in the
-	 * direction of travel, and then just enough to reveal the lookahead row.
+	 * Keeps two rows of lookahead while arrowing: the scroll only moves once fewer than two
+	 * remain visible ahead, and then only enough to reveal one.
 	 */
 	followHighlight(highlightedIndex: number | null, direction: 1 | -1): void {
 		const scroller = this.getScroller();

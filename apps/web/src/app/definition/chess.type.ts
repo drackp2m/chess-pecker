@@ -12,12 +12,8 @@ export type Square = `${ChessFile}${ChessRank}`;
 
 export type CastlingSide = 'king' | 'queen';
 
-// ToDo => `'draw'` swallows three different endings — a dead position, the fifty-move
-// rule and threefold repetition — and both boards now print "Drawn position" without
-// saying which (`page/match/match.page.ts`, `page/puzzle/puzzle.page.ts`). The reason is
-// known where the verdict is reached, in `ChessMoveGenerator.status`, and thrown away on
-// the way out. Splitting the member, or returning the reason beside it, is what lets the
-// two pages explain themselves; both read this type, so neither needs its own wording.
+// ToDo => `'draw'` swallows dead position, fifty-move and threefold, so both boards print
+// "Drawn position". `ChessMoveGenerator.status` knows which and throws it away.
 export type MatchStatus = 'idle' | 'playing' | 'checkmate' | 'stalemate' | 'draw';
 
 export interface Piece {

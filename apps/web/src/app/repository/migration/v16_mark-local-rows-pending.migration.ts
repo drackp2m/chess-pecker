@@ -6,7 +6,7 @@ import { PendingStore } from '@app/repository/definition/pending-schema.interfac
 
 type VersionChange = IDBPTransaction<AppSchema, StoreNames<AppSchema>[], 'versionchange'>;
 
-/** Las siete del árbol. Los intentos ya los rellenó la v15, cuando nació el índice. */
+/** The tree's seven. v15 already filled the attempts in, when the index was born. */
 const LOCAL_STORES: StoreNames<AppSchema>[] = [
 	'training',
 	'trainingGoal',
@@ -18,10 +18,8 @@ const LOCAL_STORES: StoreNames<AppSchema>[] = [
 ];
 
 /**
- * Todo lo que se entrenó antes de que existiera la subida está sólo aquí, y sin clave de
- * reintento no se puede ni nombrar: el servidor rechazaría la petición entera por una fila
- * que no sabe decir quién es. Cada fila que nunca llegó arriba se queda con su propio uuid
- * como `clientRef` y con la espera contada desde la última vez que cambió.
+ * Everything trained before the push existed lives only here, and a row with no retry key
+ * cannot be named, so each takes its own uuid as `clientRef`.
  */
 export const markLocalRowsPendingMigration: Migration<AppSchema> = {
 	version: 16,

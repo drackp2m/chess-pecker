@@ -1,12 +1,5 @@
-// ToDo => the prototype now survives the two boundaries that used to drop it — the
-// repository rebuilds instances in `hydrate`, and `SettingStore` replaces entities
-// with `setEntity` instead of merging them with `updateEntity` — but it survives by
-// convention, not by construction: a single `updateEntity` call, or a repository that
-// forgets to override `hydrate`, silently brings the bug back with the type still
-// claiming otherwise. A backend adds a third boundary that flattens by definition,
-// since JSON has no prototypes. Worth deciding before the model layer grows: keep
-// classes and treat those rules as invariants worth a test, or move to plain readonly
-// data with free functions, where the question cannot be asked.
+// ToDo => the prototype survives its boundaries by convention, not construction: one
+// `updateEntity` call brings the bug back. Decide between tested invariants and plain data.
 
 export abstract class BaseModel<T extends object, C = unknown> {
 	readonly uuid: string;

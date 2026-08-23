@@ -24,11 +24,8 @@ import { I18n } from '@app/i18n';
 let nextSelectId = 0;
 
 /**
- * Progressive enhancement over a native `<select>`: keeps the native element
- * as the form's source of truth (value, options) while the themed shell
- * renders a combobox around it — a real search input that owns focus and
- * keyboard, plus a custom dropdown. Orchestrates the store, the shell
- * component and the interaction handler.
+ * Progressive enhancement over a native `<select>`, which stays the form's source of truth
+ * while the shell renders a combobox around it: a real search input plus a custom dropdown.
  */
 @Directive({
 	selector: 'select[appThemed]',

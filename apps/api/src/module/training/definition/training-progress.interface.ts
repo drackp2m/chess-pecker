@@ -6,18 +6,18 @@ export interface CycleProgress {
 	index: number;
 	status: string;
 	startedAt: Date;
-	/** Cuántos de los X ejercicios llevan intento. */
+	/** How many of the X exercises carry an attempt. */
 	attempted: number;
 	total: number;
 	solved: number;
-	/** Entre 0 y 1; debe mantenerse alto o subir con cada pasada. */
+	/** Between 0 and 1; it should hold or rise with each pass. */
 	accuracy: number;
-	/** Suma de los tiempos de resolución; debe bajar con cada pasada. */
+	/** The solving times added up; it should fall with each pass. */
 	totalDurationMs: number;
 	averageDurationMs: number;
-	/** Sobre qué tiempo total se le exige esta pasada. Null en el ciclo 1, que es el listón. */
+	/** The total time this pass is held to. Null on cycle 1, which sets the bar. */
 	targetDurationMs: number | null;
-	/** Último cierre de ejercicio del ciclo, que es cuando terminó. */
+	/** The cycle's last exercise closing, which is when it ended. */
 	lastAttemptAt: Date | null;
 }
 
@@ -26,9 +26,9 @@ export interface CalibrationRoundProgress {
 	index: number;
 	kind: CalibrationRoundKind;
 	rating: number;
-	/** Qué dijo la ronda: subir, bajar, aceptar la franja, o `pending` si sigue abierta. */
+	/** What the round decided: raise, lower, accept the band, or `pending` while open. */
 	outcome: CalibrationRoundOutcome;
-	/** Cuántos de los que repartió llevan intento, y cuántos de ésos se acertaron. */
+	/** How many of those dealt out carry an attempt, and how many of those were solved. */
 	attempted: number;
 	total: number;
 	solved: number;
@@ -36,10 +36,10 @@ export interface CalibrationRoundProgress {
 }
 
 export interface CalibrationProgress {
-	/** La centena aceptada, o null si la calibración sigue abierta. */
+	/** The hundred that was accepted, or null while the calibration is open. */
 	rating: number | null;
 	averageDurationMs: number | null;
-	/** Una entrada por ronda, en el orden en que se jugaron. */
+	/** One entry per round, in the order they were played. */
 	rounds: CalibrationRoundProgress[];
 }
 
@@ -47,9 +47,9 @@ export interface TrainingProgress {
 	calibration: CalibrationProgress;
 	setSize: number;
 	goal: { puzzlesPerDay: number | null; endDate: Date | null } | null;
-	/** Días estimados para el ciclo 1 al ritmo vigente. */
+	/** Days estimated for cycle 1 at the current pace. */
 	estimatedFirstCycleDays: number | null;
 	cycles: CycleProgress[];
-	/** Sugerencia de cierre: mínimo de ciclos cumplido y sin mejora apreciable. */
+	/** A suggestion to stop: the minimum cycles are done and improvement has flattened. */
 	suggestFinish: boolean;
 }

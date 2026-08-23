@@ -11,9 +11,8 @@ export type MoveInputMethod = 'click' | 'drag';
 export const MOVE_INPUT_METHODS_ALL: readonly MoveInputMethod[] = ['click', 'drag'];
 
 /**
- * The one to keep when a selection would otherwise be empty. A board that accepts
- * no input at all is a bug rather than a preference, and clicking is the method
- * that also works from the keyboard.
+ * The one kept when a selection would otherwise be empty: a board accepting no input is a
+ * bug, and clicking is the method that also works from the keyboard.
  */
 export const FALLBACK_MOVE_INPUT_METHODS: readonly MoveInputMethod[] = ['click'];
 

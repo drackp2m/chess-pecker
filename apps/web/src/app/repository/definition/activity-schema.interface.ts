@@ -4,15 +4,14 @@ import { DBSchema } from 'idb';
 import { LocalRecord } from '@app/repository/definition/local-record.interface';
 
 /**
- * Un día ya agregado, tal cual lo sirve el API. La clave es la fecha `YYYY-MM-DD`, que
- * ordena igual como texto que como fecha, así que los rangos salen del propio índice
- * primario. `updatedAt` es cuándo se pidió, no cuándo se entrenó.
+ * One aggregated day as the API serves it, keyed by `YYYY-MM-DD` so ranges come off the
+ * primary index. `updatedAt` is when it was asked for, not when it was trained.
  */
 export interface ActivityDayRow extends LocalRecord, TrainingActivityDay {}
 
 /**
- * Hasta dónde llegaba el servidor la última vez que se preguntó. Congelada: desde la v17
- * esta fila vive en `syncCursor`, con la llave `activity` y junto a las demás.
+ * How far the server reached the last time it was asked. Frozen: since v17 this row lives
+ * in `syncCursor` under the `activity` key.
  */
 export interface ActivityCursorRowV16 {
 	readonly id: 'training-activity';

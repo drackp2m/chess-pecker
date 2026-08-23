@@ -11,9 +11,8 @@ export class CreateJwtRefreshTokenUseCase {
 	) {}
 
 	execute(userUuid: string): string {
-		// Registered claims belong in the sign options (2nd arg) so they become
-		// `sub`/`aud`/`exp`/`nbf`. `notBefore` = access-token lifetime: the refresh
-		// token only becomes valid once the access token has expired.
+		// Registered claims belong in the sign options. `notBefore` is the access-token
+		// lifetime, so this only becomes valid once that one has expired.
 		return this.jwtService.sign(
 			{},
 			{

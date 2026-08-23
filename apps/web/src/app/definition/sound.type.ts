@@ -1,9 +1,6 @@
 /**
- * A sound the board can make when a move lands. `move` is the ordinary case and is
- * drawn at random from a pool; the rest are fixed, so they stay recognisable.
- *
- * `capture` and `check` deliberately share a clip: both say "something happened here"
- * and the board makes the difference obvious on sight.
+ * A sound a landing move can make. `move` is drawn from a pool; the rest are fixed so they
+ * stay recognisable, and `capture` and `check` share a clip on purpose.
  */
 export type MoveSound = 'move' | 'capture' | 'check' | 'checkmate';
 

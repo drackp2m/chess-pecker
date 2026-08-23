@@ -110,9 +110,8 @@ describe('the board as a move crosses it', () => {
 	});
 
 	/**
-	 * The square keeps its element from one position to the next, so a slide left
-	 * running over a board that has jumped would be drawn on whatever piece stands
-	 * there now: the mover seen turning into the piece it was taking.
+	 * The square keeps its element across positions, so a slide left running over a board
+	 * that jumped would show the mover turning into the piece it was taking.
 	 */
 	it('calls off a slide when the board jumps out from under it', () => {
 		const board = mountBoard(CAPTURE);

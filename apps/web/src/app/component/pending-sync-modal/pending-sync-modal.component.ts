@@ -21,9 +21,8 @@ export class PendingSyncModalComponent extends Modal<boolean> implements OnInit 
 	readonly TITLE = this.i18n.translate(I18n.common.PENDING_SYNC_TITLE);
 
 	/**
-	 * Los cuenta el propio modal en vez de recibirlos: quien abre no puede pasarle nada,
-	 * porque `ModalStore.open` sólo promete un `Modal<T>`, y el número que enseña es lo
-	 * único que necesita de fuera.
+	 * Counted here rather than passed in: `ModalStore.open` only promises a `Modal<T>`, so
+	 * whoever opens it has no way to hand anything over.
 	 */
 	readonly pending = signal(0);
 

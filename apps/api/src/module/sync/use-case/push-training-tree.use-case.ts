@@ -27,12 +27,8 @@ import { PushCalibrationBranchUseCase } from './push-calibration-branch.use-case
 import { PushCycleBranchUseCase } from './push-cycle-branch.use-case';
 
 /**
- * El árbol entero de un entrenamiento, en orden topológico y en una sola transacción: un
- * hijo necesita el uuid definitivo de su padre, así que o entra todo o no entra nada.
- *
- * El servidor no juzga el flujo —eso lo decidió el dispositivo, que es donde vive el
- * dominio—: comprueba de quién es el árbol, que las fechas sean creíbles y lo que digan los
- * `unique` y los `check` de las tablas.
+ * A training's whole tree, topologically ordered in one transaction: a child needs its
+ * parent's final uuid. The server checks ownership, dates and constraints, not the flow.
  */
 @Injectable()
 export class PushTrainingTreeUseCase {
@@ -64,7 +60,7 @@ export class PushTrainingTreeUseCase {
 		return outcome.toResult();
 	}
 
-	/** La puerta: el árbol es de quien lo sube, y eso es lo único que se comprueba aquí. */
+	/** The gate: the tree belongs to whoever pushes it, and that is all that is checked. */
 	private async pushTraining(
 		context: SyncPushContext,
 		user: User,
@@ -86,7 +82,7 @@ export class PushTrainingTreeUseCase {
 		return claimSyncRow(context, 'training', node, this.buildTraining(user, node));
 	}
 
-	/** Terminar o cancelar un entrenamiento ocurre mucho después de que su árbol subiera. */
+	/** Finishing or cancelling a training happens long after its tree went up. */
 	private refreshTraining(row: Training, node: PushTrainingNodeDto): void {
 		if (!isFresherNode(node, row)) {
 			return;
@@ -166,9 +162,8 @@ export class PushTrainingTreeUseCase {
 	}
 
 	/**
-	 * El set, y el índice con el que los huecos de ciclo lo nombran: por el uuid de servidor
-	 * y por la clave de reintento, porque un hueco puede haber nacido antes o después de que
-	 * su ejercicio subiera.
+	 * The set, indexed both by server uuid and by retry key: a cycle slot may have been born
+	 * before or after its exercise went up.
 	 */
 	private async pushSet(
 		context: SyncPushContext,

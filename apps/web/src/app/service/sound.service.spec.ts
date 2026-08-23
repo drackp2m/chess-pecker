@@ -6,10 +6,8 @@ import { SoundService } from '@app/service/sound.service';
 import { SettingStore } from '@app/store/setting.store';
 
 /**
- * Stands in for the real thing, blocked the way a browser blocks it before the user
- * has interacted. Firefox leaves `resume()` pending — neither resolved nor rejected —
- * for as long as that lasts, which is what some of these tests are about. `state` is
- * widened past the standard union because WebKit reports `interrupted` too.
+ * Stands in for the real thing, blocked as a browser blocks it before any interaction.
+ * `state` is widened past the standard union because WebKit reports `interrupted` too.
  */
 class FakeAudioContext {
 	state: 'suspended' | 'running' | 'closed' | 'interrupted' = 'suspended';
@@ -116,9 +114,8 @@ describe('SoundService', () => {
 		});
 	});
 
-	// The regression this file exists for: a context opened at boot is poisoned by any
-	// system interruption that arrives before it ever runs, and WebKit keeps the poison
-	// across reloads, so it must not be opened until a gesture can vouch for it.
+	// The regression this file exists for: WebKit poisons a context interrupted before it
+	// ever ran, and keeps the poison across reloads.
 	it('opens no context until a gesture happens', async () => {
 		TestBed.inject(SoundService);
 		await flush();

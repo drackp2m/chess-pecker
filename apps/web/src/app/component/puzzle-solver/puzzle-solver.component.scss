@@ -15,9 +15,8 @@
 	}
 }
 
-// The board is the page on a phone, so it cancels the section inset and runs edge to
-// edge. From lg it shares the row with the panel, where escaping would put it under
-// the gap, so there it just fills its own column.
+// The board is the page on a phone, so it cancels the section inset. From lg it shares the
+// row with the panel, where escaping would put it under the gap.
 app-chess-board {
 	@include mix.media($until: lg) {
 		width: calc(100% + var(--page-padding) * 2);
@@ -25,9 +24,8 @@ app-chess-board {
 	}
 }
 
-// Three columns rather than a `space-between` row, so the arrows sit on the edges
-// without the middle drifting when one of them is wider than the other. The row runs
-// as wide as the board it belongs to, escaping the section inset alongside it.
+// Three columns rather than `space-between`, so the middle does not drift when one arrow
+// is wider than the other.
 .controls {
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
@@ -46,9 +44,8 @@ app-chess-board {
 	}
 }
 
-// The panel has to be allowed to shrink, or the widest history pushes the whole grid
-// past the viewport.
-// ToDo => Investigate why this is necessary.
+// The panel has to be allowed to shrink, or the widest history pushes the grid past the
+// viewport. ToDo => investigate why this is necessary.
 .panel {
 	min-width: 0;
 }

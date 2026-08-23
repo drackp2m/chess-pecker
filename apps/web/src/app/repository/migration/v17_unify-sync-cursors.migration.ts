@@ -4,12 +4,8 @@ import { AppSchema, AppSchemaV16 } from '@app/repository/definition/app-schema.i
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
- * Dos cursores con dos formas distintas pasan a ser uno, clavado por la misma llave con la
- * que el resumen del servidor nombra cada tabla. Así «¿hay algo nuevo?» se contesta leyendo
- * un solo store en vez de tres repartidos.
- *
- * `attemptCursor` no entra: la paginación del histórico es por entrenamiento, así que su
- * clave es el uuid de cada uno y no la entidad.
+ * Two differently shaped cursors become one, keyed as the server's summary names each table,
+ * so "is there anything new?" reads one store instead of three.
  */
 export const unifySyncCursorsMigration: Migration<AppSchemaV16> = {
 	version: 17,

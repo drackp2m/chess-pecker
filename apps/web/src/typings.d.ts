@@ -1,7 +1,6 @@
 /**
- * Build-time constant injected by the `define` option in `angular.json`:
- * `true` in the `development` configuration (`ng serve`), `false` everywhere
- * else (production, `testing`). Undefined in tooling that skips `define`.
+ * Build-time constant from `angular.json`'s `define`: `true` under `ng serve`, `false`
+ * everywhere else, undefined in tooling that skips `define` entirely.
  */
 declare const APP_DEBUG: boolean;
 

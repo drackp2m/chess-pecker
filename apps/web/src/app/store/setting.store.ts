@@ -47,13 +47,8 @@ export class SettingStore extends signalStore(
 	}
 
 	/**
-	 * Writes the setting and replaces the stored entity outright — `type` is the key on
-	 * both sides, so this is an upsert and creating a setting is the same call as
-	 * changing it. Deliberately not `updateEntity`: that one merges into a fresh object
-	 * literal (`{ ...entity, ...changes }`), which drops the `Setting` prototype and
-	 * leaves `settingEntities()` typed as `Setting[]` while holding plain data with no
-	 * `.with()` on it. `setEntity` keeps the instance, and callers always pass a whole
-	 * `Setting` here anyway, so there is nothing to merge.
+	 * An upsert keyed by `type`, replacing the entity outright. Deliberately not
+	 * `updateEntity`, which merges into a literal and drops the `Setting` prototype.
 	 */
 	save(item: Setting): void {
 		void this.settingRepository

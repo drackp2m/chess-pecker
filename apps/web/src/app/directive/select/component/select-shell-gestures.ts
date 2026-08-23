@@ -6,10 +6,8 @@ export interface SelectShellGestureHooks {
 }
 
 /**
- * Interprets the shell's raw pointer events into toggle requests. Direct
- * pointers (finger, stylus) defer to `click` — `pointerdown` fires before
- * the browser knows whether the gesture is a tap or a scroll — while
- * interactions inside the real search input stay fully native.
+ * Turns the shell's pointer events into toggle requests. Direct pointers defer to `click`,
+ * since `pointerdown` fires before a tap can be told from a scroll.
  */
 export class SelectShellGestures {
 	private togglesOnClick = false;
@@ -28,9 +26,8 @@ export class SelectShellGestures {
 		this.receivedPointerDown = true;
 		this.togglesOnClick = false;
 
-		// Pointer interactions inside the real search input must stay fully
-		// native (focus, caret placement, text selection); whether the
-		// dropdown opens is decided on click.
+		// Inside the real search input everything stays native — focus, caret, selection — and
+		// whether the dropdown opens is decided on click.
 		if (this.isInsideOptions(event.target) || this.isInsideSearchInput(event.target)) {
 			return;
 		}
@@ -53,11 +50,8 @@ export class SelectShellGestures {
 	}
 
 	/**
-	 * Toggling from `click` covers two cases: direct-pointer taps (deferred
-	 * from pointerdown once the gesture is known not to be a scroll) and
-	 * clicks that arrive with no pointerdown at all — Safari suppresses only
-	 * the pointerdown of the click that dismisses a native select popup,
-	 * while assistive tech emits bare synthetic clicks.
+	 * Toggling from `click` covers deferred direct-pointer taps and clicks with no pointerdown
+	 * at all: Safari suppresses one dismissing a native popup, and assistive tech synthesises them.
 	 */
 	handleClick(event: MouseEvent): void {
 		const togglesNow = this.togglesOnClick || !this.receivedPointerDown;
@@ -69,9 +63,8 @@ export class SelectShellGestures {
 			return;
 		}
 
-		// A click inside the search input only ever opens the dropdown
-		// (closing it or moving the caret is native business) — and not when
-		// the user just finished dragging a text selection to copy the value.
+		// A click in the search input only opens the dropdown, and not when the user has just
+		// finished dragging a text selection.
 		if (this.isInsideSearchInput(event.target)) {
 			if (!this.store.isOpen() && !this.hooks.hasTextSelection()) {
 				this.hooks.requestToggle();

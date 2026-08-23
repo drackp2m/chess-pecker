@@ -90,11 +90,8 @@ export interface ReleaseContext {
 }
 
 /**
- * Which square a pointer release should act on, if any.
- *
- * Taps are resolved here rather than from a `click` listener: capturing the pointer
- * for dragging retargets `click` to the capturing element, so the square's own
- * handler would never see it.
+ * Which square a pointer release acts on. Resolved here and not from a `click` listener:
+ * capturing the pointer for dragging retargets `click` to the capturing element.
  */
 export function resolveRelease(context: ReleaseContext): Square | undefined {
 	const { from, released, wasDrag, isClickEnabled } = context;

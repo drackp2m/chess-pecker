@@ -12,9 +12,8 @@ export class GetTrainingActivityUseCase {
 	constructor(private readonly puzzleAttemptRepository: PuzzleAttemptRepository) {}
 
 	/**
-	 * El cursor se lee antes que los días a propósito: lo que entre entre las dos consultas
-	 * viaja ya en esta respuesta y volverá a viajar en la siguiente. Repetir un día es
-	 * gratis; perdérselo dejaría un día mal guardado para siempre.
+	 * The cursor is read before the days on purpose: repeating a day is free, missing one
+	 * would leave it wrong forever.
 	 */
 	async execute(user: User, request: GetTrainingActivityRequestDto): Promise<TrainingActivity> {
 		const cursor =

@@ -39,7 +39,7 @@ describe('ListTrainingAttemptsUseCase', () => {
 			updatedAt: new Date('2026-08-11T10:00:30.000Z'),
 		});
 
-		// El hueco que no es el suyo vuelve de la base como `null`, no como `undefined`.
+		// The slot that is not its own comes back from the database as `null`, not `undefined`.
 		Object.assign(attempt, { calibrationRound: null });
 
 		return attempt;

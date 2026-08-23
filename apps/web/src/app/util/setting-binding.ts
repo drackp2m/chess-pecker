@@ -9,9 +9,8 @@ interface SettingControl<T> {
 }
 
 /**
- * Two-way link between a form control and the signal a service persists. The stored
- * value arrives after the form is built, so it is mirrored back in — and that mirroring
- * is itself the first change the control emits, which is why it never writes back.
+ * Two-way link between a form control and a persisted signal. The stored value arrives after
+ * the form is built, and that mirroring is the first change the control emits.
  */
 export function bindSetting<T>(
 	control: SettingControl<T>,

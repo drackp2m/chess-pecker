@@ -50,11 +50,8 @@ export abstract class ChessMoveGenerator {
 	}
 
 	/**
-	 * `history` is what the game passed through before this position, which only the
-	 * repetition rule needs. It has no default on purpose: an empty one is a fine
-	 * answer — a puzzle asking whether a move mates has no game behind it — but it has
-	 * to be written down, because a caller that has a history and forgets to pass it
-	 * gets no error, just a game where repetitions never draw.
+	 * What the game passed through before this position, which only the repetition rule needs.
+	 * No default on purpose: forgetting it is silent, and repetitions would never draw.
 	 */
 	static status(position: ChessPosition, history: readonly ChessPosition[]): MatchStatus {
 		if (0 === this.legalMoves(position).length) {

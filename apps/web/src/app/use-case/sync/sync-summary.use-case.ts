@@ -14,17 +14,16 @@ type StoredCursors = ReadonlyMap<SyncCursorKey, SyncCursorRow>;
 
 export interface SyncStatus {
 	readonly summary: SyncSummary;
-	/** El servidor corre un modelo más nuevo que éste: se baja, pero no se sube. */
+	/** The server runs a newer model than this one: pull, but never push. */
 	readonly canPush: boolean;
-	/** Las tablas cuyo cursor local se ha quedado por detrás del servidor. */
+	/** The tables whose local cursor has fallen behind the server. */
 	readonly behind: readonly SyncEntity[];
 	readonly treeCursor: string | undefined;
 }
 
 /**
- * Lo que hay del otro lado contrastado con lo que hay aquí, en una sola llamada. Es la fase
- * de `checking` del ciclo: quien la lee sabe si puede subir y qué le falta por bajar sin
- * haber preguntado tabla a tabla ni entrenamiento a entrenamiento.
+ * What is on the other side against what is here, in one call: the cycle's `checking` phase,
+ * which answers what to push and what to pull without asking table by table.
  */
 @Injectable({
 	providedIn: 'root',
@@ -51,8 +50,8 @@ export class SyncSummaryUseCase {
 }
 
 /**
- * Marca y recuento iguales es «al día». La marca sola no bastaría: un `MAX` no ve un borrado,
- * y el recuento solo tampoco, porque una fila sustituida por otra deja el total igual.
+ * Matching stamp and count means current. Neither alone would do: a `MAX` cannot see a
+ * deletion, and a row replaced by another leaves the total unchanged.
  */
 function isBehind(local: SyncCursorRow | undefined, remote: SyncEntitySummary): boolean {
 	if (null === remote.cursor && 0 === remote.count) {

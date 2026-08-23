@@ -40,9 +40,8 @@ const TAKEN_BACK = [...MISTAKEN, -1];
 const REVIEWED = [...TAKEN_BACK, 1];
 
 /**
- * Where each of the three explorations hangs off the main record — the number of events
- * it had written at that moment, hint included, which is what makes `record.slice(0, at)`
- * the board the exploration was handed.
+ * Where each exploration hangs off the main record: the events written at that moment,
+ * which is what makes `record.slice(0, at)` the board it was handed.
  */
 const ANCHORS = [THREE_PLY.length, LOOKED_BACK.length, REVIEWED.length];
 
@@ -89,10 +88,8 @@ function describeSession(store: PuzzleStore): SessionReading {
 }
 
 /**
- * One press of one control, and everything the board reads afterwards — the same walk
- * `main-line.spec.ts` makes, taken this time through the magnifying glass. Two of the
- * readings carry the whole point of the mode: `record`, which an exploration may never
- * touch, and `explorations`, which is the only place anything done inside one is kept.
+ * One press of one control, and everything the board reads afterwards. `record` is what an
+ * exploration may never touch, and `explorations` the only place its own moves are kept.
  */
 interface Beat {
 	readonly press: string;
@@ -200,9 +197,8 @@ const APPROACH: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			// The answer is written before it is shown: what walks it is a programme, and a
-			// programme only ever walks line that is already there. So the record runs a ply
-			// ahead of the board for as long as the beat lasts.
+			// The answer is written before it is shown, since a programme only walks line that
+			// already exists, so the record runs a ply ahead for as long as the beat lasts.
 			record: THREE_PLY,
 			exploring: false,
 			explorations: runs(),
@@ -574,10 +570,8 @@ const CONTINUED: readonly Beat[] = [
 ];
 
 /**
- * The second exploration, entered from a cursor that is three plies behind what the
- * exercise had reached. Walking forward inside it, starting over, and walking forward
- * again all reach the same end: the restart gives back the whole main line, not the
- * ply the cursor happened to be resting on.
+ * The second exploration, entered three plies behind what the exercise had reached: the
+ * restart gives back the whole main line, not the ply the cursor was resting on.
  */
 const SECOND_EXPLORATION: readonly Beat[] = [
 	{
@@ -936,9 +930,8 @@ const MISS: readonly Beat[] = [
 ];
 
 /**
- * The third exploration: entered on a refuted board, the right move found there, and the
- * exercise started over from inside it — which is where the sandbox is thrown away and
- * the wrong move goes with it, being no part of what the exercise reached.
+ * The third exploration: entered on a refuted board and restarted from inside, which throws
+ * the sandbox away and the wrong move with it.
  */
 const THIRD_EXPLORATION: readonly Beat[] = [
 	{
@@ -1215,9 +1208,8 @@ describe('the exploration mode', () => {
 
 				expect(describeSession(store)).toEqual(beat.reads);
 
-				// The main record describes the main board and only ever that one: inside
-				// an exploration it describes the board waiting to be come back to, and
-				// mid-beat it describes where the beat is going rather than where it is.
+				// The main record only ever describes the main board: inside an exploration, the
+				// one waiting to be returned to, and mid-beat, where the beat is going.
 				if (!store.isFreePlay() && !store.isBusy()) {
 					expect(replayRecord(MATE_IN_3_FEN, store.record())).toEqual(
 						describeLine(snapshot(store)),
@@ -1248,9 +1240,8 @@ describe('the exploration mode', () => {
 
 			playFivePlyLine(store);
 
-			// All the way back to the board the exercise opened on: it is White — the
-			// opponent — to move there, and it is the one turn of theirs that is not an
-			// answer to a check, so they have a move of their own to play.
+			// Back to the board the exercise opened on, the one White turn that is not an answer
+			// to a check, so they have a move of their own to play.
 			for (const cursor of [4, 3, 2, 1, 0]) {
 				store.stepBackward();
 
@@ -1401,9 +1392,8 @@ describe('the exploration mode', () => {
 		});
 
 		/**
-		 * A sandbox is the exercise being worked on, so the clock behind the hint goes on
-		 * running inside one — and stops there for the same reason it stops anywhere else:
-		 * a tab in the background is nobody looking at the position.
+		 * A sandbox is the exercise being worked on, so the hint's clock runs inside one — and
+		 * stops for the same reason it stops anywhere else.
 		 */
 		it('runs on inside an exploration, and stops with the tab there too', () => {
 			const store = board();

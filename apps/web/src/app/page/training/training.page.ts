@@ -158,10 +158,8 @@ export class TrainingPage implements OnInit {
 		}),
 	});
 
-	// ToDo => the goal only offers exercises per day. `SetTrainingGoalRequestDto` also
-	// takes an `endDate`, which is the other half of the question the method asks ("how
-	// long do you want the first pass to take"), and it is missing here because
-	// `InputDirective` has no date type yet.
+	// ToDo => the goal only offers exercises per day; `SetTrainingGoalRequestDto` also takes
+	// an `endDate`, missing here because `InputDirective` has no date type yet.
 	readonly goalForm = new FormGroup({
 		puzzlesPerDay: new FormControl(DEFAULT_PUZZLES_PER_DAY, {
 			nonNullable: true,
@@ -236,9 +234,8 @@ export class TrainingPage implements OnInit {
 	}
 
 	/**
-	 * El entrenamiento va primero porque decide cuánta actividad hace falta: el desglose
-	 * diario mira los últimos días, pero el ritmo del ciclo se dibuja desde que arrancó, y
-	 * un día del ciclo que no llegue cuenta como cero y hunde la deriva.
+	 * The training goes first because it decides how much activity is needed: a cycle day that
+	 * never arrives counts as zero and drags the trend down.
 	 */
 	private async loadTraining(): Promise<void> {
 		await this.store.load();

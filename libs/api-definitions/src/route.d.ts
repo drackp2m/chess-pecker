@@ -45,9 +45,8 @@ export interface ApiEndpoint {
 }
 
 /**
- * Route-map constraint. Bound to the map itself (`M extends ApiEndpointMap<M>`)
- * instead of `Record<string, ApiEndpoint>`: interfaces get no implicit index
- * signature, so they would never satisfy that.
+ * Route-map constraint, bound to the map itself rather than `Record<string, ApiEndpoint>`:
+ * interfaces get no implicit index signature and would never satisfy it.
  */
 export type ApiEndpointMap<M> = Record<keyof M, ApiEndpoint>;
 
@@ -97,7 +96,7 @@ export interface PuzzlePostRoutes {
 }
 
 export interface SyncGetRoutes {
-	/** Qué hay del otro lado, por tabla. Una sola llamada decide qué hay que bajar. */
+	/** What is on the other side, per table. One call decides what has to be pulled. */
 	'': { response: SyncSummary };
 	'/training/:uuid': {
 		path: { uuid: string };
@@ -107,7 +106,7 @@ export interface SyncGetRoutes {
 }
 
 export interface SyncPostRoutes {
-	/** El árbol entero de un entrenamiento. Idempotente por `clientRef`. */
+	/** A training's whole tree. Idempotent through `clientRef`. */
 	'/training': { params: PushTrainingRequest; response: PushTrainingResult };
 }
 
@@ -131,8 +130,8 @@ export interface TrainingGetRoutes {
 }
 
 /**
- * Lo que se escribe de un entrenamiento entra por `POST /sync/training`: aquí sólo quedan
- * abrirlo y darlo por completado, que no son pasos del flujo sino los dos extremos.
+ * Everything written about a training comes in through `POST /sync/training`: only opening
+ * and completing it are left here, which are its two ends and not steps in the flow.
  */
 export interface TrainingPostRoutes {
 	'': { response: Training };

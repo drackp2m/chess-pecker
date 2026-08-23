@@ -34,33 +34,27 @@ export interface BoardSlideStep {
 	/** The square that receives the slide. */
 	readonly to: Square;
 	/**
-	 * What the slide is going to take, left standing under the piece on its way until
-	 * it arrives. A square holds one piece and no more, so the one being taken travels
-	 * here rather than on any board.
+	 * What the slide will take, left standing until it arrives. A square holds one piece, so
+	 * the one being taken travels here rather than on any board.
 	 */
 	readonly taken: Piece | undefined;
 }
 
 /**
- * One beat of a board event. An ordinary move takes one; the two that move a second
- * piece take two, castling because the king and the rook travel one after the other,
- * en passant because the square captured on has to be stepped onto first.
+ * One beat of a board event. An ordinary move takes one; castling and en passant take two,
+ * since both move a second piece.
  */
 export interface BoardStage {
 	/** Everything that travels together, so a stage of two moves two pieces at once. */
 	readonly slides: readonly BoardSlideStep[];
 	/**
-	 * The board this beat lands on, carried only while another beat follows it. It
-	 * lives no longer than the animation does and reaches neither `positions` nor the
-	 * record; the last beat lands on the position the state itself moved to, which is
-	 * what `undefined` says.
+	 * The board this beat lands on, carried only while another follows and reaching neither
+	 * `positions` nor the record. `undefined` means the position the state moved to.
 	 */
 	readonly board: ChessPosition | undefined;
 	/**
-	 * What this beat sounds like as it sets off, so a move that travels two pieces is
-	 * heard twice — the plain clip for the piece that only travels, and what the move
-	 * itself came to for the one that lands it. A beat that moves nothing, which is
-	 * how a pawn turns into a queen, is silent: it was heard when the pawn set off.
+	 * What this beat sounds like, so a move travelling two pieces is heard twice. A beat that
+	 * moves nothing — a pawn turning into a queen — is silent.
 	 */
 	readonly sound: MoveSound | undefined;
 	/** Identifies this beat, so the same slide never runs twice. */

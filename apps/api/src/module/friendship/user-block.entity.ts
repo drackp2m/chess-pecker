@@ -6,8 +6,8 @@ import { User } from '../user/user.entity';
 import { UserBlockRepository } from './user-block.repository';
 
 /**
- * Tabla aparte de `friendship` porque un bloqueo es asimétrico y tiene vida propia: debe
- * sobrevivir a que la amistad se borre, y es lo que impide volver a pedirla.
+ * Kept apart from `friendship` because a block is asymmetric and has a life of its own: it
+ * has to survive the friendship being deleted, and is what stops it being asked for again.
  */
 @Entity({ repository: () => UserBlockRepository })
 @Unique({ properties: ['blocker', 'blocked'] })

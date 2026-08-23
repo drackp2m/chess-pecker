@@ -3,11 +3,8 @@ import type { PushTrainingResult, SyncEntity, SyncRejection } from '@chesspecker
 import { SyncNodeDto } from '../dto/request/sync-node.dto';
 
 /**
- * Lo que la subida tiene que contar de vuelta: con qué uuid se quedó cada fila, para que el
- * dispositivo reclave la suya, y cuáles no van a entrar nunca, para que deje de reintentarlas.
- *
- * Una fila sin `clientRef` no nació en un dispositivo: ya está arriba y no hay nada que
- * mapear ni que rechazar.
+ * What a push reports back: the uuid each row ended up with, so the device can rekey, and
+ * the ones that will never land, so it stops retrying them.
  */
 export class SyncPushOutcome {
 	private readonly uuids: Record<SyncEntity, Record<string, string>> = {

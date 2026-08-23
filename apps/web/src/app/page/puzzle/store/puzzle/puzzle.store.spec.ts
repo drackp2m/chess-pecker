@@ -50,10 +50,8 @@ function slideOf(transition: BoardTransition | undefined): FlatSlide {
 }
 
 /**
- * The slides the board would actually run. Signals are glitch-free, so a transition
- * only ever reaches the DOM if it is the one still standing when the block that set
- * it returns — which is where this samples, and why a slide overwritten in the same
- * breath is one the player never sees.
+ * The slides the board would really run. Signals are glitch-free, so only the transition
+ * still standing when the block returns reaches the DOM, which is where this samples.
  */
 function createSlideLog(store: PuzzleStore) {
 	const slides: FlatSlide[] = [];
@@ -318,9 +316,8 @@ describe('PuzzleStore', () => {
 		expect(store.isPlayerTurn()).toBe(true);
 		expect(store.mistake()).toBeUndefined();
 
-		// Playing the solution from there drops the whole free-play branch. Three plies and
-		// not two: the answer is written before it is walked, so it is on the line already
-		// with the board still a ply short of it — which is what the scoresheet reads.
+		// Playing the solution drops the whole free-play branch. Three plies and not two: the
+		// answer is written before it is walked, so the board is still a ply short of it.
 		store.selectSquare('b2');
 		store.selectSquare('b1');
 
@@ -428,9 +425,8 @@ describe('PuzzleStore', () => {
 	});
 
 	/**
-	 * The board is redrawn from scratch when the exercise is picked up again, so what it
-	 * shows is the line it was left on — and a rewind is how that line came to be looked
-	 * at from there, not something to be watched happening a second time.
+	 * The board is redrawn from scratch when the exercise is picked up, so it shows the line
+	 * it was left on: a rewind is how that came about, not something to watch again.
 	 */
 	it('replays the move the line stands on, not the last thing done to the board', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
@@ -588,10 +584,8 @@ describe('PuzzleStore', () => {
 
 		const reopened = slideOf(store.transition());
 
-		// The same move onto the same square as before, so only the tick tells the two
-		// slides apart — and the miss in between must not have rewound it. It answers the
-		// button that was just pressed, so it travels the way a move played does: the
-		// board is not being navigated, it is being started over.
+		// The same move onto the same square, so only the tick tells the slides apart. It
+		// answers the button just pressed, so it travels the way a played move does.
 		expect(reopened).toMatchObject({ from: 'f1', to: 'f8', kind: 'played' });
 		expect(reopened.tick).toBeGreaterThan(opening.tick ?? 0);
 	});

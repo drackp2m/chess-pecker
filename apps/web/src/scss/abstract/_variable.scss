@@ -9,9 +9,8 @@ $transition: (
 ) !default;
 
 /**
- * The order the chrome is painted in. Page content never appears here: it is isolated
- * into a stacking context of its own, so nothing inside a screen can climb over the
- * things that frame it however high it sets itself.
+ * The order the chrome is painted in. Page content never appears here: it is isolated into
+ * its own stacking context, so nothing inside a screen can climb over what frames it.
  */
 $elevation: (
 	navbar: 10,

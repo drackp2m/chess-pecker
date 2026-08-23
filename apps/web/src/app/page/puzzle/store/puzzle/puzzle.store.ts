@@ -101,42 +101,28 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Back to the board the exercise opened on. It is a way of looking at the line and
-	 * nothing more — the line is left whole, and the exercise is picked up again by
-	 * stepping forward to where it had got to.
-	 *
-	 * Inside an exploration the line left standing is the main one it was entered from,
-	 * so the sandbox is thrown away and the exercise really does start over; what is put
-	 * back is only what was visible of it, never the actions that got there.
+	 * Back to the board the exercise opened on, leaving the line whole. Inside an
+	 * exploration the sandbox is thrown away and the main line comes back instead.
 	 */
 	restart(): void {
 		const puzzle = this.puzzle();
 
 		if (undefined === puzzle) {
-			// Written before anything moves, so the restart goes into the record the
-			// exercise already had instead of the blank one reopening it would hand out.
+			// Written before anything moves, so it lands in the record the exercise already had.
 			this.open(this.verdict(), append(this.recordState(), { kind: 'restart' }));
 
 			return;
 		}
 
-		// The sandbox stays open — starting the exercise over is not leaving it — so the
-		// restart is written inside the exploration, which is where the board is.
+		// The sandbox stays open, so the restart is written inside the exploration.
 		this.append({ kind: 'restart' });
 		patchState(this, restartPatch(this.closure()));
 		this.run(RESTART_PROGRAM, this.playbackHooks());
 	}
 
 	/**
-	 * Plays the last move of the visible line over again, for a board that is being come
-	 * back to rather than played on — the line as the cursor leaves it, never whatever the
-	 * last thing done to the board happened to be. A rewind is a way of looking at the line,
-	 * not a move in it, and looking at it is not something to be shown a second time.
-	 *
-	 * The beat the board was left standing on is dropped either way: it is over, and a board
-	 * coming back must not run it again on its way in. What it may not cut short is a
-	 * playback still in flight or the take-back a refuted move is waiting for — both are
-	 * answers to something the player did, and the board comes back to them as it left them.
+	 * Replays the last move of the visible line for a board being come back to. It may not
+	 * cut short a playback in flight or a pending take-back: both answer what the player did.
 	 */
 	replayLastMove(): void {
 		const cursor = this.cursor();
@@ -153,11 +139,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Gives up: plays what is left of the solution, from wherever the line stopped
-	 * following it. It ends the exercise, though not the verdict — that was settled on
-	 * the first try, and watching never revises it. Asked for again once the exercise is
-	 * over there is nothing left ahead, so it rewinds to the start and plays the whole
-	 * line out; the record is closed by then and takes none of it.
+	 * Gives up and plays out the rest of the solution. It ends the exercise but not the
+	 * verdict, settled on the first try; asked for again it replays the whole line.
 	 */
 	revealSolution(): void {
 		if (!this.canRevealSolution()) {
@@ -168,22 +151,18 @@ export class PuzzleStore
 
 		const wasOpen = this.isOpen();
 		const cursor = revealCursor(this.lineState(), wasOpen ? this.deviation() : 0);
-		// The slide is judged against the cursor as it stands now, which is what it
-		// describes; the rewind is about to move it.
+		// Judged against the cursor as it stands, which is what it describes: the rewind moves it.
 		const rewind = { cursor: this.cursor(), transition: this.transition() };
 
-		// While the exercise is open the rewind onto the script has to be written into the
-		// log before the record closes, or the log would end on a board the line is no
-		// longer standing on.
+		// Written before the record closes, or the log would end on a board the line has left.
 		if (wasOpen) {
 			this.seek(cursor);
 		}
 
 		patchState(this, revealPatch({ ...rewind, closure: this.closure() }, cursor));
 
-		// Read off the board the rewind has just left standing, which is the one the answer
-		// is played from. Written whole and held back at its start, it is a stretch of line
-		// like any other, which is the only kind of thing a programme knows how to walk.
+		// Read off the board the rewind left standing, and written whole: a programme can only
+		// walk a stretch of line that already exists.
 		const answer = revealedLine(this.positions(), this.puzzle()?.moves ?? [], cursor);
 
 		patchState(this, { revealed: answer, rewound: answer.moves.length });
@@ -191,17 +170,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Puts a saved exercise back on the board, exactly as it was left. It is the board the
-	 * record describes, so nothing here is played: the playback in flight is dropped, the
-	 * line is folded out of the record in one go and the cursor lands where it stood.
-	 *
-	 * The move the line is standing on is the one thing that travels, so what changed while
-	 * the page was away can be seen — a slide and nothing more, with no beat of its own and
-	 * nothing following it.
-	 *
-	 * A record that does not replay is not worth an empty board on top of a solved
-	 * exercise, so it degrades to the position the exercise opened on and the exercise is
-	 * simply begun again; the verdict it carries still stands.
+	 * Puts a saved exercise back exactly as it was left: nothing is played, the line is
+	 * folded out of the record in one go and only the move it stands on travels.
 	 */
 	restoreFrom(stored: PuzzleRestore): void {
 		const puzzle = this.puzzle();
@@ -219,10 +189,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Uncovers the themes. It is help, so it is remembered and written down where it was
-	 * asked for — the main line, or the exploration that was open at the time — but it
-	 * closes nothing. It cannot be asked for at all until the exercise has been looked at
-	 * for `HINT_DELAY_MS`.
+	 * Uncovers the themes. It counts as help, so it is recorded where it was asked for, but
+	 * it closes nothing and is unavailable for the first `HINT_DELAY_MS`.
 	 */
 	useHint(): void {
 		if (!this.canUseHint()) {
@@ -243,8 +211,7 @@ export class PuzzleStore
 			return;
 		}
 
-		// Letting go of the index puts the main line back on the board on its own, and it
-		// comes back standing exactly where the exploration was entered from.
+		// Letting go of the index restores the main line, standing where the exploration began.
 		patchState(
 			this,
 			restoreFreePlayPatch({ cursor: this.cursor(), transition: this.transition() }, anchor),
@@ -341,10 +308,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * The two things the player cannot reach on its own, because they live on the store and
-	 * not in a feature. The seek is always the held one: everything real is written before
-	 * the programme is handed over, so all a programme ever moves is the board. And the end
-	 * of one is where the verdict is read back off the head it left the board standing on.
+	 * The two hooks the player cannot reach itself, since they live on the store. The seek is
+	 * always the held one: everything real is written before the programme is handed over.
 	 */
 	private playbackHooks(): PlaybackHooks {
 		return {
@@ -359,9 +324,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * The verdict, read back off the head the board is standing on. It is where a programme
-	 * ends, and where one that never started ends too, so a script that ran out and a line
-	 * that was walked to its end leave the exercise saying the same thing about the board.
+	 * The verdict, read off the head the board stands on. A script that ran out and a line
+	 * walked to its end have to leave the exercise saying the same thing.
 	 */
 	private settleOutcome(): void {
 		const outcome = this.outcomeAt(this.cursor());
@@ -370,10 +334,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Whether the line that just landed ends the exercise. Only the main line played out on
-	 * the board does, and free play is a sandbox that never reaches it. An answer playing
-	 * itself needs no exception: asking for it is what closed the exercise, and the first
-	 * closure is the one it keeps.
+	 * Whether the line that just landed ends the exercise. Only the main line can; free play
+	 * is a sandbox that never reaches it.
 	 */
 	private landedClosure(outcome: PuzzleOutcome): PuzzleClosure {
 		const isFound = 'solved' === outcome && undefined === this.freePlay();
@@ -382,14 +344,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Lets the opponent answer: the scripted ply at the cursor, parsed and written onto the
-	 * end of the line, with the head held a ply behind it so a programme has somewhere to
-	 * walk. Opening the exercise is the same thing — `moves[0]` is the opponent's move, and
-	 * it answers the exercise being opened rather than anything the player played.
-	 *
-	 * A script with nothing left to parse is a line that ends here: mate cut it short, or it
-	 * simply ran out. Nothing is written and no programme is started, so the verdict is read
-	 * off the board on the spot rather than waiting for a beat that is never coming.
+	 * Lets the opponent answer, with the head held a ply behind so a programme has somewhere
+	 * to walk. A script that no longer parses ends the line, and the verdict is read on the spot.
 	 */
 	private replyScripted(): void {
 		const cursor = this.cursor();
@@ -408,21 +364,16 @@ export class PuzzleStore
 	}
 
 	/**
-	 * The user did something new. It goes on the end of the log and the cursor follows it
-	 * there; the guard that used to sit on every writer separately lives inside `append`,
-	 * so a closed exercise takes none of this.
+	 * The user did something new: it goes on the end of the log and the cursor follows.
+	 * `append` holds the guard, so a closed exercise takes none of this.
 	 */
 	private append(action: PuzzleAction, patch?: Partial<PuzzleStoreProps>): void {
 		patchState(this, (state) => append(state, action), patch ?? {});
 	}
 
 	/**
-	 * Moves the head over what already exists. It never writes a move — only the step it
-	 * took, which is what lets the log replay back to this very board — and a seek that
-	 * goes nowhere writes nothing at all.
-	 *
-	 * A closed exercise is still there to be looked through, but its record is sealed and
-	 * takes no more steps, so the cursor travels beside the log instead of inside it.
+	 * Moves the head over what already exists, writing only the step so the log can replay
+	 * back to this board. A sealed record takes no steps, so the cursor travels beside it.
 	 */
 	private seek(cursor: number, patch?: Partial<PuzzleStoreProps>): void {
 		const clamped = Math.max(0, Math.min(this.line().length, cursor));
@@ -455,17 +406,15 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Opens a sandbox on the end of the log. The anchor it hangs off is not captured — the
-	 * entry event records where the main line stood, and the fold works the rest out — so
-	 * all that is held is which exploration is the open one.
+	 * Opens a sandbox on the end of the log. The entry event records where the main line
+	 * stood and the fold works the rest out, so only the open index is held.
 	 */
 	private enterFreePlay(): void {
 		const opened = this.explorations().length;
 
 		this.append({ kind: 'entry' });
 
-		// A closed record takes no entry, and an index pointing at an exploration that was
-		// never written would fold to nothing at all. The sandbox opens only if it is there.
+		// An index pointing at an entry a closed record refused would fold to nothing.
 		if (opened < this.explorations().length) {
 			patchState(this, {
 				freePlayIndex: opened,
@@ -476,14 +425,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Anything the player does ends what the board was playing by itself, and it no longer
-	 * matters what that was: the reveal, the opponent answering, a restart being shown. All
-	 * of it is the player's to abandon, and what is left standing is the board the log
-	 * describes — the beats being the whole of what is dropped.
-	 *
-	 * Only the outcome is read back, and not the closure with it: the exercise is not over
-	 * because someone stopped watching it. Ending a programme is what settles that, and a
-	 * programme that was cut short never ended.
+	 * Anything the player does abandons whatever the board was playing by itself. Only the
+	 * outcome is read back: stopping the watching is not what ends the exercise.
 	 */
 	private stopPlayback(): void {
 		this.stop();
@@ -497,16 +440,14 @@ export class PuzzleStore
 		kind: 'backward' | 'forward',
 	): void {
 		const outcome = this.outcomeAt(cursor);
-		// The board the stepped move was played on, whichever way it is travelled: it
-		// is the lower of the two cursors the move sits between.
+		// The board the move was played on: the lower of the two cursors it sits between.
 		const played = this.positions()[Math.min(cursor, this.cursor())];
 
 		this.seek(cursor, {
 			selected: undefined,
 			outcome,
 			result: settleResult(this.result(), outcome),
-			// Nothing to step over means the cursor stayed put, so whatever the board is
-			// showing still stands and must not be cleared out from under it.
+			// The cursor stayed put, so what the board shows still stands and must not be cleared.
 			...(undefined === stepped || undefined === played
 				? {}
 				: { transition: nextTransition(played, stepped, kind) }),
@@ -514,13 +455,8 @@ export class PuzzleStore
 	}
 
 	/**
-	 * Grades the player's move, then lets the opponent answer if it was right. Only a
-	 * move played against the script is graded at all: in free play the board is a
-	 * sandbox and nothing there may reach `result`, which is also the only place both
-	 * sides are the player's to move.
-	 *
-	 * The move that completes the line is also the one that ends the exercise, whether
-	 * it was found first time or after any number of misses.
+	 * Grades the player's move, then lets the opponent answer if it was right. Free play is a
+	 * sandbox: nothing played there may reach `result`, and both sides are the player's to move.
 	 */
 	private attemptMove(move: ChessMove): void {
 		if (this.isFreePlay()) {
@@ -551,10 +487,7 @@ export class PuzzleStore
 		}
 	}
 
-	/**
-	 * The take-back and the answer that may follow it share one pending timeout on
-	 * purpose: only the last one scheduled survives, so two would cancel each other.
-	 */
+	/** Take-back and answer share one timeout on purpose: two would cancel each other. */
 	private registerMistake(move: ChessMove): void {
 		this.commit(move);
 		patchState(this, {

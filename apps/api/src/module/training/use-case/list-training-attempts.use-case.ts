@@ -15,15 +15,8 @@ export class ListTrainingAttemptsUseCase {
 	constructor(private readonly puzzleAttemptRepository: PuzzleAttemptRepository) {}
 
 	/**
-	 * El corte es la última fila servida, no una marca de tiempo: dos intentos pueden
-	 * compartir el instante en que llegaron —los sube un mismo push, o los sella de golpe la
-	 * migración que añadió `receivedAt`— y entre dos fechas iguales no hay por dónde cortar.
-	 * Con la fila, sí: el orden se completa con el `uuid` y la página siguiente empieza justo
-	 * después de la anterior, aunque las 500 que quedan lleven todas la misma fecha.
-	 *
-	 * Una página llena no dice que queden más, dice que puede que queden: el cliente pide
-	 * otra y se encuentra con que está vacía, que es una petición de más y ninguna fila de
-	 * menos. Y una vacía devuelve el cursor que le dieron, porque nada ha avanzado.
+	 * The cut is the last row served and not a timestamp: two attempts can share an instant,
+	 * and `uuid` completes the order. A full page only means there *may* be more.
 	 */
 	async execute(
 		training: Training,
@@ -47,7 +40,7 @@ export class ListTrainingAttemptsUseCase {
 
 const PAGE_SIZE = TrainingPolicy.attemptPageSize;
 
-/** Un cursor en blanco es no traer ninguno: el dispositivo empieza por el principio. */
+/** A blank cursor brings none: the device starts from the beginning. */
 function toCursor(since?: string): string | undefined {
 	const cursor = since?.trim();
 
@@ -55,9 +48,8 @@ function toCursor(since?: string): string | undefined {
 }
 
 /**
- * El hueco al que pertenece: uno de los dos, nunca los dos, que es lo que garantiza el
- * `check` de la tabla. Se lee con `?.` porque una relación vacía vuelve de la base como
- * `null` y el tipo la declara opcional.
+ * The slot it belongs to: one of the two and never both, which the table's `check` enforces.
+ * Read with `?.` because an empty relation comes back as `null`.
  */
 function toHistoryEntry(attempt: PuzzleAttempt): TrainingAttempt {
 	const roundUuid = attempt.calibrationRound?.uuid;

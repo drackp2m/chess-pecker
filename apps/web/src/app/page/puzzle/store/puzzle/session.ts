@@ -26,21 +26,15 @@ import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
 /**
- * What the exercise holds that the log cannot say. The line, the positions behind it and
- * the cursor are not in here: they are the log folded out, derived in `withPuzzleComputed`
- * and never written. What is left is the board's own furniture — what is lit up, what is
- * selected, and how the exercise has been graded.
+ * What the exercise holds that the log cannot say. The line, the positions and the cursor
+ * are derived in `withPuzzleComputed` by folding the log, never stored here.
  */
 export interface PuzzleStoreProps extends PuzzleRecord {
 	/** Which exploration is open, as an index into `explorations`, or none. */
 	freePlayIndex: number | undefined;
 	/**
-	 * Plies the board is standing behind where the log leaves it, which the log itself
-	 * must not hear about. Two things put the cursor here rather than in the record:
-	 * the beat that stands a line back on the square a piece is about to leave, which is
-	 * animation and not something that happened; and every step taken once the exercise
-	 * is closed, when the record is sealed but looking through it never stops being
-	 * allowed. Both are undone by the log moving on, so it is cleared whenever it does.
+	 * Plies the board stands behind the log, which the log must not hear about: the beat
+	 * before a piece leaves its square, and any step taken once the record is sealed.
 	 */
 	rewound: number;
 	/** The answer played out after the exercise was given up on, or none. */
@@ -60,7 +54,7 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 	result: PuzzleResult | undefined;
 	/** Whether the exercise is over, and how it got there. */
 	closure: PuzzleClosure;
-	/** The themes have been looked at, which is help and is kept as such. */
+	/** The themes have been looked at, which counts as help. */
 	hintUsed: boolean;
 	/** The exercise has been open long enough for the hint to be on offer at all. */
 	hintUnlocked: boolean;
@@ -70,15 +64,8 @@ export interface PuzzleStoreProps extends PuzzleRecord {
 }
 
 /**
- * The answer played out after the exercise was given up on. It reaches the board like any
- * other move, but the record is closed by the time it does and takes none of it — so it is
- * folded onto the line from here instead, which is the one place the board says more than
- * the log does.
- *
- * `at` is what keeps it seekable. Without it the answer had to be folded from wherever the
- * head happened to be standing, so stepping back through it moved where it began rather
- * than where it was being read from, and the first move stopped replaying. Anchored, the
- * answer is a fixed stretch of line like any other and `rewound` walks it.
+ * The answer played out after giving up. The record is closed by then and takes none of it,
+ * so `at` anchors it to a fixed stretch of line that `rewound` can walk.
  */
 export interface RevealedLine {
 	/** The ply it is played from, as an index into the line the log folds to. */
@@ -86,26 +73,17 @@ export interface RevealedLine {
 	readonly moves: readonly string[];
 }
 
-/**
- * The played line, as the fold hands it back. It was a slice of the store once; it is the
- * result of replaying the log now, and the store derives it rather than keeping it.
- */
+/** The played line, derived by replaying the log rather than kept in the store. */
 export interface LineState {
 	/** `positions[k]` is the position after `k` moves of the line; `[0]` is the FEN. */
 	readonly positions: ChessPosition[];
-	/**
-	 * Every move played, right or wrong. A move that leaves the script is kept, so
-	 * the board can be played on freely from there until it is rewound.
-	 */
+	/** Every move played, right or wrong: one off the script is kept so free play works. */
 	readonly line: PuzzleMove[];
 	/** Which position is on screen: `0` … `line.length`. */
 	readonly cursor: number;
 }
 
-/**
- * What reopening the very same exercise carries over: it has already been graded, it
- * may already be closed, and the help it took is spent whatever the board does next.
- */
+/** What reopening the same exercise carries over: the grade, the closure and the help spent. */
 export type PuzzleVerdict = Pick<
 	PuzzleStoreProps,
 	'result' | 'closure' | 'hintUsed' | 'mistakeCount'
@@ -139,10 +117,7 @@ export function buildPuzzleState(): PuzzleStoreProps {
 	};
 }
 
-/**
- * A board with nothing played on it yet. Emptying the log is what empties the line now,
- * so what is left here is only the things the fold has no say over.
- */
+/** A board with nothing played yet: only what the fold has no say over. */
 function startLine(fen: string): Partial<PuzzleStoreProps> {
 	return {
 		...blankRecord(),
@@ -158,11 +133,8 @@ function startLine(fen: string): Partial<PuzzleStoreProps> {
 }
 
 /**
- * Opens an exercise at its raw FEN. The side to move there is the opponent — it is
- * about to play `moves[0]` — so the player takes the other colour.
- *
- * A fresh exercise means a fresh record; reopening the same one keeps the one it has,
- * which is why the caller gets to put its own back on top.
+ * Opens an exercise at its raw FEN. The side to move is the opponent, about to play
+ * `moves[0]`, so the player takes the other colour.
  */
 export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 	const position = ChessFen.parse(puzzle.fen);
@@ -178,9 +150,7 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 		hintUsed: false,
 		hintUnlocked: false,
 		mistakeCount: 0,
-		// What the board is playing is the player's to say, and it says so by starting a
-		// programme. A patch that named one without running it would leave the board busy
-		// for good, so nothing here names one.
+		// Naming a programme without running it would leave the board busy for good.
 		playback: undefined,
 	};
 }
@@ -189,19 +159,8 @@ export function openPuzzle(puzzle: Puzzle): Partial<PuzzleStoreProps> {
 export type PuzzleRestore = PuzzleRecord & PuzzleVerdict;
 
 /**
- * The board a saved exercise reopens on. The line comes from folding its record, so what
- * is put back is what was played and not a summary of it, and the verdict comes from the
- * row: the grade was sealed while it was being solved and reopening revises nothing.
- *
- * Nothing is left in flight. An exercise picked up again has no beat pending, no square
- * selected and no exploration standing — the record does not say whether one was open
- * when it was saved, so what comes back is the main line it hangs off.
- *
- * The board always comes back with the player at the bottom. A manual flip is the only
- * thing the record cannot give back, and it is a preference of the moment rather than part
- * of the exercise, so nothing stores it.
- *
- * What travels on the way in is `restoredTransition`'s to say, so nothing here touches it.
+ * The board a saved exercise reopens on. The line comes from folding its record and the
+ * verdict from the row, sealed while it was solved; `restoredTransition` owns the slide.
  */
 export function restorePatch(
 	stored: PuzzleRestore,
@@ -214,7 +173,9 @@ export function restorePatch(
 		closure: stored.closure,
 		hintUsed: stored.hintUsed,
 		mistakeCount: stored.mistakeCount,
+		// A manual flip is a preference of the moment, so nothing stores it.
 		orientation: playerColor,
+		// Nothing comes back in flight: the record never said what was open when it was saved.
 		freePlayIndex: undefined,
 		rewound: 0,
 		revealed: undefined,
@@ -226,9 +187,8 @@ export function restorePatch(
 }
 
 /**
- * The slide a restored board comes back with: the last move of the path the cursor is
- * standing at the end of, travelled forward. It is the only thing a restore animates —
- * how the board got to where it was left is history, and history does not replay itself.
+ * The only slide a restore animates: the last move before the cursor, travelled forward.
+ * How the board reached that point is history, and history does not replay itself.
  */
 export function restoredTransition(state: LineState): BoardTransition | undefined {
 	const move = state.line[state.cursor - 1];
@@ -252,20 +212,16 @@ interface RewindState {
 }
 
 /**
- * The slide a rewind leaves standing. Landing on the cursor the line already stood on
- * changes nothing on the board, so a slide on its way in is still the truth and has to
- * be allowed to finish — a take-back most of all, since the answer that plays itself
- * afterwards rewinds in the very same breath. Anywhere else the position jumps, and a
- * slide describing the one it left would be a lie.
+ * The slide a rewind leaves standing. Landing on the same cursor changes nothing, so a
+ * slide in flight is still true; anywhere else the position jumps and it would be a lie.
  */
 function keptTransition(state: RewindState, cursor: number): BoardTransition | undefined {
 	return cursor === state.cursor ? state.transition : undefined;
 }
 
 /**
- * Leaves the exploration the board was in. The sandbox is not unwritten — it stays in the
- * log as the variation it was — so all that closes it is letting go of its index, and the
- * fold goes back to the main line on its own.
+ * Leaves the exploration. The sandbox stays in the log as the variation it was, so letting
+ * go of its index is all it takes for the fold to return to the main line.
  */
 export function restoreFreePlayPatch(
 	state: RewindState,
@@ -273,8 +229,7 @@ export function restoreFreePlayPatch(
 ): Partial<PuzzleStoreProps> {
 	return {
 		freePlayIndex: undefined,
-		// A beat the sandbox had in flight is dropped along with it, and so is whatever it
-		// was holding the board back by: what comes back is the line as it was picked up.
+		// A beat the sandbox had in flight is dropped: the line comes back as it was picked up.
 		rewound: 0,
 		announced: undefined,
 		selected: undefined,
@@ -285,29 +240,16 @@ export function restoreFreePlayPatch(
 }
 
 /**
- * Where a restart inside an exploration puts the cursor. Starting over is starting the
- * *exercise* over, so what comes back is the main line the exploration was entered from
- * and not the sandbox that grew out of it — and only what was visible of it: a wrong move
- * the main line was left standing on is not part of the exercise and is skipped over.
- *
- * The sandbox is left in the log where it happened. Leaving the exploration is what takes
- * it off the board, and the restart that follows is written on the main line.
+ * Where a restart inside an exploration puts the cursor: back on the main line it was
+ * entered from, skipping the wrong move that line was left standing on.
  */
 export function explorationRestartCursor(anchor: FreePlayAnchor): number {
 	return anchor.deviation ?? anchor.line.length;
 }
 
 /**
- * What starting over clears before the opening move is shown again. Where the board goes is
- * the programme's to say, so nothing here rewinds anything: this is the furniture the
- * exercise had out at the time, and the board stood back up where the log leaves it.
- *
- * Whatever was being held back goes with it. The rewind that follows is measured from the
- * board it starts on, so the board has to be the one the log describes for it to come out
- * right — and none of what the offset was showing survives starting over anyway.
- *
- * A closed record took no restart, because it takes nothing at all, so the answer it had
- * played out is let go of by hand. Starting the exercise over is starting it over.
+ * What starting over clears before the opening move is shown again. Nothing here rewinds:
+ * the rewind that follows measures from the board the log describes.
  */
 export function restartPatch(closure: PuzzleClosure): Partial<PuzzleStoreProps> {
 	return {
@@ -316,6 +258,7 @@ export function restartPatch(closure: PuzzleClosure): Partial<PuzzleStoreProps> 
 		pendingPromotion: undefined,
 		transition: undefined,
 		rewound: 0,
+		// A closed record takes no restart, so its played-out answer is let go of by hand.
 		...('open' === closure ? {} : { revealed: undefined }),
 	};
 }
@@ -329,12 +272,8 @@ export function revealCursor(state: LineState, deviation: number | undefined): n
 }
 
 /**
- * What giving up does beyond the rewind. The moves that strayed are not dropped any more —
- * nothing unwrites the log — so the cursor steps back over them and they stay behind it as
- * the variation they always were.
- *
- * Asking for it closes the exercise, so the answer played out from here is not recorded.
- * The rewind onto the script is, as the negative step it really is.
+ * What giving up does beyond the rewind. Nothing unwrites the log, so the strayed moves
+ * stay behind the cursor as the variation they were; only the rewind itself is recorded.
  */
 export function revealPatch(
 	state: RewindState & Pick<PuzzleStoreProps, 'closure'>,
@@ -346,9 +285,7 @@ export function revealPatch(
 		pendingPromotion: undefined,
 		transition: keptTransition(state, cursor),
 		closure: settleClosure(state.closure, 'revealed'),
-		// Asked for again, the answer is played out afresh rather than onto the end of the
-		// one before it; the caller anchors the new one, and the first move played anchors
-		// it here when the caller has nothing to say about where it starts.
+		// Asked for again, the answer replays afresh instead of onto the end of the last one.
 		revealed: undefined,
 		rewound: 0,
 		playback: undefined,
@@ -356,13 +293,8 @@ export function revealPatch(
 }
 
 /**
- * The whole of the answer, parsed forward from the ply it is played from. A programme walks
- * a line that already exists, so the answer has to exist before the walking starts: it is
- * written in one go here and held back, rather than growing a move at a time underneath it.
- *
- * It is cut where a move stops parsing. A script that runs into a position it cannot be
- * played from ends there, and what was read up to that point is still an answer worth
- * watching — the same bargain the fold strikes with a record it cannot finish.
+ * The whole answer, parsed forward from the ply it starts at: a programme walks a line that
+ * already exists. Cut where a move stops parsing, since what was read is still worth watching.
  */
 export function revealedLine(
 	positions: readonly ChessPosition[],
@@ -406,9 +338,8 @@ export function toRecord(
 }
 
 /**
- * Whether an attempt counts as the solution. The scripted move always does, and so
- * does any move that delivers mate — a puzzle asking for mate is satisfied by any
- * mate, which is how Lichess grades them too.
+ * Whether an attempt counts as the solution: the scripted move, or any move that mates,
+ * since a mating puzzle is satisfied by any mate. Lichess grades them the same way.
  */
 export function isSolution(
 	position: ChessPosition,
@@ -434,9 +365,8 @@ export function isSolution(
 }
 
 /**
- * What a move accepted onto the board leaves behind, the log aside. The line itself is
- * not written here any more — appending the move to the log is what grows it, and the
- * fold picks the new ply up on its own.
+ * What an accepted move leaves behind, the log aside. The line is not written here:
+ * appending to the log grows it, and the fold picks the new ply up on its own.
  */
 export function commitPatch(position: ChessPosition, move: ChessMove): Partial<PuzzleStoreProps> {
 	return {
@@ -492,9 +422,8 @@ export function nextSelection(
 }
 
 /**
- * The ply at which the line stopped following the script, or `undefined` while it
- * still does. Everything past it is off the script, so rewinding the cursor back to
- * it puts the exercise on the rails again without anything having to be undone.
+ * The ply the line stopped following the script at, or `undefined` while it still does.
+ * Rewinding the cursor back to it puts the exercise on the rails with nothing undone.
  */
 export function findDeviation(
 	state: Omit<LineState, 'cursor'>,
@@ -526,9 +455,8 @@ export function isPastDeviation(deviation: number | undefined, cursor: number): 
 }
 
 /**
- * Where the exercise stands with the cursor at `cursor`. A mate ends it wherever it
- * lands: any mate solves a mating puzzle, so the scripted continuation may be cut
- * short — and replaying it from a finished position would be illegal anyway.
+ * Where the exercise stands with the cursor at `cursor`. A mate ends it wherever it lands,
+ * cutting the scripted continuation short: replaying it would be illegal anyway.
  */
 export function describeOutcome(
 	positions: readonly ChessPosition[],

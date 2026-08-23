@@ -1,6 +1,5 @@
-// File discovery + the ESLint/Stylelint/Prettier runners for the lint script.
-// Each runner returns { fixed, remaining } (or { skipped: true, … } when it has
-// no matching files); the entry point decides what to lint and how to show it.
+// File discovery and the three runners for the lint script. Each returns { fixed, remaining }
+// or { skipped: true, … }; the entry point decides what to lint and how to show it.
 
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -22,9 +21,8 @@ export const STYLELINT_EXT = ['.css', '.scss'];
 export const withExt = (files, exts) =>
 	files.filter((file) => exts.some((ext) => file.endsWith(ext)));
 
-// A pre-pass without fixing counts the auto-fixable problems per file (= corrections
-// the fix pass will apply), since ESLint doesn't report applied-fix counts. It's the
-// expensive second pass, so it only runs with --verbose.
+// A pre-pass counts the auto-fixable problems per file, since ESLint never reports applied
+// fixes. It is the expensive second pass, so it only runs with --verbose.
 async function countEslintFixable(targets) {
 	const fixableByFile = new Map();
 
@@ -278,9 +276,8 @@ export async function runPrettier(files, fix) {
 	return { fixed, remaining };
 }
 
-// Passed files that no tool would process — not an ESLint/Stylelint extension
-// and not something Prettier can parse (deliberately ignored files don't count).
-// Surfaced so a new lint-staged glob entry can't slip through unlinted.
+// Files no tool would process, ignored ones aside. Surfaced so a new lint-staged glob
+// entry cannot slip through unlinted.
 export async function findUncovered(files) {
 	const uncovered = [];
 

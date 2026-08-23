@@ -15,9 +15,8 @@ import { provideTestingI18n } from '@app/testing/i18n.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 /**
- * Every settings-backed service is stubbed whole, the same way `puzzle.store.spec` does
- * it: the page is tested against fixed preferences rather than against whatever the
- * setting store would end up loading, and nothing below them is instantiated.
+ * Every settings-backed service is stubbed whole, so the page is tested against fixed
+ * preferences rather than whatever the setting store would load.
  */
 function createPage(data: Record<string, unknown>): PuzzlePage {
 	TestBed.configureTestingModule({

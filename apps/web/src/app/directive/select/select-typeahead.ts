@@ -1,9 +1,8 @@
 const resetDelayMs = 1000;
 
 /**
- * Keystroke accumulator for non-searchable selects (native-select style
- * type-ahead): consecutive printable keys build a query until the user
- * pauses longer than the reset delay, which starts a fresh one.
+ * Keystroke accumulator for non-searchable selects: printable keys build a query until the
+ * user pauses longer than the reset delay.
  */
 export class SelectTypeahead {
 	private buffer = '';

@@ -44,8 +44,8 @@ describe('LogoutUseCase', () => {
 	});
 
 	describe('execute', () => {
-		// Dos por token: la variante de host y la de dominio. Una cookie guardada con
-		// `Domain` es otra cookie para el navegador, y caducar sólo una deja viva a la otra.
+		// Two per token, host and domain: a cookie stored with `Domain` is a different cookie
+		// to the browser, so expiring one leaves the other alive.
 		it('should expire both the host and the domain variant of each token', () => {
 			useCase.execute();
 

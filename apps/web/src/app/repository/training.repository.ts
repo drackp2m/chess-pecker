@@ -31,14 +31,14 @@ export class TrainingRepository {
 		return this.apiSdk.GET.training('/:uuid/progress', { path: { uuid } });
 	}
 
-	/** Sin `since` vuelve el rango entero; con él, sólo los días tocados desde ese corte. */
+	/** Without `since` the whole range comes back; with it, only the days touched since. */
 	async getActivity(days: number, since?: string): Promise<TrainingActivity> {
 		return this.apiSdk.GET.training('/activity', {
 			query: undefined === since ? { days } : { days, since },
 		});
 	}
 
-	/** Una página del histórico. Sin `since` empieza por el principio. */
+	/** One page of the history. Without `since` it starts from the beginning. */
 	async listAttempts(
 		uuid: string,
 		query: GetTrainingAttemptsRequest,

@@ -3,7 +3,7 @@ import { CustomRepository } from '../../shared/util/custom-entity.repository';
 import { TrainingCycleItem } from './training-cycle-item.entity';
 
 export class TrainingCycleItemRepository extends CustomRepository<TrainingCycleItem> {
-	/** El orden se materializa entero al crear el ciclo, con una inserción masiva. */
+	/** The order is materialized in full when the cycle is created, in one bulk insert. */
 	async insertMany(items: TrainingCycleItem[]): Promise<TrainingCycleItem[]> {
 		await this.entityManager.fork().persist(items).flush();
 

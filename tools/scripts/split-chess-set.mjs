@@ -26,10 +26,8 @@ if (0 === paths.length) {
 }
 
 /**
- * Every path in the sheet opens with a moveto that the SVG spec reads as absolute,
- * whatever its case, because the current point starts at the origin. Nothing crosses
- * a cell boundary, so that first pair alone says which piece a path belongs to and
- * is the only coordinate that has to move when the cell becomes its own canvas.
+ * Every path opens with a moveto the spec reads as absolute, and nothing crosses a cell
+ * boundary, so that first pair alone says which piece a path belongs to.
  */
 const HEAD = /^\s*([Mm])\s*(-?[\d.]+)[\s,]+(-?[\d.]+)/u;
 
@@ -68,10 +66,8 @@ if (0 < missing.length) {
 	process.exit(1);
 }
 
-// The pieces are masks, not pictures: only the alpha channel is ever read, so the fill
-// sits once on the root and the editor's own styling and sizing go away entirely. The
-// 42×42 canvas stays, because the padding inside it is what keeps the pieces sharing a
-// baseline and their relative sizes once the board scales them all by the same amount.
+// The pieces are masks and only the alpha channel is read, so the fill sits once on the
+// root. The 42×42 canvas stays: its padding is what keeps the pieces sharing a baseline.
 for (const [index, list] of [...cells].sort(([a], [b]) => a - b)) {
 	const body = list.map((d) => `<path d="${d}"/>`).join('');
 	const file = join(outDir, `${PIECES[index]}.svg`);

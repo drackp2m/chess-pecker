@@ -189,16 +189,8 @@ export class ChessBoardComponent {
 	}
 
 	/**
-	 * The one way a square is acted on, so the board can refuse the lot at once. A move
-	 * played into the middle of one already being played is refused here rather than by
-	 * whoever is driving the board: the beats are the view's own, and a store has ended
-	 * its part of a move long before the piece it sent has finished crossing.
-	 *
-	 * Crossing is not the whole of it, though. A move played for you is lit on its square
-	 * before it travels and a line played out pauses between its moves, and in neither is
-	 * anything sliding — so the board is also closed for as long as the store says it is
-	 * busy, or a press landing in one of those gaps would reach a store that takes it as
-	 * the player interrupting and drops what it was in the middle of showing.
+	 * The one way a square is acted on, so the board refuses the lot at once: the beats are the
+	 * view's own, and the store is also asked, since its pauses have nothing sliding in them.
 	 */
 	private pickSquare(square: Square): void {
 		if (this.isRefusingInput()) {

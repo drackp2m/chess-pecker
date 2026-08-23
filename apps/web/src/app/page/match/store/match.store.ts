@@ -117,9 +117,8 @@ export class MatchStore
 	}
 
 	/**
-	 * Plays a move written in chess notation — `Nf3`, `exd5`, `O-O`, `e7e8=Q`.
-	 * This is the single entry point used by the machine opponent and by any
-	 * scripted exercise, and it returns `false` when the notation is not playable.
+	 * Plays a move written in notation — `Nf3`, `O-O`, `e7e8=Q` — which is how the machine
+	 * opponent and every scripted exercise reach the board. `false` when it will not play.
 	 */
 	playNotation(notation: string): boolean {
 		const position = this.position();

@@ -19,22 +19,22 @@ import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { SYNC_LOCK, withExclusiveLock } from '@app/util/exclusive-lock';
 import { HttpError } from '@app/util/http-error';
 
-/** Lo que la pasada va contando de sí misma mientras corre. */
+/** What the pass reports about itself while it runs. */
 export interface SyncCycleProgress {
 	readonly phase: SyncPhase;
-	/** Filas por subir, y su desglose por tabla. */
+	/** Rows still to upload, broken down by table. */
 	readonly pending: number;
 	readonly pendingByEntity: PendingCount;
 	readonly uploaded: number;
 	readonly rejected: number;
 	readonly downloaded: number;
-	/** Las tablas que el resumen dejó por detrás del servidor. */
+	/** The tables the summary left behind the server. */
 	readonly behind: readonly SyncEntity[];
-	/** El servidor corre un modelo más nuevo: se baja, pero no se sube. */
+	/** The server runs a newer model: pull, but never push. */
 	readonly canPush: boolean;
 	/**
-	 * No queda nada por bajar: ni tablas por detrás, ni catálogo a medias. Es lo único que
-	 * obliga al arranque a esperar, porque es lo único que cambia lo que se va a pintar.
+	 * Nothing left to pull, catalogue included. The only thing boot waits on, because it is
+	 * the only thing that changes what will be painted.
 	 */
 	readonly isReplicaComplete: boolean;
 	readonly catalogDone: number;
@@ -45,20 +45,14 @@ export interface SyncCycleProgress {
 export type SyncReport = (progress: Partial<SyncCycleProgress>) => void;
 
 /**
- * Los códigos en los que nadie llegó a ejecutar nada: una red caída, un plazo agotado o una
- * pasarela que no encontró a quién preguntar. No dicen nada del modelo, así que se reintenta
- * luego. Un 500 no está aquí a propósito: ahí el servidor sí corrió, y volverá a contestar lo
- * mismo hasta que alguien lo arregle.
+ * The codes where nothing ever ran: no network, a timeout, a gateway with nobody to ask. A
+ * 500 is deliberately not here — the server did run, and will answer the same until fixed.
  */
 const UNREACHABLE_STATUS = new Set([0, 408, 502, 503, 504]);
 
 /**
- * La pasada entera: `checking` → `pushing` → `pulling`, en ese orden y nunca al revés.
- * Subir antes que bajar es lo que hace que lo de aquí llegue arriba antes de que nada de
- * arriba pueda pisarlo, y el candado es lo que impide que dos pestañas la corran a la vez.
- *
- * Termina siempre, y su final es una fase: `ready` si pudo con todo, `offline` si algo
- * pasajero la cortó, `failed` si el servidor dijo que no.
+ * The whole pass: `checking` → `pushing` → `pulling`, never the other way round. Pushing
+ * first is what gets local rows up before anything from above can overwrite them.
  */
 @Injectable({
 	providedIn: 'root',
@@ -83,8 +77,8 @@ export class SyncCycleUseCase {
 	}
 
 	/**
-	 * Sólo la subida, para antes de borrar: el cierre de sesión se lleva por delante todo
-	 * lo que no haya llegado arriba, así que intentarlo una última vez es lo mínimo.
+	 * Push only, for just before wiping: logging out destroys anything that never made it up,
+	 * so one last attempt is the least it deserves.
 	 */
 	async flush(report: SyncReport): Promise<void> {
 		await withExclusiveLock(SYNC_LOCK, async () => {
@@ -101,8 +95,8 @@ export class SyncCycleUseCase {
 		report({ phase: 'checking', error: null });
 		await this.countPending(report);
 
-		// `GET /sync` es de un usuario, así que sin sesión no hay resumen que contrastar.
-		// El catálogo sí se replica igual: es global y no es de nadie.
+		// `GET /sync` belongs to a user, so there is no summary without a session; the catalogue
+		// replicates anyway, being global.
 		if (!this.session.isAuthenticated()) {
 			report({ isReplicaComplete: await this.catalog.isSynced() });
 			await this.sweepCatalog(undefined, report);
@@ -139,8 +133,8 @@ export class SyncCycleUseCase {
 
 		report({ downloaded: pulled.rows, ...(pulled.interrupted ? {} : { behind: [] }) });
 
-		// El catálogo va el último a propósito: son ~22.000 ejercicios contra las decenas
-		// del árbol, y quien mira el splash prefiere tener lo suyo antes que lo de todos.
+		// The catalogue goes last on purpose: ~22,000 exercises against the tree's dozens, and
+		// whoever watches the splash would rather have their own first.
 		await this.sweepCatalog(status.summary.catalog, report);
 
 		const swept = await this.catalog.isSynced(status.summary.catalog);
@@ -151,15 +145,14 @@ export class SyncCycleUseCase {
 	}
 
 	/**
-	 * Nada por bajar es nada que esperar: con esto en la mano, el arranque abre la puerta sin
-	 * llegar a mirar lo que la pasada haga después, que es todo trabajo que no cambia lo que
-	 * hay aquí para pintar.
+	 * Nothing to pull is nothing to wait for: boot opens the door on this alone, since the
+	 * rest of the pass changes nothing that is about to be painted.
 	 */
 	private async isReplicaComplete(status: SyncStatus): Promise<boolean> {
 		return 0 === status.behind.length && (await this.catalog.isSynced(status.summary.catalog));
 	}
 
-	/** `true` si algo pasajero cortó la subida y queda trabajo para la pasada siguiente. */
+	/** `true` when something transient cut the push short and work is left for the next pass. */
 	private async push(report: SyncReport): Promise<boolean> {
 		report({ phase: 'pushing' });
 
@@ -188,9 +181,8 @@ export class SyncCycleUseCase {
 }
 
 /**
- * Un corte no es un rechazo. Lo que no llegó a contestar —o contestó que estaba ocupado—
- * se vuelve a intentar en la pasada siguiente, y hasta entonces la aplicación funciona con
- * lo que tiene aquí, que es exactamente para lo que existe todo esto.
+ * A cut is not a refusal: whatever never answered is retried next pass, and until then the
+ * app runs on what it has locally, which is the whole point.
  */
 export function toFailurePhase(error: unknown): SyncPhase {
 	if (ApiCancelledError.is(error)) {

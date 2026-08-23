@@ -66,10 +66,8 @@
 		opacity: 0.25;
 	}
 
-	// The last move and a refuted attempt are both a translucent wash over the
-	// square, so the piece underneath stays readable. Same treatment, different tint.
-	// It rides on the square's own background rather than over its contents, so a
-	// piece standing there is never tinted along with the square under it.
+	// A translucent wash over the square's own background and not its contents, so the
+	// piece standing there stays readable and is never tinted along with it.
 	&.last-move,
 	&.mistake {
 		background-image: linear-gradient(var(--square-last-move), var(--square-last-move));

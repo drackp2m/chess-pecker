@@ -25,13 +25,8 @@ export const appConfig: ApplicationConfig = {
 			const _languageService = inject(LanguageService);
 			const _updateService = inject(UpdateService);
 
-			// The session restore is a background refresh, not a boot gate: the app
-			// starts as `unknown` and whatever reads the store reacts when it settles,
-			// so the initializer fires it without awaiting the result.
-			//
-			// El ciclo de sincronización sí es una puerta, y va detrás: quién ha entrado
-			// decide si hay resumen que pedir, y hasta que la pasada termina la aplicación
-			// enseña el splash en vez de datos a medias.
+			// The session restore is a background refresh and not a boot gate, so it is fired
+			// without awaiting; the sync cycle behind it is the gate.
 			const sessionStore = inject(SessionStore);
 			const syncStore = inject(SyncStore);
 

@@ -26,15 +26,8 @@ import { ViewportService } from '@app/service/viewport.service';
 import { elementOffsetHeight, elementOffsetWidth } from '@app/util/element-size';
 
 /**
- * Themed shell rendered around the native `<select>` (projected via
- * `ng-content`). Reads the shared SelectStore directly and delegates its
- * concerns to plain collaborators: pointer gestures (SelectShellGestures),
- * CSS variable measuring and dropdown positioning (SelectShellLayout) and
- * dropdown scrolling (SelectDropdownScroller).
- *
- * Pointer events are handled at the host level. Focus, keyboard and text
- * rendering belong to the shell's own combobox search input; the projected
- * native select only carries the form value.
+ * Themed shell rendered around the projected native `<select>`, which only carries the form
+ * value: focus, keyboard and text belong to the shell's own combobox search input.
  */
 @Component({
 	selector: 'app-select-shell',
@@ -62,11 +55,8 @@ export class SelectShellComponent {
 	protected readonly listboxId = computed<string>(() => `${this.selectId()}-listbox`);
 
 	/**
-	 * The field's single visible text: the live search while open (it always
-	 * starts empty — the search is cleared on close), the selected option's
-	 * text once closed, or nothing at all so the placeholder shows through.
-	 * Non-searchable fields keep showing the selected text while open, since
-	 * there is no search to make room for.
+	 * The field's single visible text: the live search while open, the selected option once
+	 * closed, or nothing so the placeholder shows through.
 	 */
 	protected readonly displayText = computed<string>(() => {
 		if (this.store.isOpen() && this.store.searchable()) {
@@ -77,9 +67,8 @@ export class SelectShellComponent {
 	});
 
 	/**
-	 * Screen-reader feedback while the dropdown is open: the custom listbox
-	 * is a purely visual layer (hidden from the accessibility tree), so
-	 * highlight movements are voiced through a polite live region instead.
+	 * The custom listbox is hidden from the accessibility tree, so highlight movements are
+	 * voiced through a polite live region instead.
 	 */
 	protected readonly announcement = computed<string>(() => {
 		if (!this.store.isOpen()) {
@@ -149,8 +138,7 @@ export class SelectShellComponent {
 				return;
 			}
 
-			// The `.open` class reaches the DOM after this effect runs; wait a
-			// frame so the dropdown has layout before measuring against it.
+			// The `.open` class lands after this effect, so wait a frame for layout to measure.
 			requestAnimationFrame(() => {
 				this.dropdownScroller.applyRowHeight(this.firstRealOptionIndex());
 				this.dropdownScroller.centerHighlighted();
@@ -184,9 +172,8 @@ export class SelectShellComponent {
 	}
 
 	hoverOption(option: SelectOptionViewModel, index: number): void {
-		// While the keyboard owns the highlight, hovers are ignored: the
-		// capture-phase mousemove listener (SelectOutsideDismissal) has
-		// already released the flag by now if the pointer really moved.
+		// Hovers are ignored while the keyboard owns the highlight: a pointer that really
+		// moved has already released the flag through `SelectOutsideDismissal`.
 		if (this.store.keyboardNavigating() || option.disabled) {
 			return;
 		}
@@ -195,10 +182,8 @@ export class SelectShellComponent {
 	}
 
 	/**
-	 * The keydown is handled synchronously by the directive's interaction
-	 * handler during `emit`, so right after it the store already points at
-	 * the new highlight and the scroll can follow it. Skipped when the arrow
-	 * just opened the dropdown: the centering-on-open effect takes over.
+	 * The keydown is handled synchronously during `emit`, so the store already points at the
+	 * new highlight. Skipped when the arrow just opened the dropdown.
 	 */
 	protected onSearchKeydown(event: KeyboardEvent): void {
 		const wasOpen = this.store.isOpen();
@@ -232,9 +217,8 @@ export class SelectShellComponent {
 	protected onSearchInput(event: Event): void {
 		const value = (event.target as HTMLInputElement).value;
 
-		// Editing can also start while closed (paste, IME composition): the
-		// dropdown must open — which clears the previous search — before the
-		// new text lands in the store.
+		// Editing can start while closed (paste, IME), and opening clears the previous search,
+		// so it has to happen before the new text lands in the store.
 		if (!this.store.isOpen()) {
 			this.toggleRequested.emit();
 		}

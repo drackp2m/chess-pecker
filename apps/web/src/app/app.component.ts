@@ -18,9 +18,8 @@ export class AppComponent {
 	private readonly sync = inject(SyncStore);
 
 	/**
-	 * La puerta de arranque. Sólo la cierra una descarga: mientras falte algo por bajar, lo
-	 * que se pintara se pintaría con una réplica a medias. Lo que queda por subir no tiene
-	 * por qué hacer esperar a nadie —ya está aquí—, así que ésa sigue de fondo.
+	 * The boot gate, closed only by a download: anything painted over a half-replica would be
+	 * wrong. What is left to upload is already here, so it waits for nobody.
 	 */
 	readonly loading = computed(() => !this.sync.isReady());
 }

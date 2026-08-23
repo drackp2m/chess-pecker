@@ -32,8 +32,8 @@ export class BlockUserUseCase {
 			throw new PreconditionFailedException('already exists', 'block');
 		}
 
-		// Bloquear rompe la relación que hubiera: la fila se borra en lugar de quedarse
-		// rechazada, porque quien bloquea no quiere el rastro y el bloqueo ya impide volver.
+		// Blocking breaks whatever relation existed: the row is deleted rather than left
+		// rejected, since the block already prevents asking again.
 		const friendship = await this.friendshipRepository.getActiveBetween(blocker.uuid, blocked.uuid);
 
 		if (undefined !== friendship) {

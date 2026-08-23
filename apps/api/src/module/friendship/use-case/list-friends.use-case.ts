@@ -9,8 +9,8 @@ export class ListFriendsUseCase {
 	constructor(private readonly friendshipRepository: FriendshipRepository) {}
 
 	/**
-	 * La fila no dice quién es el amigo: dice quién pidió y quién recibió. El "el otro de
-	 * los dos" se resuelve aquí una vez, y no en cada consulta que necesite la lista.
+	 * The row says who asked and who received, not who the friend is, so "the other one" is
+	 * resolved here once instead of in every query that needs the list.
 	 */
 	async execute(user: User): Promise<User[]> {
 		const friendships = await this.friendshipRepository.getManyByUserAndStatus(

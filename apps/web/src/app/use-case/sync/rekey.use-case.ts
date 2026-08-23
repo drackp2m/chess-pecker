@@ -14,7 +14,7 @@ type Remap = Record<SyncEntity, Map<string, string>>;
 
 type RekeyTransaction = RepositoryTransaction<AppSchema, 'readwrite'>;
 
-/** Una fila sincronizable vista sólo por su clave, que es lo único que el reclavado toca. */
+/** A syncable row seen only by its key, which is all a rekey touches. */
 interface RekeyableRow {
 	readonly uuid: string;
 }
@@ -25,18 +25,12 @@ interface RekeyableSchema extends DBSchema {
 
 type RekeyableStore = IDBPObjectStore<RekeyableSchema, ['row'], 'row', 'readwrite'>;
 
-/** El borrador entra aunque nunca suba: su clave es el hueco, y el hueco se mueve. */
+/** The draft is included though it never uploads: its key is the slot, and the slot moves. */
 const REKEY_STORES: StoreNames<AppSchema>[] = [...SYNC_ENTITIES, 'attemptDraft'];
 
 /**
- * Clavar el árbol local con los uuid que devolvió la subida.
- *
- * Una clave primaria no se edita, así que reclavar es borrar y volver a insertar; y la fila
- * no viaja sola, porque sus hijos la nombran. Todo ocurre en una única transacción de
- * IndexedDB: o el árbol entero queda con los uuid del servidor, o sigue con los suyos. Un
- * árbol a medio reescribir sería historial corrompido en silencio.
- *
- * `clientRef` no se toca nunca: es con lo que nació la fila y con lo que se reintenta.
+ * Rekeys the local tree to the uuids the push returned. A primary key cannot be edited, so
+ * this is delete-and-insert in one transaction: a half-rewritten tree is corrupt history.
  */
 @Injectable({
 	providedIn: 'root',
@@ -52,15 +46,15 @@ export class RekeyUseCase {
 		}
 
 		await this.repository.runInTransaction(REKEY_STORES, 'readwrite', async (transaction) => {
-			// Las referencias primero: mientras los padres conservan su clave vieja, los hijos
-			// se encuentran por índice.
+			// References first: while the parents keep their old keys, the children are still
+			// findable by index.
 			await rewriteReferences(transaction, trainingUuid, remap);
 			await rekeyRows(transaction, remap);
 		});
 	}
 }
 
-/** El uuid que devolvió el servidor sólo interesa si no es el que la fila ya tenía. */
+/** The uuid the server returned only matters when it is not the one the row already had. */
 function toRemap(uuids: PushTrainingResult['uuids']): Remap {
 	const remap: Remap = {
 		training: new Map(),
@@ -141,7 +135,7 @@ async function rewriteRounds(
 	}
 }
 
-/** Lo que repartió la ronda: la nombra por su clave, así que la sigue. */
+/** What the round dealt out names it by its key, so it follows it. */
 async function rewriteDealt(
 	transaction: RekeyTransaction,
 	roundUuid: string,
@@ -172,7 +166,7 @@ async function rewriteCycles(
 	}
 }
 
-/** El hueco nombra a su ciclo y al ejercicio del set: los dos pueden haberse movido. */
+/** The slot names its cycle and its set exercise, and either may have moved. */
 async function rewriteItems(
 	transaction: RekeyTransaction,
 	cycleUuid: string,
@@ -203,8 +197,8 @@ async function rewriteAttempts(
 }
 
 /**
- * El borrador no sube, pero su clave primaria *es* el hueco que ocupa: si el hueco cambia de
- * uuid y el borrador se queda con el viejo, el ejercicio a medias deja de encontrarse.
+ * The draft never uploads, but its primary key *is* the slot it fills: leave it on the old
+ * uuid when the slot moves and the half-finished exercise becomes unfindable.
  */
 async function rewriteDrafts(
 	transaction: RekeyTransaction,
@@ -268,10 +262,8 @@ async function rekeyRows(transaction: RekeyTransaction, remap: Remap): Promise<v
 }
 
 /**
- * Reclavar es borrar la clave vieja e insertar con la nueva, y de la fila no hace falta ver
- * nada más que su uuid. `objectStore` es genérico y una unión de firmas genéricas no se
- * puede llamar, así que la vista estructural es lo que permite escribir esto una vez en vez
- * de ocho.
+ * Rekeying needs nothing of a row but its uuid. `objectStore` is generic and a union of
+ * generic signatures cannot be called, so a structural view writes this once instead of eight.
  */
 async function rekeyStore(
 	transaction: RekeyTransaction,

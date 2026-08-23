@@ -28,13 +28,11 @@ function buildLibraryState(): PuzzleLibraryProps {
 }
 
 /**
- * The loaded set of exercises and the cursor over it. Kept apart from the solving
- * session so the origin of the rows — a pasted CSV today, a database table later —
- * stays a concern of its own.
+ * The loaded set and the cursor over it, kept apart from the solving session so where the
+ * rows came from stays a concern of its own.
  */
-// ToDo => a set is persisted, but a *cycle* is not: which pass over the set it is, its
-// order — the method usually reshuffles per cycle — and where the user stopped. `index`
-// alone cannot express "puzzle 40 of cycle 3, 12 still unsolved this pass".
+// ToDo => a set is persisted but a *cycle* is not: `index` alone cannot express "puzzle 40
+// of cycle 3, 12 still unsolved this pass".
 @Injectable()
 export class PuzzleLibraryStore extends signalStore(
 	{ protectedState: false },

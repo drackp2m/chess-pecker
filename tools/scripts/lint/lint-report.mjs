@@ -1,6 +1,5 @@
-// ANSI colors + summary rendering for the lint script: a fixed/left header per
-// tool plus, for the problems left, an ESLint-stylish block (file header +
-// aligned line:col/severity/message/rule rows) the editor turns into links.
+// ANSI colours and summary rendering for the lint script: a header per tool, plus an
+// ESLint-stylish block for the problems left, which the editor turns into links.
 
 export const c = {
 	reset: '\x1b[0m',
@@ -50,9 +49,8 @@ export function printProblems(problems) {
 	}
 }
 
-// The error/warning tally ESLint prints under the problems. Callers keep info
-// findings out of this list entirely — they are not problems, so they never
-// reach this tally or the CI exit code.
+// The tally ESLint prints under the problems. Callers keep infos out of this list: they
+// are not problems, so they never reach the tally or the exit code.
 export function printTally(problems) {
 	const errors = problems.filter((problem) => 'error' === problem.severity).length;
 	const warnings = problems.length - errors;

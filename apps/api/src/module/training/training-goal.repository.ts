@@ -3,7 +3,7 @@ import { CustomRepository } from '../../shared/util/custom-entity.repository';
 import { TrainingGoal } from './training-goal.entity';
 
 export class TrainingGoalRepository extends CustomRepository<TrainingGoal> {
-	/** El objetivo vigente es el último que fijó; los anteriores se conservan. */
+	/** The current goal is the last one set; the earlier ones are kept. */
 	async getCurrentByTraining(trainingUuid: string): Promise<TrainingGoal | undefined> {
 		const goals = await this.getMany(
 			{ training: trainingUuid },

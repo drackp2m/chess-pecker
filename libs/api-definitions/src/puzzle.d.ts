@@ -1,7 +1,6 @@
 /**
- * An exercise as the API serves it. It is not the shape the board reads: there the
- * exercise is keyed by its Lichess id, while every write back to the API goes by
- * `uuid`, so both have to travel together. `PuzzleMapper` does the conversion.
+ * An exercise as the API serves it, which is not the shape the board reads: it keys by
+ * Lichess id and the API by `uuid`, so both travel together. `PuzzleMapper` converts.
  */
 export interface ApiPuzzle {
 	readonly uuid: string;

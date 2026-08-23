@@ -3,7 +3,7 @@ import { CustomRepository } from '../../shared/util/custom-entity.repository';
 import { TrainingPuzzle } from './training-puzzle.entity';
 
 export class TrainingPuzzleRepository extends CustomRepository<TrainingPuzzle> {
-	/** El set entra de golpe: son X filas de una sentada, no X inserts. */
+	/** The set goes in at once: X rows in one statement, not X inserts. */
 	async insertMany(trainingPuzzles: TrainingPuzzle[]): Promise<TrainingPuzzle[]> {
 		await this.entityManager.fork().persist(trainingPuzzles).flush();
 

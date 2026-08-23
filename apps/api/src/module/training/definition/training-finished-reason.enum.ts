@@ -1,10 +1,10 @@
 export enum TrainingFinishedReason {
-	/** Completó el mínimo de ciclos y decidió parar. */
+	/** The minimum cycles are done and they chose to stop. */
 	Completed = 'completed',
-	/** Dejó de mejorar entre ciclos. */
+	/** Improvement between cycles flattened out. */
 	Plateau = 'plateau',
-	/** Llegó al tope de ciclos. */
+	/** It reached the cycle cap. */
 	MaxCycles = 'max-cycles',
-	/** Lo canceló el usuario. */
+	/** The user cancelled it. */
 	Cancelled = 'cancelled',
 }

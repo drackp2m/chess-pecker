@@ -50,9 +50,8 @@ function timelineDerived(
 }
 
 /**
- * Where the exploration on the board was entered from. It is folded out of the log
- * like everything else, so leaving free play needs nothing to have been kept: the
- * main line up to the entry point is still there to be replayed.
+ * Where the exploration on the board was entered from, folded out of the log: leaving free
+ * play needs nothing kept, since the main line up to the entry point can be replayed.
  */
 function freePlayDerived(
 	store: StateSignals<PuzzleStoreProps>,
@@ -66,8 +65,8 @@ function freePlayDerived(
 			return undefined;
 		}
 
-		// A log that will not replay takes the anchor with it, and free play with it:
-		// the board degrades to the main line rather than to a sandbox over nothing.
+		// A log that will not replay takes the anchor with it, so the board degrades to the
+		// main line rather than to a sandbox over nothing.
 		try {
 			return foldExploration(store.fen(), record(), index, puzzle())?.anchor;
 		} catch {
@@ -84,17 +83,13 @@ function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzl
 	}));
 
 	/**
-	 * The log folded out, with any answer played out on top of it, stood back by whatever
-	 * the head is holding. `rewound` is the one thing that moves the board without moving
-	 * the log, and it is clamped so a beat left over can never walk the cursor off the
-	 * front of the line.
+	 * The log folded out, stood back by whatever the head holds. `rewound` is the one thing
+	 * that moves the board without moving the log, clamped so it cannot walk off the front.
 	 */
 	const fold = computed<LineState>(() => {
 		const logged = foldSession(store.fen(), record(), store.freePlayIndex(), puzzle());
-		// The answer goes on before the offset comes off, because it is anchored to the ply
-		// it was played from and belongs to the line rather than to where the head is. The
-		// offset then walks that whole line, the answer included, instead of dragging the
-		// answer along behind it.
+		// The answer goes on before the offset comes off: anchored to the ply it was played
+		// from, so the offset walks the whole line instead of dragging the answer behind it.
 		const grown = foldRevealed(logged, store.revealed());
 		const rewound = store.rewound();
 
@@ -160,11 +155,8 @@ function scriptComputed(store: ScriptInput, puzzle: Signal<Puzzle | undefined>) 
 		isFreePlay: computed(() => undefined !== store.freePlay()),
 
 		/**
-		 * The cursor is standing behind everything the exercise has reached, which is the
-		 * solved line and, if there is one, the last move that was tried on the end of it.
-		 * The line from here on is a record of what happened and is not writable: a move
-		 * played into it would drop the plies ahead of the cursor, and those are the ones
-		 * that must never be taken away from the player again.
+		 * The cursor stands behind everything the exercise reached, and that line is not
+		 * writable: a move played into it would drop the plies ahead of the cursor.
 		 */
 		isBehindLine: computed(() => store.cursor() < (deviation() ?? store.line().length)),
 
@@ -189,10 +181,8 @@ function lineComputed(
 		lastMove: computed<ChessMove | undefined>(() => line()[cursor() - 1]),
 
 		/**
-		 * The move that broke the script, while it is still the last one on the board.
-		 * An exploration has no script to break — either side may be played there, and
-		 * changing the line is what it is for — so nothing inside one is ever a mistake.
-		 * Check and mate go on showing: those are the board's own and not the exercise's.
+		 * The move that broke the script, while it is still the last on the board. An
+		 * exploration has no script to break, so nothing inside one is ever a mistake.
 		 */
 		mistake: computed<ChessMove | undefined>(() =>
 			script.isFreePlay() ? undefined : mistakeAt(line(), cursor(), script.deviation()),
@@ -221,19 +211,11 @@ function sessionComputed(
 }
 
 /**
- * Free play is a real game on this board, so it gets a real verdict — `undefined` while
- * the exercise is being solved, which is graded against its script and has nothing to say
- * about mate or a draw. The positions before the cursor are the history, exactly as the
- * match store keeps it.
+ * Free play is a real game, so it gets a real verdict; an exercise is graded against its
+ * script and stays `undefined`.
  */
-// ToDo => nothing covers what stepping backwards does to this. Both halves depend on
-// `cursor`, so rewinding re-judges the position on screen — which is what it should do —
-// but it also shortens the history, so a threefold repetition stops counting when you step
-// back over it and counts again when you step forward. That reads as coherent (the verdict
-// of the position shown, from what was played up to it) and it is where the two boards
-// diverge: the match rewinds by *destroying* history in `undoLastMove`, so there a
-// repetition undone is gone for good. Pin whichever is wanted down in a test before either
-// one is taken for granted.
+// ToDo => pin down in a test what stepping backwards does here: a rewind shortens the
+// history so a repetition stops counting, while the match board destroys it for good.
 function freePlayComputed(
 	position: Signal<ChessPosition>,
 	positions: Signal<ChessPosition[]>,
@@ -296,10 +278,7 @@ function puzzleComputed(store: StateSignals<PuzzleStoreProps>) {
 	};
 }
 
-/**
- * Everything the puzzle store derives rather than stores. Split off as a signal
- * store feature so the store class itself is left holding only commands.
- */
+/** Everything the store derives rather than stores, so the class holds only commands. */
 export function withPuzzleComputed() {
 	return signalStoreFeature({ state: type<PuzzleStoreProps>() }, withComputed(puzzleComputed));
 }

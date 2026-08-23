@@ -121,8 +121,8 @@ export function cycleNode(refs: TreeRefs): PlainNode<PushCycleNodeDto> {
 }
 
 /**
- * Un árbol con una fila de cada tabla, que es lo que hace falta para que un recuento
- * signifique algo: si la subida duplicase, duplicaría en alguna de las ocho.
+ * A tree with one row per table, which is what makes a count mean anything: a push that
+ * duplicated would duplicate in one of the eight.
  */
 export function trainingNode(refs: TreeRefs): PlainNode<PushTrainingNodeDto> {
 	return {

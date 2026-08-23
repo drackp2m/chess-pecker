@@ -12,8 +12,8 @@ import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 
 /**
- * Cerrar sesión, entero y en un solo sitio: preguntar si hay algo que sólo esté aquí,
- * cerrar contra el API, y dejar el dispositivo como si nadie hubiera entrado.
+ * Logging out, whole and in one place: ask whether anything exists only here, close against
+ * the API, and leave the device as if nobody had signed in.
  */
 @Injectable({
 	providedIn: 'root',
@@ -26,8 +26,8 @@ export class LogOutUseCase {
 	private readonly syncStore = inject(SyncStore);
 
 	/**
-	 * Todo lo que guarda algo del usuario en memoria. Un store nuevo con datos suyos se
-	 * añade aquí, que es lo único que hay que recordar para que salga con los demás.
+	 * Everything holding user data in memory. A new store with any of it is added here, which
+	 * is the only thing to remember for it to leave with the rest.
 	 */
 	private readonly stores: readonly Resettable[] = [
 		inject(ActivityStore),
@@ -36,7 +36,7 @@ export class LogOutUseCase {
 		inject(TrainingStore),
 	];
 
-	/** `false` si no se llegó a cerrar: lo canceló el usuario, o el API no pudo. */
+	/** `false` when it never closed: the user cancelled, or the API could not. */
 	async execute(): Promise<boolean> {
 		if (!(await this.confirmPending())) {
 			return false;
@@ -52,10 +52,8 @@ export class LogOutUseCase {
 	}
 
 	/**
-	 * Lo que no ha llegado al servidor sólo existe aquí, y el cierre lo borra. Así que
-	 * primero se intenta subirlo: el modal sólo aparece si esa subida no pudo con todo, y
-	 * dice cuántas quedaron. Si no se puede ni mirar, se pregunta igual antes que borrar
-	 * a ciegas.
+	 * What never reached the server exists only here and logging out deletes it, so it is
+	 * pushed first: the modal only appears if that push could not manage everything.
 	 */
 	private async confirmPending(): Promise<boolean> {
 		await this.syncStore.flush();
@@ -79,7 +77,7 @@ export class LogOutUseCase {
 		}
 	}
 
-	/** La sesión ya está cerrada, así que no poder borrar no puede tumbar el cierre. */
+	/** The session is already closed, so a failed wipe cannot bring the logout down. */
 	private async forgetEverything(): Promise<void> {
 		for (const store of this.stores) {
 			store.reset();

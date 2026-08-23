@@ -3,10 +3,8 @@ import { AttemptRowV4 } from '@app/repository/definition/attempt-schema.interfac
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
- * Adding a field is free —the rows that lack it simply lack it— but dropping one is
- * not: `movesPlayed` would stay on disk forever, saying something the type no longer
- * says. So the rows are walked and rewritten in the shape the code now reads, with an
- * empty record, which is the truth about an attempt nobody was recording.
+ * Adding a field is free, but dropping one is not: `movesPlayed` would stay on disk saying
+ * what the type no longer says, so the rows are rewritten with an empty record.
  */
 export const recordAttemptSolveMigration: Migration<AppSchemaV5> = {
 	version: 5,

@@ -34,7 +34,7 @@ export class TrainingController {
 		return this.listTrainingsUseCase.execute(user);
 	}
 
-	/** Agregado sobre todos los entrenamientos del usuario, no de uno solo: va antes de `:uuid`. */
+	/** Aggregated over every training of the user, so it comes before `:uuid`. */
 	@Get('activity')
 	async getActivity(
 		@CurrentUser() user: User,
@@ -64,9 +64,8 @@ export class TrainingController {
 	}
 
 	/**
-	 * El histórico de ejercicios cerrados. Es de donde un dispositivo sin nada vuelve a
-	 * levantar lo ya resuelto, así que el ejercicio viaja dentro de cada intento: quien
-	 * pregunta puede no tenerlo en su catálogo.
+	 * The closed-exercise history a bare device rebuilds from, so the exercise travels inside
+	 * each attempt: whoever asks may not have it in their catalogue.
 	 */
 	@Get(':uuid/attempt')
 	async listAttempts(
@@ -79,7 +78,7 @@ export class TrainingController {
 		return this.listTrainingAttemptsUseCase.execute(training, query);
 	}
 
-	/** Darlo por completado: exige haber cerrado el mínimo de ciclos. */
+	/** Marking it complete, which demands the minimum cycles are closed. */
 	@Post(':uuid/finish')
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async finish(@CurrentUser() user: User, @Param('uuid') uuid: string): Promise<void> {
@@ -88,7 +87,7 @@ export class TrainingController {
 		return this.finishTrainingUseCase.execute(training, false);
 	}
 
-	/** Cancelarlo, que se puede en cualquier momento. No borra nada: el histórico sirve igual. */
+	/** Cancelling it, allowed at any time. Nothing is deleted: the history still serves. */
 	@Delete(':uuid')
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async cancel(@CurrentUser() user: User, @Param('uuid') uuid: string): Promise<void> {

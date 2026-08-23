@@ -22,9 +22,8 @@ import { PIECE_LABEL_KEY } from '@app/util/chess/piece-label';
 const RANK_START = SQUARE_COUNT - BOARD_SIZE;
 
 /**
- * Three rooks on one rank. Black opens by taking one of white's, and the answer is to
- * take the black rook back; every other legal move is a miss. No kings, which only the
- * CSV import would object to — the engine skips the check logic when it finds none.
+ * Three rooks on one rank: black takes, white takes back, everything else is a miss. No
+ * kings, which only the CSV import would object to.
  */
 const DEMO_PUZZLE: Puzzle = {
 	id: 'demo',
@@ -53,9 +52,8 @@ interface DemoSquare {
 }
 
 /**
- * The settings screen's own board: a strip of eight squares driven by the real
- * `PuzzleStore`, so every board preference can be tried where it is chosen. Only the
- * drawing is new; the behaviour underneath is the one the exercises use.
+ * The settings screen's board: eight squares driven by the real `PuzzleStore`, so every
+ * preference can be tried where it is chosen. Only the drawing is new.
  */
 @Component({
 	selector: 'app-board-demo',

@@ -52,9 +52,8 @@ export class TrainingStore
 	private readonly engine = inject(TrainingEngineUseCase);
 
 	/**
-	 * Sólo lee lo que hay aquí. El histórico lo baja el ciclo de sincronización antes de que
-	 * la aplicación sirva datos, así que al llegar aquí los ejercicios ya resueltos están
-	 * donde se los va a buscar.
+	 * Reads only what is already here: the sync cycle pulls the history before the app serves
+	 * data, so the solved exercises are in place by the time this runs.
 	 */
 	async load(): Promise<void> {
 		patchState(this, { isLoading: true, error: null });

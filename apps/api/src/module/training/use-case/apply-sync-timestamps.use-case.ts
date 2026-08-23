@@ -6,14 +6,12 @@ import { SyncTimestampsDto } from '../dto/request/sync-timestamps.dto';
 
 @Injectable()
 export class ApplySyncTimestampsUseCase {
-	/** Margen para relojes de cliente que van algo adelantados. */
+	/** Slack for client clocks running slightly fast. */
 	private static readonly futureToleranceMs = 5 * 60 * 1000;
 
 	/**
-	 * El reloj lo pone el usuario, así que las fechas que llegan pasan por una comprobación
-	 * de cordura antes de escribirse. Mientras las estadísticas sean personales esto basta;
-	 * si algún día se comparan con las de un amigo, harán falta marcas del servidor porque
-	 * las del cliente son falsificables.
+	 * The user owns the clock, so incoming dates get a sanity check. Enough while the stats
+	 * are personal; comparing them against a friend's would need server stamps.
 	 */
 	execute<T extends CustomBaseEntity<T>>(entity: T, timestamps: SyncTimestampsDto): T {
 		const now = Date.now();

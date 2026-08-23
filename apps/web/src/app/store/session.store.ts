@@ -12,9 +12,8 @@ import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
 /**
- * How long an answer stays good enough to skip asking again when the app comes back. Kept
- * under the quarter of an hour of silence Render waits before putting the service to
- * sleep, so a revalidation that finds the server awake is also what keeps it that way.
+ * How long an answer stays good enough to skip asking again. Kept under the quarter hour
+ * Render waits before sleeping, so a revalidation also keeps the service awake.
  */
 const STALE_AFTER_MS = 10 * 60 * 1000;
 
@@ -42,8 +41,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	readonly username = computed(() => this.user()?.username ?? null);
 
 	/**
-	 * Dos lecturas del mismo sondeo que no pueden contradecirse en pantalla: la sesión que
-	 * no llegó a resolverse y lo que ese viaje dijo del servidor mientras se esperaba.
+	 * Two readings of the same probe that must not contradict each other on screen: the
+	 * session that never resolved, and what the trip said about the server meanwhile.
 	 */
 	readonly connectionPhase = computed<ConnectionPhase>(() =>
 		this.isUnreachable() ? 'unreachable' : this.connectionStore.phase(),
@@ -55,14 +54,11 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	private probing: Promise<void> | null = null;
 	private checkedAt = 0;
 
-	// Called once from the app initializer (see app.config.ts) rather than from a
-	// constructor, so nothing that injects the store kicks off an HTTP request. A 401 is
-	// not the end of it either: `authInterceptor` renews the session and repeats the call
-	// before anything reaches this `catch`, which therefore does mean "there is no session".
-	// The clearing lives here and not inside `probe()`: a call that fails without ever
-	// suspending would finish before the assignment below, leaving a settled promise in
-	// place that every later restore would wait on instead of asking again.
+	// Called from the app initializer rather than a constructor, so injecting the store
+	// never kicks off an HTTP request.
 	async restore(): Promise<void> {
+		// Cleared here and not in `probe()`: a call that fails without suspending would settle
+		// before the assignment, leaving a promise every later restore would wait on.
 		this.probing ??= this.probe().finally(() => {
 			this.probing = null;
 		});
@@ -71,10 +67,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	}
 
 	/**
-	 * A tab left open for hours boots its answer once and then believes it forever, while
-	 * the server behind it goes back to sleep and the session expires. Coming back to the
-	 * app, or getting the network back, is the moment to ask again — but only if the last
-	 * answer is old enough to be worth a round trip.
+	 * A tab left open for hours would believe its boot answer forever while the session
+	 * expires. Coming back is the moment to ask again, if the last answer is old enough.
 	 */
 	watch(): void {
 		document.addEventListener('visibilitychange', () => {
@@ -97,9 +91,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	}
 
 	/**
-	 * The way out of `unreachable`: the server was asleep and someone is saying it may be
-	 * awake now. A restore already in flight is left alone — asking twice would only spend
-	 * another cold start.
+	 * The way out of `unreachable`. A restore already in flight is left alone: asking twice
+	 * would only spend another cold start.
 	 */
 	async retry(): Promise<void> {
 		if ('unknown' === this.status()) {
@@ -150,13 +143,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	}
 
 	/**
-	 * La sesión vive en cookies `httpOnly`, así que sólo el API puede cerrarla: si la
-	 * llamada falla no hay nada que el cliente pueda borrar por su cuenta. Pasar a
-	 * `anonymous` de todos modos dejaba una interfaz mintiendo, con la sesión intacta
-	 * esperando al siguiente refresco, así que el fallo se queda a la vista.
-	 *
-	 * Aquí sólo se cierra la sesión. Vaciar lo que el usuario dejó en el dispositivo es
-	 * de `LogOutUseCase`, que es por donde entra la interfaz.
+	 * Only the API can close a session in `httpOnly` cookies, so a failed call stays visible
+	 * rather than lying about it. Wiping the device is `LogOutUseCase`'s job.
 	 */
 	async logOut(): Promise<boolean> {
 		patchState(this, { isSubmitting: true, error: null });
@@ -179,10 +167,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	}
 
 	/**
-	 * Renewing is shared on purpose. The API rotates the refresh cookie, so two calls racing
-	 * each other would spend the same token twice and the loser would close the session the
-	 * winner had just renewed. Everything that fails at the same instant waits on the same
-	 * round trip — `authInterceptor` is the only caller, and it has no way to coordinate.
+	 * Renewing is shared on purpose: the API rotates the refresh cookie, so two racing calls
+	 * would spend the same token twice and the loser would close the renewed session.
 	 */
 	async refresh(): Promise<void> {
 		this.refreshing ??= this.renewSession();
@@ -205,11 +191,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	}
 
 	/**
-	 * A 401 here is the end of the conversation, not the start of one: `authInterceptor`
-	 * has already renewed and repeated the call before anything reaches this point, so it
-	 * does mean "there is no session". Anything else — no network, a 5xx, a gateway that
-	 * gave up on a cold start — says nothing about the session, and calling it `anonymous`
-	 * would log the user out of an interface that has no idea whether they are logged in.
+	 * A 401 here really means "no session": `authInterceptor` already renewed and repeated the
+	 * call. Anything else says nothing about it, so it must not read as `anonymous`.
 	 */
 	private static toFailedStatus(error: unknown): SessionStatus {
 		return HttpError.hasStatus(error, HttpStatusCode.Unauthorized) ||
@@ -231,10 +214,8 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	}
 
 	/**
-	 * Shared like the renewal above: a revalidation, a retry and the boot probe can all
-	 * land at once, and a cold start is expensive enough that they had better wait on the
-	 * same round trip. A cancelled call leaves the status untouched and the clock alone,
-	 * so the next chance to ask still asks.
+	 * Shared like the renewal above, since a cold start is expensive. A cancelled call leaves
+	 * the status and the clock alone, so the next chance to ask still asks.
 	 */
 	private async probe(): Promise<void> {
 		try {

@@ -32,13 +32,8 @@ export const EMPTY_BAR_LAYOUT: ChartBarLayout = {
 };
 
 /**
- * A slot is one bar plus one gap, and only whole slots are ever painted — whatever is left
- * over goes back into the bar, the gap or both, so the last bar always ends on the edge.
- * The plot never shows more slots than `count` asks for, and squeezes bar, gap or both when
- * that many do not fit as given; `pad` holds that many open even when the series is shorter,
- * so the room the missing points would take is left empty at the far end. What still does not
- * fit is dropped, unless the plot is allowed to scroll: then it keeps every point and hands
- * back the strip of whole slots the container can show at once.
+ * A slot is one bar plus one gap, and only whole slots are painted: the remainder goes back
+ * into bar, gap or both so the last bar ends on the edge. `pad` holds `count` slots open.
  */
 export function fitBars(
 	available: number,

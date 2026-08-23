@@ -29,8 +29,8 @@ export class ActivityStore
 	private readonly notificationService = inject(NotificationService);
 
 	/**
-	 * Lo guardado se pinta igual aunque el API no conteste, pero sin decirlo la pantalla
-	 * estaría afirmando que esos son los datos de ahora mismo.
+	 * What is stored is painted even when the API does not answer, but unsaid the screen would
+	 * be claiming those are the numbers right now.
 	 */
 	async load(rangeDays: number): Promise<void> {
 		patchState(this, { isLoading: true });

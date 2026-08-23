@@ -9,7 +9,7 @@ import { TrainingRepository } from '../training.repository';
 export class GetOwnedTrainingUseCase {
 	constructor(private readonly trainingRepository: TrainingRepository) {}
 
-	/** Puerta de entrada de todo lo demás: existe y es tuyo, o no sigues. */
+	/** The gate everything else passes through: it exists and it is yours, or you stop here. */
 	async execute(user: User, trainingUuid: string): Promise<Training> {
 		const training = await this.trainingRepository.getOne({ uuid: trainingUuid });
 

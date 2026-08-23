@@ -1,4 +1,4 @@
-/** Un store con datos del usuario dentro, que el cierre de sesión tiene que dejar vacío. */
+/** A store holding user data, which logging out has to leave empty. */
 export interface Resettable {
 	reset(): void;
 }

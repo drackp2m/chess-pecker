@@ -8,16 +8,8 @@ import { TrainingStatus } from './definition/training-status.enum';
 import { TrainingRepository } from './training.repository';
 
 /**
- * El programa completo. Su duración es `createdAt` → `finishedAt`.
- *
- * No guarda nada derivable: ni el ELO calibrado (es el `rating` de la ronda aceptada), ni
- * el tiempo medio de la calibración, ni el tiempo de referencia del ciclo 1 (la suma de
- * los `durationMs` de sus intentos). El mínimo y el tope de ciclos son política de la app,
- * no columnas, mientras el usuario no los elija por entrenamiento.
- *
- * `finishedAt` sí es explícito, y es la única tabla del entrenamiento que lo tiene: un
- * entrenamiento puede acabar sin intento detrás (cancelación), y su `status` cambia varias
- * veces, así que `updatedAt` no significa "cuándo acabó" como sí ocurre en `puzzle_attempt`.
+ * The whole programme, lasting `createdAt` → `finishedAt`. Nothing derivable is stored, but
+ * `finishedAt` is explicit: a training can end with no attempt behind it.
  */
 @Entity({ repository: () => TrainingRepository })
 @Index({ properties: ['user', 'status'] })

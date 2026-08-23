@@ -2,9 +2,8 @@ import { AppSchemaV10 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
- * Hasta ahora un intento se mandaba al API en cuanto se cerraba y no había manera de
- * guardarlo para subirlo luego, así que todo lo cerrado que haya en local ya está arriba.
- * Sellarlo evita que el cierre de sesión avise de una cola de subida que no existe.
+ * Attempts used to go straight to the API on closing, so everything closed locally is
+ * already up. Sealing it stops logout warning about an upload queue that does not exist.
  */
 export const markStoredAttemptsSyncedMigration: Migration<AppSchemaV10> = {
 	version: 9,

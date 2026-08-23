@@ -33,9 +33,8 @@ h5 {
 	overflow: hidden;
 }
 
-// White keeps the colour of the square it plays from whichever theme the page is in;
-// black takes the muted contrast fill instead, since the dark square would sink into
-// the background.
+// White keeps its square's colour in either theme; black takes the muted contrast fill,
+// since the dark square would sink into the background.
 .move {
 	&.white {
 		color: var(--color-contrast-light);

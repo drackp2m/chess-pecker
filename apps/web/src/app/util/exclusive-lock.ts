@@ -1,15 +1,11 @@
-/** El candado de la sincronización: uno solo, y para el ciclo entero. */
+/** The sync lock: one only, and for the whole cycle. */
 export const SYNC_LOCK = 'chesspecker-sync';
 
 const queues = new Map<string, Promise<unknown>>();
 
 /**
- * Una sección crítica compartida por todas las pestañas del mismo origen. Dos pestañas
- * arrancando a la vez subirían el mismo árbol dos veces: la clave de reintento evita el
- * duplicado en el servidor, pero no el trabajo ni las carreras entre las dos respuestas.
- *
- * Esperar es lo correcto y no bloquea: la puerta de arranque tiene su propio tope, así que
- * la segunda pestaña abre igual aunque la primera siga sincronizando.
+ * A critical section shared by every tab of the origin. The retry key stops the server
+ * duplicating, but not the work nor the race between two responses.
  */
 export async function withExclusiveLock<T>(name: string, action: () => Promise<T>): Promise<T> {
 	const locks: LockManager | undefined = (navigator as Partial<Navigator>).locks;
@@ -24,9 +20,8 @@ export async function withExclusiveLock<T>(name: string, action: () => Promise<T
 }
 
 /**
- * Sin `navigator.locks` —contexto inseguro, o un navegador que no lo trae— sólo se puede
- * serializar dentro de la pestaña. Es menos de lo que promete el candado, pero es lo que
- * hay, y la subida sigue siendo idempotente para lo demás.
+ * Without `navigator.locks` — an insecure context, or a browser lacking it — this can only
+ * serialise within the tab. Less than the lock promises, but the push stays idempotent.
  */
 async function runQueued<T>(name: string, action: () => Promise<T>): Promise<T> {
 	const previous = queues.get(name) ?? Promise.resolve();

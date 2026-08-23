@@ -5,9 +5,8 @@ export interface SelectShellLayoutElements {
 }
 
 /**
- * Layout concerns of the shell: keeps the `--label-width` / `--input-height`
- * CSS variables in sync with the rendered sizes and decides whether the
- * dropdown should open upwards.
+ * The shell's layout: keeps `--label-width` and `--input-height` in step with the rendered
+ * sizes, and decides whether the dropdown opens upwards.
  */
 export class SelectShellLayout {
 	private readonly coarsePointer = window.matchMedia('(pointer: coarse)').matches;
@@ -18,9 +17,8 @@ export class SelectShellLayout {
 	) {}
 
 	/**
-	 * The label width is not static: translations resolve asynchronously, the
-	 * language can change at runtime and web fonts reflow the text once they
-	 * load, so both sizes arrive as signals the shell keeps re-applying.
+	 * The label width is not static — async translations, runtime language changes, late web
+	 * fonts — so both sizes arrive as signals the shell keeps re-applying.
 	 */
 	applySizeVariables(labelWidth: number, wrapperHeight: number): void {
 		const wrapperElement = this.elements.wrapper();
@@ -34,11 +32,8 @@ export class SelectShellLayout {
 	}
 
 	/**
-	 * Coarse-pointer devices always open upwards while the field is
-	 * searchable: focusing the editable input pops the virtual keyboard and
-	 * the browser auto-scrolls the field into view, which would fight a
-	 * downward dropdown. A read-only combobox never summons the keyboard, so
-	 * it positions freely on the emptier viewport half.
+	 * A searchable field on a coarse pointer always opens upwards: the virtual keyboard scrolls
+	 * the field into view and would fight a downward dropdown.
 	 */
 	isPositionedTop(): boolean {
 		if (this.coarsePointer && this.store.searchable()) {

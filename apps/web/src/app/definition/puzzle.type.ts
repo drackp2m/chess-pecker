@@ -1,13 +1,8 @@
 import { ChessMoveRecord, PieceColor } from '@app/definition/chess.type';
 
 /**
- * One exercise in the Lichess puzzle-database shape.
- *
- * The encoding is not obvious: `fen` is the position *before* the opponent's last
- * move, and `moves[0]` is that opponent move, replayed for you when the puzzle
- * opens. Everything after it alternates — odd indexes are the moves you must find,
- * even indexes are the opponent's scripted replies. The side to move in `fen` is
- * therefore the opponent, and you play the opposite colour.
+ * One exercise in the Lichess puzzle-database shape: `fen` is the position before the
+ * opponent's `moves[0]`, and odd indexes from there are the moves the player must find.
  */
 export interface Puzzle {
 	readonly id: string;
@@ -20,18 +15,14 @@ export interface Puzzle {
 }
 
 /**
- * How the attempt was graded, settled the first time the exercise is either finished
- * or left the script, and never revised after that. Woodpecker scores the first try,
- * so anything played from there on — a retry, a reveal — leaves this untouched.
- *
- * Settling it does not end the exercise: that is what `PuzzleClosure` says.
+ * How the attempt was graded, settled on the first try and never revised. Settling it does
+ * not end the exercise: that is what `PuzzleClosure` says.
  */
 export type PuzzleResult = 'solved' | 'failed';
 
 /**
- * Whether the exercise is over, which is a different question from how it was graded:
- * the note is sealed on the first try, but the exercise itself runs until the solution
- * is out — played by the player, or handed over to them when they give up.
+ * Whether the exercise is over, which is not how it was graded: it runs until the solution
+ * is out, played by the player or handed to them.
  */
 export type PuzzleClosure =
 	/** Still being solved, however many misses and retries it has taken. */
@@ -41,10 +32,7 @@ export type PuzzleClosure =
 	/** The player gave up, and the rest of the line was played out for them. */
 	| 'revealed';
 
-/**
- * The closure to keep: the first one the exercise reaches is the one it ended on, so
- * an answer watched after the line was found never turns a `found` into a `revealed`.
- */
+/** The first closure reached is the one kept, so watching the answer cannot undo a `found`. */
 export function settleClosure(current: PuzzleClosure, closure: PuzzleClosure): PuzzleClosure {
 	return 'open' === current ? closure : current;
 }
@@ -60,18 +48,16 @@ export type PuzzleOutcome =
 	/** The opponent's scripted reply is being played. */
 	| 'replying'
 	/**
-	 * A move left the script. It stays up long enough to be seen and is then taken
-	 * back on its own, so the exercise can be tried again; playing on instead of
-	 * waiting switches the board to free play.
+	 * A move left the script. It is taken back on its own so the exercise can be retried;
+	 * playing on instead switches the board to free play.
 	 */
 	| 'failed'
 	/** The whole line was found. */
 	| 'solved';
 
 /**
- * The verdict to keep. The first one the exercise reaches is the one it is graded on,
- * so a later `solved` — after a retry, or after the solution was played out — never
- * replaces the `failed` that was already recorded.
+ * The first verdict reached is the one kept, so a `solved` after a retry never replaces a
+ * `failed` already recorded.
  */
 export function settleResult(
 	current: PuzzleResult | undefined,
@@ -85,22 +71,14 @@ export function settleResult(
 }
 
 /**
- * How long the exercise has to have been looked at before the hint is offered. Help taken
- * on sight is not help: the themes stay covered until the position has really been read.
- *
- * It is measured the same way the attempt's own duration is — watched time, so a tab left
- * in the background waits for nothing and the themes are not there on coming back. No move
- * speed scales it either, and no restart winds it back: the position has been on screen
- * for as long as it has been.
+ * How long the exercise must have been looked at before the hint is offered. Watched time,
+ * like the attempt's own duration, so a backgrounded tab waits for nothing.
  */
 export const HINT_DELAY_MS = 30_000;
 
 /**
- * One thing that happened while the exercise was being solved: a move in UCI, a run
- * of cursor steps as a signed count, `0` for a restart, or the marker for the hint.
- * Replaying a prefix of them rebuilds one and only one board, which is what the whole
- * format rests on — the marker is the one event that moves nothing, and says only that
- * help was taken, and exactly when.
+ * One thing that happened while solving: a UCI move, a signed run of cursor steps, `0` for a
+ * restart, or the hint marker. Replaying a prefix rebuilds one and only one board.
  */
 export type PuzzleEvent = string | number;
 

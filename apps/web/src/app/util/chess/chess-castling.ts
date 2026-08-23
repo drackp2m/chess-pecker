@@ -10,9 +10,8 @@ export interface CastlingRookMove {
 }
 
 /**
- * Castling has more preconditions than any other move, so it lives apart from the
- * main generator: the right must survive, the path must be clear, and the king may
- * neither start in check nor travel through an attacked square.
+ * Castling lives apart from the generator, having more preconditions than any other move:
+ * the right, a clear path, and a king neither in check nor crossing an attacked square.
  */
 export abstract class ChessCastling {
 	static moves(position: ChessPosition, index: number, king: Piece): ChessMove[] {
@@ -38,10 +37,8 @@ export abstract class ChessCastling {
 	}
 
 	/**
-	 * The rook's half of the move, read off the square the king reached. The king
-	 * never leaves its row, so both squares are the same two files on whichever rank
-	 * it castled on and only the side chooses between them. The board applies it and
-	 * the animation slides it, which is why neither owns the arithmetic.
+	 * The rook's half, read off the square the king reached. Both the board and the animation
+	 * need it, which is why neither owns the arithmetic.
 	 */
 	static rookMove(kingTo: number, side: CastlingSide): CastlingRookMove {
 		const row = ChessSquare.rowOf(kingTo) * BOARD_SIZE;

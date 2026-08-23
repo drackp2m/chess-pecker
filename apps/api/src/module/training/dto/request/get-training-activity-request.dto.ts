@@ -5,7 +5,7 @@ import { IsDate, IsInt, IsOptional, Max, Min } from 'class-validator';
 import { TrainingPolicy } from '../../definition/training-policy';
 
 export class GetTrainingActivityRequestDto implements GetTrainingActivityRequest<Date> {
-	/** Días que cubre el desglose, hoy incluido. Por defecto, la ventana entera. */
+	/** Days the breakdown covers, today included. Defaults to the whole window. */
 	@IsOptional()
 	@Type(() => Number)
 	@IsInt()
@@ -13,7 +13,7 @@ export class GetTrainingActivityRequestDto implements GetTrainingActivityRequest
 	@Max(TrainingPolicy.activityMaxDays)
 	days?: number;
 
-	/** El `cursor` de la respuesta anterior: recorta a los días tocados desde entonces. */
+	/** The previous response's `cursor`: narrows it to the days touched since. */
 	@IsOptional()
 	@Type(() => Date)
 	@IsDate()

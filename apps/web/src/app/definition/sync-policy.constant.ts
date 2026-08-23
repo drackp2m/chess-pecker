@@ -1,38 +1,37 @@
 export const SyncPolicy = {
 	/**
-	 * Filas pendientes por petición. El árbol entero de una cuenta veterana son miles de
-	 * huecos y sus partidas: lo que no cabe se queda para la pasada siguiente, que es inocuo
-	 * porque la subida es idempotente.
+	 * Pending rows per request. A veteran account's tree is thousands, so the overflow waits
+	 * for the next pass — harmless, since the push is idempotent.
 	 */
 	pushBatchSize: 200,
 
-	/** Tope de peticiones por pasada, para que un árbol que no avanza no gire para siempre. */
+	/** Requests per pass, so a tree that makes no progress cannot spin forever. */
 	maxRequestsPerRun: 50,
 
-	/** Espera antes de cada reintento, en orden: su longitud decide cuántos hay. */
+	/** The wait before each retry, in order: its length decides how many there are. */
 	retryBackoffMs: [1000, 4000],
 
-	/** Tope duro del arranque: pasado esto la puerta se abre, con éxito o sin él. */
+	/** Boot's hard cap: past this the gate opens, successfully or not. */
 	startupTimeoutMs: 15000,
 
 	/**
-	 * Lo que el splash espera —mirando, no de fondo— antes de contar qué está pasando. Una
-	 * pasada que termina antes es un parpadeo, y un parpadeo no debe enseñar nada.
+	 * How long the splash waits — watched, not backgrounded — before saying what is going on.
+	 * A pass that ends sooner is a flicker, and a flicker should show nothing.
 	 */
 	splashDetailMs: 600,
 
 	/**
-	 * Cada cuánto vuelve a sincronizarse al volver a la aplicación o al recuperar la red.
-	 * Sin este suelo, alternar de pestaña dispararía una pasada por cambio.
+	 * How often it re-syncs on coming back to the app or regaining the network. Without this
+	 * floor, switching tabs would fire a pass per switch.
 	 */
 	revisitAfterMs: 5 * 60 * 1000,
 
-	/** A partir de aquí una fila lleva demasiado esperando y hay que decirlo. */
+	/** Past this a row has been waiting too long, and it has to be said. */
 	staleAfterMs: 7 * 24 * 60 * 60 * 1000,
 
 	/**
-	 * Cuántos motivos de rechazo se guardan por tabla para enseñarlos. El recuento es de
-	 * todas; la lista es una muestra, porque quien la lee busca el patrón, no el inventario.
+	 * How many refusal reasons are kept per table to show. The count covers them all; the list
+	 * is a sample, since whoever reads it wants the pattern and not the inventory.
 	 */
 	rejectionSampleSize: 5,
 } as const;

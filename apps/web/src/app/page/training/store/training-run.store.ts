@@ -23,12 +23,8 @@ import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
 /**
- * Drives one solving run — a calibration round, or a stretch of a cycle. It owns the queue
- * and the grading and knows nothing about the board: the page hands it the verdict, it
- * records it and decides what comes next.
- *
- * A graded exercise stays on the board until `advance()` is called, so a miss can be
- * looked at before it is left behind. The method allows no retry either way.
+ * Drives one solving run, owning the queue and the grading but knowing nothing of the board.
+ * A graded exercise stays up until `advance()`, so a miss can be looked at first.
  */
 @Injectable()
 export class TrainingRunStore extends signalStore(
@@ -68,9 +64,8 @@ export class TrainingRunStore extends signalStore(
 	}
 
 	/**
-	 * Records how the exercise on screen went, once it is over. Woodpecker grades on the
-	 * first try, so the verdict inside `record` was settled long before the exercise
-	 * closed; this still runs once per exercise and is never revised.
+	 * Records how the exercise went once it is over. The verdict was settled on the first try,
+	 * so this runs once per exercise and is never revised.
 	 */
 	async grade(record: TrainingAttemptRecord): Promise<void> {
 		const uuid = this.trainingUuid();
@@ -99,9 +94,8 @@ export class TrainingRunStore extends signalStore(
 	}
 
 	/**
-	 * Opens the round the closed one asked for, without leaving the board: a scan is a
-	 * single exercise, so going back to the training page between rounds is most of the
-	 * calibration.
+	 * Opens the next round without leaving the board: a scan is one exercise, so going back to
+	 * the training page between rounds would be most of the calibration.
 	 */
 	async openNextRound(): Promise<void> {
 		const uuid = this.trainingUuid();

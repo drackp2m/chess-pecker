@@ -8,8 +8,8 @@ import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { User } from '../../user/user.entity';
 
 /**
- * El árbol del usuario se recorta una sola vez y las ocho ramas se cuelgan de él: sin el
- * `with`, cada rama repetiría el filtro por usuario y el parámetro ocho veces.
+ * The user's tree is cut once and the eight branches hang off it: without the `with`, each
+ * would repeat the user filter and its parameter eight times over.
  */
 const ENTITY_SUMMARY = `with owned as (select uuid from training where user_uuid = ?)
  select 'training' as entity, max(t.received_at) as cursor, count(*)::int as count
@@ -47,12 +47,8 @@ interface EntitySummaryRow {
 }
 
 /**
- * Qué hay aquí, en una sola pregunta: por tabla, hasta dónde llega el reloj de servidor y
- * cuántas filas hay. El cliente lo contrasta con sus cursores y sabe qué bajar sin ir tabla
- * a tabla ni entrenamiento a entrenamiento.
- *
- * El recuento acompaña a la marca porque un `MAX` no ve los borrados: sólo cuando las dos
- * cosas coinciden se puede decir que la réplica está al día.
+ * What is here, in one question: per table, how far the server clock reaches and how many
+ * rows there are. The count goes with the stamp because a `MAX` cannot see deletions.
  */
 @Injectable()
 export class GetSyncSummaryUseCase {
@@ -79,7 +75,7 @@ export class GetSyncSummaryUseCase {
 	}
 }
 
-/** Un catálogo vacío también tiene versión, para que el cliente compare cadenas y nunca nulos. */
+/** An empty catalogue still has a version, so the client compares strings and never nulls. */
 const EMPTY_VERSION = new Date(0).toISOString();
 
 const NOTHING: SyncEntitySummary = { cursor: null, count: 0 };

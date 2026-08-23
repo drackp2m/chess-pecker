@@ -11,7 +11,7 @@ import { claimSyncRow, isFresherNode, reuseSyncRow, syncKey } from '../util/sync
 
 import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
 
-/** La rama de la calibración: las rondas, lo que repartió cada una y lo que se jugó en ella. */
+/** The calibration branch: the rounds, what each dealt out, and what was played in them. */
 @Injectable()
 export class PushCalibrationBranchUseCase {
 	constructor(
@@ -72,7 +72,7 @@ export class PushCalibrationBranchUseCase {
 		return claimSyncRow(context, 'calibrationRound', node, this.buildRound(training, node));
 	}
 
-	/** La ronda sube abierta y decide después: subir, bajar o aceptar la franja. */
+	/** A round uploads open and decides afterwards: raise, lower, or accept the band. */
 	private refreshRound(row: TrainingCalibrationRound, node: PushCalibrationRoundNodeDto): void {
 		if (!isFresherNode(node, row)) {
 			return;
@@ -99,7 +99,7 @@ export class PushCalibrationBranchUseCase {
 		);
 	}
 
-	/** Qué ejercicios se repartieron en la ronda, que es lo que la hace reconstruible. */
+	/** Which exercises the round dealt out, which is what makes it reconstructible. */
 	private async pushDealt(
 		context: SyncPushContext,
 		round: TrainingCalibrationRound,

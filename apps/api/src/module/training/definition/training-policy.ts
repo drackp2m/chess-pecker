@@ -1,50 +1,49 @@
 /**
- * Las decisiones del método que son política de la app, no esquema. Están juntas aquí para
- * que cambiarlas sea tocar un fichero y no migrar filas.
+ * The method's decisions that are app policy and not schema, together here so changing one
+ * means touching a file rather than migrating rows.
  */
 export const TrainingPolicy = {
-	/** Rango de ELO del catálogo, en centenas cerradas. */
+	/** The catalogue's ELO range, in closed hundreds. */
 	minRating: 400,
 	maxRating: 2500,
 
-	/** Sondeos iniciales: ejercicios sueltos, para acotar la zona antes de gastar rondas de 10. */
+	/** Opening scans: single exercises, narrowing the region before spending rounds of ten. */
 	scanRounds: 4,
 	scanStartRating: 1200,
-	/** Salto del primer sondeo; se parte por la mitad en cada uno siguiente. */
+	/** The first scan's jump, halved on each one after it. */
 	scanInitialStep: 600,
 
-	/** Ejercicios por ronda de afinado. */
+	/** Exercises per refine round. */
 	refinePuzzles: 10,
-	/** Por encima de esta tasa de acierto el nivel se queda corto; por debajo, se pasa. */
+	/** Above this success rate the level is too easy; below it, too hard. */
 	refineUpperAccuracy: 0.9,
 	refineLowerAccuracy: 0.8,
 
-	/** Tamaño del set de trabajo y ancho de la franja de ELO de la que se saca. */
+	/** Size of the working set, and the width of the ELO band it is drawn from. */
 	defaultSetSize: 1000,
 	setRatingSpread: 100,
 
-	/** Ancho del bloque dentro del que se baraja entre ciclos, manteniendo fácil → difícil. */
+	/** The block shuffled within between cycles, keeping the easy → hard order. */
 	shuffleBlockSize: 100,
 
 	minCycles: 4,
 	maxCycles: 7,
 
 	/**
-	 * Exigencia de cada ciclo sobre el tiempo real del ciclo 1. El índice 0 es el ciclo 2;
-	 * a partir del último valor se mantiene el último factor.
+	 * What each cycle demands of cycle 1's real time. Index 0 is cycle 2, and the last factor
+	 * holds from there on.
 	 */
 	cycleTargetFactors: [0.5, 0.35, 0.25],
 
-	/** Por debajo de esta mejora entre ciclos se considera que ya no rinde seguir. */
+	/** Below this improvement between cycles, carrying on no longer pays. */
 	plateauImprovement: 0.1,
 
-	/** Ventana máxima del desglose de actividad, y la que se sirve si no se pide otra. */
+	/** The activity breakdown's widest window, and the one served when none is asked for. */
 	activityMaxDays: 53 * 7,
 
 	/**
-	 * Intentos por página del histórico, y los que se sirven si no se piden menos. La
-	 * partida entera viaja dentro de cada uno, así que la página se mide en filas y no en
-	 * días: un ciclo de 1000 ejercicios son cuatro viajes, no uno enorme.
+	 * Attempts per history page. The whole game travels inside each, so a page is measured in
+	 * rows and not days: a 1000-exercise cycle is four trips, not one huge one.
 	 */
 	attemptPageSize: 250,
 } as const;

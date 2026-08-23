@@ -11,14 +11,12 @@ import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
 
 const PAGE_SIZE = 500;
 
-/** Cuántos ejercicios lleva la réplica y cuántos hay. Es lo que el splash cuenta. */
+/** How many exercises the replica holds and how many there are: what the splash counts. */
 export type CatalogProgress = (done: number, total: number) => void;
 
 /**
- * El catálogo replicado aquí. No es de nadie —no tiene `pendingSince`, ni conflictos, ni
- * la regla de «local manda» que sostiene la bajada del entrenamiento—, así que no es una
- * tabla más del ciclo: es una barrida por páginas que el ciclo dispara con el resumen en
- * la mano.
+ * The catalogue replicated here. It belongs to nobody — no `pendingSince`, no conflicts, no
+ * "local wins" — so it is a paged sweep the cycle fires rather than another of its tables.
  */
 @Injectable({
 	providedIn: 'root',
@@ -32,9 +30,8 @@ export class PuzzleCatalogReplicaUseCase {
 	private sweeping: Promise<void> | null = null;
 
 	/**
-	 * `summary` es lo que dice el servidor que tiene. Sin él —sin sesión, que es cuando
-	 * `GET /sync` no se puede pedir— se decide como se decidía antes: con el total contado
-	 * aquí, que no ve una reimportación.
+	 * `summary` is what the server says it holds. Without a session there is none, so the
+	 * decision falls back to the local total, which cannot see a re-import.
 	 */
 	async run(summary?: SyncCatalogSummary, progress?: CatalogProgress): Promise<void> {
 		this.sweeping ??= this.sweep(summary, progress)
@@ -47,9 +44,8 @@ export class PuzzleCatalogReplicaUseCase {
 	}
 
 	/**
-	 * Si la barrida no tiene nada que hacer. El ciclo lo pregunta antes de empezarla: un
-	 * catálogo al día no es una descarga, y sólo una descarga justifica hacer esperar al
-	 * arranque.
+	 * Whether the sweep has nothing to do. A current catalogue is not a download, and only a
+	 * download justifies making boot wait.
 	 */
 	async isSynced(summary?: SyncCatalogSummary): Promise<boolean> {
 		return this.isUpToDate(await this.cursors.findState(), summary);
@@ -84,8 +80,8 @@ export class PuzzleCatalogReplicaUseCase {
 			await this.cursors.saveState({
 				cursor: next,
 				total: page.total,
-				// La versión es la de antes de empezar: si el catálogo cambia a mitad de la
-				// barrida, quedarse con la vieja es lo que hace que la pasada siguiente lo vea.
+				// The version is the one from before the sweep began: keeping the old one is what
+				// lets the next pass notice a catalogue that changed halfway through.
 				version: summary?.version ?? state?.version ?? null,
 				completedAt: null === next ? new Date() : null,
 			});
@@ -100,10 +96,8 @@ export class PuzzleCatalogReplicaUseCase {
 	}
 
 	/**
-	 * Con resumen, la versión decide. **Esto arregla un fallo de hoy**: la importación es
-	 * un upsert que refresca rating y popularidad, así que reimportar el mismo CSV deja el
-	 * total idéntico, la barrida se da por cerrada y los ratings de aquí se quedan viejos
-	 * para siempre. La marca es lo único que lo ve.
+	 * With a summary the version decides: re-importing the same CSV leaves the total identical,
+	 * so counting alone would call the sweep done and freeze the local ratings forever.
 	 */
 	private async isUpToDate(
 		state: CatalogCursorState | undefined,

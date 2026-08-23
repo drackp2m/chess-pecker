@@ -2,8 +2,8 @@ import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
- * Los intentos que ya se restauraron entraron sin su sitio en la pasada, que entonces no
- * viajaba. Olvidar el corte los hace volver una vez, que es cuando la fila lo aprende.
+ * Already-restored attempts came in without their place in the pass, which did not travel
+ * then. Forgetting the cut brings them back once, which is when the row learns it.
  */
 export const resetAttemptCursorMigration: Migration<AppSchema> = {
 	version: 14,

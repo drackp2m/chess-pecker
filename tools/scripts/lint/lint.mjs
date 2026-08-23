@@ -1,17 +1,6 @@
 #!/usr/bin/env node
-// Runs ESLint → Stylelint → Prettier and prints a per-tool summary (ESLint-
-// stylish layout — file header + aligned line:col/severity/message/rule rows —
-// so the editor turns each location into a clickable link).
-//
-// Check by default; pass --fix to apply every safe fix, and --verbose (with
-// --fix) to also show the per-file correction counts, at the cost of a second
-// (expensive, type-checked) ESLint pass.
-//
-// With no file paths it processes the whole repo; given paths (e.g. from
-// lint-staged) only those, routed to each tool by extension. Files no tool can
-// handle are reported as "Uncovered". Exits non-zero when any error remains (an
-// unfixable lint error, or an unformatted file in check mode) so CI and git
-// hooks can block.
+// Runs ESLint → Stylelint → Prettier and prints one ESLint-stylish summary per tool.
+// Check by default; --fix applies every safe fix and --verbose adds per-file counts.
 
 import { writeLintSummary } from '../lint/github-summary.mjs';
 import { c, plural, printSection, printUncovered } from '../lint/lint-report.mjs';
@@ -56,13 +45,8 @@ if (null !== maxWarnings.limit && (!Number.isInteger(maxWarnings.limit) || 0 > m
 	process.exit(2);
 }
 
-// Whole repo when called without file paths; otherwise only the given files
-// (whatever the caller passes), routed to each tool by extension. ESLint and
-// Stylelint get handed "." / a glob and rely on their own ignore config
-// (eslint.config.mjs ignores, .stylelintignore) to filter — no file walking
-// needed. Prettier processes files one by one, so it needs a concrete list;
-// repoFiles() walks the tree (skipping node_modules and friends) and
-// .prettierignore does the fine-grained filtering per file.
+// ESLint and Stylelint are handed "." or a glob and filter through their own ignore config;
+// Prettier works file by file, so `repoFiles()` walks the tree to build it a concrete list.
 const eslintTargets = hasFiles ? withExt(argFiles, ESLINT_EXT) : ['.'];
 const stylelintTargets = hasFiles
 	? withExt(argFiles, STYLELINT_EXT)
@@ -127,7 +111,6 @@ writeLintSummary({
 	details: runDescription,
 });
 
-// Non-zero exit on any error (unfixable lint error, or an unformatted file in
-// check mode) so CI and pre-commit hooks block; warnings only block when
+// Non-zero exit on any error so CI and pre-commit hooks block; warnings only block when
 // --max-warnings caps them.
 process.exitCode = 0 !== errors || tooManyWarnings ? 1 : 0;

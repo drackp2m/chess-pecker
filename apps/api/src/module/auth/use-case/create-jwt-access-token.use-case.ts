@@ -11,9 +11,8 @@ export class CreateJwtAccessTokenUseCase {
 	) {}
 
 	execute(userUuid: string): string {
-		// These are JWT *registered claims* -> they must go in the sign options
-		// (2nd arg) so they become `sub`/`aud`/`exp`/`nbf`. Put in the payload
-		// (1st arg) they'd be plain fields and the token would carry no `sub`/`exp`.
+		// Registered claims belong in the sign options, or they become plain payload fields
+		// and the token carries no `sub`/`exp`.
 		return this.jwtService.sign(
 			{},
 			{

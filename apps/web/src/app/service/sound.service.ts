@@ -26,34 +26,8 @@ const SILENCE_GRACE_MS = 500;
 type ExtendedState = AudioContextState | 'interrupted';
 
 /**
- * The board's sound effects, decoded once up front and fired through the Web Audio
- * API rather than `<audio>` elements — an `AudioBufferSourceNode` starts with no
- * decode latency and overlaps with itself, which matters when a reply lands while
- * the move before it is still ringing.
- *
- * The context is built **inside a gesture and never before**, which is the whole
- * point of this file. WebKit poisons the audio session of contexts that were open
- * but never running when the system interrupted it — a locked screen, another app
- * taking audio focus, a long idle stretch. A poisoned context reports `running`
- * after `resume()` and plays nothing, for the rest of the page's life; the poison
- * outlives a reload, because Safari reuses the process for the same origin, so a
- * context built at boot is born deaf every time until the browser itself is quit.
- * One built inside a gesture is unaffected even in an already-poisoned process.
- *
- * So nothing here touches the hardware until the first click or keypress: the clips
- * are decoded through an `OfflineAudioContext`, and the real context is opened by
- * `adopt`, synchronously, on the gesture. Moves played before that are dropped, which
- * is intended — there is no way to make them audible, and queueing them up would fire
- * a burst later.
- *
- * The reverse mistake is just as costly: a context that is *already* playing survives
- * the interruptions above, so it is never closed and rebuilt speculatively. `adopt`
- * only replaces one it can prove is deaf — `interrupted`, or `running` with a clock
- * that has stopped advancing — and only from within a gesture, the one moment a
- * replacement can be born healthy.
- *
- * Every gesture starts its own resume attempt rather than joining one already in
- * flight, because a blocked `resume()` is not guaranteed to settle — see `unlock`.
+ * The board's sound effects, fired through Web Audio rather than `<audio>`: a source node
+ * has no decode latency and overlaps itself, which a reply landing mid-move needs.
  */
 @Injectable({
 	providedIn: 'root',
@@ -108,9 +82,8 @@ export class SoundService {
 	}
 
 	/**
-	 * Plays one clip. What a move sounds like is decided where its beats are planned —
-	 * `nextTransition` — because a move that travels two pieces is heard twice, and only
-	 * the board running those beats knows when each of them sets off.
+	 * Plays one clip. `nextTransition` decides what a move sounds like, since a move that
+	 * travels two pieces is heard twice and only the board knows when each beat sets off.
 	 */
 	play(sound: MoveSound, direction: SoundDirection = 'forward'): void {
 		if (!this.current()) {
@@ -124,10 +97,7 @@ export class SoundService {
 		}
 	}
 
-	/**
-	 * Fires one decoded clip, once it is known which one. A missing context means no
-	 * gesture has happened yet, which is the one case worth dropping silently.
-	 */
+	/** Fires one decoded clip. No context means no gesture yet, so the move is dropped. */
 	private playSource(source: string): void {
 		const context = this.context;
 		const buffer = this.buffers.get(source);
@@ -167,13 +137,8 @@ export class SoundService {
 	}
 
 	/**
-	 * A gesture is the browser's own precondition for playing audio, and WebKit's for
-	 * opening a context that is not deaf on arrival, so it is the only place a context
-	 * is ever built. It also always starts a *fresh* resume attempt: Firefox leaves
-	 * `resume()` pending — neither resolved nor rejected — for as long as autoplay is
-	 * blocked, so reusing an in-flight promise would mean the very gesture that lifts
-	 * the block never reaches `resume()`, and the context stays suspended for the rest
-	 * of the page's life.
+	 * The only place a context is built, and always a fresh resume attempt: Firefox leaves
+	 * `resume()` pending while autoplay is blocked, so a reused promise would never settle.
 	 */
 	private unlock(): void {
 		const context = this.adopt();
@@ -194,10 +159,14 @@ export class SoundService {
 		void this.resume(this.context);
 	}
 
-	/** Returns the context to play through, building one only when there is none to keep. */
+	/**
+	 * The context to play through, only ever built inside a gesture: WebKit poisons one left
+	 * open but not running when the system interrupted it, and the poison outlives a reload.
+	 */
 	private adopt(): AudioContext | undefined {
 		const context = this.context;
 
+		// One that is already playing survives interruption, so it is never replaced blindly.
 		if (undefined !== context && !this.isDeaf(context)) {
 			return context;
 		}
@@ -211,9 +180,8 @@ export class SoundService {
 	}
 
 	/**
-	 * Whether the context can no longer reach the speakers. A poisoned one keeps
-	 * reporting `running`, so the only tell is `currentTime`: on a live context it
-	 * advances with the audio clock whether or not anything is playing.
+	 * Whether the context can still reach the speakers. A poisoned one keeps reporting
+	 * `running`, so the only tell is `currentTime`, which advances on a live context.
 	 */
 	private isDeaf(context: AudioContext): boolean {
 		const state = this.state(context);
@@ -261,10 +229,8 @@ export class SoundService {
 	}
 
 	/**
-	 * Picks a source for `sound`, uniformly among every variant except the one played
-	 * last. Pure chance would repeat one move in five, and a repeat reads as a stuck
-	 * sound rather than as variety. The two directions share the counter, so stepping
-	 * back and forward again does not land on the same clip either.
+	 * Picks a variant uniformly among all but the one played last, since a repeat reads as a
+	 * stuck sound. Both directions share the counter, so stepping back and forward varies too.
 	 */
 	private pick(sound: MoveSound, direction: SoundDirection): string | undefined {
 		const sources = SOUND_SOURCE[direction][sound];
@@ -274,8 +240,8 @@ export class SoundService {
 			return sources[0];
 		}
 
-		// Draws uniformly from the `length - 1` variants that are not `last`, then
-		// shifts past it — rather than re-rolling, which has no bound on its runtime.
+		// Draws from the `length - 1` variants that are not `last`, then shifts past it:
+		// re-rolling would have no bound on its runtime.
 		const drawn = Math.floor(Math.random() * (sources.length - (undefined === last ? 0 : 1)));
 		const index = undefined !== last && drawn >= last ? drawn + 1 : drawn;
 
@@ -293,10 +259,8 @@ export class SoundService {
 	}
 
 	/**
-	 * Fetches and decodes every clip once; the whole set is a few kilobytes. The decode
-	 * runs on an `OfflineAudioContext`, which opens no output device and so cannot be
-	 * poisoned, and the buffers it produces belong to no context in particular — they
-	 * outlive every replacement `adopt` makes.
+	 * Decodes every clip once through an `OfflineAudioContext`, which opens no output device
+	 * and cannot be poisoned. Its buffers belong to no context, so they outlive every `adopt`.
 	 */
 	private preload(): void {
 		if ('undefined' === typeof OfflineAudioContext) {

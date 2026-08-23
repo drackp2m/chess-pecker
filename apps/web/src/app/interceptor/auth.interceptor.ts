@@ -10,11 +10,8 @@ import { HttpError } from '@app/util/http-error';
 const AUTH_URL = `${API_BASE_URL}/auth`;
 
 /**
- * The endpoints that *are* the session. A 401 from any of them is the answer, not a
- * symptom: `login` means the credentials are wrong — `SessionStore` turns that into a
- * readable message — and `refresh-session` means the refresh cookie is gone too, so
- * asking it again is only how a loop would start. Leaving them out is also what keeps
- * the renewal from waiting on itself.
+ * The endpoints that *are* the session: a 401 from one of them is the answer, not a symptom.
+ * Leaving them out is also what keeps the renewal from waiting on itself.
  */
 const SESSION_URLS = [
 	`${AUTH_URL}/login`,
@@ -24,15 +21,8 @@ const SESSION_URLS = [
 ];
 
 /**
- * The access cookie expires long before the refresh one, so a session that is still valid
- * starts answering 401 partway through. Renewing it and repeating the request is what keeps
- * that from surfacing as a random failure in the middle of a training: the refresh cookie is
- * scoped to `/auth/refresh-session`, so no other endpoint can renew itself.
- *
- * Doing it *once* is a two-sided problem. Requests that fail together share one renewal,
- * which `SessionStore.refresh()` owns; requests that start after it, while the cookie is
- * known to be expired, wait for the new one instead of spending a round trip on a 401
- * nobody needs to hear again.
+ * The access cookie expires long before the refresh one, so a valid session starts answering
+ * 401 partway through; renewing and repeating keeps that out of the middle of a training.
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
 	if (!request.url.startsWith(API_BASE_URL)) {
@@ -61,8 +51,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 				catchError(() => {
 					endSession(sessionStore, router);
 
-					// The caller asked about its own request: answering with the error of a
-					// renewal it never made would bury the 401 it has to handle.
+					// Answering with the error of a renewal the caller never made would bury its 401.
 					return throwError(() => error);
 				}),
 			);
@@ -71,9 +60,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 };
 
 /**
- * Held back until the renewal in flight settles. A renewal that fails is not this request's
- * business: it goes out exactly as it was and answers with whatever the API says about it,
- * which is how the caller finds out rather than being told about a call it never made.
+ * Held back until the renewal in flight settles. A failed renewal is not this request's
+ * business: it goes out as it was and answers with whatever the API says about it.
  */
 function whenRenewed(sessionStore: SessionStore): Observable<unknown> {
 	const renewal = sessionStore.pendingRefresh();
@@ -86,19 +74,16 @@ function whenRenewed(sessionStore: SessionStore): Observable<unknown> {
 }
 
 /**
- * A 401 is only worth a renewal while there is a session to renew. Once one has been refused
- * the store knows it is over, and everything that follows is answered by the API itself
- * instead of queueing behind another pointless round trip to `refresh-session`.
+ * A 401 is only worth a renewal while there is a session to renew: once one is refused,
+ * everything after it is answered by the API instead of queueing behind another round trip.
  */
 function isRenewable(sessionStore: SessionStore, error: unknown): boolean {
 	return HttpError.hasStatus(error, HttpStatusCode.Unauthorized) && !sessionStore.isAnonymous();
 }
 
 /**
- * The renewal was refused, so the session really is over. Whoever was logged in is pulled
- * out of wherever they were; an anonymous visitor is already where they belong, and on a
- * reload it is `authenticatedGuard` that decides — moving them here would bounce every
- * visitor to the login page just for loading the app without cookies.
+ * The session really is over, so whoever was logged in is pulled out. An anonymous visitor
+ * is left alone: `authenticatedGuard` decides on reload, or every visitor would be bounced.
  */
 function endSession(sessionStore: SessionStore, router: Router): void {
 	if (sessionStore.isAuthenticated()) {

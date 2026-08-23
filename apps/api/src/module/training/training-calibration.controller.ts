@@ -10,9 +10,8 @@ import { GetCalibrationRoundPuzzlesUseCase } from './use-case/get-calibration-ro
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
 
 /**
- * Sólo lecturas: quién abre una ronda y qué decide con ella es del dispositivo, que es donde
- * vive el dominio desde que la aplicación es local-first. Lo que se escribe entra por
- * `POST /sync/training`.
+ * Reads only: opening a round and deciding on it belong to the device, where the domain
+ * lives. Everything written comes in through `POST /sync/training`.
  */
 @Controller('training/:uuid/calibration')
 export class TrainingCalibrationController {
@@ -32,7 +31,7 @@ export class TrainingCalibrationController {
 		return this.calibrationRoundRepository.getManyByTraining(training.uuid);
 	}
 
-	/** Los que faltan por intentar de una ronda abierta, con el tamaño del reparto entero. */
+	/** What is left to attempt in an open round, with the size of the whole deal. */
 	@Get('round/:roundUuid/puzzle')
 	async listRoundPuzzles(
 		@CurrentUser() user: User,

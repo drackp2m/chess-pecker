@@ -18,9 +18,7 @@ async function bootstrap(): Promise<void> {
 
 	useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-	// Express' default body-parser limit (100kb) is well under what a puzzle import batch
-	// needs: `ImportPuzzleRequestDto` allows up to 5000 puzzles per request, which serializes
-	// to close to 1MB.
+	// Express' default 100kb is well under a puzzle import batch: 5000 puzzles is close to 1MB.
 	app.useBodyParser('json', { limit: '2mb' });
 
 	app.setGlobalPrefix(...BootstrapHelper.globalPrefix(apiConfig));

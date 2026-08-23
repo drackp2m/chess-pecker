@@ -49,10 +49,8 @@ export interface BoardPlayback {
 	/** The board that beat runs over, or `undefined` for the one the state holds. */
 	readonly board: Signal<ChessPosition | undefined>;
 	/**
-	 * Whether the beat on screen is still crossing the board. Everything that must
-	 * wait for a move to land reads it: the piece being taken, which stays standing
-	 * until it is reached, the check that lights only once it is given, and the board
-	 * itself, which takes no move while it is in the middle of playing one.
+	 * Whether the beat on screen is still crossing. Everything that must wait for a move to
+	 * land reads it: the piece being taken, the check lighting up, the board itself.
 	 */
 	readonly isSliding: Signal<boolean>;
 }
@@ -69,30 +67,19 @@ interface PlaybackRun {
 }
 
 /**
- * Runs a transition beat by beat, and voices each one: a beat is a piece setting off,
- * which is exactly what a move sounds like, so the clips are fired here rather than
- * where the move was played.
- *
- * Only the transition is watched. The setting and the orientation are read as each
- * beat starts, deliberately outside the reactive graph, because a board is redrawn
- * long after a move for all sorts of reasons and none of them may bring an old slide
- * back to life. Turning the animation on would otherwise send a piece that has been
- * sitting on its square since the last move sailing in from the one it left, and
- * flipping the board would replay that move backwards.
- *
- * The key is the tick alone: it already identifies the beat across the whole session,
- * and anything added to it — the drawing order of the square, say — would change under
- * a flip and be read as a slide the piece had not run yet.
+ * Runs a transition beat by beat and voices each one, since a beat is a piece setting off,
+ * which is exactly what a move sounds like.
  */
 export function createBoardPlayback(input: BoardPlaybackInput): BoardPlayback {
 	const run = createRun(input);
 	const stage = computed(() => input.transition()?.stages[run.beat()]);
 
-	// A transition arriving always starts from its first beat, whatever the one it
-	// replaced had reached — and one going away takes the beats it had left with it.
+	// A transition arriving starts from its first beat, whatever the one it replaced reached.
 	effect(() => {
 		input.transition();
 
+		// Only the transition is watched: the setting and the orientation are read untracked,
+		// or turning the animation on would send a settled piece sailing in from its old square.
 		untracked(() => {
 			run.scheduled.cancel();
 			run.beat.set(0);
@@ -132,9 +119,8 @@ function start(run: PlaybackRun): void {
 }
 
 /**
- * Holds the beat open for as long as its pieces are still crossing. A beat with nothing
- * to slide is over the instant it is drawn, and so is one the setting silenced: neither
- * has anything for the rest of the board to wait on.
+ * Holds the beat open while its pieces are crossing. One with nothing to slide is over the
+ * instant it is drawn, since it gives the rest of the board nothing to wait on.
  */
 function hold(run: PlaybackRun): void {
 	run.settling.cancel();
@@ -184,13 +170,8 @@ function advance(run: PlaybackRun): void {
 }
 
 /**
- * The piece this beat sets off, heard as it goes. Every beat is voiced, which is why
- * the sound is fired from here and not from the store that played the move: a move
- * travelling two pieces sounds twice, each clip on the beat that earns it — the rook
- * going round before its king, the pawn stepping back before it is taken en passant.
- *
- * Which clip is the transition's own business; all this decides is when it is heard,
- * and that a rewind says it the other way round.
+ * The piece this beat sets off, heard as it goes: a move travelling two pieces sounds
+ * twice, each clip on the beat that earns it. Which clip is the transition's business.
  */
 function announce(run: PlaybackRun): void {
 	const transition = untracked(() => run.input.transition());
@@ -202,9 +183,8 @@ function announce(run: PlaybackRun): void {
 }
 
 /**
- * How long a beat stays up. A beat that slides lasts as long as the slide; one the
- * setting silenced is over the instant it is drawn, so it borrows the pause the
- * opponent's own moves are given rather than flashing past.
+ * How long a beat stays up. One the setting silenced borrows the pause given to the
+ * opponent's moves rather than flashing past.
  */
 function holdFor(input: BoardPlaybackInput): number {
 	return untracked(() => {

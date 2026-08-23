@@ -168,7 +168,7 @@ function startsMonth(date: Date): boolean {
 	return monday.getUTCMonth() === date.getUTCMonth() && DAYS_PER_WEEK >= monday.getUTCDate();
 }
 
-/** Lunes-primero: `getUTCDay()` da domingo=0, así que se desplaza para que lunes quede en 0. */
+/** Monday-first: `getUTCDay()` puts Sunday at 0, so it is shifted to land Monday there. */
 function mostRecentMonday(date: Date): Date {
 	return addUtcDays(date, -((date.getUTCDay() + 6) % 7));
 }

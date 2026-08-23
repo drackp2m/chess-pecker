@@ -7,13 +7,8 @@ import { TrainingCycle } from './training-cycle.entity';
 import { TrainingPuzzle } from './training-puzzle.entity';
 
 /**
- * El orden de los ejercicios en ese ciclo, materializado entero al crearlo con una
- * inserción masiva de X filas. No se calcula al vuelo para que el usuario vea siempre la
- * misma secuencia aunque mañana cambie el algoritmo de barajado, y para que el histórico de
- * ciclos anteriores quede intacto.
- *
- * El único por `(cycle, trainingPuzzle)` es el que impide que un barajado con un bug
- * duplique un ejercicio dentro de la pasada.
+ * The exercise order for one cycle, materialized in full on creation: computing it on the
+ * fly would change the sequence under the user whenever the shuffle does.
  */
 @Entity({ repository: () => TrainingCycleItemRepository })
 @Unique({ properties: ['cycle', 'position'] })
@@ -25,7 +20,7 @@ export class TrainingCycleItem extends SyncableBaseEntity<TrainingCycleItem> {
 	@ManyToOne(() => TrainingPuzzle, { deleteRule: 'cascade' })
 	trainingPuzzle!: TrainingPuzzle;
 
-	/** 0..X-1, orden de presentación. */
+	/** 0..X-1, the order they are presented in. */
 	@Property()
 	position!: number;
 }

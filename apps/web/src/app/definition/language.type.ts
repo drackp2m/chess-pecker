@@ -2,9 +2,9 @@
  * ToDo => Try to add this languages
  * + en-GB => English
  * + ru-RU => Русский
- * - hi-IN => हिन्दी
+ * + hi-IN => हिन्दी
  * + es-ES => Español
- * - fr-FR => Français
+ * + fr-FR => Français
  * - de-DE => Deutsch
  * - po-BR => Português
  * - tr-TR => Türkçe

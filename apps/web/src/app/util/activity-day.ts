@@ -22,8 +22,8 @@ export function emptyActivityDay(date: string): TrainingActivityDay {
 }
 
 /**
- * Todos los días entre dos fechas, con los que falten a cero. El API sólo devuelve días
- * con actividad, así que sin esto un hueco no se distingue de un día nunca pedido.
+ * Every day between two dates, the missing ones zeroed. The API only returns days with
+ * activity, so without this a gap is indistinguishable from a day never asked for.
  */
 export function fillActivityDays(
 	days: readonly TrainingActivityDay[],

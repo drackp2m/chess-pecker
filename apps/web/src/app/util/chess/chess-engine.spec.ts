@@ -179,10 +179,8 @@ describe('draws', () => {
 	});
 
 	/**
-	 * `e4` records an en passant target that no black pawn can answer, so it changes
-	 * none of the moves available and the position it leaves is, by the rule, the same
-	 * one the knight shuffle keeps coming back to. The double push is also the last
-	 * irreversible move of the line, which is what lets that position repeat at all.
+	 * `e4` records an en passant target no black pawn can answer, so by the rule it leaves the
+	 * same position the knight shuffle keeps returning to.
 	 */
 	it('counts a position whose en passant target nobody could have used', () => {
 		const line = ['e4', 'Nf6', 'Nf3', 'Ng8', 'Ng1', 'Nf6', 'Nf3', 'Ng8', 'Ng1'];
