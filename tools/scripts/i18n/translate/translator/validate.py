@@ -5,9 +5,22 @@ import sys
 from contextlib import redirect_stdout
 from dataclasses import dataclass
 
+from .context import contains_word
 from .placeholders import PH_RE, salvage_missing_markers, strip_hallucinated_placeholders
 
 FENCE_RE = re.compile(r"^```[A-Za-z]*\n?|\n?```$")
+STOP_MARKERS = (
+    "<end_of_turn>",
+    "<start_of_turn>",
+    "<|im_end|>",
+    "<|im_start|>",
+    "<|endoftext|>",
+    "<eos>",
+    "<bos>",
+    "<pad>",
+)
+THINK_CLOSED_RE = re.compile(r"^.*</think\s*>", re.DOTALL)
+THINK_OPEN_RE = re.compile(r"<think\s*>.*$", re.DOTALL)
 FENCED_RE = re.compile(r"⟦(.*?)⟧", re.DOTALL)
 LEAD_RE = re.compile(
     r"^\s*(?:here (?:is|'s)[^:\n]{0,40}|the translation[^:\n]{0,40}|translation|"
@@ -41,6 +54,8 @@ SCRIPTS = {
 }
 MAX_RATIO = 2.0
 MIN_RATIO = 0.35
+STEM_FLOOR = 4
+STEM_TRIM = 2
 
 
 @dataclass(frozen=True)
@@ -48,6 +63,24 @@ class Issue:
     code: str
     detail: str
     hard: bool = False
+    pairs: tuple[tuple[str, str], ...] = ()
+
+
+# A model that keeps talking after its own end-of-turn token repeats it dozens
+# of times; the answer is whatever came before the first one.
+def cut_at_stop(text: str) -> tuple[str, bool]:
+    found = [index for index in (text.find(marker) for marker in STOP_MARKERS) if index != -1]
+
+    if not found:
+        return text, False
+
+    return text[: min(found)], True
+
+
+def strip_control(text: str) -> str:
+    without_thoughts = THINK_OPEN_RE.sub("", THINK_CLOSED_RE.sub("", text))
+
+    return cut_at_stop(without_thoughts)[0].strip()
 
 
 def unquote(text: str) -> str:
@@ -92,7 +125,7 @@ def extract(text: str, prefer: str) -> str:
 
 
 def clean(text: str, source: str, prefer: str = "first") -> str:
-    cleaned = FENCE_RE.sub("", str(text).strip()).strip()
+    cleaned = FENCE_RE.sub("", strip_control(str(text))).strip()
     cleaned = LEAD_RE.sub("", cleaned).strip()
     cleaned = unquote(cleaned)
 
@@ -142,10 +175,14 @@ def check_length(text: str, source: str) -> list[Issue]:
     return []
 
 
-def contains_word(haystack: str, needle: str) -> bool:
-    pattern = r"(?<!\w)" + re.escape(needle.casefold())
+# A glossary term arrives in its dictionary form and the sentence declines it:
+# "попытка" is written "попытку", "manche" turns up as "manches". Matching the
+# stem is what keeps an inflected language from failing every single check.
+def stem(term: str) -> str:
+    head, _, last = term.rpartition(" ")
+    trimmed = last[: max(STEM_FLOOR, len(last) - STEM_TRIM)]
 
-    return re.search(pattern, haystack.casefold()) is not None
+    return f"{head} {trimmed}" if head else trimmed
 
 
 def check_terms(text: str, source: str, terms: list[tuple[str, str]]) -> list[Issue]:
@@ -155,13 +192,15 @@ def check_terms(text: str, source: str, terms: list[tuple[str, str]]) -> list[Is
         if not target or not contains_word(source, term):
             continue
 
-        if not contains_word(text, target):
-            ignored.append(f"{term} → {target}")
+        if not contains_word(text, stem(target)):
+            ignored.append((term, target))
 
     if not ignored:
         return []
 
-    return [Issue("glossary", f"sin usar {', '.join(ignored)}")]
+    listed = ", ".join(f"{term} → {target}" for term, target in ignored)
+
+    return [Issue("glossary", f"sin usar {listed}", pairs=tuple(ignored))]
 
 
 def bare(text: str, keep: tuple[str, ...]) -> str:
@@ -222,6 +261,10 @@ def validate(
 
 def reason_of(issues: list[Issue]) -> str:
     return "; ".join(f"{issue.code} ({issue.detail})" for issue in issues)
+
+
+def demanded(issues: list[Issue]) -> tuple[tuple[str, str], ...]:
+    return tuple(pair for issue in issues for pair in issue.pairs)
 
 
 def drop_repeats(text: str) -> str:

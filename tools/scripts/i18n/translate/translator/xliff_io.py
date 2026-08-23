@@ -19,6 +19,19 @@ def local_name(element) -> str:
     return etree.QName(element).localname
 
 
+# The export side creates its directory too. Doing it here, and up front, is
+# what keeps a mistyped -o from costing a model load and a translated unit.
+def ensure_parent(path: Path) -> None:
+    path.expanduser().parent.mkdir(parents=True, exist_ok=True)
+
+
+def output_for(path: Path, requested: Path | None, tag: str = "translated") -> Path:
+    if requested is not None:
+        return requested
+
+    return path.with_name(f"{path.stem}.{tag}{path.suffix}")
+
+
 def read_xliff(path: Path):
     parser = etree.XMLParser(
         remove_blank_text=False,

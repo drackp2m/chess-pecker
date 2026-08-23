@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
+from .context import parse_glossary, split_rules, useful_keep, useful_rules, useful_terms
+from .models import INSTRUCT, TRANSLATE
 from .placeholders import marker_position
 from .xliff_io import (
     expected_markers_for,
@@ -17,30 +20,36 @@ from .xliff_io import (
     target_to_prompt_text,
 )
 
-KEEP_PREFIX = "No traducir nunca:"
 OPEN, CLOSE = "⟦", "⟧"
-PROFILES = ("instruct", "translate")
 INJECTIONS = ("none", "terms", "full")
 OUTDATED_SUB_STATE = "chesspecker:outdated"
 REVIEW_SUB_STATE = "chesspecker:review"
+ANSWER_RE = re.compile(r"^\s*(\d{1,3})\s*[.)\]:>–-]?\s*(.*\S)\s*$")
 
-RULES = """\
-Cada encargo trae unas notas y, al final, el texto a traducir entre ⟦ y ⟧.
-
+CORE_RULES = """\
 - Traduce sólo lo que va entre ⟦ y ⟧, y responde con la traducción y nada más: sin las marcas, \
 sin comillas alrededor, sin explicaciones y sin repetir el original.
 - Las notas son para ti: dicen qué es el texto y cómo debe sonar. No se traducen, no se resumen y \
 no aparecen en la respuesta ni en parte.
 - No dejes ni una palabra en el idioma de origen: la respuesta va entera en el idioma de destino, \
 salvo lo que el vocabulario marque como intraducible.
-- Copia la puntuación final del original: si no acaba en punto, tu traducción tampoco.
+- Copia la puntuación final del original: si no acaba en punto, tu traducción tampoco.\
+"""
 
-Marcadores:
+MARKER_RULES = """\
+## Marcadores
 - Los que tienen la forma __PH_s1__ son huecos que la aplicación rellena al vuelo.
 - Cópialos tal cual, una sola vez cada uno, sin traducirlos ni renombrarlos.
 - Colócalos donde los pida la gramática del idioma de destino.
 - No inventes marcadores que no estén en el origen.\
 """
+
+CONTEXT_PREFIX = "- Qué es: "
+DEMAND_PREFIX = "- Usa sí o sí estas palabras: "
+
+MIXED_MARKERS = (
+    "- Sólo llevan marcadores los textos donde ya aparecen; a los demás no les añadas ninguno."
+)
 
 EXAMPLE = """\
 Ejemplo:
@@ -53,7 +62,6 @@ SECTIONS = (
     ("app", "La aplicación"),
     ("language", "El idioma de destino"),
     ("scope", "Esta sección de la interfaz"),
-    ("glossary", "Vocabulario obligado"),
 )
 
 
@@ -81,29 +89,36 @@ class Block:
     source_lang: str
     target_lang: str
     notes: dict[str, list[str]] = field(default_factory=dict)
-    profile: str = "instruct"
+    profile: str = INSTRUCT
     injection: str = "terms"
 
     @property
-    def keep(self) -> tuple[str, ...]:
-        for line in note_text(self.notes, "glossary").splitlines():
-            if line.startswith(KEEP_PREFIX):
-                return tuple(
-                    term.strip() for term in line[len(KEEP_PREFIX) :].split(",") if term.strip()
-                )
+    def glossary(self):
+        return parse_glossary(note_text(self.notes, "glossary"))
 
-        return ()
+    @property
+    def keep(self) -> tuple[str, ...]:
+        return self.glossary[1]
+
+    @property
+    def rules(self) -> list[str]:
+        return split_rules(note_text(self.notes, "app"))[1]
+
+    def section(self, category: str) -> str:
+        text = note_text(self.notes, category)
+
+        return split_rules(text)[0] if category == "app" else text
 
     @property
     def system(self) -> str:
         parts = [
             f"Eres un traductor profesional de {self.source_lang} a "
             f"{self.target_lang}, especializado en interfaces de software.",
-            RULES,
+            CORE_RULES,
         ]
 
         for category, heading in SECTIONS:
-            text = note_text(self.notes, category)
+            text = self.section(category)
 
             if text:
                 parts.append(f"## {heading}\n{text}")
@@ -147,46 +162,23 @@ class Unit:
 
         return lines
 
-    def prompt(self, target_lang: str, attempt: int = 0, reason: str = "") -> str:
-        notes = self.note_lines()
-        parts = ["Notas (no se traducen):\n" + "\n".join(notes)] if notes else []
+    @property
+    def context(self) -> str:
+        return " ".join(note_text(self.notes, "context").split())
 
-        if attempt and reason:
-            parts.append(
-                f"Tu respuesta anterior se rechazó: {reason}. Responde otra vez con "
-                "sólo la traducción, corrigiendo eso."
-            )
+    def demand_lines(self) -> list[str]:
+        pairs = [f"«{target}» para «{term}»" for term, target in self.terms if target]
 
-        if attempt > 1 and self.markers:
-            parts.append(EXAMPLE)
+        return [DEMAND_PREFIX + ", ".join(pairs)] if pairs else []
 
-        parts.append(
-            f"Traduce al {target_lang} el texto que va entre {OPEN} y {CLOSE}, y responde sólo "
-            f"con la traducción:\n{OPEN}{self.source}{CLOSE}"
-        )
-
-        return "\n\n".join(parts)
-
-    def note_lines(self) -> list[str]:
+    def detail_lines(self) -> list[str]:
         lines = []
-        context = note_text(self.notes, "context")
-        terms = note_text(self.notes, "term")
         params = note_text(self.notes, "param")
 
-        if context:
-            flattened = " ".join(context.split())
-            lines.append(f"- Qué es este texto: {flattened}")
-
-        if terms:
-            lines.append(f"- Términos fijados: {terms}")
-
-        if params:
+        if params and self.markers:
             lines.append(f"- Qué rellena cada hueco: {params}")
 
         lines.extend(self.markers_note())
-
-        if not self.markers:
-            lines.append("- El texto no lleva marcadores: no añadas ninguno.")
 
         if self.outdated and self.previous:
             lines.append(
@@ -196,11 +188,177 @@ class Unit:
 
         return lines
 
+    def note_lines(self) -> list[str]:
+        lines = [f"{CONTEXT_PREFIX}{self.context}"] if self.context else []
+
+        return self.demand_lines() + lines + self.detail_lines()
+
+
+@dataclass
+class Batch:
+    block: Block
+    units: list[Unit]
+    attempt: int = 0
+    reason: str = ""
+    demand: tuple[tuple[str, str], ...] = ()
+
+    @property
+    def size(self) -> int:
+        return len(self.units)
+
+    @property
+    def single(self) -> bool:
+        return self.size == 1
+
+    @property
+    def texts(self) -> list[str]:
+        return [unit.source for unit in self.units]
+
+    @property
+    def has_markers(self) -> bool:
+        return any(unit.markers for unit in self.units)
+
+    def marker_section(self) -> str:
+        if not self.has_markers:
+            return ""
+
+        if all(unit.markers for unit in self.units):
+            return MARKER_RULES
+
+        return f"{MARKER_RULES}\n{MIXED_MARKERS}"
+
+    def named_terms(self) -> set[str]:
+        return {source.casefold() for unit in self.units for source, _ in unit.terms}
+
+    def glossary_section(self) -> str:
+        terms, keep = self.block.glossary
+        lines = [term.line for term in useful_terms(terms, self.texts, self.named_terms())]
+        names = useful_keep(keep, self.texts)
+
+        if names:
+            lines.append(f"Se dejan como están, sin traducir: {', '.join(names)}")
+
+        if not lines:
+            return ""
+
+        return "## Vocabulario obligado\n" + "\n".join(lines)
+
+    def rules_section(self) -> str:
+        rules = useful_rules(self.block.rules, self.texts)
+
+        if not rules:
+            return ""
+
+        return "## Reglas que aplican aquí\n" + "\n".join(f"- {rule}" for rule in rules)
+
+    def retry_section(self) -> str:
+        if not (self.attempt and self.reason):
+            return ""
+
+        lines = [
+            f"Tu respuesta anterior se rechazó: {self.reason}. Responde otra vez con "
+            "sólo la traducción, corrigiendo eso."
+        ]
+
+        for term, target in self.demand:
+            lines.append(
+                f"El original dice «{term}»: tu traducción tiene que llevar la palabra "
+                f"«{target}», con la forma que pida la frase."
+            )
+
+        return "\n".join(lines)
+
+    def example_section(self) -> str:
+        return EXAMPLE if self.attempt > 1 and self.has_markers else ""
+
+    def head(self) -> list[str]:
+        parts = (
+            self.rules_section(),
+            self.marker_section(),
+            self.glossary_section(),
+            self.retry_section(),
+            self.example_section(),
+        )
+
+        return [part for part in parts if part]
+
+    def one(self) -> str:
+        unit = self.units[0]
+        notes = unit.note_lines()
+        parts = []
+
+        if notes:
+            parts.append("## Notas (no se traducen)\n" + "\n".join(notes))
+
+        parts.append(
+            f"Traduce al {self.block.target_lang} el texto que va entre {OPEN} y {CLOSE}, "
+            f"y responde sólo con la traducción:\n{OPEN}{unit.source}{CLOSE}"
+        )
+
+        return "\n\n".join(parts)
+
+    # The export hangs the same group note on every key of a group, so inside a
+    # batch it would arrive ten times over: it is written once and pointed at.
+    def context_line(self, unit: Unit, index: int, seen: dict[str, int]) -> str:
+        first = seen.setdefault(unit.context, index)
+
+        if first == index:
+            return f"  {CONTEXT_PREFIX}{unit.context}"
+
+        return f"  {CONTEXT_PREFIX}lo mismo que en el {first}."
+
+    def many(self) -> str:
+        lines = []
+        seen: dict[str, int] = {}
+
+        for index, unit in enumerate(self.units, 1):
+            lines.append(f"{index} {OPEN}{unit.source}{CLOSE}")
+            lines.extend(f"  {line}" for line in unit.demand_lines())
+
+            if unit.context:
+                lines.append(self.context_line(unit, index, seen))
+
+            lines.extend(f"  {note}" for note in unit.detail_lines())
+
+        return (
+            f"Traduce al {self.block.target_lang} los {self.size} textos numerados. Responde "
+            f"con {self.size} líneas, cada una con su número, un espacio y sólo la traducción: "
+            f"sin las marcas {OPEN} {CLOSE}, sin las notas y sin ninguna línea de más.\n\n"
+            + "\n".join(lines)
+        )
+
+    def render(self) -> str:
+        return "\n\n".join([*self.head(), self.one() if self.single else self.many()])
+
+
+# Numbering only has to climb, not to be complete: a model that skips one line
+# used to cost the whole tail of the batch, and every line is validated against
+# its own source anyway.
+def parse_answers(text: str, count: int) -> dict[int, str]:
+    answers: dict[int, str] = {}
+    last = 0
+
+    for line in text.splitlines():
+        match = ANSWER_RE.match(line)
+
+        if match is None:
+            continue
+
+        index = int(match.group(1))
+
+        if not last < index <= count:
+            continue
+
+        answers[index] = match.group(2).strip()
+        last = index
+
+    return answers
+
 
 # TranslateGemma's template has no slot for anything but the text, so the only
 # way terminology reaches it is inside the text itself — which is what Google
 # recommends, and what the validator is there to police.
-def injected(unit: "Unit", injection: str) -> str:
+def injected(unit: Unit, injection: str) -> str:
     if injection == "none":
         return unit.source
 
@@ -218,7 +376,7 @@ def injected(unit: "Unit", injection: str) -> str:
     return "\n".join(lines) + f"\n{OPEN}{unit.source}{CLOSE}"
 
 
-def translate_content(block: Block, unit: "Unit") -> list[dict[str, str]]:
+def translate_content(block: Block, unit: Unit) -> list[dict[str, str]]:
     return [
         {
             "type": "text",
@@ -229,18 +387,20 @@ def translate_content(block: Block, unit: "Unit") -> list[dict[str, str]]:
     ]
 
 
-def build_messages(block: Block, unit: "Unit", attempt: int = 0, reason: str = "") -> list[dict]:
-    if block.profile == "translate":
-        return [{"role": "user", "content": translate_content(block, unit)}]
+def build_messages(batch: Batch) -> list[dict]:
+    block = batch.block
+
+    if block.profile == TRANSLATE:
+        return [{"role": "user", "content": translate_content(block, batch.units[0])}]
 
     return [
         {"role": "system", "content": block.system},
-        {"role": "user", "content": unit.prompt(block.target_lang, attempt, reason)},
+        {"role": "user", "content": batch.render()},
     ]
 
 
-def fenced(block: Block, unit: "Unit") -> bool:
-    return block.profile == "instruct" or injected(unit, block.injection) != unit.source
+def fenced(block: Block, unit: Unit) -> bool:
+    return block.profile == INSTRUCT or injected(unit, block.injection) != unit.source
 
 
 def unit_of(element, scope: str) -> Unit | None:
@@ -283,7 +443,7 @@ def blocks_of(
     file_element,
     source_lang: str,
     target_lang: str,
-    profile: str = "instruct",
+    profile: str = INSTRUCT,
     injection: str = "terms",
 ) -> tuple[Block, list[Unit]]:
     scope = file_element.get("id") or ""
