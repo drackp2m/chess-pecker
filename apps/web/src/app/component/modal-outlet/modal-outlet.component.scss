@@ -1,6 +1,6 @@
 #modal-outlet {
 	position: absolute;
-	z-index: 10;
+	z-index: var(--elevation-modal);
 	top: 0;
 
 	width: 100%;

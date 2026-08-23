@@ -2,9 +2,11 @@ import { Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ActivityHeatmapComponent } from '@app/component/activity-heatmap/activity-heatmap.component';
+import { SegmentedControlComponent } from '@app/component/segmented-control/segmented-control.component';
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
+import { SegmentDirective } from '@app/directive/segment/segment.directive';
 import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
 import { toProgramSummary } from '@app/page/dashboard/program-summary';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
@@ -21,7 +23,14 @@ const MAX_ACTIVITY_MONTHS = Math.max(...ACTIVITY_RANGES);
 @Component({
 	templateUrl: './dashboard.page.html',
 	styleUrl: './dashboard.page.scss',
-	imports: [ButtonDirective, RouterLinkDirective, I18nPipe, ActivityHeatmapComponent],
+	imports: [
+		ButtonDirective,
+		RouterLinkDirective,
+		I18nPipe,
+		ActivityHeatmapComponent,
+		SegmentedControlComponent,
+		SegmentDirective,
+	],
 	providers: [provideI18nScope('dashboard')],
 })
 export class DashboardPage {

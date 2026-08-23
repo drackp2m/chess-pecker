@@ -29,13 +29,18 @@ let lastTick = 0;
 const play = vi.fn();
 
 function stageOf(
-	slides: BoardSlideStep[],
+	slides: Pick<BoardSlideStep, 'from' | 'to'>[],
 	board?: ChessPosition,
 	sound: MoveSound = 'move',
 ): BoardStage {
 	lastTick += 1;
 
-	return { slides, board, sound, tick: lastTick };
+	return {
+		slides: slides.map((step) => ({ ...step, taken: undefined })),
+		board,
+		sound,
+		tick: lastTick,
+	};
 }
 
 /** A move across the board, under a tick of its own the way the stores hand them out. */

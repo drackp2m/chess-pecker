@@ -11,6 +11,10 @@
 		--safe-offset-bottom: max(var(--safe-area-bottom), var(--spacing-2));
 		--nav-height: calc(56px + var(--safe-offset-bottom));
 
+		@each $name, $value in var.$elevation {
+			--elevation-#{$name}: #{$value};
+		}
+
 		@each $size, $value in var.$spacing {
 			--spacing-#{$size}: #{$value};
 		}

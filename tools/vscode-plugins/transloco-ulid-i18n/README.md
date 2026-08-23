@@ -82,6 +82,17 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   feeds completion back, and the import plus the member in the `I18nParams` union, which is what
   types the pipe. The component still needs its
   `provideI18nScope('<name>')` by hand, which will only accept the scope once it has its first key.
+- **Export / import** — `i18n: Export translations to XLIFF` picks the target languages and whether
+  to send everything or only what has no target yet, and writes one bilingual **XLIFF 2.0** file per
+  language into `translations/`. Each unit carries the ULID as its `id`, the constant
+  (`AuthI18n.USERNAME`), where it is used and the declared param types as notes, and every
+  `{{ param }}` as an `<originalData>`/`<ph>` pair, so a translator gets an atomic placeholder chip
+  instead of braces they can typo. `i18n: Import translations from XLIFF` reads them back: existing
+  keys are merged into the `<lang>.json` files in `keys.ts` order, and units whose ULID is not
+  declared yet are offered in a multi-select — the ones you tick are appended to `keys.ts` (named
+  from the exported note, or slugged from the source text) with their source written to the default
+  language. Placeholders that changed shape in the target are reported without blocking the rest.
+  Both commands run the same code as `pnpm i18n:export` / `pnpm i18n:import`.
 
 ## Running it
 
@@ -105,11 +116,12 @@ Opening the repo natively instead (no container) is the same command against `~/
 
 ## Settings
 
-| Setting                                 | Default | Meaning                                                           |
-| --------------------------------------- | ------- | ----------------------------------------------------------------- |
-| `translocoUlidI18n.langs`               | `[]`    | Languages to resolve; empty uses `tools/scripts/i18n/config.mjs`. |
-| `translocoUlidI18n.inlineText`          | `true`  | Show the inline translation.                                      |
-| `translocoUlidI18n.inlineTextMaxLength` | `60`    | Where the inline text is ellipsised.                              |
+| Setting                                 | Default        | Meaning                                                                     |
+| --------------------------------------- | -------------- | --------------------------------------------------------------------------- |
+| `translocoUlidI18n.langs`               | `[]`           | Languages to resolve; empty uses `tools/scripts/i18n/catalogue/config.mjs`. |
+| `translocoUlidI18n.inlineText`          | `true`         | Show the inline translation.                                                |
+| `translocoUlidI18n.inlineTextMaxLength` | `60`           | Where the inline text is ellipsised.                                        |
+| `translocoUlidI18n.transferDir`         | `translations` | Where the XLIFF export lands and the import dialog opens.                   |
 
 It also ships a `configurationDefaults` block turning `editor.suggest.showWords` off for `html` and
 `typescript`, so VSCode's word-based guesses (the ones that offered `solved` or `percentage`, scraped

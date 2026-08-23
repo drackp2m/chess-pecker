@@ -11,20 +11,18 @@
 		<div class="flex-col gap-2">
 			<h4>{{ I18n.dashboard.ACTIVITY_TITLE | i18n }}</h4>
 
-			<!-- ToDo => create component for this -->
-			<div class="activity-ranges flex-row">
+			<app-segmented-control class="fs-sm" [ariaLabel]="I18n.dashboard.ACTIVITY_TITLE | i18n">
 				@for (months of activityRanges; track months) {
-					<button
-						appThemed
-						class="fs-sm br-0"
-						color="primary-mid"
-						[class.is-selected]="months === activityMonths()"
-						(click)="selectActivityRange(months)"
-					>
-						{{ I18n.dashboard.ACTIVITY_RANGE_MONTHS | i18n: { months } }}
-					</button>
+					<input
+						appSegment
+						type="radio"
+						name="activity-range"
+						[label]="I18n.dashboard.ACTIVITY_RANGE_MONTHS | i18n: { months }"
+						[checked]="months === activityMonths()"
+						(change)="selectActivityRange(months)"
+					/>
 				}
-			</div>
+			</app-segmented-control>
 
 			<app-activity-heatmap
 				[days]="visibleActivity()"

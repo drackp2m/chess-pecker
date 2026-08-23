@@ -8,6 +8,7 @@ import {
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
+import { pieceElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import {
@@ -38,6 +39,10 @@ interface BoardSquare {
 	/** Origin of a move that is about to be played for you. */
 	readonly isAnnounced: boolean;
 	readonly slide: PieceSlide | undefined;
+	/** The piece this square is about to lose, still standing while it is taken. */
+	readonly taken: Piece | undefined;
+	/** Which piece is drawn over which while one of them is crossing the other. */
+	readonly elevation: number | undefined;
 	readonly fileLabel: string | undefined;
 	readonly rankLabel: string | undefined;
 }
@@ -84,7 +89,7 @@ export class ChessBoardComponent {
 		isClickEnabled: () => this.isClickEnabled(),
 		pick: (square) => {
 			if (square !== this.store.selected()) {
-				this.store.selectSquare(square);
+				this.pickSquare(square);
 			}
 		},
 	});
@@ -102,6 +107,11 @@ export class ChessBoardComponent {
 		);
 	});
 
+	/** Held back while a piece is still on its way, so a check lands with the move. */
+	readonly checkedSquare = computed(() =>
+		this.playback.isSliding() ? undefined : this.store.checkedSquare(),
+	);
+
 	readonly promotionColor = computed(() => this.store.position().turn);
 
 	private readonly board = viewChild.required<ElementRef<HTMLElement>>('board');
@@ -112,7 +122,7 @@ export class ChessBoardComponent {
 	 */
 	activate(square: BoardSquare, event: MouseEvent): void {
 		if (0 === event.detail && this.isClickEnabled()) {
-			this.store.selectSquare(square.square);
+			this.pickSquare(square.square);
 		}
 	}
 
@@ -127,6 +137,10 @@ export class ChessBoardComponent {
 	}
 
 	pressSquare(square: BoardSquare, event: PointerEvent): void {
+		if (this.playback.isSliding()) {
+			return;
+		}
+
 		const isDraggable = this.isDragEnabled() && undefined !== square.piece;
 
 		this.gesture.press(square.square, isDraggable, { x: event.clientX, y: event.clientY });
@@ -145,7 +159,7 @@ export class ChessBoardComponent {
 		const target = this.gesture.release({ x: event.clientX, y: event.clientY });
 
 		if (undefined !== target) {
-			this.store.selectSquare(target);
+			this.pickSquare(target);
 		}
 	}
 
@@ -168,6 +182,20 @@ export class ChessBoardComponent {
 			square.isTarget ? I18n.common.SQUARE_CAPTURE : I18n.common.SQUARE_PIECE,
 			{ piece, square: square.square },
 		);
+	}
+
+	/**
+	 * The one way a square is acted on, so the board can refuse the lot at once. A move
+	 * played into the middle of one already being played is refused here rather than by
+	 * whoever is driving the board: the beats are the view's own, and a store has ended
+	 * its part of a move long before the piece it sent has finished crossing.
+	 */
+	private pickSquare(square: Square): void {
+		if (this.playback.isSliding()) {
+			return;
+		}
+
+		this.store.selectSquare(square);
 	}
 
 	/** Feature-detected: not every test environment implements pointer capture. */
@@ -193,26 +221,25 @@ export class ChessBoardComponent {
 		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
 		const announced = this.store.announcedMove();
+		const piece = this.position().board[index];
+		const travelling = this.playback.slides().find((pending) => square === pending.to);
 
 		return {
 			square,
-			piece: this.position().board[index],
+			piece,
 			isLight: ChessSquare.isLight(index),
 			isSelected: square === this.store.selected(),
 			isTarget: undefined !== target,
 			isCapture: undefined !== target?.captured,
 			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),
-			isChecked: square === this.store.checkedSquare(),
+			isChecked: square === this.checkedSquare(),
 			isMistake: undefined !== mistake && (square === mistake.from || square === mistake.to),
 			isAnnounced: square === announced?.from,
-			slide: this.describeSlide(square),
+			slide: travelling?.slide,
+			taken: this.playback.isSliding() ? travelling?.taken : undefined,
+			elevation: undefined === piece ? undefined : pieceElevation(piece),
 			fileLabel: 56 <= order ? FILES[ChessSquare.fileOf(index)] : undefined,
 			rankLabel: 0 === order % 8 ? RANKS[ChessSquare.rowOf(index)] : undefined,
 		};
-	}
-
-	/** Only the squares the beat landed on have anything to slide. */
-	private describeSlide(square: Square): PieceSlide | undefined {
-		return this.playback.slides().find((pending) => square === pending.to)?.slide;
 	}
 }

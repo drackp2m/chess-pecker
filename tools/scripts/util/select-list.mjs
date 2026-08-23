@@ -20,6 +20,12 @@ const HINTS = [
 	['↑↓', 'space', 'enter', 'esc'],
 ];
 
+const DEFAULT_LABELS = {
+	title: 'Select the test files to lock',
+	shortTitle: 'Select files',
+	noun: 'file',
+};
+
 export const terminal = () => ({
 	rows: Math.max(MIN_VIEWPORT + CHROME, process.stdout.rows ?? 24),
 	columns: Math.max(MIN_COLUMNS, process.stdout.columns ?? 80),
@@ -63,9 +69,9 @@ function rowOf(state, file, index) {
 }
 
 function titleOf(state) {
-	const counts = `${plural(state.filtered.length, 'file')} · ${state.marked.size} selected`;
-	const long = `Select the test files to lock`;
-	const title = long.length + counts.length + 4 <= state.size.columns ? long : 'Select files';
+	const counts = `${plural(state.filtered.length, state.noun)} · ${state.marked.size} selected`;
+	const { title: long, shortTitle } = state.labels;
+	const title = long.length + counts.length + 4 <= state.size.columns ? long : shortTitle;
 
 	return `${c.bold}${title}${c.reset} ${c.dim}(${counts})${c.reset}`;
 }
@@ -187,9 +193,11 @@ function onKey(state, sequence, key, done) {
 	return undefined;
 }
 
-const initialState = (files, preselected) => ({
+const initialState = (files, preselected, labels) => ({
 	files,
 	filtered: files,
+	labels,
+	noun: labels.noun,
 	marked: new Set(preselected.filter((file) => files.includes(file))),
 	filter: '',
 	cursor: 0,
@@ -198,8 +206,8 @@ const initialState = (files, preselected) => ({
 	size: terminal(),
 });
 
-export function selectFiles(files, preselected) {
-	const state = initialState(files, preselected);
+export function selectFromList(files, preselected, labels = DEFAULT_LABELS) {
+	const state = initialState(files, preselected, { ...DEFAULT_LABELS, ...labels });
 
 	readline.emitKeypressEvents(process.stdin);
 	process.stdin.setRawMode(true);

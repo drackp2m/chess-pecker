@@ -3,6 +3,7 @@ import { Component, ElementRef, computed, inject, signal, viewChild } from '@ang
 import { BoardDragGesture } from '@app/component/chess-board/board-drag';
 import { Point } from '@app/component/chess-board/board-geometry';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
+import { pieceElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_SIZE, FILES, RANKS, SQUARE_COUNT } from '@app/definition/chess.constant';
 import { Piece, PieceColor, Square } from '@app/definition/chess.type';
@@ -45,6 +46,8 @@ interface DemoSquare {
 	readonly isMistake: boolean;
 	readonly isAnnounced: boolean;
 	readonly slide: PieceSlide | undefined;
+	readonly taken: Piece | undefined;
+	readonly elevation: number | undefined;
 	readonly fileLabel: string | undefined;
 	readonly rankLabel: string | undefined;
 }
@@ -189,10 +192,12 @@ export class BoardDemoComponent {
 		const target = this.store.movesFromSelection().find((move) => square === move.to);
 		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
+		const piece = this.position().board[index];
+		const travelling = this.playback.slides().find((pending) => square === pending.to);
 
 		return {
 			square,
-			piece: this.position().board[index],
+			piece,
 			isLight: ChessSquare.isLight(index),
 			isSelected: square === this.store.selected(),
 			isTarget: undefined !== target,
@@ -200,7 +205,9 @@ export class BoardDemoComponent {
 			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),
 			isMistake: undefined !== mistake && (square === mistake.from || square === mistake.to),
 			isAnnounced: square === this.store.announcedMove()?.from,
-			slide: this.describeSlide(square),
+			slide: travelling?.slide,
+			taken: this.playback.isSliding() ? travelling?.taken : undefined,
+			elevation: undefined === piece ? undefined : pieceElevation(piece),
 			// The strip is a board's bottom rank, so it carries that rank's edge: every
 			// square names its file, and only the first one names the rank.
 			fileLabel: FILES[ChessSquare.fileOf(index)],
@@ -209,10 +216,6 @@ export class BoardDemoComponent {
 	}
 
 	/** Only the squares the beat landed on have anything to slide. */
-	private describeSlide(square: Square): PieceSlide | undefined {
-		return this.playback.slides().find((pending) => square === pending.to)?.slide;
-	}
-
 	private describe(): string {
 		if (this.store.isRevealing()) {
 			return I18n.common.DEMO_PLAYING_ANSWER;

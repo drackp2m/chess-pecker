@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import ts from 'typescript';
 
-import { DEFAULTS, toKebabCase } from './config.mjs';
+import { DEFAULTS, RESERVED_DIRS, toKebabCase } from './config.mjs';
 
 const SOURCE_EXTENSIONS = new Set(['.ts', '.html']);
 const CONST_USAGE = /\b([A-Z][A-Za-z0-9]*)I18n\s*\.\s*([A-Z][A-Z0-9_]*)\b/g;
@@ -208,7 +208,7 @@ export function readScopes({ i18nDir, langs, rootScope = DEFAULTS.rootScope }) {
 	}
 
 	const nested = readdirSync(i18nDir, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
+		.filter((entry) => entry.isDirectory() && !RESERVED_DIRS.has(entry.name))
 		.map((entry) => readScope(path.join(i18nDir, entry.name), entry.name, langs, true));
 
 	if (!existsSync(path.join(i18nDir, 'keys.ts'))) {

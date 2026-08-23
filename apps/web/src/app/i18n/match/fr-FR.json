@@ -1,0 +1,20 @@
+{
+	"01KZJ895MBDHHY35NSG66Z2CX2": "Jouer",
+	"01KZJ895MB287JNKG3AQK0QE05": "Jaques",
+	"01KZJ895MBCKSTCBV7GV3PTNAN": "Échec de Jaque: vous avez perdu.",
+	"01KZJ895MB538DDEFCNEEXPJQS": "Échec de Jaque: vous avez gagné.",
+	"01KZJ895MB206DWDB9Y66T782Z": "À toi de jouer",
+	"01KZJ895MBE0KR3D5T14ATFHHK": "La machine réfléchit…",
+	"01KZJ895MBVY40YKSMFMFPEN6Q": "Ordonnance",
+	"01KZJ895MBBTMX8RM0R5A9PGTE": "Jouer avec les blancs",
+	"01KZJ895MB768FTTZ24MSP7YYG": "Jouer avec les noires",
+	"01KZJ895MB22G1RVE5CE1152JQ": "Choisir un campon lance un nouveau jeu.",
+	"01KZJ895MBXCGP8VSGTC89J2AK": "Tableau",
+	"01KZJ895MBQFFM0M25P885PECC": "Faire tourner le plateau",
+	"01KZJ895MBE3WQTRW8GC3NAVYD": "Annuler le coup",
+	"01KZJ895MB9V885BMCY675C79A": "Position de l'exercice",
+	"01KZJ895MBQKSC9YNYJ0BW24Q8": "Réinitialiser la position",
+	"01KZJ895MBS2HDHRSR83E1EN5M": "Jeter au oubli",
+	"01KZJ895MBQ7F44AZ9DTZ2RNRS": "Il n'a pas été possible de lire cette position FEN.",
+	"01KZJ93GA1JB7TQ9Z498HP9W55": "«{{ notation }}» n'est pas une manœuvre légale ici."
+}

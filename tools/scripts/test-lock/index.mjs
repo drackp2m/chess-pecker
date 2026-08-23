@@ -2,12 +2,12 @@
 import { existsSync } from 'node:fs';
 
 import { c } from '../lint/lint-report.mjs';
+import { selectFromList } from '../util/select-list.mjs';
 
 import { candidates, parseArgs } from './config.mjs';
 import { writeTestLockSummary } from './github-summary.mjs';
 import { checkLock, hashAll, hashOf, lockedFiles, readLock, writeLock } from './lock.mjs';
 import { printChanges, printCheck, printHeader, printList } from './report.mjs';
-import { selectFiles } from './select.mjs';
 
 const options = parseArgs(process.argv.slice(2));
 const lock = readLock(options.lockFile);
@@ -105,7 +105,7 @@ async function runSelect() {
 
 	printHeader('Selecting', files, options.lockFile);
 
-	const chosen = await selectFiles(files, Object.keys(lock.files));
+	const chosen = await selectFromList(files, Object.keys(lock.files));
 
 	if (null === chosen) {
 		console.log(`\n  ${c.dim}⊘ cancelled — the lock file is untouched${c.reset}`);

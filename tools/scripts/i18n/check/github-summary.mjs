@@ -1,5 +1,5 @@
-import { plural } from '../lint/lint-report.mjs';
-import { inStepSummary, writeStepSummary } from '../util/github-summary.mjs';
+import { plural } from '../../lint/lint-report.mjs';
+import { inStepSummary, writeStepSummary } from '../../util/github-summary.mjs';
 
 import { FIXABLE_TYPES, cellsOf, columnsOf, severityOf } from './findings.mjs';
 

@@ -1,0 +1,59 @@
+@property --marker-left {
+	inherits: true;
+	initial-value: 0;
+	syntax: '<length>';
+}
+
+@property --marker-width {
+	inherits: true;
+	initial-value: 0;
+	syntax: '<length>';
+}
+
+:host {
+	display: inline-block;
+}
+
+:host(.is-measured) {
+	transition:
+		--marker-left var(--transition-duration) var(--transition-easing),
+		--marker-width var(--transition-duration) var(--transition-easing);
+}
+
+.segmented-track {
+	isolation: isolate;
+	position: relative;
+
+	overflow: hidden;
+	display: flex;
+
+	width: fit-content;
+	border-radius: var(--border-radius-1);
+
+	background-color: color-mix(in oklab, var(--color-contrast) 8%, transparent);
+}
+
+.segmented-marker {
+	position: absolute;
+	inset-block: 0;
+	left: 0;
+	transform: translateX(calc(var(--marker-left) - 1px));
+
+	width: calc(var(--marker-width) + 2px);
+
+	opacity: 0;
+	background-color: var(--color-contrast-mid);
+
+	transition: opacity var(--transition-duration) var(--transition-easing);
+}
+
+:host(.is-measured.has-selection) .segmented-marker {
+	opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:host(.is-measured),
+	.segmented-marker {
+		transition-duration: 0s;
+	}
+}

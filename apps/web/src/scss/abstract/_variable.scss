@@ -8,6 +8,17 @@ $transition: (
 	easing: cubic-bezier(0.4, 0, 0.2, 1),
 ) !default;
 
+/**
+ * The order the chrome is painted in. Page content never appears here: it is isolated
+ * into a stacking context of its own, so nothing inside a screen can climb over the
+ * things that frame it however high it sets itself.
+ */
+$elevation: (
+	navbar: 10,
+	modal: 20,
+	notification: 30,
+) !default;
+
 $breakpoint: (
 	sm: 480px,
 	md: 768px,

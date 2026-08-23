@@ -8,6 +8,12 @@
 	--square-mistake: rgb(196 48 38 / 45%);
 	--square-announced: color-mix(in oklab, var(--color-accent) 85%, rgb(255 255 255));
 
+	// Under every level a piece can be given, since it is the one being taken.
+	--layer-taken: 0;
+
+	// Clear of every level a piece can be given, the way the full board keeps it.
+	--layer-ghost: 90;
+
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
@@ -16,6 +22,8 @@
 // Only the strip runs edge to edge, the way the full board does on the pages that
 // show one; the hint and the controls under it stay in the text column.
 .strip {
+	// Settled inside the strip, exactly as the full board settles it.
+	isolation: isolate;
 	position: relative;
 
 	display: grid;
@@ -60,12 +68,11 @@
 
 	// The last move and a refuted attempt are both a translucent wash over the
 	// square, so the piece underneath stays readable. Same treatment, different tint.
-	&.last-move::after,
-	&.mistake::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		background-color: var(--square-last-move);
+	// It rides on the square's own background rather than over its contents, so a
+	// piece standing there is never tinted along with the square under it.
+	&.last-move,
+	&.mistake {
+		background-image: linear-gradient(var(--square-last-move), var(--square-last-move));
 	}
 
 	&.selected {
@@ -79,8 +86,8 @@
 
 	// Declared after the shared rule above so a refuted move outranks the last-move
 	// tint on the very squares it also occupies.
-	&.mistake::after {
-		background-color: var(--square-mistake);
+	&.mistake {
+		background-image: linear-gradient(var(--square-mistake), var(--square-mistake));
 	}
 
 	// A dot marks a quiet destination, a ring marks a capture.
@@ -109,9 +116,17 @@
 		outline-offset: -2px;
 	}
 
+	// The level itself is bound per piece, so the one that matters rides over the one
+	// that does not while they share a square.
 	app-chess-piece {
 		position: relative;
-		z-index: 1;
+	}
+
+	// The piece being taken, left standing under the one coming for it until it lands.
+	app-chess-piece.taken {
+		position: absolute;
+		z-index: var(--layer-taken);
+		inset: 0;
 	}
 }
 
@@ -151,11 +166,12 @@
 	}
 }
 
-// Follows the pointer while a piece is being dragged.
+// Follows the pointer while a piece is being dragged, clear of every piece it is
+// being carried over.
 .ghost {
 	pointer-events: none;
 	position: fixed;
-	z-index: 2;
+	z-index: var(--layer-ghost);
 }
 
 @media (prefers-reduced-motion: reduce) {
