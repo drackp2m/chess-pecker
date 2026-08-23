@@ -32,12 +32,12 @@ function build(fen: string, uci: string, kind: BoardTransitionKind = 'played') {
 }
 
 /** The squares each beat sends travelling, which is all the assertions read. */
-function slidesOf(transition: BoardTransition): BoardSlideStep[][] {
+function slidesOf(transition: BoardTransition): Pick<BoardSlideStep, 'from' | 'to'>[][] {
 	return transition.stages.map((stage) => stage.slides.map(({ from, to }) => ({ from, to })));
 }
 
 /** The clip each beat is heard with, in the order they are to run. */
-function soundsOf(transition: BoardTransition): MoveSound[] {
+function soundsOf(transition: BoardTransition): (MoveSound | undefined)[] {
 	return transition.stages.map((stage) => stage.sound);
 }
 

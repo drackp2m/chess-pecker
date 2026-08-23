@@ -24,6 +24,10 @@
 			(pointerdown)="pressSquare(square, $event)"
 			(click)="activate(square, $event)"
 		>
+			@if (square.taken; as taken) {
+				<app-chess-piece class="taken" [type]="taken.type" [color]="taken.color" />
+			}
+
 			@if (square.piece; as piece) {
 				<app-chess-piece
 					[type]="piece.type"

@@ -58,16 +58,40 @@ function planStages(position: ChessPosition, move: ChessMove): StagePlan[] {
 		return planCastling(position, move, move.castling);
 	}
 
+	if (undefined !== move.promotion) {
+		return planPromotion(position, move);
+	}
+
 	return [played(position, move)];
 }
 
 /** The beat the move lands on: everything is where the state says, and it is heard. */
 function played(position: ChessPosition, move: ChessMove): StagePlan {
 	return {
-		slides: [{ from: move.from, to: move.to }],
+		slides: [{ from: move.from, to: move.to, taken: ChessBoard.pieceAt(position, move.to) }],
 		board: undefined,
 		sound: landing(position, move),
 	};
+}
+
+/**
+ * A pawn reaching the last rank is two things at once, and only one of them travels.
+ * The pawn crosses first, over a board holding the pawn on the square it is promoting
+ * on, and the piece it becomes takes its place on a beat that moves nothing at all —
+ * so what is seen crossing the board is the pawn, and the queen arrives by arriving
+ * rather than by sailing in from a square no queen ever stood on.
+ */
+function planPromotion(position: ChessPosition, move: ChessMove): StagePlan[] {
+	const travel: BoardSlideStep = {
+		from: move.from,
+		to: move.to,
+		taken: ChessBoard.pieceAt(position, move.to),
+	};
+
+	return [
+		{ slides: [travel], board: slid(position, travel), sound: landing(position, move) },
+		{ slides: [], board: undefined, sound: undefined },
+	];
 }
 
 /**
@@ -88,11 +112,17 @@ function planCastling(position: ChessPosition, move: ChessMove, side: CastlingSi
  * retreat is just a pawn travelling; the capture is what the move came to.
  */
 function planEnPassant(position: ChessPosition, move: ChessMove): StagePlan[] {
-	const retreat: BoardSlideStep = { from: ChessSquare.fromIndex(capturedPawn(move)), to: move.to };
+	const pawn = ChessSquare.fromIndex(capturedPawn(move));
+	const retreat: BoardSlideStep = { from: pawn, to: move.to, taken: undefined };
+	const capture: BoardSlideStep = {
+		from: move.from,
+		to: move.to,
+		taken: ChessBoard.pieceAt(position, pawn),
+	};
 
 	return [
 		{ slides: [retreat], board: slid(position, retreat), sound: 'move' },
-		played(position, move),
+		{ ...played(position, move), slides: [capture] },
 	];
 }
 
@@ -108,7 +138,7 @@ function reversePlans(plans: readonly StagePlan[]): StagePlan[] {
 	return plans
 		.map((plan) => ({
 			...plan,
-			slides: plan.slides.map(({ from, to }) => ({ from: to, to: from })),
+			slides: plan.slides.map(({ from, to }) => ({ from: to, to: from, taken: undefined })),
 		}))
 		.reverse()
 		.map((plan, index) => ({ ...plan, board: boards.at(-1 - index) }));
@@ -118,7 +148,11 @@ function reversePlans(plans: readonly StagePlan[]): StagePlan[] {
 function rookSlide(move: ChessMove, side: CastlingSide): BoardSlideStep {
 	const rook = ChessCastling.rookMove(ChessSquare.toIndex(move.to), side);
 
-	return { from: ChessSquare.fromIndex(rook.from), to: ChessSquare.fromIndex(rook.to) };
+	return {
+		from: ChessSquare.fromIndex(rook.from),
+		to: ChessSquare.fromIndex(rook.to),
+		taken: undefined,
+	};
 }
 
 /** Where the pawn an en passant capture takes really stands: beside the capturer. */

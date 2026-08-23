@@ -150,6 +150,8 @@ export interface MountedBoard {
 	render(): void;
 	/** What is drawn on a square right now, as `'<colour> <type>'`. */
 	pieceAt(square: Square): string | undefined;
+	/** The piece that square is losing, still standing under the one taking it. */
+	takenAt(square: Square): string | undefined;
 	isChecked(square: Square): boolean;
 	isAnnounced(square: Square): boolean;
 	isPromotionOpen(): boolean;
@@ -254,15 +256,18 @@ function squareOfElement(
 		: ChessSquare.fromIndex(indexAtOrder(order, presenter.orientation()));
 }
 
-function pieceAt(
+function pieceOn(
 	fixture: BoardFixture,
 	presenter: FakeBoardPresenter,
 	square: Square,
+	isTaken: boolean,
 ): string | undefined {
 	const button = squareElement(fixture, presenter, square);
-	const view = fixture.debugElement
-		.queryAll(By.directive(ChessPieceComponent))
-		.find((debug) => true === button?.contains(debug.nativeElement as Node));
+	const view = fixture.debugElement.queryAll(By.directive(ChessPieceComponent)).find((debug) => {
+		const element = debug.nativeElement as HTMLElement;
+
+		return true === button?.contains(element) && isTaken === element.classList.contains('taken');
+	});
 	const piece = view?.componentInstance as ChessPieceComponent | undefined;
 
 	return undefined === piece ? undefined : `${piece.color()} ${piece.type()}`;
@@ -351,7 +356,8 @@ function readings(
 	const root = fixture.nativeElement as HTMLElement;
 
 	return {
-		pieceAt: (square: Square): string | undefined => pieceAt(fixture, presenter, square),
+		pieceAt: (square: Square): string | undefined => pieceOn(fixture, presenter, square, false),
+		takenAt: (square: Square): string | undefined => pieceOn(fixture, presenter, square, true),
 		isChecked: (square: Square): boolean => hasClass(fixture, presenter, square, 'checked'),
 		isAnnounced: (square: Square): boolean => hasClass(fixture, presenter, square, 'announced'),
 		isPromotionOpen: (): boolean => null !== root.querySelector('.promotion'),

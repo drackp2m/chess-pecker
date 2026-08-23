@@ -46,6 +46,7 @@ interface DemoSquare {
 	readonly isMistake: boolean;
 	readonly isAnnounced: boolean;
 	readonly slide: PieceSlide | undefined;
+	readonly taken: Piece | undefined;
 	readonly elevation: number | undefined;
 	readonly fileLabel: string | undefined;
 	readonly rankLabel: string | undefined;
@@ -192,6 +193,7 @@ export class BoardDemoComponent {
 		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
 		const piece = this.position().board[index];
+		const travelling = this.playback.slides().find((pending) => square === pending.to);
 
 		return {
 			square,
@@ -203,7 +205,8 @@ export class BoardDemoComponent {
 			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),
 			isMistake: undefined !== mistake && (square === mistake.from || square === mistake.to),
 			isAnnounced: square === this.store.announcedMove()?.from,
-			slide: this.describeSlide(square),
+			slide: travelling?.slide,
+			taken: this.playback.isSliding() ? travelling?.taken : undefined,
 			elevation: undefined === piece ? undefined : pieceElevation(piece),
 			// The strip is a board's bottom rank, so it carries that rank's edge: every
 			// square names its file, and only the first one names the rank.
@@ -213,10 +216,6 @@ export class BoardDemoComponent {
 	}
 
 	/** Only the squares the beat landed on have anything to slide. */
-	private describeSlide(square: Square): PieceSlide | undefined {
-		return this.playback.slides().find((pending) => square === pending.to)?.slide;
-	}
-
 	private describe(): string {
 		if (this.store.isRevealing()) {
 			return I18n.common.DEMO_PLAYING_ANSWER;

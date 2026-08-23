@@ -139,7 +139,7 @@ describe('PuzzleStore.restoreFrom', () => {
 
 		expect(store.cursor()).toBe(1);
 		expect(store.line()).toHaveLength(5);
-		expect(store.transition()?.stages[0]?.slides).toEqual([{ from: 'f1', to: 'f8' }]);
+		expect(store.transition()?.stages[0]?.slides).toMatchObject([{ from: 'f1', to: 'f8' }]);
 	});
 
 	it('has nothing to travel when the record holds no move at all', () => {

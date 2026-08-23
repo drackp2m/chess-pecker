@@ -1,4 +1,4 @@
-import { ChessPosition, Square } from '@app/definition/chess.type';
+import { ChessPosition, Piece, Square } from '@app/definition/chess.type';
 import { MoveSound } from '@app/definition/sound.type';
 import { I18n } from '@app/i18n';
 
@@ -33,6 +33,12 @@ export interface BoardSlideStep {
 	readonly from: Square;
 	/** The square that receives the slide. */
 	readonly to: Square;
+	/**
+	 * What the slide is going to take, left standing under the piece on its way until
+	 * it arrives. A square holds one piece and no more, so the one being taken travels
+	 * here rather than on any board.
+	 */
+	readonly taken: Piece | undefined;
 }
 
 /**
@@ -53,9 +59,10 @@ export interface BoardStage {
 	/**
 	 * What this beat sounds like as it sets off, so a move that travels two pieces is
 	 * heard twice — the plain clip for the piece that only travels, and what the move
-	 * itself came to for the one that lands it.
+	 * itself came to for the one that lands it. A beat that moves nothing, which is
+	 * how a pawn turns into a queen, is silent: it was heard when the pawn set off.
 	 */
-	readonly sound: MoveSound;
+	readonly sound: MoveSound | undefined;
 	/** Identifies this beat, so the same slide never runs twice. */
 	readonly tick: number;
 }

@@ -79,6 +79,7 @@ describe('the board as a move crosses it', () => {
 		board.advance(SLIDE_DURATION);
 
 		expect(board.pieceAt('d6')).toBe('white pawn');
+		expect(board.takenAt('d6')).toBe('black pawn');
 		expect(board.sliding()).toEqual([{ square: 'd6', transform: 'translate(100%, 100%)' }]);
 	});
 
@@ -134,49 +135,55 @@ describe('the board as a move crosses it', () => {
 		expect(board.isPromotionOpen()).toBe(true);
 	});
 
-	/**
-	 * Every one of these is a fault a player reported, written the way the board ought
-	 * to behave. They pass by failing, so the suite stays honest about what is broken:
-	 * as each fault is fixed, drop the `.fails` from its case and it goes on guarding
-	 * the fix.
-	 */
-	describe('what it still gets wrong', () => {
-		it.fails('travels a promoting pawn as a pawn, and changes it on arrival', () => {
-			const board = mountBoard(PROMOTION);
+	it('leaves the piece being taken standing until the one taking it arrives', () => {
+		const board = mountBoard(CAPTURE);
 
-			board.play('h7h8q');
+		board.play('e4d4');
 
-			expect(board.pieceAt('h8')).toBe('white pawn');
+		expect(board.pieceAt('d4')).toBe('white rook');
+		expect(board.takenAt('d4')).toBe('black rook');
 
-			board.advance(SLIDE_DURATION);
+		board.advance(SLIDE_DURATION);
 
-			expect(board.pieceAt('h8')).toBe('white queen');
-		});
+		expect(board.pieceAt('d4')).toBe('white rook');
+		expect(board.takenAt('d4')).toBeUndefined();
+	});
 
-		it.fails('holds the check back until the piece giving it has arrived', () => {
-			const board = mountBoard(CASTLING);
+	it('travels a promoting pawn as a pawn, and changes it on arrival', () => {
+		const board = mountBoard(PROMOTION);
 
-			board.play('a1a8');
+		board.play('h7h8q');
 
-			expect(board.isChecked('e8')).toBe(false);
+		expect(board.pieceAt('h8')).toBe('white pawn');
 
-			board.advance(SLIDE_DURATION);
+		board.advance(SLIDE_DURATION);
 
-			expect(board.isChecked('e8')).toBe(true);
-		});
+		expect(board.pieceAt('h8')).toBe('white queen');
+	});
 
-		it.fails('refuses a piece pressed while something is still travelling', () => {
-			const board = mountBoard(CAPTURE);
+	it('holds the check back until the piece giving it has arrived', () => {
+		const board = mountBoard(CASTLING);
 
-			board.play('e4d4');
-			board.click('e1');
+		board.play('a1a8');
 
-			expect(board.picked()).toEqual([]);
+		expect(board.isChecked('e8')).toBe(false);
 
-			board.advance(SLIDE_DURATION);
-			board.click('e1');
+		board.advance(SLIDE_DURATION);
 
-			expect(board.picked()).toEqual(['e1']);
-		});
+		expect(board.isChecked('e8')).toBe(true);
+	});
+
+	it('refuses a piece pressed while something is still travelling', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.play('e4d4');
+		board.click('e1');
+
+		expect(board.picked()).toEqual([]);
+
+		board.advance(SLIDE_DURATION);
+		board.click('e1');
+
+		expect(board.picked()).toEqual(['e1']);
 	});
 });

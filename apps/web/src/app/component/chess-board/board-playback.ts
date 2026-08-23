@@ -17,7 +17,7 @@ import {
 	MoveAnimation,
 	shouldAnimate,
 } from '@app/definition/board-animation.type';
-import { ChessPosition, PieceColor, Square } from '@app/definition/chess.type';
+import { ChessPosition, Piece, PieceColor, Square } from '@app/definition/chess.type';
 import {
 	MoveSpeed,
 	REPLAY_DELAY,
@@ -31,6 +31,8 @@ import { ScheduledAction } from '@app/util/scheduled-action';
 export interface BoardSlide {
 	readonly to: Square;
 	readonly slide: PieceSlide;
+	/** Drawn under the arriving piece, for as long as it has not arrived. */
+	readonly taken: Piece | undefined;
 }
 
 export interface BoardPlaybackInput {
@@ -46,13 +48,23 @@ export interface BoardPlayback {
 	readonly slides: Signal<readonly BoardSlide[]>;
 	/** The board that beat runs over, or `undefined` for the one the state holds. */
 	readonly board: Signal<ChessPosition | undefined>;
+	/**
+	 * Whether the beat on screen is still crossing the board. Everything that must
+	 * wait for a move to land reads it: the piece being taken, which stays standing
+	 * until it is reached, the check that lights only once it is given, and the board
+	 * itself, which takes no move while it is in the middle of playing one.
+	 */
+	readonly isSliding: Signal<boolean>;
 }
 
 /** What a beat needs to hand the board over to the one after it. */
 interface PlaybackRun {
 	readonly input: BoardPlaybackInput;
 	readonly scheduled: ScheduledAction;
+	/** Kept apart from the beats: a slide outlasts the beat that is holding them. */
+	readonly settling: ScheduledAction;
 	readonly beat: WritableSignal<number>;
+	readonly sliding: WritableSignal<boolean>;
 	readonly sound: SoundService;
 }
 
@@ -73,11 +85,8 @@ interface PlaybackRun {
  * a flip and be read as a slide the piece had not run yet.
  */
 export function createBoardPlayback(input: BoardPlaybackInput): BoardPlayback {
-	const scheduled = new ScheduledAction();
-	/** Which beat of the transition is on screen. */
-	const beat = signal(0);
-	const stage = computed(() => input.transition()?.stages[beat()]);
-	const run: PlaybackRun = { input, scheduled, beat, sound: inject(SoundService) };
+	const run = createRun(input);
+	const stage = computed(() => input.transition()?.stages[run.beat()]);
 
 	// A transition arriving always starts from its first beat, whatever the one it
 	// replaced had reached — and one going away takes the beats it had left with it.
@@ -85,22 +94,78 @@ export function createBoardPlayback(input: BoardPlaybackInput): BoardPlayback {
 		input.transition();
 
 		untracked(() => {
-			scheduled.cancel();
-			beat.set(0);
-			announce(run);
-			advance(run);
+			run.scheduled.cancel();
+			run.beat.set(0);
+			start(run);
 		});
 	});
 
 	// Timers outlive the board they were started from, so they are stopped with it.
 	inject(DestroyRef).onDestroy(() => {
-		scheduled.cancel();
+		run.scheduled.cancel();
+		run.settling.cancel();
 	});
 
 	return {
 		slides: computed(() => describeSlides(input, stage())),
 		board: computed(() => stage()?.board),
+		isSliding: run.sliding.asReadonly(),
 	};
+}
+
+function createRun(input: BoardPlaybackInput): PlaybackRun {
+	return {
+		input,
+		scheduled: new ScheduledAction(),
+		settling: new ScheduledAction(),
+		beat: signal(0),
+		sliding: signal(false),
+		sound: inject(SoundService),
+	};
+}
+
+/** Everything a beat does as it comes up: it is heard, it travels, and it hands over. */
+function start(run: PlaybackRun): void {
+	announce(run);
+	hold(run);
+	advance(run);
+}
+
+/**
+ * Holds the beat open for as long as its pieces are still crossing. A beat with nothing
+ * to slide is over the instant it is drawn, and so is one the setting silenced: neither
+ * has anything for the rest of the board to wait on.
+ */
+function hold(run: PlaybackRun): void {
+	run.settling.cancel();
+
+	if (!isTravelling(run)) {
+		run.sliding.set(false);
+
+		return;
+	}
+
+	run.sliding.set(true);
+	run.settling.run(
+		() => {
+			run.sliding.set(false);
+		},
+		untracked(() => scaleForSpeed(SLIDE_DURATION, run.input.speed())),
+	);
+}
+
+function isTravelling(run: PlaybackRun): boolean {
+	return untracked(() => {
+		const transition = run.input.transition();
+		const stage = transition?.stages[run.beat()];
+
+		return (
+			undefined !== transition &&
+			undefined !== stage &&
+			0 < stage.slides.length &&
+			shouldAnimate(transition.kind, run.input.animation())
+		);
+	});
 }
 
 /** Hands the board over to the next beat, once this one has had its time. */
@@ -114,8 +179,7 @@ function advance(run: PlaybackRun): void {
 
 	run.scheduled.run(() => {
 		run.beat.set(next);
-		announce(run);
-		advance(run);
+		start(run);
 	}, holdFor(run.input));
 }
 
@@ -168,8 +232,9 @@ function describeSlides(
 
 		const orientation = input.orientation();
 
-		return stage.slides.map(({ from, to }) => ({
+		return stage.slides.map(({ from, to, taken }) => ({
 			to,
+			taken,
 			slide: { ...slideOffset(from, to, orientation), key: stage.tick },
 		}));
 	});
