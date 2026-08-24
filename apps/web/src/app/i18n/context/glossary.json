@@ -1,209 +1,9 @@
 {
 	"terms": [
 		{
-			"term": "jugada",
-			"note": "un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar",
-			"translations": {
-				"en-GB": "move",
-				"ru-RU": "ход",
-				"hi-IN": "चाल",
-				"fr-FR": "coup",
-				"ca-ES": "jugada"
-			}
-		},
-		{
-			"term": "línea",
-			"note": "la secuencia de jugadas que resuelve el ejercicio; nunca una línea de texto ni una fila, ni la línea geométrica del tablero",
-			"translations": {
-				"en-GB": "line",
-				"ru-RU": "вариант",
-				"hi-IN": "लाइन",
-				"fr-FR": "variante",
-				"ca-ES": "línia"
-			}
-		},
-		{
-			"term": "pieza",
-			"note": "cualquier trebejo del tablero, peón incluido",
-			"translations": {
-				"en-GB": "piece",
-				"ru-RU": "фигура",
-				"hi-IN": "मोहरा",
-				"fr-FR": "pièce",
-				"ca-ES": "peça"
-			}
-		},
-		{
-			"term": "torre",
-			"note": "la pieza de ajedrez; nunca una torre de edificio",
-			"translations": {
-				"en-GB": "rook",
-				"ru-RU": "ладья",
-				"hi-IN": "हाथी",
-				"fr-FR": "tour",
-				"ca-ES": "torre"
-			}
-		},
-		{
-			"term": "caballo",
-			"translations": {
-				"en-GB": "knight",
-				"ru-RU": "конь",
-				"hi-IN": "घोड़ा",
-				"fr-FR": "cavalier",
-				"ca-ES": "cavall"
-			}
-		},
-		{
-			"term": "alfil",
-			"translations": {
-				"en-GB": "bishop",
-				"ru-RU": "слон",
-				"hi-IN": "ऊँट",
-				"fr-FR": "fou",
-				"ca-ES": "alfil"
-			}
-		},
-		{
-			"term": "dama",
-			"note": "la reina; en español la aplicación dice siempre dama, no reina",
-			"translations": {
-				"en-GB": "queen",
-				"ru-RU": "ферзь",
-				"hi-IN": "वज़ीर",
-				"fr-FR": "dame",
-				"ca-ES": "dama"
-			}
-		},
-		{
-			"term": "peón",
-			"translations": {
-				"en-GB": "pawn",
-				"ru-RU": "пешка",
-				"hi-IN": "प्यादा",
-				"fr-FR": "pion",
-				"ca-ES": "peó"
-			}
-		},
-		{
-			"term": "rey",
-			"translations": {
-				"en-GB": "king",
-				"ru-RU": "король",
-				"hi-IN": "राजा",
-				"fr-FR": "roi",
-				"ca-ES": "rei"
-			}
-		},
-		{
-			"term": "casilla",
-			"note": "una de las 64 del tablero; el término de ajedrez, no la celda de una tabla",
-			"translations": {
-				"en-GB": "square",
-				"ru-RU": "поле",
-				"hi-IN": "खाना",
-				"fr-FR": "case",
-				"ca-ES": "casella"
-			}
-		},
-		{
-			"term": "tablero",
-			"translations": {
-				"en-GB": "board",
-				"ru-RU": "доска",
-				"hi-IN": "बोर्ड",
-				"fr-FR": "échiquier",
-				"ca-ES": "tauler"
-			}
-		},
-		{
-			"term": "bando",
-			"note": "el color con el que se juega, blancas o negras; nunca una banda, una franja ni un lado del tablero",
-			"translations": {
-				"en-GB": "side",
-				"ru-RU": "сторона",
-				"hi-IN": "पक्ष",
-				"fr-FR": "camp",
-				"ca-ES": "bàndol"
-			}
-		},
-		{
-			"term": "jaque",
-			"translations": {
-				"en-GB": "check",
-				"ru-RU": "шах",
-				"hi-IN": "शह",
-				"fr-FR": "échec",
-				"ca-ES": "escac"
-			}
-		},
-		{
-			"term": "jaque mate",
-			"translations": {
-				"en-GB": "checkmate",
-				"ru-RU": "мат",
-				"hi-IN": "शहमात",
-				"fr-FR": "échec et mat",
-				"ca-ES": "escac i mat"
-			}
-		},
-		{
-			"term": "rey ahogado",
-			"note": "el ahogado, que son tablas; nunca ahogarse ni asfixiarse",
-			"translations": {
-				"en-GB": "stalemate",
-				"ru-RU": "пат",
-				"hi-IN": "स्टैल्मेट",
-				"fr-FR": "pat",
-				"ca-ES": "ofegat"
-			}
-		},
-		{
-			"term": "tablas",
-			"translations": {
-				"en-GB": "draw",
-				"ru-RU": "ничья",
-				"hi-IN": "ड्रॉ",
-				"fr-FR": "nulle",
-				"ca-ES": "taules"
-			}
-		},
-		{
-			"term": "coronar",
-			"note": "promocionar un peón que llega a la última fila",
-			"translations": {
-				"en-GB": "promote",
-				"ru-RU": "превратить",
-				"hi-IN": "प्रमोट",
-				"fr-FR": "promouvoir",
-				"ca-ES": "coronar"
-			}
-		},
-		{
-			"term": "partida",
-			"note": "una partida de ajedrez contra la máquina; nunca una coincidencia, un emparejamiento ni un resultado de búsqueda",
-			"translations": {
-				"en-GB": "match",
-				"ru-RU": "партия",
-				"hi-IN": "बाज़ी",
-				"fr-FR": "partie",
-				"ca-ES": "partida"
-			}
-		},
-		{
-			"term": "ejercicio",
-			"note": "el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle",
-			"translations": {
-				"en-GB": "exercise",
-				"ru-RU": "упражнение",
-				"hi-IN": "अभ्यास",
-				"fr-FR": "exercice",
-				"ca-ES": "exercici"
-			}
-		},
-		{
 			"term": "entrenamiento",
-			"note": "el programa entero: calibración, conjunto fijado y ciclos. Sólo hay uno en curso a la vez",
+			"group": "programa",
+			"note": "el programa entero: calibración, conjunto fijado y ciclos. Sólo hay uno en curso a la vez. Es el único nombre: nunca «programa» ni «bloque»",
 			"translations": {
 				"en-GB": "training",
 				"ru-RU": "тренировка",
@@ -214,7 +14,8 @@
 		},
 		{
 			"term": "calibración",
-			"note": "la fase inicial que busca el nivel del jugador a base de rondas",
+			"group": "programa",
+			"note": "la fase inicial que busca el nivel del jugador a base de rondas: primero exploraciones, después afinados",
 			"translations": {
 				"en-GB": "calibration",
 				"ru-RU": "калибровка",
@@ -224,30 +25,57 @@
 			}
 		},
 		{
-			"term": "sondeo",
-			"note": "ronda de calibración de un solo ejercicio, que salta de nivel; el verbo es sondear",
+			"term": "ronda",
+			"group": "programa",
+			"note": "cada tanda de la calibración, sea una exploración o un afinado; nunca una ronda de bebidas ni una vuelta del conjunto, que es un ciclo",
 			"translations": {
-				"en-GB": "scan",
-				"ru-RU": "проба",
-				"hi-IN": "स्कैन",
-				"fr-FR": "sondage",
-				"ca-ES": "sondeig"
+				"en-GB": "round",
+				"ru-RU": "раунд",
+				"hi-IN": "राउंड",
+				"fr-FR": "manche",
+				"ca-ES": "ronda"
 			}
 		},
 		{
-			"term": "ajuste",
-			"note": "en el entrenamiento, la ronda de calibración de diez ejercicios que afina el nivel. En la página de ajustes, en cambio, un ajuste es una preferencia de la aplicación: son dos cosas distintas y el contexto del scope manda",
+			"term": "exploración",
+			"group": "programa",
+			"note": "ronda de calibración de un solo ejercicio, que salta de nivel para acotar la zona donde está el jugador. Nunca el juego libre del tablero, que se llama juego libre",
 			"translations": {
-				"en-GB": "refine",
+				"en-GB": "exploration",
+				"ru-RU": "разведка",
+				"hi-IN": "अन्वेषण",
+				"fr-FR": "exploration",
+				"ca-ES": "exploració"
+			}
+		},
+		{
+			"term": "afinado",
+			"group": "programa",
+			"note": "ronda de calibración de diez ejercicios que afina el nivel que la exploración encontró; el verbo es afinar. Nunca los ajustes de la aplicación, que son una preferencia y otra palabra",
+			"translations": {
+				"en-GB": "refinement",
 				"ru-RU": "уточнение",
-				"hi-IN": "एडजस्टमेंट",
+				"hi-IN": "परिष्करण",
 				"fr-FR": "affinage",
-				"ca-ES": "refinament"
+				"ca-ES": "afinament"
+			}
+		},
+		{
+			"term": "etapa",
+			"group": "programa",
+			"note": "cada fila del resumen del entrenamiento: una ronda de calibración o un ciclo. Un ciclo es una etapa; nunca el momento en el que está el entrenamiento",
+			"translations": {
+				"en-GB": "stage",
+				"ru-RU": "этап",
+				"hi-IN": "चरण",
+				"fr-FR": "étape",
+				"ca-ES": "etapa"
 			}
 		},
 		{
 			"term": "conjunto",
-			"note": "los ejercicios que se fijan una vez y se repiten en todos los ciclos",
+			"group": "programa",
+			"note": "los ejercicios que se fijan una vez y se repiten en todos los ciclos; nunca «bloque» ni «lote»",
 			"translations": {
 				"en-GB": "set",
 				"ru-RU": "набор",
@@ -258,7 +86,8 @@
 		},
 		{
 			"term": "ciclo",
-			"note": "una vuelta entera al conjunto; se numeran desde 1",
+			"group": "programa",
+			"note": "una vuelta entera al conjunto; se numeran desde 1. Es el único nombre, también al explicar el método Woodpecker: nunca «pasada» ni «vuelta»",
 			"translations": {
 				"en-GB": "cycle",
 				"ru-RU": "цикл",
@@ -268,30 +97,9 @@
 			}
 		},
 		{
-			"term": "pasada",
-			"note": "sinónimo de ciclo cuando se explica el método Woodpecker",
-			"translations": {
-				"en-GB": "pass",
-				"ru-RU": "проход",
-				"hi-IN": "पास",
-				"fr-FR": "passage",
-				"ca-ES": "passada"
-			}
-		},
-		{
-			"term": "ronda",
-			"note": "cada tanda de la calibración, sondeo o ajuste",
-			"translations": {
-				"en-GB": "round",
-				"ru-RU": "раунд",
-				"hi-IN": "राउंड",
-				"fr-FR": "manche",
-				"ca-ES": "ronda"
-			}
-		},
-		{
 			"term": "ritmo",
-			"note": "los ejercicios al día a los que el jugador se compromete",
+			"group": "programa",
+			"note": "los ejercicios al día a los que el jugador se compromete; nunca «meta» ni «objetivo»",
 			"translations": {
 				"en-GB": "pace",
 				"ru-RU": "темп",
@@ -301,8 +109,21 @@
 			}
 		},
 		{
+			"term": "ejercicio",
+			"group": "programa",
+			"note": "el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle",
+			"translations": {
+				"en-GB": "exercise",
+				"ru-RU": "упражнение",
+				"hi-IN": "अभ्यास",
+				"fr-FR": "exercice",
+				"ca-ES": "exercici"
+			}
+		},
+		{
 			"term": "intento",
-			"note": "el registro de un ejercicio resuelto, fallado o abandonado",
+			"group": "programa",
+			"note": "el registro de un ejercicio ya terminado: cómo acabó, cuánto tardó y qué ayuda se usó",
 			"translations": {
 				"en-GB": "attempt",
 				"ru-RU": "попытка",
@@ -312,40 +133,80 @@
 			}
 		},
 		{
-			"term": "banda de rating",
-			"note": "el tramo de dificultad del que se sacan los ejercicios",
+			"term": "hecho",
+			"group": "final",
+			"note": "un ejercicio que llegó a un final, sea cual sea: a la primera, tras fallar o con la solución vista. Es la suma de los tres, y lo que la precisión divide",
 			"translations": {
-				"en-GB": "rating band",
-				"ru-RU": "диапазон рейтинга",
-				"hi-IN": "रेटिंग बैंड",
-				"fr-FR": "plage de classement",
-				"ca-ES": "franja de rating"
+				"en-GB": "done",
+				"ru-RU": "выполнено",
+				"hi-IN": "पूर्ण",
+				"fr-FR": "fait",
+				"ca-ES": "fet"
 			}
 		},
 		{
-			"term": "catálogo",
-			"note": "el fondo de ejercicios del servidor, común a todos los usuarios",
+			"term": "a la primera",
+			"group": "final",
+			"note": "el ejercicio acertado al primer intento, sin una sola jugada equivocada. Nunca se dice sólo «resuelto»: el que falla y luego encuentra la línea también la resuelve, y no cuenta aquí",
 			"translations": {
-				"en-GB": "catalogue",
-				"ru-RU": "каталог",
-				"hi-IN": "कैटलॉग",
-				"fr-FR": "catalogue",
-				"ca-ES": "catàleg"
+				"en-GB": "first try",
+				"ru-RU": "с первой попытки",
+				"hi-IN": "पहली बार में",
+				"fr-FR": "du premier coup",
+				"ca-ES": "a la primera"
 			}
 		},
 		{
-			"term": "juego libre",
-			"note": "mover las dos piezas de los dos bandos en el tablero, sin rival",
+			"term": "tras fallar",
+			"group": "final",
+			"note": "el ejercicio que se acabó encontrando, pero no al primer intento. No es rendirse: la línea salió del jugador",
 			"translations": {
-				"en-GB": "free play",
-				"ru-RU": "свободная игра",
-				"hi-IN": "फ्री प्ले",
-				"fr-FR": "jeu libre",
-				"ca-ES": "joc lliure"
+				"en-GB": "after a miss",
+				"ru-RU": "после ошибки",
+				"hi-IN": "चूक के बाद",
+				"fr-FR": "après une erreur",
+				"ca-ES": "després de fallar"
+			}
+		},
+		{
+			"term": "solución vista",
+			"group": "final",
+			"note": "el ejercicio que terminó enseñando la línea porque el jugador se rindió. Es el resultado; la acción que lleva a él es rendirse",
+			"translations": {
+				"en-GB": "solution shown",
+				"ru-RU": "решение показано",
+				"hi-IN": "समाधान दिखाया",
+				"fr-FR": "solution montrée",
+				"ca-ES": "solució vista"
+			}
+		},
+		{
+			"term": "precisión",
+			"group": "final",
+			"note": "los ejercicios resueltos a la primera divididos por los hechos, en porcentaje; nunca la precisión de una medida o de un instrumento",
+			"translations": {
+				"en-GB": "accuracy",
+				"ru-RU": "точность",
+				"hi-IN": "सटीकता",
+				"fr-FR": "précision",
+				"ca-ES": "precisió"
+			}
+		},
+		{
+			"term": "error",
+			"group": "final",
+			"note": "una jugada equivocada dentro de un ejercicio, no el ejercicio entero fallado, y nunca un error de la aplicación",
+			"translations": {
+				"en-GB": "mistake",
+				"ru-RU": "ошибка",
+				"hi-IN": "गलती",
+				"fr-FR": "erreur",
+				"ca-ES": "error"
 			}
 		},
 		{
 			"term": "pista",
+			"group": "final",
 			"note": "la ayuda que señala la pieza que hay que mover",
 			"translations": {
 				"en-GB": "hint",
@@ -357,7 +218,8 @@
 		},
 		{
 			"term": "rendirse",
-			"note": "abandonar un ejercicio y ver la solución; no es abandonar una partida",
+			"group": "final",
+			"note": "abandonar un ejercicio y ver la solución; no es abandonar una partida. El resultado que deja es «solución vista»",
 			"translations": {
 				"en-GB": "give up",
 				"ru-RU": "сдаться",
@@ -367,7 +229,252 @@
 			}
 		},
 		{
+			"term": "banda de rating",
+			"group": "contenido",
+			"note": "el tramo de dificultad del que se sacan los ejercicios",
+			"translations": {
+				"en-GB": "rating band",
+				"ru-RU": "диапазон рейтинга",
+				"hi-IN": "रेटिंग बैंड",
+				"fr-FR": "plage de classement",
+				"ca-ES": "franja de rating"
+			}
+		},
+		{
+			"term": "catálogo",
+			"group": "contenido",
+			"note": "el fondo de ejercicios del servidor, común a todos los usuarios",
+			"translations": {
+				"en-GB": "catalogue",
+				"ru-RU": "каталог",
+				"hi-IN": "कैटलॉग",
+				"fr-FR": "catalogue",
+				"ca-ES": "catàleg"
+			}
+		},
+		{
+			"term": "juego libre",
+			"group": "contenido",
+			"note": "mover las piezas de los dos bandos en el tablero, sin rival y sin solución que seguir; nunca «exploración», que en la calibración es una ronda",
+			"translations": {
+				"en-GB": "free play",
+				"ru-RU": "свободная игра",
+				"hi-IN": "फ्री प्ले",
+				"fr-FR": "jeu libre",
+				"ca-ES": "joc lliure"
+			}
+		},
+		{
+			"term": "jugada",
+			"group": "ajedrez",
+			"note": "un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar",
+			"translations": {
+				"en-GB": "move",
+				"ru-RU": "ход",
+				"hi-IN": "चाल",
+				"fr-FR": "coup",
+				"ca-ES": "jugada"
+			}
+		},
+		{
+			"term": "línea",
+			"group": "ajedrez",
+			"note": "la secuencia de jugadas que resuelve el ejercicio; nunca una línea de texto ni una fila, ni la línea geométrica del tablero",
+			"translations": {
+				"en-GB": "line",
+				"ru-RU": "вариант",
+				"hi-IN": "लाइन",
+				"fr-FR": "variante",
+				"ca-ES": "línia"
+			}
+		},
+		{
+			"term": "partida",
+			"group": "ajedrez",
+			"note": "una partida de ajedrez contra la máquina; nunca una coincidencia, un emparejamiento ni un resultado de búsqueda",
+			"translations": {
+				"en-GB": "match",
+				"ru-RU": "партия",
+				"hi-IN": "बाज़ी",
+				"fr-FR": "partie",
+				"ca-ES": "partida"
+			}
+		},
+		{
+			"term": "tablero",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "board",
+				"ru-RU": "доска",
+				"hi-IN": "बोर्ड",
+				"fr-FR": "échiquier",
+				"ca-ES": "tauler"
+			}
+		},
+		{
+			"term": "casilla",
+			"group": "ajedrez",
+			"note": "una de las 64 del tablero; el término de ajedrez, no la celda de una tabla",
+			"translations": {
+				"en-GB": "square",
+				"ru-RU": "поле",
+				"hi-IN": "खाना",
+				"fr-FR": "case",
+				"ca-ES": "casella"
+			}
+		},
+		{
+			"term": "bando",
+			"group": "ajedrez",
+			"note": "el color con el que se juega, blancas o negras; nunca una banda, una franja ni un lado del tablero",
+			"translations": {
+				"en-GB": "side",
+				"ru-RU": "сторона",
+				"hi-IN": "पक्ष",
+				"fr-FR": "camp",
+				"ca-ES": "bàndol"
+			}
+		},
+		{
+			"term": "pieza",
+			"group": "ajedrez",
+			"note": "cualquier trebejo del tablero, peón incluido",
+			"translations": {
+				"en-GB": "piece",
+				"ru-RU": "фигура",
+				"hi-IN": "मोहरा",
+				"fr-FR": "pièce",
+				"ca-ES": "peça"
+			}
+		},
+		{
+			"term": "rey",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "king",
+				"ru-RU": "король",
+				"hi-IN": "राजा",
+				"fr-FR": "roi",
+				"ca-ES": "rei"
+			}
+		},
+		{
+			"term": "dama",
+			"group": "ajedrez",
+			"note": "la reina; en español la aplicación dice siempre dama, no reina",
+			"translations": {
+				"en-GB": "queen",
+				"ru-RU": "ферзь",
+				"hi-IN": "वज़ीर",
+				"fr-FR": "dame",
+				"ca-ES": "dama"
+			}
+		},
+		{
+			"term": "torre",
+			"group": "ajedrez",
+			"note": "la pieza de ajedrez; nunca una torre de edificio",
+			"translations": {
+				"en-GB": "rook",
+				"ru-RU": "ладья",
+				"hi-IN": "हाथी",
+				"fr-FR": "tour",
+				"ca-ES": "torre"
+			}
+		},
+		{
+			"term": "alfil",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "bishop",
+				"ru-RU": "слон",
+				"hi-IN": "ऊँट",
+				"fr-FR": "fou",
+				"ca-ES": "alfil"
+			}
+		},
+		{
+			"term": "caballo",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "knight",
+				"ru-RU": "конь",
+				"hi-IN": "घोड़ा",
+				"fr-FR": "cavalier",
+				"ca-ES": "cavall"
+			}
+		},
+		{
+			"term": "peón",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "pawn",
+				"ru-RU": "пешка",
+				"hi-IN": "प्यादा",
+				"fr-FR": "pion",
+				"ca-ES": "peó"
+			}
+		},
+		{
+			"term": "coronar",
+			"group": "ajedrez",
+			"note": "promocionar un peón que llega a la última fila",
+			"translations": {
+				"en-GB": "promote",
+				"ru-RU": "превратить",
+				"hi-IN": "प्रमोट",
+				"fr-FR": "promouvoir",
+				"ca-ES": "coronar"
+			}
+		},
+		{
+			"term": "jaque",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "check",
+				"ru-RU": "шах",
+				"hi-IN": "शह",
+				"fr-FR": "échec",
+				"ca-ES": "escac"
+			}
+		},
+		{
+			"term": "jaque mate",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "checkmate",
+				"ru-RU": "мат",
+				"hi-IN": "शहमात",
+				"fr-FR": "échec et mat",
+				"ca-ES": "escac i mat"
+			}
+		},
+		{
+			"term": "rey ahogado",
+			"group": "ajedrez",
+			"note": "el ahogado, que son tablas; nunca ahogarse ni asfixiarse",
+			"translations": {
+				"en-GB": "stalemate",
+				"ru-RU": "пат",
+				"hi-IN": "स्टैल्मेट",
+				"fr-FR": "pat",
+				"ca-ES": "ofegat"
+			}
+		},
+		{
+			"term": "tablas",
+			"group": "ajedrez",
+			"translations": {
+				"en-GB": "draw",
+				"ru-RU": "ничья",
+				"hi-IN": "ड्रॉ",
+				"fr-FR": "nulle",
+				"ca-ES": "taules"
+			}
+		},
+		{
 			"term": "sincronización",
+			"group": "infraestructura",
 			"note": "el intercambio con el servidor; subir es del dispositivo al servidor y bajar al revés",
 			"translations": {
 				"en-GB": "synchronisation",
@@ -379,6 +486,7 @@
 		},
 		{
 			"term": "sesión",
+			"group": "infraestructura",
 			"note": "la sesión iniciada contra el API, guardada en una cookie",
 			"translations": {
 				"en-GB": "session",

@@ -1,5 +1,5 @@
 <!--
-	ToDo => "Your program" covers the counts (solved per stage, current stage, level),
+	ToDo => "Your training" covers the counts (first try per stage, current stage, level),
 	which is what the API already aggregates. What the method is actually scored on is
 	still missing: the time of the last cycle against the ones before it, the
 	worst-performing exercises, and later the friends' comparison. The first two need
@@ -40,25 +40,25 @@
 		</div>
 
 		<div class="flex-col gap-2">
-			<h4>{{ I18n.dashboard.YOUR_PROGRAM | i18n }}</h4>
+			<h4>{{ I18n.dashboard.YOUR_TRAINING | i18n }}</h4>
 
-			@if (summary(); as program) {
+			@if (summary(); as training) {
 				<p class="fs-sm color-contrast-mid">
 					{{
-						I18n.dashboard.PROGRAM_TOTALS
+						I18n.dashboard.TRAINING_TOTALS
 							| i18n
 								: {
-										solved: program.solved,
-										total: program.total,
-										percentage: program.percentage,
+										firstTry: training.firstTry,
+										total: training.total,
+										percentage: training.percentage,
 								  }
 					}}
-					@if (program.rating; as rating) {
-						{{ I18n.dashboard.PROGRAM_LEVEL | i18n: { rating } }}
+					@if (training.rating; as rating) {
+						{{ I18n.dashboard.TRAINING_LEVEL | i18n: { rating } }}
 					}
 				</p>
 
-				@if (program.current; as current) {
+				@if (training.current; as current) {
 					<p class="fs-sm color-contrast-mid">{{ current.key | i18n: current.params }}</p>
 				}
 
@@ -67,20 +67,20 @@
 						<tr>
 							<th scope="col">{{ I18n.common.STAGE | i18n }}</th>
 
-							<th scope="col">{{ I18n.common.SOLVED | i18n }}</th>
+							<th scope="col">{{ I18n.common.FIRST_TRY | i18n }}</th>
 
 							<th scope="col">{{ I18n.common.RESULT | i18n }}</th>
 						</tr>
 					</thead>
 
 					<tbody>
-						@for (row of program.rows; track row.key) {
+						@for (row of training.rows; track row.key) {
 							<tr>
 								<th scope="row">
 									{{ row.stage.key | i18n: row.stage.params }} {{ row.stageDetail }}
 								</th>
 
-								<td class="mono">{{ row.solved }}</td>
+								<td class="mono">{{ row.firstTry }}</td>
 
 								<td>{{ row.result.key | i18n: row.result.params }} {{ row.resultDetail }}</td>
 							</tr>
@@ -89,8 +89,8 @@
 				</table>
 			}
 
-			<button appThemed color="accent" [disabled]="training.isLoading()" (click)="openProgram()">
-				{{ programLabel().key | i18n: programLabel().params }}
+			<button appThemed color="accent" [disabled]="training.isLoading()" (click)="openTraining()">
+				{{ trainingLabel().key | i18n: trainingLabel().params }}
 			</button>
 		</div>
 	}
@@ -105,10 +105,6 @@
 
 			<button appThemed color="primary-mid" appRouterLink="/puzzles/sample">
 				{{ I18n.dashboard.TRY_SAMPLE | i18n }}
-			</button>
-
-			<button appThemed appRouterLink="/match">
-				{{ I18n.dashboard.NEW_MATCH | i18n }}
 			</button>
 		</div>
 	</div>

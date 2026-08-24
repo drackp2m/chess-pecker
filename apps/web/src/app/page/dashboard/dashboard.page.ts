@@ -8,7 +8,7 @@ import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { SegmentDirective } from '@app/directive/segment/segment.directive';
 import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
-import { toProgramSummary } from '@app/page/dashboard/program-summary';
+import { toTrainingSummary } from '@app/page/dashboard/training-summary';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { ActivityStore } from '@app/store/activity.store';
 import { SessionStore } from '@app/store/session.store';
@@ -40,7 +40,7 @@ export class DashboardPage {
 	readonly training = inject(TrainingStore);
 	readonly activity = inject(ActivityStore);
 
-	readonly summary = computed(() => toProgramSummary(this.training.progress()));
+	readonly summary = computed(() => toTrainingSummary(this.training.progress()));
 
 	readonly hoveredDay = signal<ActivityCell | null>(null);
 
@@ -57,21 +57,21 @@ export class DashboardPage {
 		this.visibleActivity().reduce((total, day) => total + day.count, 0),
 	);
 
-	/** What the one button on the program does, so the state is read before it is opened. */
-	readonly programLabel = computed<TranslationRef>(() => {
+	/** What the one button on the training does, so the state is read before it is opened. */
+	readonly trainingLabel = computed<TranslationRef>(() => {
 		const runningCycle = this.training.runningCycle();
 
 		if ('calibrating' === this.training.active()?.status) {
-			return i18nRef(I18n.dashboard.PROGRAM_REFINE);
+			return i18nRef(I18n.dashboard.TRAINING_REFINE);
 		}
 
 		return undefined === runningCycle
-			? i18nRef(I18n.dashboard.PROGRAM_START)
-			: i18nRef(I18n.dashboard.PROGRAM_CONTINUE, { index: runningCycle.index });
+			? i18nRef(I18n.dashboard.TRAINING_CONTINUE)
+			: i18nRef(I18n.dashboard.CYCLE_CONTINUE, { index: runningCycle.index });
 	});
 
 	/** Anything already in progress goes straight to the board; the rest needs the forms. */
-	private readonly programLink = computed(() =>
+	private readonly trainingLink = computed(() =>
 		'calibrating' === this.training.active()?.status || undefined !== this.training.runningCycle()
 			? '/training/solve'
 			: '/training',
@@ -80,14 +80,14 @@ export class DashboardPage {
 	private readonly logOutUseCase = inject(LogOutUseCase);
 	private readonly router = inject(Router);
 
-	private hasLoadedProgram = false;
+	private hasLoadedTraining = false;
 
 	constructor() {
-		// The session settles after the first paint, so the program is asked for whenever
+		// The session settles after the first paint, so the training is asked for whenever
 		// that happens to land — and only once, however many times the store then changes.
 		effect(() => {
-			if (this.session.isAuthenticated() && !this.hasLoadedProgram) {
-				this.hasLoadedProgram = true;
+			if (this.session.isAuthenticated() && !this.hasLoadedTraining) {
+				this.hasLoadedTraining = true;
 
 				void this.training.load();
 				void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS));
@@ -95,8 +95,8 @@ export class DashboardPage {
 		});
 	}
 
-	openProgram(): void {
-		void this.router.navigate([this.programLink()]);
+	openTraining(): void {
+		void this.router.navigate([this.trainingLink()]);
 	}
 
 	onDayFocus(day: ActivityCell | null): void {

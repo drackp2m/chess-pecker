@@ -102,7 +102,7 @@ export class TrainingPage implements OnInit {
 		overflow: { mode: 'drop' },
 	};
 
-	readonly dailySolved = computed(() =>
+	readonly dailyFirstTry = computed(() =>
 		this.dailyBreakdown().reduce((total, day) => total + day.solved, 0),
 	);
 
@@ -227,7 +227,7 @@ export class TrainingPage implements OnInit {
 
 	describeCycle(cycle: CycleProgress): string {
 		return this.i18n.translate(I18n.training.CYCLE_SUMMARY, {
-			solved: cycle.solved,
+			done: cycle.attempted,
 			total: cycle.total,
 			percent: Math.round(cycle.accuracy * 100),
 		});
@@ -257,18 +257,18 @@ export class TrainingPage implements OnInit {
 	private dailyBars(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {
 		return [
 			{
-				id: 'solved',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_SOLVED),
+				id: 'firstTry',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_FIRST_TRY),
 				values: days.map((day) => day.solved),
 			},
 			{
-				id: 'failed',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_FAILED),
+				id: 'afterMiss',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_AFTER_MISS),
 				values: days.map((day) => day.failed),
 			},
 			{
-				id: 'resigned',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_RESIGNED),
+				id: 'shown',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_SHOWN),
 				values: days.map((day) => day.resigned),
 			},
 		];
@@ -299,9 +299,9 @@ export class TrainingPage implements OnInit {
 			label: Number(day.date.slice(8)).toString(),
 			description: this.i18n.translate(I18n.training.DAILY_DAY_DETAIL, {
 				date: day.date,
-				solved: day.solved,
-				failed: day.failed,
-				resigned: day.resigned,
+				firstTry: day.solved,
+				afterMiss: day.failed,
+				shown: day.resigned,
 				mistakes: day.mistakes,
 				hints: day.hints,
 				minutes: Math.round(day.durationMs / MS_PER_MINUTE),

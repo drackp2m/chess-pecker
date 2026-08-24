@@ -1,6 +1,6 @@
 # setting
 
-La página de ajustes. Aquí un «ajuste» es una preferencia de la aplicación, no la ronda de calibración del entrenamiento.
+La página de ajustes. Aquí un «ajuste» es una preferencia de la aplicación. La ronda de calibración que antes se llamaba así ahora es un «afinado», así que ya no hay dos cosas con el mismo nombre.
 
 Cada bloque tiene un encabezado corto y un párrafo de introducción debajo. Los encabezados son sustantivos de una o dos palabras; las etiquetas de los controles y las opciones son cortas, sin punto final y sin repetir el nombre del bloque. Los párrafos sí son prosa con punto.
 

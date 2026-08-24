@@ -1,28 +1,32 @@
 # dashboard
 
-La página de inicio, la primera que se ve. Tiene tres partes: el resumen del programa en curso, los atajos a la práctica suelta, y el gancho al método Woodpecker para quien llega nuevo.
+La página de inicio, la primera que se ve. Tiene tres partes: el resumen del entrenamiento en curso, los atajos a la práctica suelta, y el gancho al método Woodpecker para quien llega nuevo.
 
-## YOUR_PROGRAM
+## YOUR_TRAINING
 
-Encabezado. El «programa» es el entrenamiento en curso del jugador, con todos sus ciclos.
+Encabezado. Es el entrenamiento en curso del jugador, con todas sus rondas y sus ciclos. Nunca «programa».
 
-## PROGRAM_TOTALS
+## TRAINING_TOTALS
 
-## PROGRAM_CURRENT_*
+## TRAINING_CURRENT_*
 
-Recuentos de ejercicios resueltos sobre el total, en distintos tramos del programa: el programa entero, los sondeos, el ajuste o un ciclo concreto. `{{ percentage }}` llega ya formateado con su símbolo y `{{ index }}` es el número del ciclo. La frase se lee de corrido y no lleva punto.
+Recuentos de ejercicios resueltos a la primera sobre el total, en distintas etapas del entrenamiento: el entrenamiento entero, las exploraciones, el afinado o un ciclo concreto. `{{ firstTry }}` cuenta sólo los acertados al primer intento, no los que se acabaron encontrando. `{{ percentage }}` llega ya formateado con su símbolo y `{{ index }}` es el número del ciclo. La frase se lee de corrido y no lleva punto.
 
-## PROGRAM_LEVEL
+## TRAINING_LEVEL
 
 Fragmento que se pega detrás de otro con el separador « · ». `{{ rating }}` es un ELO.
 
-## PROGRAM_*
+## TRAINING_REFINE
 
-Los botones del bloque del programa: afinar la calibración, empezar un bloque nuevo de ejercicios o continuar el ciclo en marcha. Imperativos, sin punto.
+## TRAINING_CONTINUE
+
+## CYCLE_CONTINUE
+
+Los botones del bloque del entrenamiento: afinar la calibración, seguir con el entrenamiento donde se quedó o continuar el ciclo en marcha. Imperativos, sin punto.
 
 ## PRACTICE
 
-Encabezado del bloque de práctica suelta, la que no cuenta para el programa.
+Encabezado del bloque de práctica suelta, la que no cuenta para el entrenamiento.
 
 ## METHOD_TITLE
 
@@ -32,7 +36,7 @@ El nombre del método. «Woodpecker» no se traduce nunca, ni se translitera.
 
 ## METHOD_OPEN
 
-El bloque del método en el inicio, ya reducido a un gancho y un botón: la explicación entera vive en la scope `intro`. `METHOD_SUMMARY` es una sola frase que resume la idea —el **mismo** conjunto de ejercicios, pasada tras pasada, hasta reconocer la idea táctica de un vistazo— y `METHOD_OPEN` es la etiqueta del botón que abre esa presentación.
+El bloque del método en el inicio, ya reducido a un gancho y un botón: la explicación entera vive en la scope `intro`. `METHOD_SUMMARY` es una sola frase que resume la idea —el **mismo** conjunto de ejercicios, ciclo tras ciclo, hasta reconocer la idea táctica de un vistazo— y `METHOD_OPEN` es la etiqueta del botón que abre esa presentación.
 
 ## ACTIVITY_*
 

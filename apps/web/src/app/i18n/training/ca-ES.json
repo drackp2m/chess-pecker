@@ -73,8 +73,8 @@
 	"01M2K7B4X00MZRZS3YJ612PS3H": "Rendits",
 	"01M2K7B4X0R38PJDYSHMFA35W3": "Errors",
 	"01M2K7B4X04KBQBJ29EGR0QY3K": "Pistes",
-	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ solved }} resolts, {{ failed }} fallats, {{ resigned }} rendits · {{ mistakes }} errors, {{ hints }} pistes · {{ minutes }} min",
-	"01M2K7B4X0B4GWJVX17EFKMFCF": "Últims {{ days }} dies · {{ solved }} exercicis resolts",
+	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ firstTry }} resolts, {{ afterMiss }} fallats, {{ shown }} rendits · {{ mistakes }} errors, {{ hints }} pistes · {{ minutes }} min",
+	"01M2K7B4X0B4GWJVX17EFKMFCF": "Últims {{ days }} dies · {{ firstTry }} exercicis resolts",
 	"01KZNRPGG0KYNNVF8SHK72BG4S": "Respecte al ritme",
 	"01KZNRPGG051V1E9B3N5MECMHE": "Balanç acumulat",
 	"01KZNRPGG0PJ1FZ6K0MNAYBNYB": "{{ date }} · {{ done }} de {{ expected }} · {{ delta }} aquell dia, {{ drift }} en total",
@@ -83,5 +83,5 @@
 	"01KZPWVGSDGS53J80H7DYGWN3A": "{{ exercises }} exercicis per darrere",
 	"01M3Q0R8PQZRWMKVYGJJ5DTPHG": "Cancel·lar l’entrenament?",
 	"01M3Q0R8PQKC4YMVG92S56C0F5": "Es conserva el progrés fet fins ara, però l’entrenament s’atura aquí i hauràs de començar-ne un de nou.",
-	"01KZQ04WTYZVJCVY0BGR68T4MZ": "Has finalitzat {{ solved }} de {{ total }} exercicis · {{ percent }}% d’encert"
+	"01KZQ04WTYZVJCVY0BGR68T4MZ": "Has finalitzat {{ done }} de {{ total }} exercicis · {{ percent }}% d’encert"
 }

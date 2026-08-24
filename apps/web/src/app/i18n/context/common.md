@@ -20,25 +20,25 @@ Entrada de menú que lleva a la partida contra la máquina.
 
 La partida contra la máquina. Nunca una coincidencia ni un emparejamiento.
 
-## SCAN
+## EXPLORATION
 
-El sondeo de la calibración: una ronda de un solo ejercicio. Aquí es un sustantivo, la etiqueta de una etapa, no el verbo escanear.
+La exploración de la calibración: una ronda de un solo ejercicio, que salta de nivel para acotar la zona. Aquí es un sustantivo, la etiqueta de una etapa, y nunca el juego libre del tablero.
 
 ## REFINE
 
-El ajuste de la calibración: la ronda de diez ejercicios. También un sustantivo.
+El afinado de la calibración: la ronda de diez ejercicios que afina el nivel encontrado. También un sustantivo, y nunca un ajuste de la aplicación.
 
 ## STAGE
 
-La etapa de la calibración en la que se está: sondeo o ajuste.
+Encabezado de la columna que nombra cada fila del resumen: una ronda de calibración (exploración o afinado) o un ciclo. Un ciclo es una etapa.
 
 ## CYCLE
 
 `{{ index }}` es el número del ciclo, desde 1.
 
-## SOLVED
+## FIRST_TRY
 
-Encabezado de un recuento de ejercicios resueltos, en plural.
+Encabezado de la columna que cuenta los ejercicios acertados al primer intento sobre los repartidos. No es «resueltos»: el que falla y luego encuentra la línea no cuenta aquí. Tiene que caber en una columna estrecha.
 
 ## LINE
 

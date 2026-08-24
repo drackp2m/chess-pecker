@@ -95,7 +95,7 @@ export class TrainingStore
 	async setGoal(goal: SetTrainingGoalRequest): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.engine.setGoal(uuid, goal),
-			i18nRef(I18n.training.SET_GOAL_ERROR),
+			i18nRef(I18n.training.SAVE_PACE_ERROR),
 		);
 	}
 

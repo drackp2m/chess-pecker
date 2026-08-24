@@ -73,8 +73,8 @@
 	"01M2K7B4X00MZRZS3YJ612PS3H": "Сдались",
 	"01M2K7B4X0R38PJDYSHMFA35W3": "Ошибки",
 	"01M2K7B4X04KBQBJ29EGR0QY3K": "Подсказки",
-	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · решено: {{ solved }}, ошибок: {{ failed }}, сдались: {{ resigned }} · ошибок: {{ mistakes }}, подсказок: {{ hints }} · {{ minutes }} мин",
-	"01M2K7B4X0B4GWJVX17EFKMFCF": "Последние {{ days }} дн. · решено {{ solved }} упражнений",
+	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · решено: {{ firstTry }}, ошибок: {{ afterMiss }}, сдались: {{ shown }} · ошибок: {{ mistakes }}, подсказок: {{ hints }} · {{ minutes }} мин",
+	"01M2K7B4X0B4GWJVX17EFKMFCF": "Последние {{ days }} дн. · решено {{ firstTry }} упражнений",
 	"01KZNRPGG0KYNNVF8SHK72BG4S": "Относительно темпа",
 	"01KZNRPGG051V1E9B3N5MECMHE": "Текущий баланс",
 	"01KZNRPGG0PJ1FZ6K0MNAYBNYB": "{{ date }} · {{ done }} из {{ expected }} · за день: {{ delta }}, всего: {{ drift }}",
@@ -83,5 +83,5 @@
 	"01KZPWVGSDGS53J80H7DYGWN3A": "На {{ exercises }} упражнений позади",
 	"01M3Q0R8PQZRWMKVYGJJ5DTPHG": "Отменить тренировку?",
 	"01M3Q0R8PQKC4YMVG92S56C0F5": "Достигнутый прогресс сохранится, но тренировка будет остановлена, и для продолжения потребуется начать новую.",
-	"01KZQ04WTYZVJCVY0BGR68T4MZ": "Решено {{ solved }} из {{ total }} упражнений · точность {{ percent }}%"
+	"01KZQ04WTYZVJCVY0BGR68T4MZ": "Решено {{ done }} из {{ total }} упражнений · точность {{ percent }}%"
 }

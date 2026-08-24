@@ -1,12 +1,14 @@
 # training
 
-La página del entrenamiento, que es el corazón de la aplicación. Un entrenamiento tiene tres tramos en este orden: la **calibración** busca el nivel del jugador a base de rondas; la **planificación** fija el conjunto de ejercicios y el ritmo diario; y luego se recorren los **ciclos**, cada uno una vuelta entera al mismo conjunto. Sólo puede haber un entrenamiento en curso.
+La página del entrenamiento, que es el corazón de la aplicación. Un entrenamiento pasa por tres fases en este orden: la **calibración** busca el nivel del jugador a base de rondas; la **planificación** fija el conjunto de ejercicios y el ritmo diario; y luego se recorren los **ciclos**, cada uno una vuelta entera al mismo conjunto. Sólo puede haber un entrenamiento en curso.
+
+Ojo a los tres niveles, que no son lo mismo: una **fase** es uno de esos tres momentos y su nombre nunca se escribe en la interfaz; una **etapa** es una fila del resumen, o sea una ronda de calibración o un ciclo; y un **ciclo** es una de las dos clases de etapa.
 
 Los textos largos de esta página explican el método a alguien que lo está haciendo por primera vez: se traducen como prosa, no como jerga técnica calcada. Las etiquetas de los botones son imperativas y cortas.
 
 ## PHASE_*
 
-El tramo en el que está el entrenamiento, escrito como lo que la aplicación está haciendo ahora mismo: gerundio o frase corta en marcha, no un sustantivo. `PHASE_ABANDONED` es un entrenamiento que el jugador canceló, no uno que se perdió ni que falló.
+La fase en la que está el entrenamiento, escrita como lo que la aplicación está haciendo ahora mismo: gerundio o frase corta en marcha, no un sustantivo. `PHASE_ABANDONED` es un entrenamiento que el jugador canceló, no uno que se perdió ni que falló.
 
 ## STATUS_*
 
@@ -14,7 +16,7 @@ La misma idea que `PHASE_*` pero en una sola palabra, para una etiqueta o una in
 
 ## CALIBRATION_*
 
-La fase de calibración. Un **sondeo** es una ronda de un solo ejercicio que salta de nivel; un **ajuste**, una ronda de diez que afina alrededor del nivel encontrado. «Sondear más alto» o «más bajo» es probar con ejercicios más difíciles o más fáciles: es una decisión sobre la dificultad, no sobre una posición del tablero ni sobre la profundidad de un cálculo.
+La fase de calibración. Una **exploración** es una ronda de un solo ejercicio que salta de nivel para acotar la zona; un **afinado**, una ronda de diez que afina alrededor del nivel encontrado. «Sube el nivel» o «baja el nivel» es que la ronda siguiente reparte ejercicios más difíciles o más fáciles: es una decisión sobre la dificultad, no sobre una posición del tablero ni sobre la profundidad de un cálculo.
 
 ## OUTCOME_*
 
@@ -46,7 +48,7 @@ El gráfico que compara lo hecho cada día con el ritmo pactado. `{{ delta }}` e
 
 ## DAILY_*
 
-El gráfico de actividad diaria. Cada serie es una etiqueta de leyenda de una o dos palabras: resueltos, fallados, rendidos (los que abandonó para ver la solución), errores (jugadas equivocadas dentro de un ejercicio) y pistas. Tienen que caber en una leyenda estrecha.
+El gráfico de actividad diaria. Las tres primeras series parten en tres los ejercicios hechos, sin solaparse: **a la primera** (acertados al primer intento), **tras fallar** (encontrados, pero después de al menos un error) y **solución vista** (los que se abandonaron para ver la línea). Las otras dos cuentan otra cosa: **errores** son jugadas equivocadas dentro de un ejercicio, y **pistas** las ayudas pedidas. Cada etiqueta tiene que caber en una leyenda estrecha.
 
 ## PRACTICE_NOTICE_*
 
