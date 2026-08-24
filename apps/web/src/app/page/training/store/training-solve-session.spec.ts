@@ -55,7 +55,7 @@ const STORED_DRAFT: AttemptDraftRow = {
 	lichessId: 'AAA11',
 	durationMs: 12_000,
 	record: ['g8h8', 'a1a2', -1],
-	explorations: [],
+	freePlayRuns: [],
 	hintUsed: true,
 	mistakeCount: 1,
 	createdAt: new Date('2026-08-03T09:00:00.000Z'),
@@ -450,7 +450,7 @@ describe('TrainingSolveSession', () => {
 		expect(onlyDraft(attempts)).toMatchObject({
 			uuid: STORED_DRAFT.uuid,
 			record: STORED_DRAFT.record,
-			explorations: [],
+			freePlayRuns: [],
 			hintUsed: true,
 			mistakeCount: 1,
 		});

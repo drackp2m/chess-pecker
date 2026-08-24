@@ -66,7 +66,7 @@ function toHistoryEntry(attempt: PuzzleAttempt): TrainingAttempt {
 		hintUsed: attempt.hintUsed,
 		mistakeCount: attempt.mistakeCount,
 		record: attempt.record,
-		explorations: attempt.explorations,
+		freePlayRuns: attempt.freePlayRuns,
 		createdAt: attempt.createdAt.toISOString(),
 		updatedAt: attempt.updatedAt.toISOString(),
 		...(undefined === roundUuid ? {} : { roundUuid }),

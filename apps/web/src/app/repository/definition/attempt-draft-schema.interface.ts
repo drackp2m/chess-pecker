@@ -17,7 +17,7 @@ export interface AttemptDraftRow {
 	readonly lichessId: string;
 	readonly durationMs: number;
 	readonly record: readonly PuzzleEvent[];
-	readonly explorations: readonly FreePlayRun[];
+	readonly freePlayRuns: readonly FreePlayRun[];
 	/** There may still be no verdict. */
 	readonly solved?: boolean;
 	readonly hintUsed: boolean;

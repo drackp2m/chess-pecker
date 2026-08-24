@@ -8,7 +8,7 @@ import { TrainingCalibrationRoundRepository } from './training-calibration-round
 import { Training } from './training.entity';
 
 /**
- * Scan and refine in one table: an ELO band, some attempts and a decision, differing only in
+ * Exploration and refine in one table: an ELO band, some attempts and a decision, differing only in
  * how many attempts hang off them. Everything derived lives in `puzzle_attempt`.
  */
 @Entity({ repository: () => TrainingCalibrationRoundRepository })

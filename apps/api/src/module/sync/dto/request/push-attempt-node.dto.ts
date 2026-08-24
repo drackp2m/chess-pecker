@@ -48,5 +48,5 @@ export class PushAttemptNodeDto extends SyncNodeDto implements PushAttemptNode<D
 	@IsArray()
 	@ValidateNested({ each: true })
 	@Type(() => FreePlayRunDto)
-	explorations!: FreePlayRun[];
+	freePlayRuns!: FreePlayRun[];
 }

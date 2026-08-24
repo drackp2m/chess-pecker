@@ -15,8 +15,8 @@
 	"01M0R723KHNMPKNCS6DTCTR0R6": "Один и тот же набор упражнений, повторяемый проход за проходом, пока узнавание тактической идеи не станет мгновенным.",
 	"01M0R72FBZN48HP2AB38MA18FF": "Читать введение",
 	"3QANR96FW2DBWT32T7AMQHRZA1": "Активность",
-	"450807Y5ZBDPF1ARZJCTNNMHEM": "В выбранном диапазоне выполнено {{ count }} упражнений",
-	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ count }} упражнений выполнено {{ date }}",
+	"450807Y5ZBDPF1ARZJCTNNMHEM": "В выбранном диапазоне выполнено {{ done }} упражнений",
+	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ done }} упражнений выполнено {{ date }}",
 	"01KZKC6AF682V42Y8JEMP8XRNG": "Меньше",
 	"01KZKC6AF6ACN4CWMWHX9CYPVR": "Больше",
 	"01KZKC6AF6R3M9T0XVQD5HYBNE": "{{ months }} мес."

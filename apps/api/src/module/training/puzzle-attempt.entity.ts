@@ -67,5 +67,5 @@ export class PuzzleAttempt extends SyncableBaseEntity<PuzzleAttempt> {
 	record!: PuzzleEvent[];
 
 	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
-	explorations!: FreePlayRun[];
+	freePlayRuns!: FreePlayRun[];
 }

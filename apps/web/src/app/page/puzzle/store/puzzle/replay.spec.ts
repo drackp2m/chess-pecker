@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { Puzzle } from '@app/definition/puzzle.type';
-import { foldExploration, foldOrBlank, foldRecord } from '@app/page/puzzle/store/puzzle/replay';
+import { foldFreePlayRun, foldOrBlank, foldRecord } from '@app/page/puzzle/store/puzzle/replay';
 import { ChessFen } from '@app/util/chess/chess-fen';
 
 const FEN = '5r2/pp6/2p3k1/2R1p2n/8/1BP5/Pr4PP/5R1K w - - 0 27';
@@ -61,11 +61,11 @@ describe('foldOrBlank', () => {
 	});
 });
 
-describe('foldExploration', () => {
-	it('hangs the exploration off the main line it was entered from', () => {
-		const record = { record: ['f1f8', 'b2b1'], explorations: [{ at: 2, events: ['b3d1'] }] };
+describe('foldFreePlayRun', () => {
+	it('hangs the free-play run off the main line it was entered from', () => {
+		const record = { record: ['f1f8', 'b2b1'], freePlayRuns: [{ at: 2, events: ['b3d1'] }] };
 
-		const fold = foldExploration(FEN, record, 0, PUZZLE);
+		const fold = foldFreePlayRun(FEN, record, 0, PUZZLE);
 
 		expect(fold?.cursor).toBe(3);
 		expect(fold?.anchor.cursor).toBe(2);
@@ -74,12 +74,12 @@ describe('foldExploration', () => {
 	});
 
 	it('works the deviation out again from the line the anchor holds', () => {
-		const record = { record: ['f1f8', 'b2c2'], explorations: [{ at: 2, events: [] }] };
+		const record = { record: ['f1f8', 'b2c2'], freePlayRuns: [{ at: 2, events: [] }] };
 
-		expect(foldExploration(FEN, record, 0, PUZZLE)?.anchor.deviation).toBe(1);
+		expect(foldFreePlayRun(FEN, record, 0, PUZZLE)?.anchor.deviation).toBe(1);
 	});
 
-	it('has nothing to say about an exploration the record does not hold', () => {
-		expect(foldExploration(FEN, { record: [], explorations: [] }, 0, PUZZLE)).toBeUndefined();
+	it('has nothing to say about a free-play run the record does not hold', () => {
+		expect(foldFreePlayRun(FEN, { record: [], freePlayRuns: [] }, 0, PUZZLE)).toBeUndefined();
 	});
 });

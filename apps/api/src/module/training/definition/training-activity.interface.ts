@@ -5,10 +5,10 @@ export interface TrainingActivity {
 
 export interface TrainingActivityDay {
 	date: string;
-	count: number;
-	solved: number;
-	failed: number;
-	resigned: number;
+	done: number;
+	firstTry: number;
+	afterMiss: number;
+	shown: number;
 	foundClean: number;
 	foundHinted: number;
 	foundMissed: number;

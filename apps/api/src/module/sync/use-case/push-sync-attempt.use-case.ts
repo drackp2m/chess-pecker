@@ -88,7 +88,7 @@ export class PushSyncAttemptUseCase {
 				hintUsed: node.hintUsed,
 				mistakeCount: node.mistakeCount,
 				record: node.record,
-				explorations: node.explorations,
+				freePlayRuns: node.freePlayRuns,
 			}),
 			node,
 		);

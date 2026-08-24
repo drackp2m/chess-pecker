@@ -15,8 +15,8 @@
 	"01M0R723KHNMPKNCS6DTCTR0R6": "एक ही सेट के व्यायाम, चक्र दर चक्र दोहराए जाते हैं, जब तक रणनीतिक विचार पहचानना तत्काल न हो जाए।",
 	"01M0R72FBZN48HP2AB38MA18FF": "परिचय पढ़ें",
 	"3QANR96FW2DBWT32T7AMQHRZA1": "गतिविधि",
-	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ count }} चुनी गई खंड में पूर्ण की गई गतिविधियाँ",
-	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ count }} पूरे किए गए व्यायाम {{ date }}",
+	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ done }} चुनी गई खंड में पूर्ण की गई गतिविधियाँ",
+	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ done }} पूरे किए गए व्यायाम {{ date }}",
 	"01KZKC6AF682V42Y8JEMP8XRNG": "कम",
 	"01KZKC6AF6ACN4CWMWHX9CYPVR": "अधिक",
 	"01KZKC6AF6R3M9T0XVQD5HYBNE": "{{ months }}एम"

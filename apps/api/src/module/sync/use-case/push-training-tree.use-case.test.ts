@@ -160,7 +160,7 @@ describe('PushTrainingTreeUseCase', () => {
 							createdAt: BORN,
 							updatedAt: BORN,
 							index: 1,
-							kind: CalibrationRoundKind.Scan,
+							kind: CalibrationRoundKind.Exploration,
 							rating: 1200,
 							outcome: CalibrationRoundOutcome.Raise,
 							puzzles: [
@@ -188,7 +188,7 @@ describe('PushTrainingTreeUseCase', () => {
 
 			expect(result.rejected).toStrictEqual([]);
 			expect(training.status).toStrictEqual(TrainingStatus.Calibrating);
-			expect(round.kind).toStrictEqual(CalibrationRoundKind.Scan);
+			expect(round.kind).toStrictEqual(CalibrationRoundKind.Exploration);
 			expect(round.outcome).toStrictEqual(CalibrationRoundOutcome.Raise);
 			expect(round.rating).toStrictEqual(1200);
 			expect(played.kind).toStrictEqual(PuzzleAttemptKind.Calibration);
@@ -220,7 +220,7 @@ describe('PushTrainingTreeUseCase', () => {
 							createdAt: BORN,
 							updatedAt: BORN,
 							index: 1,
-							kind: CalibrationRoundKind.Scan,
+							kind: CalibrationRoundKind.Exploration,
 							rating: 1200,
 							outcome: CalibrationRoundOutcome.Accept,
 							puzzles: [
@@ -423,13 +423,13 @@ describe('PushTrainingTreeUseCase', () => {
 	});
 
 	describe('a training the user cancelled', () => {
-		it('goes up abandoned, with the reason and the moment it stopped', async () => {
+		it('goes up cancelled, with the reason and the moment it stopped', async () => {
 			const refs = buildRefs();
 
 			const result = await useCase.execute(
 				user,
 				tree(refs, {
-					status: TrainingStatus.Abandoned,
+					status: TrainingStatus.Cancelled,
 					finishedReason: TrainingFinishedReason.Cancelled,
 					finishedAt: CLOSED,
 					cycles: [
@@ -438,7 +438,7 @@ describe('PushTrainingTreeUseCase', () => {
 							createdAt: BORN,
 							updatedAt: CLOSED,
 							index: 1,
-							status: TrainingCycleStatus.Abandoned,
+							status: TrainingCycleStatus.Cancelled,
 							items: [
 								{
 									clientRef: refs.item,
@@ -458,10 +458,10 @@ describe('PushTrainingTreeUseCase', () => {
 			const cycle = await em.findOneOrFail(TrainingCycle, { clientRef: refs.cycle });
 
 			expect(result.rejected).toStrictEqual([]);
-			expect(training.status).toStrictEqual(TrainingStatus.Abandoned);
+			expect(training.status).toStrictEqual(TrainingStatus.Cancelled);
 			expect(training.finishedReason).toStrictEqual(TrainingFinishedReason.Cancelled);
 			expect(training.finishedAt).toStrictEqual(CLOSED);
-			expect(cycle.status).toStrictEqual(TrainingCycleStatus.Abandoned);
+			expect(cycle.status).toStrictEqual(TrainingCycleStatus.Cancelled);
 		});
 	});
 

@@ -90,12 +90,12 @@ export interface FreePlayRun {
 	readonly events: readonly PuzzleEvent[];
 }
 
-/** How an exercise was solved: the main line, and the explorations hanging off it. */
+/** How an exercise was solved: the main line, and the freePlayRuns hanging off it. */
 export interface PuzzleRecord {
 	/** Every event outside free play, in the order they happened. */
 	readonly record: readonly PuzzleEvent[];
-	/** Every exploration into free play, in the order they were entered. */
-	readonly explorations: readonly FreePlayRun[];
+	/** Every visit to free play, in the order they were entered. */
+	readonly freePlayRuns: readonly FreePlayRun[];
 }
 
 /** A move played during a session, plus where it came from. */

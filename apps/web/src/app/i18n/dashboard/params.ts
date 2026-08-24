@@ -27,10 +27,10 @@ export interface DashboardI18nParams {
 		index: number;
 	};
 	'dashboard.450807Y5ZBDPF1ARZJCTNNMHEM': {
-		count: number;
+		done: number;
 	};
 	'dashboard.62FBJMQVTVSE1N6D6QAJ53Y3E6': {
-		count: number;
+		done: number;
 		date: string;
 	};
 	'dashboard.01KZKC6AF6R3M9T0XVQD5HYBNE': {

@@ -45,7 +45,7 @@
 							[attr.aria-label]="
 								cell
 									? (I18n.dashboard.ACTIVITY_DAY_DETAIL
-										| i18n: { count: cell.count, date: cell.date })
+										| i18n: { done: cell.done, date: cell.date })
 									: null
 							"
 							(mousedown)="$event.preventDefault()"

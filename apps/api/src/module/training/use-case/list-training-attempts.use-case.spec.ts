@@ -34,7 +34,7 @@ describe('ListTrainingAttemptsUseCase', () => {
 			hintUsed: false,
 			mistakeCount: 1,
 			record: ['g8h8', 'a1a8'],
-			explorations: [],
+			freePlayRuns: [],
 			createdAt: new Date('2026-08-11T10:00:00.000Z'),
 			updatedAt: new Date('2026-08-11T10:00:30.000Z'),
 		});
@@ -58,7 +58,7 @@ describe('ListTrainingAttemptsUseCase', () => {
 			hintUsed: true,
 			mistakeCount: 0,
 			record: [],
-			explorations: [{ at: 0, events: ['e2e4'] }],
+			freePlayRuns: [{ at: 0, events: ['e2e4'] }],
 		});
 
 		Object.assign(attempt, { cycleItem: null });
@@ -117,7 +117,7 @@ describe('ListTrainingAttemptsUseCase', () => {
 
 			expect(attempts[0]?.roundUuid).toStrictEqual('round-uuid');
 			expect(attempts[0]?.cycleItemUuid).toBeUndefined();
-			expect(attempts[0]?.explorations).toStrictEqual([{ at: 0, events: ['e2e4'] }]);
+			expect(attempts[0]?.freePlayRuns).toStrictEqual([{ at: 0, events: ['e2e4'] }]);
 		});
 
 		it('asks only for what came in after the row it was given', async () => {

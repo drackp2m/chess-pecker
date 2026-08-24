@@ -30,7 +30,7 @@ import { ChessNotation } from '@app/util/chess/chess-notation';
  * are derived in `withPuzzleComputed` by folding the log, never stored here.
  */
 export interface PuzzleStoreProps extends PuzzleRecord {
-	/** Which exploration is open, as an index into `explorations`, or none. */
+	/** Which free-play run is open, as an index into `freePlayRuns`, or none. */
 	freePlayIndex: number | undefined;
 	/**
 	 * Plies the board stands behind the log, which the log must not hear about: the beat
@@ -168,7 +168,7 @@ export function restorePatch(
 ): Partial<PuzzleStoreProps> {
 	return {
 		record: stored.record,
-		explorations: stored.explorations,
+		freePlayRuns: stored.freePlayRuns,
 		result: stored.result,
 		closure: stored.closure,
 		hintUsed: stored.hintUsed,
@@ -220,7 +220,7 @@ function keptTransition(state: RewindState, cursor: number): BoardTransition | u
 }
 
 /**
- * Leaves the exploration. The sandbox stays in the log as the variation it was, so letting
+ * Leaves the free-play run. The sandbox stays in the log as the variation it was, so letting
  * go of its index is all it takes for the fold to return to the main line.
  */
 export function restoreFreePlayPatch(
@@ -240,10 +240,10 @@ export function restoreFreePlayPatch(
 }
 
 /**
- * Where a restart inside an exploration puts the cursor: back on the main line it was
+ * Where a restart inside a free-play run puts the cursor: back on the main line it was
  * entered from, skipping the wrong move that line was left standing on.
  */
-export function explorationRestartCursor(anchor: FreePlayAnchor): number {
+export function freePlayRestartCursor(anchor: FreePlayAnchor): number {
 	return anchor.deviation ?? anchor.line.length;
 }
 

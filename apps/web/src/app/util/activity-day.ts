@@ -5,10 +5,10 @@ import { addUtcDays, diffUtcDays, toIsoDate } from '@app/util/utc-date';
 export function emptyActivityDay(date: string): TrainingActivityDay {
 	return {
 		date,
-		count: 0,
-		solved: 0,
-		failed: 0,
-		resigned: 0,
+		done: 0,
+		firstTry: 0,
+		afterMiss: 0,
+		shown: 0,
 		foundClean: 0,
 		foundHinted: 0,
 		foundMissed: 0,

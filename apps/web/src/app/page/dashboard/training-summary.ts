@@ -74,13 +74,13 @@ interface StageCounts {
 }
 
 const ROUND_STAGE = {
-	scan: I18n.common.EXPLORATION,
+	exploration: I18n.common.EXPLORATION,
 	refine: I18n.common.REFINE,
 } as const satisfies Record<CalibrationRoundProgress['kind'], string>;
 
 /** How the phase is named when it is the one being played, not a row of the log. */
 const PHASE_STAGE = {
-	scan: I18n.dashboard.TRAINING_CURRENT_EXPLORATIONS,
+	exploration: I18n.dashboard.TRAINING_CURRENT_EXPLORATIONS,
 	refine: I18n.dashboard.TRAINING_CURRENT_REFINEMENT,
 } as const satisfies Record<CalibrationRoundProgress['kind'], string>;
 
@@ -94,7 +94,7 @@ const ROUND_RESULT = {
 const CYCLE_RESULT = {
 	running: I18n.common.RUNNING,
 	finished: I18n.common.FINISHED,
-	abandoned: I18n.common.CANCELLED,
+	cancelled: I18n.common.CANCELLED,
 } as const satisfies Record<CycleProgress['status'], string>;
 
 /**

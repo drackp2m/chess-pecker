@@ -74,7 +74,7 @@ export function attemptNode(clientRef: string, lichessId: string): PlainNode<Pus
 		hintUsed: false,
 		mistakeCount: 0,
 		record: [],
-		explorations: [],
+		freePlayRuns: [],
 	};
 }
 
@@ -84,7 +84,7 @@ export function roundNode(refs: TreeRefs): PlainNode<PushCalibrationRoundNodeDto
 		createdAt: BORN,
 		updatedAt: CLOSED,
 		index: 1,
-		kind: CalibrationRoundKind.Scan,
+		kind: CalibrationRoundKind.Exploration,
 		rating: 1500,
 		outcome: CalibrationRoundOutcome.Accept,
 		puzzles: [

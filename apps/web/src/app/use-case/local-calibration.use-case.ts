@@ -136,7 +136,7 @@ export class LocalCalibrationUseCase {
 	}
 
 	private async dealPuzzles(
-		kind: 'scan' | 'refine',
+		kind: 'exploration' | 'refine',
 		rating: number,
 	): Promise<readonly PuzzleRow[]> {
 		const size = roundPuzzleCount(kind);
@@ -152,7 +152,7 @@ export class LocalCalibrationUseCase {
 	private async insertRound(
 		trainingUuid: string,
 		index: number,
-		kind: 'scan' | 'refine',
+		kind: 'exploration' | 'refine',
 		rating: number,
 	): Promise<CalibrationRoundRow> {
 		const now = new Date();

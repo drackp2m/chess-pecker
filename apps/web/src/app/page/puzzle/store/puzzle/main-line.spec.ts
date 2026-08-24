@@ -843,7 +843,7 @@ describe('the main line', () => {
 		});
 	});
 
-	it('replays the main line back into the board each exploration started from', () => {
+	it('replays the main line back into the board each free-play run started from', () => {
 		const store = board();
 		const entries: LineSnapshot[] = [];
 
@@ -864,10 +864,10 @@ describe('the main line', () => {
 		store.toggleFreePlay();
 		store.toggleFreePlay();
 
-		const anchors = store.explorations().map((run) => run.at);
+		const anchors = store.freePlayRuns().map((run) => run.at);
 
 		expect(store.record()).toEqual([...FIVE_PLY, -2, 1, 0]);
-		expect(store.explorations()).toEqual([
+		expect(store.freePlayRuns()).toEqual([
 			{ at: 6, events: ['a7a6'] },
 			{ at: 8, events: [] },
 		]);

@@ -19,7 +19,7 @@ export interface CyclePaceDay {
 
 export interface ActivityCell {
 	readonly date: string;
-	readonly count: number;
+	readonly done: number;
 	readonly level: 0 | 1 | 2 | 3 | 4;
 }
 
@@ -28,7 +28,7 @@ export function buildActivityGrid(
 	totalDays: number,
 	today: Date = new Date(),
 ): readonly (ActivityCell | null)[][] {
-	const counts = new Map(days.map((day) => [day.date, day.count]));
+	const counts = new Map(days.map((day) => [day.date, day.done]));
 	const end = utcMidnight(today);
 	const rangeStart = addUtcDays(end, -(totalDays - 1));
 	const start = mostRecentMonday(rangeStart);
@@ -68,7 +68,7 @@ export function cyclePaceSeries(
 	puzzlesPerDay: number,
 	today: Date = new Date(),
 ): readonly CyclePaceDay[] {
-	const counts = new Map(days.map((day) => [day.date, day.count]));
+	const counts = new Map(days.map((day) => [day.date, day.done]));
 	const start = utcMidnight(new Date(startedAt));
 	const total = Math.max(0, diffUtcDays(start, utcMidnight(today)) + 1);
 	let drift = 0;
@@ -153,12 +153,12 @@ function toCell(
 	}
 
 	const isoDate = toIsoDate(date);
-	const count = counts.get(isoDate) ?? 0;
+	const done = counts.get(isoDate) ?? 0;
 
 	return {
 		date: isoDate,
-		count,
-		level: toBucket(count, bounds, ACTIVITY_LEVELS) as ActivityCell['level'],
+		done,
+		level: toBucket(done, bounds, ACTIVITY_LEVELS) as ActivityCell['level'],
 	};
 }
 

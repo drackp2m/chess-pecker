@@ -337,7 +337,7 @@ function attemptNodes(
 			hintUsed: row.hintUsed,
 			mistakeCount: row.mistakeCount,
 			record: [...row.record],
-			explorations: row.explorations.map((run) => ({ at: run.at, events: [...run.events] })),
+			freePlayRuns: row.freePlayRuns.map((run) => ({ at: run.at, events: [...run.events] })),
 		});
 	}
 

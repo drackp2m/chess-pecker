@@ -5,8 +5,8 @@
 		"apps/web/src/app/component/chess-board/board-choreography.spec.ts": "c1e331a95364506c700f66ca173ef710b757fc595b2a1ff5505c7e7c8c37ad5b",
 		"apps/web/src/app/component/chess-board/board-playback.spec.ts": "7ea321dd59ca97cb06a8fe788bc61a1d4f899125692c2938052ad34081a5f998",
 		"apps/web/src/app/component/chess-piece/chess-piece.component.spec.ts": "2379fabbde1467bfb96b35cd5ee0c75242bdc7243313f8d24a70e01ad5bdd6ba",
-		"apps/web/src/app/page/puzzle/store/puzzle/exploration.spec.ts": "8a49a3c2779d184340bca841e4d8ad859a04e815695b3331f3d36b7808682687",
-		"apps/web/src/app/page/puzzle/store/puzzle/main-line.spec.ts": "a5b1808c2e99ad3eedd47c7683f447a591a302de2aa927e8495038e469af4cc7",
+		"apps/web/src/app/page/puzzle/store/puzzle/free-play.spec.ts": "85130751a2c0002ccfc20d4691c1c84b29499069f246599fc11f8cf8eae5703e",
+		"apps/web/src/app/page/puzzle/store/puzzle/main-line.spec.ts": "555fc581ccecbe5fc590b0cd4df30fb1f29fc477836570eb9615bf5d975708f5",
 		"apps/web/src/app/util/chess/board-transition.spec.ts": "2ac6ca0009e70ee91ac476a00559bde99eee0d535c8bf0f41380966ba4e923bc"
 	}
 }

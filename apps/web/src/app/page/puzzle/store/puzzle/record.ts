@@ -16,7 +16,7 @@ export const HINT = '?';
  * know where to write without replaying anything.
  */
 export interface RecordState extends PuzzleRecord {
-	/** Which exploration is open; while one is the target, the main line is not. */
+	/** Which free-play run is open; while one is the target, the main line is not. */
 	readonly freePlayIndex: number | undefined;
 	/** How the exercise ended, which closes the record for good. */
 	readonly closure: PuzzleClosure;
@@ -31,12 +31,12 @@ export type PuzzleAction =
 	| { readonly kind: 'entry' };
 
 export function blankRecord(): PuzzleRecord {
-	return { record: [], explorations: [] };
+	return { record: [], freePlayRuns: [] };
 }
 
 /** The record untouched, for everything that happens once it is closed. */
 function keep(state: PuzzleRecord): PuzzleRecord {
-	return { record: state.record, explorations: state.explorations };
+	return { record: state.record, freePlayRuns: state.freePlayRuns };
 }
 
 /**
@@ -52,7 +52,7 @@ function extendRun(events: readonly PuzzleEvent[], step: number): readonly Puzzl
 
 /**
  * What an action writes, or `undefined` when it turns out to be nothing at all. Entering free
- * play is not here: it opens the exploration the rest write into, so `append` handles it.
+ * play is not here: it opens the free-play run the rest write into, so `append` handles it.
  */
 function writeAction(
 	action: Exclude<PuzzleAction, { kind: 'entry' }>,
@@ -70,7 +70,7 @@ function writeAction(
 }
 
 /**
- * Writes where the exercise is recording now: the open exploration, the main line otherwise,
+ * Writes where the exercise is recording now: the open free-play run, the main line otherwise,
  * nowhere once closed. Entering free play opens that target, so it is handled first.
  */
 export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
@@ -81,7 +81,7 @@ export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
 	if ('entry' === action.kind) {
 		return {
 			record: state.record,
-			explorations: [...state.explorations, { at: state.record.length, events: [] }],
+			freePlayRuns: [...state.freePlayRuns, { at: state.record.length, events: [] }],
 		};
 	}
 
@@ -94,10 +94,10 @@ export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
 	const index = state.freePlayIndex;
 
 	if (undefined === index) {
-		return { record: write(state.record), explorations: state.explorations };
+		return { record: write(state.record), freePlayRuns: state.freePlayRuns };
 	}
 
-	const open = state.explorations[index];
+	const open = state.freePlayRuns[index];
 
 	// Free play with nothing to write into was entered after the record closed, already refused.
 	if (undefined === open) {
@@ -106,7 +106,7 @@ export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
 
 	return {
 		record: state.record,
-		explorations: state.explorations.map((run, at) =>
+		freePlayRuns: state.freePlayRuns.map((run, at) =>
 			at === index ? { ...run, events: write(run.events) } : run,
 		),
 	};

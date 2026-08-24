@@ -57,24 +57,24 @@ describe('append', () => {
 		expect(append(before, { kind: 'step', step: 0 }).record).toEqual(['f1f8']);
 	});
 
-	it('opens an exploration anchored to the length the main line had reached', () => {
+	it('opens a free-play run anchored to the length the main line had reached', () => {
 		const entered = append(state({ record: ['f1f8', 'b2b1'] }), { kind: 'entry' });
 
-		expect(entered.explorations).toEqual([{ at: 2, events: [] }]);
+		expect(entered.freePlayRuns).toEqual([{ at: 2, events: [] }]);
 		expect(entered.record).toEqual(['f1f8', 'b2b1']);
 	});
 
-	it('writes into the open exploration while free play is on', () => {
+	it('writes into the open free-play run while free play is on', () => {
 		const before = state({
 			record: ['f1f8'],
-			explorations: [{ at: 1, events: [] }],
+			freePlayRuns: [{ at: 1, events: [] }],
 			freePlayIndex: 0,
 		});
 
 		const written = append(before, { kind: 'move', move: move('f1f8') });
 
 		expect(written.record).toEqual(['f1f8']);
-		expect(written.explorations).toEqual([{ at: 1, events: ['f1f8'] }]);
+		expect(written.freePlayRuns).toEqual([{ at: 1, events: ['f1f8'] }]);
 	});
 
 	it.each<PuzzleClosure>(['found', 'revealed'])(
@@ -84,7 +84,7 @@ describe('append', () => {
 
 			expect(append(before, { kind: 'move', move: move('b3d1') }).record).toEqual(['f1f8']);
 			expect(append(before, { kind: 'hint' }).record).toEqual(['f1f8']);
-			expect(append(before, { kind: 'entry' }).explorations).toEqual([]);
+			expect(append(before, { kind: 'entry' }).freePlayRuns).toEqual([]);
 		},
 	);
 });

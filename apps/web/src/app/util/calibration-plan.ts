@@ -19,19 +19,21 @@ export interface CalibrationAttemptGrade {
 }
 
 export function resolveNextRound(rounds: readonly CalibrationRoundPlan[]): CalibrationRoundTarget {
-	const scans = rounds.filter((round) => 'scan' === round.kind);
+	const explorations = rounds.filter((round) => 'exploration' === round.kind);
 
-	let rating: number = TrainingPolicy.scanStartRating;
-	let step: number = TrainingPolicy.scanInitialStep;
+	let rating: number = TrainingPolicy.explorationStartRating;
+	let step: number = TrainingPolicy.explorationInitialStep;
 
-	for (const scan of scans) {
-		rating = clampRatingBucket('raise' === scan.outcome ? scan.rating + step : scan.rating - step);
+	for (const exploration of explorations) {
+		rating = clampRatingBucket(
+			'raise' === exploration.outcome ? exploration.rating + step : exploration.rating - step,
+		);
 
 		step = Math.max(RATING_BUCKET_SIZE, halveStep(step));
 	}
 
-	if (scans.length < TrainingPolicy.scanRounds) {
-		return { kind: 'scan', rating };
+	if (explorations.length < TrainingPolicy.explorationRounds) {
+		return { kind: 'exploration', rating };
 	}
 
 	for (const refine of rounds.filter((round) => 'refine' === round.kind)) {
@@ -42,7 +44,7 @@ export function resolveNextRound(rounds: readonly CalibrationRoundPlan[]): Calib
 }
 
 export function roundPuzzleCount(kind: CalibrationRoundKind): number {
-	return 'scan' === kind ? 1 : TrainingPolicy.refinePuzzles;
+	return 'exploration' === kind ? 1 : TrainingPolicy.refinePuzzles;
 }
 
 export function resolveRoundOutcome(
@@ -52,7 +54,7 @@ export function resolveRoundOutcome(
 ): CalibrationRoundOutcome {
 	const solved = attempts.filter((attempt) => true === attempt.solved).length;
 
-	if ('scan' === round.kind) {
+	if ('exploration' === round.kind) {
 		return 0 < solved ? 'raise' : 'lower';
 	}
 

@@ -155,8 +155,8 @@ export class TrainingSolveSession {
 			hintUnlocked: this.board.hintUnlocked(),
 			restore: {
 				record: [...this.board.record()],
-				explorations: this.board
-					.explorations()
+				freePlayRuns: this.board
+					.freePlayRuns()
 					.map((run) => ({ at: run.at, events: [...run.events] })),
 				closure: this.board.closure(),
 				hintUsed: this.board.hintUsed(),
@@ -260,7 +260,7 @@ export class TrainingSolveSession {
 
 		return {
 			record: row.record,
-			explorations: row.explorations,
+			freePlayRuns: row.freePlayRuns,
 			closure,
 			hintUsed: row.hintUsed,
 			mistakeCount: row.mistakeCount,
@@ -307,7 +307,7 @@ export class TrainingSolveSession {
 				durationMs,
 				updatedAt,
 				record: this.board.record(),
-				explorations: this.board.explorations(),
+				freePlayRuns: this.board.freePlayRuns(),
 				hintUsed: this.board.hintUsed(),
 				mistakeCount: this.board.mistakeCount(),
 				...(undefined === result ? {} : { solved: 'solved' === result }),
@@ -349,8 +349,8 @@ export class TrainingSolveSession {
 			hintUsed: this.board.hintUsed(),
 			mistakeCount: this.board.mistakeCount(),
 			record: [...this.board.record()],
-			explorations: this.board
-				.explorations()
+			freePlayRuns: this.board
+				.freePlayRuns()
 				.map((run) => ({ at: run.at, events: [...run.events] })),
 		};
 
@@ -384,7 +384,7 @@ export class TrainingSolveSession {
 				durationMs: timing.durationMs,
 				updatedAt: new Date(timing.updatedAt),
 				record: attempt.record,
-				explorations: attempt.explorations,
+				freePlayRuns: attempt.freePlayRuns,
 				hintUsed: attempt.hintUsed,
 				mistakeCount: attempt.mistakeCount,
 				solved: attempt.solved,

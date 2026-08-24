@@ -1,15 +1,15 @@
 import { ApiPuzzle } from './puzzle';
 import { SyncTimestamps } from './sync';
 
-export type TrainingStatus = 'calibrating' | 'planning' | 'running' | 'finished' | 'abandoned';
+export type TrainingStatus = 'calibrating' | 'planning' | 'running' | 'finished' | 'cancelled';
 
 export type TrainingFinishedReason = 'completed' | 'plateau' | 'max-cycles' | 'cancelled';
 
-export type CalibrationRoundKind = 'scan' | 'refine';
+export type CalibrationRoundKind = 'exploration' | 'refine';
 
 export type CalibrationRoundOutcome = 'pending' | 'raise' | 'lower' | 'accept';
 
-export type TrainingCycleStatus = 'running' | 'finished' | 'abandoned';
+export type TrainingCycleStatus = 'running' | 'finished' | 'cancelled';
 
 export type PuzzleAttemptKind = 'calibration' | 'cycle';
 
@@ -83,7 +83,7 @@ export interface FreePlayRun {
 
 /**
  * How the attempt went, the same in calibration as in a cycle. `solved` is the grade, sealed
- * on the first try; `record` and `explorations` redraw the exercise exactly as it was solved.
+ * on the first try; `record` and `freePlayRuns` redraw the exercise exactly as it was solved.
  */
 export interface PuzzleAttemptRecord {
 	durationMs: number;
@@ -92,7 +92,7 @@ export interface PuzzleAttemptRecord {
 	hintUsed: boolean;
 	mistakeCount: number;
 	record: PuzzleEvent[];
-	explorations: FreePlayRun[];
+	freePlayRuns: FreePlayRun[];
 }
 
 export interface CycleProgress {
@@ -200,15 +200,16 @@ export interface TrainingActivity {
 }
 
 /**
- * A day with at least one closed exercise. `solved`/`failed`/`resigned` split by verdict,
- * `found*`/`revealed*` by ending crossed with help taken; neither is derived from the other.
+ * A day with at least one closed exercise. `firstTry`/`afterMiss`/`shown` split the day's
+ * `done` by verdict, `found*`/`revealed*` by ending crossed with help taken; the two splits
+ * cover the same attempts and neither is derived from the other.
  */
 export interface TrainingActivityDay {
 	readonly date: string;
-	readonly count: number;
-	readonly solved: number;
-	readonly failed: number;
-	readonly resigned: number;
+	readonly done: number;
+	readonly firstTry: number;
+	readonly afterMiss: number;
+	readonly shown: number;
 	readonly foundClean: number;
 	readonly foundHinted: number;
 	readonly foundMissed: number;

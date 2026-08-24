@@ -24,7 +24,7 @@ export class FinishTrainingUseCase {
 	 * The reason is stored because plateau, cap and giving up all end up equally finished.
 	 */
 	async execute(training: Training, cancel: boolean): Promise<void> {
-		if ([TrainingStatus.Finished, TrainingStatus.Abandoned].includes(training.status)) {
+		if ([TrainingStatus.Finished, TrainingStatus.Cancelled].includes(training.status)) {
 			throw new PreconditionFailedException('already finished', 'training');
 		}
 
@@ -61,7 +61,7 @@ export class FinishTrainingUseCase {
 		const running = await this.trainingCycleRepository.getRunningByTraining(training.uuid);
 
 		if (undefined !== running) {
-			await this.trainingCycleRepository.updateStatus(running.uuid, TrainingCycleStatus.Abandoned);
+			await this.trainingCycleRepository.updateStatus(running.uuid, TrainingCycleStatus.Cancelled);
 		}
 	}
 }

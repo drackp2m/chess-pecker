@@ -4,5 +4,5 @@ export enum TrainingStatus {
 	Planning = 'planning',
 	Running = 'running',
 	Finished = 'finished',
-	Abandoned = 'abandoned',
+	Cancelled = 'cancelled',
 }

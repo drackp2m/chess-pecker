@@ -19,6 +19,8 @@ import { resetAttemptCursorMigration } from '@app/repository/migration/v14_reset
 import { splitAttemptDraftMigration } from '@app/repository/migration/v15_split-attempt-draft.migration';
 import { markLocalRowsPendingMigration } from '@app/repository/migration/v16_mark-local-rows-pending.migration';
 import { unifySyncCursorsMigration } from '@app/repository/migration/v17_unify-sync-cursors.migration';
+import { renameActivityVerdictsMigration } from '@app/repository/migration/v18_rename-activity-verdicts.migration';
+import { renameFreePlayRunsMigration } from '@app/repository/migration/v19_rename-free-play-runs.migration';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
@@ -57,6 +59,8 @@ export abstract class Repository {
 		splitAttemptDraftMigration,
 		markLocalRowsPendingMigration,
 		unifySyncCursorsMigration,
+		renameActivityVerdictsMigration,
+		renameFreePlayRunsMigration,
 	];
 
 	static getLatestVersion(): number {

@@ -32,9 +32,9 @@
 
 			<p class="fs-sm color-contrast-mid">
 				@if (hoveredDay(); as day) {
-					{{ I18n.dashboard.ACTIVITY_DAY_DETAIL | i18n: { count: day.count, date: day.date } }}
+					{{ I18n.dashboard.ACTIVITY_DAY_DETAIL | i18n: { done: day.done, date: day.date } }}
 				} @else {
-					{{ I18n.dashboard.ACTIVITY_TOTAL | i18n: { count: totalActivity() } }}
+					{{ I18n.dashboard.ACTIVITY_TOTAL | i18n: { done: totalActivity() } }}
 				}
 			</p>
 		</div>

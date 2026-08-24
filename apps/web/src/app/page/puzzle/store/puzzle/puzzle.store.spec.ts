@@ -707,7 +707,7 @@ describe('PuzzleStore', () => {
 	});
 
 	describe('free play', () => {
-		interface Exploration {
+		interface FreePlayRun {
 			readonly entry: string;
 			readonly arrive: (store: PuzzleStore) => void;
 			readonly moves: readonly (readonly [Square, Square])[];
@@ -720,7 +720,7 @@ describe('PuzzleStore', () => {
 			store.stepBackward();
 		};
 
-		const EXPLORATIONS: readonly Exploration[] = [
+		const FREE_PLAY_CASES: readonly FreePlayRun[] = [
 			{
 				entry: 'the opening position',
 				arrive: (): void => undefined,
@@ -755,11 +755,11 @@ describe('PuzzleStore', () => {
 			},
 		];
 
-		for (const exploration of EXPLORATIONS) {
-			it(`comes back to ${exploration.entry} exactly as it left it`, () => {
+		for (const freePlayRun of FREE_PLAY_CASES) {
+			it(`comes back to ${freePlayRun.entry} exactly as it left it`, () => {
 				const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
-				exploration.arrive(store);
+				freePlayRun.arrive(store);
 
 				const entry = snapshot(store);
 				const outcome = store.outcome();
@@ -767,7 +767,7 @@ describe('PuzzleStore', () => {
 
 				store.toggleFreePlay();
 
-				for (const [from, to] of exploration.moves) {
+				for (const [from, to] of freePlayRun.moves) {
 					play(store, from, to);
 				}
 
@@ -775,7 +775,7 @@ describe('PuzzleStore', () => {
 				store.stepForward();
 
 				expect(store.isFreePlay()).toBe(true);
-				expect(store.cursor()).toBe(entry.cursor + exploration.moves.length);
+				expect(store.cursor()).toBe(entry.cursor + freePlayRun.moves.length);
 				expect(store.line()).not.toEqual(entry.line);
 
 				store.toggleFreePlay();
@@ -829,7 +829,7 @@ describe('PuzzleStore', () => {
 			expect(store.isPlayerTurn()).toBe(true);
 		});
 
-		it('gives the entry point back after the exploration was restarted', () => {
+		it('gives the entry point back after the free-play run was restarted', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			rewindToPlyTwo(store);
@@ -861,7 +861,7 @@ describe('PuzzleStore', () => {
 			expect(store.outcome()).toBe('solving');
 		});
 
-		it('drops what the exploration had in flight when it is left', () => {
+		it('drops what the free-play run had in flight when it is left', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			rewindToPlyTwo(store);
@@ -899,7 +899,7 @@ describe('PuzzleStore', () => {
 			expect(store.isFreePlay()).toBe(false);
 		});
 
-		it('keeps the verdict the exercise was graded on through a restarted exploration', () => {
+		it('keeps the verdict the exercise was graded on through a restarted free-play run', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
@@ -918,7 +918,7 @@ describe('PuzzleStore', () => {
 			expect(store.cursor()).toBe(2);
 		});
 
-		it('never lets a scripted move land inside an exploration', () => {
+		it('never lets a scripted move land inside a free-play run', () => {
 			const store = configure();
 
 			store.loadCsv(`${HEADER}\n${MATE_IN_3}`, 'Spec set');
@@ -998,7 +998,7 @@ describe('PuzzleStore', () => {
 			expect(store.isPlayerTurn()).toBe(true);
 		});
 
-		it('leaves a solved verdict to be earned after the exploration', () => {
+		it('leaves a solved verdict to be earned after the free-play run', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.toggleFreePlay();
@@ -1022,7 +1022,7 @@ describe('PuzzleStore', () => {
 			expect(store.result()).toBe('solved');
 		});
 
-		it('leaves a failed verdict to be earned after the exploration', () => {
+		it('leaves a failed verdict to be earned after the free-play run', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.toggleFreePlay();
@@ -1253,7 +1253,7 @@ describe('PuzzleStore', () => {
 			}
 
 			expect(store.record()).toEqual([...FIVE_PLY, 'd1f1']);
-			expect(store.explorations()).toEqual([]);
+			expect(store.freePlayRuns()).toEqual([]);
 		});
 
 		it('stays open through a miss, so the take-back and the retry are both in it', () => {
@@ -1277,7 +1277,7 @@ describe('PuzzleStore', () => {
 			expect(store.record()).toEqual(['f1f8', 'b2c2', -1, 'b2b1', 'b3d1']);
 		});
 
-		it('keeps an exploration made after the miss, anchor and all', () => {
+		it('keeps a free-play run made after the miss, anchor and all', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
@@ -1287,7 +1287,7 @@ describe('PuzzleStore', () => {
 			store.toggleFreePlay();
 
 			expect(store.record()).toEqual(['f1f8', 'b2c2', -1]);
-			expect(store.explorations()).toEqual([{ at: 3, events: ['b2c2'] }]);
+			expect(store.freePlayRuns()).toEqual([{ at: 3, events: ['b2c2'] }]);
 		});
 
 		it('writes the rewind giving up does, and nothing the answer plays after it', () => {
@@ -1307,7 +1307,7 @@ describe('PuzzleStore', () => {
 			expect(replayRecord(MATE_IN_3_FEN, store.record()).cursor).toBe(1);
 		});
 
-		it('keeps a restart made inside an exploration out of the main line', () => {
+		it('keeps a restart made inside a free-play run out of the main line', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			store.toggleFreePlay();
@@ -1317,11 +1317,11 @@ describe('PuzzleStore', () => {
 
 			expect(store.record()).toEqual(['f1f8']);
 			// The opening move is shown again rather than played again, so the restart is
-			// the only thing the exploration has to write down about it.
-			expect(store.explorations()).toEqual([{ at: 1, events: ['a7a6', 0] }]);
+			// the only thing the free-play run has to write down about it.
+			expect(store.freePlayRuns()).toEqual([{ at: 1, events: ['a7a6', 0] }]);
 		});
 
-		it('anchors an exploration to the length the main line had reached', () => {
+		it('anchors a free-play run to the length the main line had reached', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			playFivePlyLine(store);
@@ -1333,12 +1333,12 @@ describe('PuzzleStore', () => {
 			store.stepBackward();
 			store.toggleFreePlay();
 
-			// Straight back in, with nothing in between: same anchor, second exploration.
+			// Straight back in, with nothing in between: same anchor, second free-play run.
 			store.toggleFreePlay();
 			store.toggleFreePlay();
 
 			expect(store.record()).toEqual([...FIVE_PLY, -3]);
-			expect(store.explorations()).toEqual([
+			expect(store.freePlayRuns()).toEqual([
 				{ at: 6, events: ['f8f1', -1] },
 				{ at: 6, events: [] },
 			]);

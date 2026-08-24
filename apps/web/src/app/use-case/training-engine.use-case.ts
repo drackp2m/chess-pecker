@@ -58,6 +58,6 @@ export class TrainingEngineUseCase {
 
 	async cancel(uuid: string): Promise<void> {
 		await this.cycles.abandonRunningCycle(uuid);
-		await this.trainings.finish(uuid, 'abandoned', 'cancelled');
+		await this.trainings.finish(uuid, 'cancelled', 'cancelled');
 	}
 }

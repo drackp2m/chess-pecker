@@ -106,7 +106,7 @@ export class TrainingRestoreUseCase {
 			uuid: attempt.uuid,
 			durationMs: attempt.durationMs,
 			record: attempt.record,
-			explorations: attempt.explorations,
+			freePlayRuns: attempt.freePlayRuns,
 			solved: attempt.solved,
 			closure: attempt.closure,
 			hintUsed: attempt.hintUsed,

@@ -91,7 +91,7 @@ describe('GetCalibrationRoundPuzzlesUseCase', () => {
 				new TrainingCalibrationRound({
 					training,
 					uuid: 'round-uuid',
-					kind: CalibrationRoundKind.Scan,
+					kind: CalibrationRoundKind.Exploration,
 					rating: 600,
 					outcome: CalibrationRoundOutcome.Raise,
 				}),

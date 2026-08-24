@@ -97,7 +97,7 @@ export interface PushAttemptNode<TDate = string> extends SyncNode<TDate> {
 	hintUsed: boolean;
 	mistakeCount: number;
 	record: PuzzleEvent[];
-	explorations: FreePlayRun[];
+	freePlayRuns: FreePlayRun[];
 }
 
 export interface GetSyncTrainingTreeRequest<TDate = string> {

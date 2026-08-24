@@ -13,12 +13,12 @@ import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 
-export interface ExplorationFold extends LineState {
+export interface FreePlayFold extends LineState {
 	readonly anchor: FreePlayAnchor;
 }
 
 /**
- * What a restart stands the board back up as: the main line itself, or inside an exploration
+ * What a restart stands the board back up as: the main line itself, or inside a free-play run
  * the line the sandbox hangs off, cut back to where the script stopped being followed.
  */
 function restartFloor(state: LineState, floor: LineState | undefined): LineState {
@@ -131,13 +131,13 @@ function anchorFloor(anchor: FreePlayAnchor): LineState {
 	};
 }
 
-export function foldExploration(
+export function foldFreePlayRun(
 	fen: string,
 	state: PuzzleRecord,
 	index: number,
 	puzzle: Puzzle | undefined,
-): ExplorationFold | undefined {
-	const run = state.explorations[index];
+): FreePlayFold | undefined {
+	const run = state.freePlayRuns[index];
 
 	if (undefined === run) {
 		return undefined;
@@ -168,8 +168,8 @@ export function foldSession(
 	}
 
 	try {
-		// With no such exploration, what is left over is the line it would have hung off.
-		return foldExploration(fen, state, freePlayIndex, puzzle) ?? foldOrBlank(fen, state.record);
+		// With no such free-play run, what is left over is the line it would have hung off.
+		return foldFreePlayRun(fen, state, freePlayIndex, puzzle) ?? foldOrBlank(fen, state.record);
 	} catch {
 		return foldOrBlank(fen, state.record);
 	}

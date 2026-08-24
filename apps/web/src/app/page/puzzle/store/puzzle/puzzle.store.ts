@@ -102,7 +102,7 @@ export class PuzzleStore
 
 	/**
 	 * Back to the board the exercise opened on, leaving the line whole. Inside an
-	 * exploration the sandbox is thrown away and the main line comes back instead.
+	 * free-play run the sandbox is thrown away and the main line comes back instead.
 	 */
 	restart(): void {
 		const puzzle = this.puzzle();
@@ -114,7 +114,7 @@ export class PuzzleStore
 			return;
 		}
 
-		// The sandbox stays open, so the restart is written inside the exploration.
+		// The sandbox stays open, so the restart is written inside the free-play run.
 		this.append({ kind: 'restart' });
 		patchState(this, restartPatch(this.closure()));
 		this.run(RESTART_PROGRAM, this.playbackHooks());
@@ -211,7 +211,7 @@ export class PuzzleStore
 			return;
 		}
 
-		// Letting go of the index restores the main line, standing where the exploration began.
+		// Letting go of the index restores the main line, standing where the free-play run began.
 		patchState(
 			this,
 			restoreFreePlayPatch({ cursor: this.cursor(), transition: this.transition() }, anchor),
@@ -399,7 +399,7 @@ export class PuzzleStore
 	private recordState(): RecordState {
 		return {
 			record: this.record(),
-			explorations: this.explorations(),
+			freePlayRuns: this.freePlayRuns(),
 			freePlayIndex: this.freePlayIndex(),
 			closure: this.closure(),
 		};
@@ -410,12 +410,12 @@ export class PuzzleStore
 	 * stood and the fold works the rest out, so only the open index is held.
 	 */
 	private enterFreePlay(): void {
-		const opened = this.explorations().length;
+		const opened = this.freePlayRuns().length;
 
 		this.append({ kind: 'entry' });
 
 		// An index pointing at an entry a closed record refused would fold to nothing.
-		if (opened < this.explorations().length) {
+		if (opened < this.freePlayRuns().length) {
 			patchState(this, {
 				freePlayIndex: opened,
 				selected: undefined,

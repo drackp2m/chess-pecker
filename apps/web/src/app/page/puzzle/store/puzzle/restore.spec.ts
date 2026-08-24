@@ -28,7 +28,7 @@ function board(): PuzzleStore {
 function stored(record: readonly PuzzleEvent[], overrides: Partial<PuzzleRestore> = {}) {
 	return {
 		record,
-		explorations: [],
+		freePlayRuns: [],
 		result: undefined,
 		closure: 'open',
 		hintUsed: false,
@@ -164,13 +164,13 @@ describe('PuzzleStore.restoreFrom', () => {
 	});
 
 	/** The record does not say whether one was open, so what comes back is the line it hangs off. */
-	it('comes back on the main line, with no exploration standing', () => {
+	it('comes back on the main line, with no free-play run standing', () => {
 		const store = board();
 
-		store.restoreFrom(stored(FIVE_PLY, { explorations: [{ at: 5, events: ['f1f2'] }] }));
+		store.restoreFrom(stored(FIVE_PLY, { freePlayRuns: [{ at: 5, events: ['f1f2'] }] }));
 
 		expect(store.isFreePlay()).toBe(false);
-		expect(store.explorations()).toEqual([{ at: 5, events: ['f1f2'] }]);
+		expect(store.freePlayRuns()).toEqual([{ at: 5, events: ['f1f2'] }]);
 		expect(describeLine(snapshot(store))).toEqual(replayRecord(MATE_IN_3_FEN, FIVE_PLY));
 	});
 

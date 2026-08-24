@@ -7,11 +7,11 @@ export const TrainingPolicy = {
 	minRating: 400,
 	maxRating: 2500,
 
-	/** Opening scans: single exercises, narrowing the region before spending rounds of ten. */
-	scanRounds: 4,
-	scanStartRating: 1200,
-	/** The first scan's jump, halved on each one after it. */
-	scanInitialStep: 600,
+	/** Opening explorations: single exercises, narrowing the region before spending rounds of ten. */
+	explorationRounds: 4,
+	explorationStartRating: 1200,
+	/** The first exploration's jump, halved on each one after it. */
+	explorationInitialStep: 600,
 
 	/** Exercises per refine round. */
 	refinePuzzles: 10,

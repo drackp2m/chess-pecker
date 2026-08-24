@@ -75,7 +75,7 @@
 
 				<h5>{{ I18n.training.COMMIT_TO_A_PACE | i18n }}</h5>
 
-				<form [formGroup]="goalForm" class="flex-col gap-3" (ngSubmit)="saveGoal()">
+				<form [formGroup]="paceForm" class="flex-col gap-3" (ngSubmit)="savePace()">
 					<input
 						appThemed
 						type="number"
@@ -136,7 +136,7 @@
 												@if (hoveredPaceDay(); as day) {
 													{{ day.description }}
 												} @else {
-													{{ I18n.training.CYCLE_PACE_SUMMARY | i18n: { pace: cyclePaceGoal() } }} ·
+													{{ I18n.training.CYCLE_PACE_SUMMARY | i18n: { pace: cyclePace() } }} ·
 
 													{{
 														cyclePaceDrift() < 0

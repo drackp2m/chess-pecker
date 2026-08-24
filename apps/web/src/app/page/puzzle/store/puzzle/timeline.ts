@@ -162,7 +162,7 @@ function demote(draft: Draft, branch: Branch, ply: number): void {
 function branchOff(draft: Draft, position: ChessPosition, move: ChessMove): Cursor {
 	const { branch, ply } = draft.cursor;
 	const started = addBranch(draft, {
-		kind: undefined === draft.run ? 'variation' : 'exploration',
+		kind: undefined === draft.run ? 'variation' : 'freePlay',
 		run: draft.run,
 		parent: branch.id,
 		at: ply,
@@ -280,7 +280,7 @@ function openRun(draft: Draft, index: number): Cursor {
 
 	return {
 		branch: addBranch(draft, {
-			kind: 'exploration',
+			kind: 'freePlay',
 			run: index,
 			parent: branch.id,
 			at: ply,
@@ -324,12 +324,12 @@ function foldLog(draft: Draft, record: PuzzleRecord): (Cursor | undefined)[] {
 	let pending = 0;
 
 	const openPending = (upto: number): void => {
-		let run = record.explorations[pending];
+		let run = record.freePlayRuns[pending];
 
 		while (undefined !== run && run.at <= upto) {
 			left[pending] = foldRun(draft, run, pending);
 			pending += 1;
-			run = record.explorations[pending];
+			run = record.freePlayRuns[pending];
 		}
 	};
 

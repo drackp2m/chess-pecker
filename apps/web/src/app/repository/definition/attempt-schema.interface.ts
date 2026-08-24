@@ -23,7 +23,7 @@ export interface AttemptRow extends LocalRecord {
 	/** Everything that happened outside free play, in order. */
 	readonly record: readonly PuzzleEvent[];
 	/** Every visit to free play, anchored to a length of `record`. */
-	readonly explorations: readonly FreePlayRun[];
+	readonly freePlayRuns: readonly FreePlayRun[];
 	readonly solved: boolean;
 	/** How the exercise ended. A row here is closed by definition. */
 	readonly closure: PuzzleAttemptClosure;

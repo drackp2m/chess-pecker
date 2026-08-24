@@ -78,7 +78,7 @@ export class LocalTrainingUseCase {
 			return undefined;
 		}
 
-		if ('finished' === training.status || 'abandoned' === training.status) {
+		if ('finished' === training.status || 'cancelled' === training.status) {
 			throw new Error('The training is already finished');
 		}
 

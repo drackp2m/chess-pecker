@@ -10,7 +10,7 @@ import {
 } from '@app/definition/chess.type';
 import { Puzzle, PuzzleMove, PuzzleRecord } from '@app/definition/puzzle.type';
 import { Timeline } from '@app/definition/timeline.type';
-import { foldExploration, foldRevealed, foldSession } from '@app/page/puzzle/store/puzzle/replay';
+import { foldFreePlayRun, foldRevealed, foldSession } from '@app/page/puzzle/store/puzzle/replay';
 import {
 	FreePlayAnchor,
 	LineState,
@@ -50,7 +50,7 @@ function timelineDerived(
 }
 
 /**
- * Where the exploration on the board was entered from, folded out of the log: leaving free
+ * Where the free-play run on the board was entered from, folded out of the log: leaving free
  * play needs nothing kept, since the main line up to the entry point can be replayed.
  */
 function freePlayDerived(
@@ -68,18 +68,18 @@ function freePlayDerived(
 		// A log that will not replay takes the anchor with it, so the board degrades to the
 		// main line rather than to a sandbox over nothing.
 		try {
-			return foldExploration(store.fen(), record(), index, puzzle())?.anchor;
+			return foldFreePlayRun(store.fen(), record(), index, puzzle())?.anchor;
 		} catch {
 			return undefined;
 		}
 	});
 }
 
-/** The log folded out: the line on the board, and the anchor an exploration hangs off. */
+/** The log folded out: the line on the board, and the anchor a free-play run hangs off. */
 function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzle | undefined>) {
 	const record = computed<PuzzleRecord>(() => ({
 		record: store.record(),
-		explorations: store.explorations(),
+		freePlayRuns: store.freePlayRuns(),
 	}));
 
 	/**
@@ -182,7 +182,7 @@ function lineComputed(
 
 		/**
 		 * The move that broke the script, while it is still the last on the board. An
-		 * exploration has no script to break, so nothing inside one is ever a mistake.
+		 * free-play run has no script to break, so nothing inside one is ever a mistake.
 		 */
 		mistake: computed<ChessMove | undefined>(() =>
 			script.isFreePlay() ? undefined : mistakeAt(line(), cursor(), script.deviation()),

@@ -80,7 +80,7 @@ function toDraft(row: AttemptRowV14): AttemptDraftRow {
 		lichessId: row.lichessId,
 		durationMs: row.durationMs,
 		record: row.record,
-		explorations: row.explorations,
+		freePlayRuns: row.explorations,
 		hintUsed: row.hintUsed,
 		mistakeCount: row.mistakeCount,
 		createdAt: row.createdAt,
@@ -97,10 +97,11 @@ function toDraft(row: AttemptRowV14): AttemptDraftRow {
  * server stays pending under its own uuid as the retry key.
  */
 function toAttempt(row: AttemptRowV14): AttemptRow {
-	const { slotId: _slotId, startedAt: _startedAt, ...kept } = row;
+	const { slotId: _slotId, startedAt: _startedAt, explorations, ...kept } = row;
 
 	return {
 		...kept,
+		freePlayRuns: explorations,
 		solved: true === row.solved,
 		closure: 'found' === row.closure ? 'found' : 'revealed',
 		...(undefined === row.syncedAt ? { clientRef: row.uuid, pendingSince: row.updatedAt } : {}),

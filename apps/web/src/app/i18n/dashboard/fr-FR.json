@@ -15,8 +15,8 @@
 	"01M0R723KHNMPKNCS6DTCTR0R6": "Un même ensemble d'exercices, répété passage après passage, jusqu'à ce que reconnaître l'idée tactique devienne immédiat.",
 	"01M0R72FBZN48HP2AB38MA18FF": "Lire l'introduction",
 	"3QANR96FW2DBWT32T7AMQHRZA1": "Activité",
-	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ count }} exercices effectués dans la portion choisie",
-	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ count }} exercices terminés le {{ date }}",
+	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ done }} exercices effectués dans la portion choisie",
+	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ done }} exercices terminés le {{ date }}",
 	"01KZKC6AF682V42Y8JEMP8XRNG": "Moins",
 	"01KZKC6AF6ACN4CWMWHX9CYPVR": "Plus",
 	"01KZKC6AF6R3M9T0XVQD5HYBNE": "{{ months }}M"

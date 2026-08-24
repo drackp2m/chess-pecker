@@ -14,8 +14,8 @@ import { TrainingRepository } from './training.repository';
 @Entity({ repository: () => TrainingRepository })
 @Index({ properties: ['user', 'status'] })
 @Check({
-	name: 'training_abandoned_matches_reason_check',
-	expression: `finished_reason is null or ((status = 'abandoned') = (finished_reason = 'cancelled'))`,
+	name: 'training_cancelled_matches_reason_check',
+	expression: `finished_reason is null or ((status = 'cancelled') = (finished_reason = 'cancelled'))`,
 })
 export class Training extends SyncableBaseEntity<Training> {
 	@ManyToOne(() => User, { deleteRule: 'cascade' })

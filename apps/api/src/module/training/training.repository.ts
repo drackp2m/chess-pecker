@@ -35,7 +35,7 @@ export class TrainingRepository extends CustomRepository<Training> {
 	async finish(uuid: string, reason: TrainingFinishedReason, finishedAt: Date): Promise<void> {
 		const status =
 			TrainingFinishedReason.Cancelled === reason
-				? TrainingStatus.Abandoned
+				? TrainingStatus.Cancelled
 				: TrainingStatus.Finished;
 
 		await this.entityManager

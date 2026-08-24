@@ -8,7 +8,7 @@ Los textos largos de esta página explican el método a alguien que lo está hac
 
 ## PHASE_*
 
-La fase en la que está el entrenamiento, escrita como lo que la aplicación está haciendo ahora mismo: gerundio o frase corta en marcha, no un sustantivo. `PHASE_ABANDONED` es un entrenamiento que el jugador canceló, no uno que se perdió ni que falló.
+La fase en la que está el entrenamiento, escrita como lo que la aplicación está haciendo ahora mismo: gerundio o frase corta en marcha, no un sustantivo. `PHASE_CANCELLED` es un entrenamiento que el jugador canceló, no uno que se perdió ni que falló.
 
 ## STATUS_*
 

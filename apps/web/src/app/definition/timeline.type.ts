@@ -1,6 +1,6 @@
 import { PuzzleMove } from '@app/definition/puzzle.type';
 
-export type TimelineLineKind = 'main' | 'variation' | 'exploration';
+export type TimelineLineKind = 'main' | 'variation' | 'freePlay';
 
 export interface TimelineLine {
 	readonly id: number;

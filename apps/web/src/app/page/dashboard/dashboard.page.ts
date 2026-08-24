@@ -54,7 +54,7 @@ export class DashboardPage {
 	);
 
 	readonly totalActivity = computed(() =>
-		this.visibleActivity().reduce((total, day) => total + day.count, 0),
+		this.visibleActivity().reduce((total, day) => total + day.done, 0),
 	);
 
 	/** What the one button on the training does, so the state is read before it is opened. */

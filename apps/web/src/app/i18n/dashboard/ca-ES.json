@@ -15,8 +15,8 @@
 	"01M0R723KHNMPKNCS6DTCTR0R6": "Un mateix conjunt d’exercicis, repetit passada rere passada, fins que reconèixer la idea tàctica sigui immediat.",
 	"01M0R72FBZN48HP2AB38MA18FF": "Llegeix la introducció",
 	"3QANR96FW2DBWT32T7AMQHRZA1": "Activitat",
-	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ count }} exercicis completats en el rang seleccionat",
-	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ count }} exercicis completats el {{ date }}",
+	"450807Y5ZBDPF1ARZJCTNNMHEM": "{{ done }} exercicis completats en el rang seleccionat",
+	"62FBJMQVTVSE1N6D6QAJ53Y3E6": "{{ done }} exercicis completats el {{ date }}",
 	"01KZKC6AF682V42Y8JEMP8XRNG": "Menys",
 	"01KZKC6AF6ACN4CWMWHX9CYPVR": "Més",
 	"01KZKC6AF6R3M9T0XVQD5HYBNE": "{{ months }}M"

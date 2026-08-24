@@ -169,7 +169,7 @@ export class LocalCycleUseCase {
 		if (undefined !== running) {
 			await this.repository.insert(
 				'cycle',
-				touch<TrainingCycleRow>({ ...running, status: 'abandoned' }),
+				touch<TrainingCycleRow>({ ...running, status: 'cancelled' }),
 			);
 		}
 	}

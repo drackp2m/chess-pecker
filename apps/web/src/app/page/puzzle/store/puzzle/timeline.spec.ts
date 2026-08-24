@@ -24,12 +24,12 @@ const ANSWER = ['b2b1', 'b3d1', 'b1d1', 'f8f1', 'd1f1'];
 
 function timelineInput(
 	record: readonly PuzzleEvent[],
-	explorations: readonly FreePlayRun[] = [],
+	freePlayRuns: readonly FreePlayRun[] = [],
 	over: Partial<TimelineInput> = {},
 ): TimelineInput {
 	return {
 		fen: FEN,
-		record: { record, explorations },
+		record: { record, freePlayRuns },
 		freePlayIndex: undefined,
 		revealed: undefined,
 		rewound: 0,
@@ -122,17 +122,17 @@ describe('projectTimeline', () => {
 		expect(timeline.head).toEqual({ line: 0, ply: 1 });
 	});
 
-	it('hangs an exploration off the ply the main line was standing on', () => {
+	it('hangs a free-play run off the ply the main line was standing on', () => {
 		const timeline = projectTimeline(
 			timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: ['f8f1'] }], { freePlayIndex: 0 }),
 		);
 
-		expect(timeline.lines[1]).toMatchObject({ parent: 0, at: 2, kind: 'exploration', run: 0 });
+		expect(timeline.lines[1]).toMatchObject({ parent: 0, at: 2, kind: 'freePlay', run: 0 });
 		expect(timeline.lines[1]?.moves.map((move) => move.san)).toEqual(['Rf1']);
 		expect(timeline.head).toEqual({ line: 1, ply: 3 });
 	});
 
-	it('leaves the head on the main line when the exploration is not the open one', () => {
+	it('leaves the head on the main line when the free-play run is not the open one', () => {
 		const timeline = projectTimeline(
 			timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: ['f8f1'] }]),
 		);
@@ -141,19 +141,19 @@ describe('projectTimeline', () => {
 		expect(timeline.head).toEqual({ line: 0, ply: 2 });
 	});
 
-	it('marks the entry of an exploration that played nothing', () => {
+	it('marks the entry of a free-play run that played nothing', () => {
 		const timeline = projectTimeline(timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: [] }]));
 
-		expect(timeline.lines[1]).toMatchObject({ parent: 0, at: 2, kind: 'exploration', run: 0 });
+		expect(timeline.lines[1]).toMatchObject({ parent: 0, at: 2, kind: 'freePlay', run: 0 });
 		expect(timeline.lines[1]?.moves).toEqual([]);
 	});
 
-	it('branches an exploration off the main line again after a restart inside it', () => {
+	it('branches a free-play run off the main line again after a restart inside it', () => {
 		const timeline = projectTimeline(
 			timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: [0, 'b2c2'] }], { freePlayIndex: 0 }),
 		);
 
-		expect(timeline.lines[2]).toMatchObject({ parent: 0, at: 1, kind: 'exploration', run: 0 });
+		expect(timeline.lines[2]).toMatchObject({ parent: 0, at: 1, kind: 'freePlay', run: 0 });
 		expect(timeline.lines[2]?.moves.map((move) => move.san)).toEqual(['Rc2']);
 		expect(timeline.lines[0]?.moves.map((move) => move.san)).toEqual(['Rxf8', 'Rb1+']);
 		expect(headPath(timeline)).toEqual(['Rxf8', 'Rc2']);
@@ -188,7 +188,7 @@ describe('projectTimeline', () => {
 		expect(timeline.head).toEqual({ line: 0, ply: 0 });
 	});
 
-	it('drops an exploration that does not replay and keeps the main line', () => {
+	it('drops a free-play run that does not replay and keeps the main line', () => {
 		const timeline = projectTimeline(
 			timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: ['a1a2'] }], { freePlayIndex: 0 }),
 		);
@@ -228,16 +228,20 @@ describe('the head path', () => {
 			'b2c2',
 		]),
 		'a restart': timelineInput(['f1f8', 'b2b1', 'b3d1', 0]),
-		'an exploration standing open': timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: ['f8f1'] }], {
-			freePlayIndex: 0,
-		}),
-		'an exploration that was left': timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: ['f8f1'] }]),
-		'an exploration restarted from inside': timelineInput(
+		'a free-play run standing open': timelineInput(
+			['f1f8', 'b2b1'],
+			[{ at: 2, events: ['f8f1'] }],
+			{
+				freePlayIndex: 0,
+			},
+		),
+		'a free-play run that was left': timelineInput(['f1f8', 'b2b1'], [{ at: 2, events: ['f8f1'] }]),
+		'a free-play run restarted from inside': timelineInput(
 			['f1f8', 'b2b1'],
 			[{ at: 2, events: [0, 'b2c2'] }],
 			{ freePlayIndex: 0 },
 		),
-		'an exploration stepping along the main line': timelineInput(
+		'a free-play run stepping along the main line': timelineInput(
 			['f1f8', 'b2b1', 'b3d1'],
 			[{ at: 3, events: [-2] }],
 			{ freePlayIndex: 0 },
@@ -250,7 +254,7 @@ describe('the head path', () => {
 			rewound: 4,
 		}),
 		'a record that does not replay': timelineInput(['f1f8', 'a1a2']),
-		'an exploration that does not replay': timelineInput(
+		'a free-play run that does not replay': timelineInput(
 			['f1f8', 'b2b1'],
 			[{ at: 2, events: ['a1a2'] }],
 			{ freePlayIndex: 0 },

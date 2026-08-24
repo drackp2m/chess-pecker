@@ -85,7 +85,7 @@ function armHintGate(context: PlaybackContext): void {
 
 /**
  * Leaves the refuted move up to be seen, then takes it back — unless there is none left.
- * Opening an exploration drops a pending take-back: nothing in a sandbox is graded.
+ * Opening a free-play run drops a pending take-back: nothing in a sandbox is graded.
  */
 function scheduleUndo(context: PlaybackContext, undo: () => void): void {
 	const { store, scheduled, speed } = context;
