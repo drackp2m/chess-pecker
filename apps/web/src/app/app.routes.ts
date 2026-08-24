@@ -28,7 +28,6 @@ export const APP_ROUTES: Routes = [
 			},
 			{
 				path: 'training',
-				canActivate: [authenticatedGuard],
 				loadChildren: () => import('./page/training/training.routes'),
 			},
 			{

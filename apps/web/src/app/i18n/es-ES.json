@@ -87,7 +87,7 @@
 	"01KZJ895M5FVDK3GJWD8TYTXHC": "Cierra las demás pestañas de esta aplicación para terminar de actualizar su base de datos local.",
 	"01KZJ895M5G0BQV1TG8JC425X4": "No se llega al servidor. Comprueba que el API está en marcha.",
 	"01KZJ895M5XWG0GF2STZHSBH7X": "{{ detail }}",
-	"01KZJ895M50KK3084TMWF8FPSS": "El catálogo no tiene ejercicios en esa banda de rating, así que no hay nada que repartir. Un administrador tiene que importar más ejercicios.",
+	"01KZJ895M50KK3084TMWF8FPSS": "Este dispositivo no tiene ejercicios en esa banda de nivel. Conéctate para descargar el catálogo, o importa tus propios ejercicios desde un CSV.",
 	"01KZJ895M5X6YE44PRDRCCR6QS": "Ya tienes un entrenamiento en curso. La lista se acaba de recargar: sigue con ese o cancélalo antes.",
 	"01KZJ895M5QV11484PMDGBF8CC": "Marca cuántos ejercicios al día quieres hacer antes de abrir el primer ciclo.",
 	"01KZJ895M5R0ST7AFE8M90TDN6": "El usuario o la contraseña no son correctos.",

@@ -87,7 +87,7 @@
 	"01KZJ895M5FVDK3GJWD8TYTXHC": "Close the other tabs of this app to finish updating its local database.",
 	"01KZJ895M5G0BQV1TG8JC425X4": "The server is unreachable. Check that the API is running.",
 	"01KZJ895M5XWG0GF2STZHSBH7X": "{{ detail }}",
-	"01KZJ895M50KK3084TMWF8FPSS": "The catalog has no exercises in that rating band, so there is nothing to deal. An administrator has to import more puzzles.",
+	"01KZJ895M50KK3084TMWF8FPSS": "This device has no exercises in that rating band. Go online to download the catalogue, or import your own exercises from a CSV.",
 	"01KZJ895M5X6YE44PRDRCCR6QS": "You already have a training in progress. The list has just been reloaded — carry on with that one, or cancel it first.",
 	"01KZJ895M5QV11484PMDGBF8CC": "Set how many exercises a day you are aiming for before opening the first cycle.",
 	"01KZJ895M5R0ST7AFE8M90TDN6": "Wrong username or password.",

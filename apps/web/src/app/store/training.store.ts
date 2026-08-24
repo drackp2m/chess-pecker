@@ -35,6 +35,10 @@ export class TrainingStore
 
 	readonly runningCycle = computed(() => this.cycles().find((cycle) => 'running' === cycle.status));
 
+	readonly canSolve = computed(
+		() => 'calibrating' === this.active()?.status || undefined !== this.runningCycle(),
+	);
+
 	/** A cycle can only be opened when the previous one is closed and the set is fixed. */
 	readonly canStartCycle = computed(() => {
 		const progress = this.progress();

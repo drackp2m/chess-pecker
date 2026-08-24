@@ -7,6 +7,7 @@ import { ButtonDirective } from '@app/directive/button.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { IntroStore } from '@app/store/intro.store';
+import { TrainingStore } from '@app/store/training.store';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
 type StepPhase = 'entering' | 'idle' | 'leaving';
@@ -25,6 +26,7 @@ export class IntroPage {
 	protected readonly I18n = I18n;
 
 	readonly intro = inject(IntroStore);
+	readonly training = inject(TrainingStore);
 
 	readonly leaveLabel = computed(() =>
 		this.intro.isRevisit() ? I18n.intro.CLOSE : I18n.intro.SKIP,
@@ -60,19 +62,37 @@ export class IntroPage {
 	}
 
 	forward(): void {
-		if (this.intro.isLast()) {
+		if (!this.intro.isLast()) {
+			this.intro.next();
+
+			return;
+		}
+
+		if (this.intro.isRevisit()) {
 			this.leave();
 
 			return;
 		}
 
-		this.intro.next();
+		void this.begin();
 	}
 
 	leave(): void {
 		this.intro.complete();
 
 		void this.router.navigate(['/']);
+	}
+
+	private async begin(): Promise<void> {
+		this.intro.complete();
+
+		await this.training.load();
+
+		if (null === this.training.active()) {
+			await this.training.start();
+		}
+
+		void this.router.navigate([this.training.canSolve() ? '/training/solve' : '/training']);
 	}
 
 	private watchStep(): void {

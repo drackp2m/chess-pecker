@@ -4,6 +4,7 @@ import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 import { ActivityRepository } from '@app/repository/activity.repository';
 import { ActivityDayRow } from '@app/repository/definition/activity-schema.interface';
 import { TrainingRepository } from '@app/repository/training.repository';
+import { SessionStore } from '@app/store/session.store';
 import { fillActivityDays } from '@app/util/activity-day';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { addUtcDays, diffUtcDays, toIsoDate, utcMidnight } from '@app/util/utc-date';
@@ -26,6 +27,7 @@ export interface ActivityHistory {
 export class ActivityHistoryUseCase {
 	private readonly activityRepository = inject(ActivityRepository);
 	private readonly trainingRepository = inject(TrainingRepository);
+	private readonly sessionStore = inject(SessionStore);
 
 	/**
 	 * The last `rangeDays` days, local first. What is stored is always one run ending today,
@@ -56,6 +58,12 @@ export class ActivityHistoryUseCase {
 	}
 
 	private async refresh(from: Date, to: Date): Promise<boolean> {
+		// The aggregate belongs to a user, so without a session there is nothing to ask for and
+		// nothing missing: what is stored is all there is.
+		if (!this.sessionStore.isAuthenticated()) {
+			return false;
+		}
+
 		const days = diffUtcDays(from, to) + 1;
 		const stored = await this.activityRepository.countRange(toIsoDate(from), toIsoDate(to));
 		const cursor = await this.activityRepository.findCursor();

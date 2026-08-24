@@ -31,7 +31,7 @@ const MAX_ACTIVITY_MONTHS = Math.max(...ACTIVITY_RANGES);
 		SegmentedControlComponent,
 		SegmentDirective,
 	],
-	providers: [provideI18nScope('dashboard')],
+	providers: [provideI18nScope('dashboard', 'training')],
 })
 export class DashboardPage {
 	protected readonly I18n = I18n;
@@ -61,6 +61,10 @@ export class DashboardPage {
 	readonly trainingLabel = computed<TranslationRef>(() => {
 		const runningCycle = this.training.runningCycle();
 
+		if (null === this.training.active()) {
+			return i18nRef(I18n.training.START_TRAINING);
+		}
+
 		if ('calibrating' === this.training.active()?.status) {
 			return i18nRef(I18n.dashboard.TRAINING_REFINE);
 		}
@@ -72,24 +76,37 @@ export class DashboardPage {
 
 	/** Anything already in progress goes straight to the board; the rest needs the forms. */
 	private readonly trainingLink = computed(() =>
-		'calibrating' === this.training.active()?.status || undefined !== this.training.runningCycle()
-			? '/training/solve'
-			: '/training',
+		this.training.canSolve() ? '/training/solve' : '/training',
 	);
 
 	private readonly logOutUseCase = inject(LogOutUseCase);
 	private readonly router = inject(Router);
 
-	private hasLoadedTraining = false;
+	private loadedFor = '';
 
 	constructor() {
-		// The session settles after the first paint, so the training is asked for whenever
-		// that happens to land — and only once, however many times the store then changes.
+		// The training is local, so it is asked for whoever is here; the session only decides
+		// whether the activity is worth asking the API for. A finished sync pass is the other
+		// moment worth reading again: it is what brings down an account's history on log in.
 		effect(() => {
-			if (this.session.isAuthenticated() && !this.hasLoadedTraining) {
-				this.hasLoadedTraining = true;
+			const status = this.session.status();
+			const syncedAt = this.training.lastSyncedAt();
 
-				void this.training.load();
+			if ('unknown' === status) {
+				return;
+			}
+
+			const pass = `${status}:${(syncedAt?.getTime() ?? 0).toString()}`;
+
+			if (pass === this.loadedFor) {
+				return;
+			}
+
+			this.loadedFor = pass;
+
+			void this.training.load();
+
+			if ('authenticated' === status) {
 				void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS));
 			}
 		});

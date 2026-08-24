@@ -38,62 +38,62 @@
 				}
 			</p>
 		</div>
+	}
 
-		<div class="flex-col gap-2">
-			<h4>{{ I18n.dashboard.YOUR_TRAINING | i18n }}</h4>
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.dashboard.YOUR_TRAINING | i18n }}</h4>
 
-			@if (summary(); as training) {
-				<p class="fs-sm color-contrast-mid">
-					{{
-						I18n.dashboard.TRAINING_TOTALS
-							| i18n
-								: {
-										firstTry: training.firstTry,
-										total: training.total,
-										percentage: training.percentage,
-								  }
-					}}
-					@if (training.rating; as rating) {
-						{{ I18n.dashboard.TRAINING_LEVEL | i18n: { rating } }}
-					}
-				</p>
-
-				@if (training.current; as current) {
-					<p class="fs-sm color-contrast-mid">{{ current.key | i18n: current.params }}</p>
+		@if (summary(); as training) {
+			<p class="fs-sm color-contrast-mid">
+				{{
+					I18n.dashboard.TRAINING_TOTALS
+						| i18n
+							: {
+									firstTry: training.firstTry,
+									total: training.total,
+									percentage: training.percentage,
+							  }
+				}}
+				@if (training.rating; as rating) {
+					{{ I18n.dashboard.TRAINING_LEVEL | i18n: { rating } }}
 				}
+			</p>
 
-				<table class="summary fs-sm">
-					<thead>
-						<tr>
-							<th scope="col">{{ I18n.common.STAGE | i18n }}</th>
-
-							<th scope="col">{{ I18n.common.FIRST_TRY | i18n }}</th>
-
-							<th scope="col">{{ I18n.common.RESULT | i18n }}</th>
-						</tr>
-					</thead>
-
-					<tbody>
-						@for (row of training.rows; track row.key) {
-							<tr>
-								<th scope="row">
-									{{ row.stage.key | i18n: row.stage.params }} {{ row.stageDetail }}
-								</th>
-
-								<td class="mono">{{ row.firstTry }}</td>
-
-								<td>{{ row.result.key | i18n: row.result.params }} {{ row.resultDetail }}</td>
-							</tr>
-						}
-					</tbody>
-				</table>
+			@if (training.current; as current) {
+				<p class="fs-sm color-contrast-mid">{{ current.key | i18n: current.params }}</p>
 			}
 
-			<button appThemed color="accent" [disabled]="training.isLoading()" (click)="openTraining()">
-				{{ trainingLabel().key | i18n: trainingLabel().params }}
-			</button>
-		</div>
-	}
+			<table class="summary fs-sm">
+				<thead>
+					<tr>
+						<th scope="col">{{ I18n.common.STAGE | i18n }}</th>
+
+						<th scope="col">{{ I18n.common.FIRST_TRY | i18n }}</th>
+
+						<th scope="col">{{ I18n.common.RESULT | i18n }}</th>
+					</tr>
+				</thead>
+
+				<tbody>
+					@for (row of training.rows; track row.key) {
+						<tr>
+							<th scope="row">
+								{{ row.stage.key | i18n: row.stage.params }} {{ row.stageDetail }}
+							</th>
+
+							<td class="mono">{{ row.firstTry }}</td>
+
+							<td>{{ row.result.key | i18n: row.result.params }} {{ row.resultDetail }}</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+
+		<button appThemed color="accent" [disabled]="training.isLoading()" (click)="openTraining()">
+			{{ trainingLabel().key | i18n: trainingLabel().params }}
+		</button>
+	</div>
 
 	<div class="flex-col gap-2">
 		<h4>{{ I18n.dashboard.PRACTICE | i18n }}</h4>

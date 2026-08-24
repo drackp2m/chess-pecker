@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import type { CalibrationRoundOutcome } from '@chesspecker/api-definitions';
 
+import { I18n, i18nRef } from '@app/i18n';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { PuzzleRow } from '@app/repository/definition/puzzle-schema.interface';
 import {
@@ -15,6 +16,7 @@ import {
 	resolveRoundOutcome,
 	roundPuzzleCount,
 } from '@app/util/calibration-plan';
+import { LocalFailureError } from '@app/util/local-failure-error';
 import { ratingBucketCeiling } from '@app/util/rating-bucket';
 
 export interface LocalCalibrationRoundStart {
@@ -143,7 +145,10 @@ export class LocalCalibrationUseCase {
 		const puzzles = await this.repository.sampleByRating(rating, ratingBucketCeiling(rating), size);
 
 		if (puzzles.length < size) {
-			throw new Error('Not enough local puzzles in that rating band');
+			throw new LocalFailureError(
+				i18nRef(I18n.common.CATALOG_EMPTY),
+				'Not enough local puzzles in that rating band',
+			);
 		}
 
 		return puzzles;

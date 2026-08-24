@@ -40,7 +40,13 @@
 			{{ I18n.intro.BACK | i18n }}
 		</button>
 
-		<button appThemed class="flex-grow" color="accent" (click)="forward()">
+		<button
+			appThemed
+			class="flex-grow"
+			color="accent"
+			[disabled]="training.isSubmitting()"
+			(click)="forward()"
+		>
 			{{ forwardLabel() | i18n }}
 		</button>
 	</footer>

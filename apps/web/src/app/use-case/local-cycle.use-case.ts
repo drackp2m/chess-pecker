@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 
 import { TrainingPolicy } from '@app/definition/training-policy.constant';
+import { I18n, i18nRef } from '@app/i18n';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { PuzzleRow } from '@app/repository/definition/puzzle-schema.interface';
 import {
@@ -13,6 +14,7 @@ import { LocalCalibrationUseCase } from '@app/use-case/local-calibration.use-cas
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
 import { born, touch } from '@app/use-case/sync/local-record';
 import { buildCycleOrder } from '@app/util/cycle-order';
+import { LocalFailureError } from '@app/util/local-failure-error';
 import { clampRatingBucket, ratingBucketCeiling } from '@app/util/rating-bucket';
 
 export interface LocalCycleSlot {
@@ -53,7 +55,10 @@ export class LocalCycleUseCase {
 		const puzzles = await this.sampleBand(accepted.rating, size);
 
 		if (0 === puzzles.length) {
-			throw new Error('Not enough local puzzles in that rating band');
+			throw new LocalFailureError(
+				i18nRef(I18n.common.CATALOG_EMPTY),
+				'Not enough local puzzles in that rating band',
+			);
 		}
 
 		await this.repository.batchInsert('trainingPuzzle', this.toSetRows(trainingUuid, puzzles));
