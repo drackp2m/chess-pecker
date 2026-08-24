@@ -1,0 +1,47 @@
+<main class="intro flex-col">
+	<header
+		class="intro-header force-light px-4 pb-2 surface-contrast color-primary flex-row align-center justify-between gap-4"
+	>
+		<h3>Chess Pecker</h3>
+
+		<button class="leave fs-md color-primary" (click)="leave()">
+			{{ leaveLabel() | i18n }}
+		</button>
+	</header>
+
+	<div class="body flex-col gap-6">
+		<app-step-indicator
+			[count]="intro.stepCount"
+			[index]="intro.index()"
+			[ariaLabel]="I18n.intro.PROGRESS | i18n"
+		/>
+
+		<section
+			class="step flex-col gap-4"
+			[attr.data-phase]="phase()"
+			[style.--step-direction]="direction()"
+		>
+			<h3>{{ visibleStep().title | i18n }}</h3>
+
+			@for (paragraph of visibleStep().body; track $index) {
+				<p class="color-contrast-mid">{{ paragraph | i18n }}</p>
+			}
+		</section>
+	</div>
+
+	<footer class="actions px-4 flex-row gap-2">
+		<button
+			appThemed
+			class="flex-grow"
+			color="primary-mid"
+			[disabled]="intro.isFirst()"
+			(click)="intro.previous()"
+		>
+			{{ I18n.intro.BACK | i18n }}
+		</button>
+
+		<button appThemed class="flex-grow" color="accent" (click)="forward()">
+			{{ forwardLabel() | i18n }}
+		</button>
+	</footer>
+</main>

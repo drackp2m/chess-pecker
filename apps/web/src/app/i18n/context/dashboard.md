@@ -1,8 +1,6 @@
 # dashboard
 
-La página de inicio, la primera que se ve. Tiene tres partes: el resumen del programa en curso, los atajos a la práctica suelta, y la explicación del método Woodpecker para quien llega nuevo.
-
-Es la página con más prosa de la aplicación. Los textos del método se leen enteros y de un tirón, así que se traducen como texto divulgativo —frases que fluyen, no viñetas telegráficas—, manteniendo el tono de quien explica algo que ha probado.
+La página de inicio, la primera que se ve. Tiene tres partes: el resumen del programa en curso, los atajos a la práctica suelta, y el gancho al método Woodpecker para quien llega nuevo.
 
 ## YOUR_PROGRAM
 
@@ -30,13 +28,11 @@ Encabezado del bloque de práctica suelta, la que no cuenta para el programa.
 
 El nombre del método. «Woodpecker» no se traduce nunca, ni se translitera.
 
-## METHOD_INTRO
+## METHOD_SUMMARY
 
-## METHOD_STEP_*
+## METHOD_OPEN
 
-## METHOD_OUTRO
-
-La explicación del método Woodpecker, en prosa seguida. La idea que no se puede perder por el camino: se repite el **mismo** conjunto de ejercicios, cada pasada más rápida, y un ejercicio fallado se marca y se deja atrás sin reintento. «Pasada» es una vuelta entera al conjunto. `METHOD_STEP_SHUFFLE` habla de barajar el orden dentro de bandas estrechas de rating, o sea de tramos de dificultad.
+El bloque del método en el inicio, ya reducido a un gancho y un botón: la explicación entera vive en la scope `intro`. `METHOD_SUMMARY` es una sola frase que resume la idea —el **mismo** conjunto de ejercicios, pasada tras pasada, hasta reconocer la idea táctica de un vistazo— y `METHOD_OPEN` es la etiqueta del botón que abre esa presentación.
 
 ## ACTIVITY_*
 

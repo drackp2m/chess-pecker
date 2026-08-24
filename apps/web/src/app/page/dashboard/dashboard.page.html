@@ -116,20 +116,10 @@
 	<div class="flex-col gap-2">
 		<h4>{{ I18n.dashboard.METHOD_TITLE | i18n }}</h4>
 
-		<p class="fs-sm color-contrast-mid">{{ I18n.dashboard.METHOD_INTRO | i18n }}</p>
+		<p class="fs-sm color-contrast-mid">{{ I18n.dashboard.METHOD_SUMMARY | i18n }}</p>
 
-		<ul class="method flex-col gap-1 fs-sm">
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_BUILD | i18n }}</li>
-
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_PASSES | i18n }}</li>
-
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_TIME | i18n }}</li>
-
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_MISS | i18n }}</li>
-
-			<li class="pl-3">{{ I18n.dashboard.METHOD_STEP_SHUFFLE | i18n }}</li>
-		</ul>
-
-		<p class="fs-sm color-contrast-mid">{{ I18n.dashboard.METHOD_OUTRO | i18n }}</p>
+		<button appThemed color="primary-mid" appRouterLink="/intro">
+			{{ I18n.dashboard.METHOD_OPEN | i18n }}
+		</button>
 	</div>
 </section>

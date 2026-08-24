@@ -1,0 +1,69 @@
+.intro {
+	--leave-duration: 160ms;
+	--enter-duration: 200ms;
+	--enter-easing: cubic-bezier(0, 0, 0.2, 1);
+	--step-shift: var(--spacing-3);
+
+	height: 100dvh;
+	background-color: var(--color-primary);
+
+	.intro-header {
+		padding-top: var(--safe-padding-top);
+		border-bottom: solid 1.5px var(--color-primary);
+
+		.leave {
+			flex-shrink: 0;
+			text-decoration: underline;
+			text-underline-offset: 3px;
+		}
+	}
+
+	.body {
+		overflow: hidden;
+		flex: 1;
+		min-height: 0;
+		padding: var(--page-padding);
+	}
+
+	.step {
+		overflow-y: auto;
+		flex: 1;
+		min-height: 0;
+
+		&[data-phase='leaving'] {
+			animation: step-leave var(--leave-duration) var(--transition-easing) forwards;
+		}
+
+		&[data-phase='entering'] {
+			animation: step-enter var(--enter-duration) var(--enter-easing);
+		}
+	}
+
+	.actions {
+		flex-shrink: 0;
+		padding-bottom: var(--safe-padding-bottom);
+	}
+}
+
+@keyframes step-leave {
+	to {
+		transform: translateY(calc(var(--step-shift) * var(--step-direction, 1) * -1));
+		opacity: 0;
+	}
+}
+
+@keyframes step-enter {
+	from {
+		transform: translateY(calc(var(--step-shift) * var(--step-direction, 1)));
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.intro .step {
+		&[data-phase='leaving'],
+		&[data-phase='entering'] {
+			animation: none;
+		}
+	}
+}

@@ -1,12 +1,18 @@
 import { Routes } from '@angular/router';
 
 import { authenticatedGuard } from '@app/guard/authenticated.guard';
+import { introGuard } from '@app/guard/intro.guard';
 import { MainLayout } from '@app/layout/main/main.layout';
 
 export const APP_ROUTES: Routes = [
 	{
+		path: 'intro',
+		loadChildren: () => import('./page/intro/intro.routes'),
+	},
+	{
 		path: '',
 		component: MainLayout,
+		canActivate: [introGuard],
 		children: [
 			{
 				path: '',
