@@ -1,3 +1,13 @@
+# v1.25.2 (2026-08-25)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- floor a cycle's expected items at its set size ([d5a2cfc](https://github.com/drackp2m/chess-pecker/commit/d5a2cfce34ac121f8b9e3577f0792f31c68e95b0)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.25.1...v1.25.2
+
 # v1.25.1 (2026-08-25)
 
 ## What's Changed
