@@ -153,6 +153,14 @@ function attempt(uuid: string, over: Partial<AttemptRow> = {}): AttemptRow {
 
 const GOAL_FILL = SyncPolicy.pushBatchSize - 1;
 
+function longRecord(): string {
+	return 'e'.repeat(SyncPolicy.pushBatchBytes);
+}
+
+function played(uuid: string, over: Partial<AttemptRow> = {}): AttemptRow {
+	return attempt(uuid, { kind: 'calibration', roundUuid: 'round-1', ...over });
+}
+
 async function fillBudget(repository: LocalDataRepository): Promise<void> {
 	await repository.insert('training', born(training(TRAINING)));
 	await repository.batchInsert(
@@ -269,6 +277,7 @@ describe('TrainingTreeUseCase.build', () => {
 			cycles: [
 				{
 					clientRef: 'cycle-1',
+					itemCount: 1,
 					items: [{ clientRef: 'item-1', attempts: [{ clientRef: 'attempt-2' }] }],
 				},
 			],
@@ -307,6 +316,51 @@ describe('TrainingTreeUseCase.build', () => {
 
 		expect(push?.request.training.cycles[0]?.items).toEqual([]);
 		expect(push?.manifest.cycleItem).toEqual([]);
+	});
+
+	it('leaves out a branch that is already up, and the parent holding only those', async () => {
+		await repository.insert('training', sealed(training(TRAINING)));
+		await repository.insert('calibrationRound', sealed(round('round-1')));
+		await repository.insert('calibrationPuzzle', sealed(dealt('dealt-1', 'round-1')));
+		await repository.insert('cycle', sealed(pass('cycle-1')));
+		await repository.insert('trainingPuzzle', born(exercise('set-1')));
+
+		const push = await trees.build(TRAINING);
+
+		expect(push?.request.training.rounds).toEqual([]);
+		expect(push?.request.training.cycles).toEqual([]);
+		expect(push?.request.training.puzzles).toHaveLength(1);
+	});
+
+	it('carries a parent that is already up when something under it is waiting', async () => {
+		await repository.insert('training', sealed(training(TRAINING)));
+		await repository.insert('trainingPuzzle', sealed(exercise('set-1')));
+		await repository.insert('cycle', sealed(pass('cycle-1', { expectedItems: 3 })));
+		await repository.insert('cycleItem', sealed(slot('item-1', 'cycle-1', 'set-1')));
+		await repository.insert('cycleItem', born(slot('item-2', 'cycle-1', 'set-1', { position: 1 })));
+
+		const push = await trees.build(TRAINING);
+
+		expect(push?.request.training.puzzles).toEqual([]);
+		expect(push?.request.training.cycles).toMatchObject([
+			{ uuid: 'cycle-1', itemCount: 3, items: [{ clientRef: 'item-2' }] },
+		]);
+		expect(push?.manifest).toMatchObject({ cycle: [], cycleItem: ['item-2'] });
+	});
+
+	it('leaves out a slot that is up, and keeps it as a parent of what is not', async () => {
+		await repository.insert('training', sealed(training(TRAINING)));
+		await repository.insert('trainingPuzzle', sealed(exercise('set-1')));
+		await repository.insert('cycle', sealed(pass('cycle-1')));
+		await repository.insert('cycleItem', sealed(slot('item-1', 'cycle-1', 'set-1')));
+		await repository.insert('attempt', born(attempt('attempt-1', { cycleItemUuid: 'item-1' })));
+
+		const push = await trees.build(TRAINING);
+
+		expect(push?.request.training.cycles[0]?.items).toMatchObject([
+			{ uuid: 'item-1', attempts: [{ clientRef: 'attempt-1' }] },
+		]);
+		expect(push?.manifest.attempt).toEqual(['attempt-1']);
 	});
 
 	it('leaves out a branch the server already refused', async () => {
@@ -358,16 +412,26 @@ describe('TrainingTreeUseCase.build', () => {
 			expect(push?.manifest.calibrationPuzzle).toEqual([]);
 		});
 
-		it('still sends a parent that is already up, so its children have a name', async () => {
+		it('drops a parent that is already up once nothing under it fits either', async () => {
 			await fillBudget(repository);
 			await repository.insert('calibrationRound', sealed(round('round-1')));
 			await repository.insert('calibrationPuzzle', born(dealt('dealt-1', 'round-1')));
 
 			const push = await trees.build(TRAINING);
 
-			expect(push?.request.training.rounds).toHaveLength(1);
-			expect(push?.request.training.rounds[0]?.puzzles).toEqual([]);
+			expect(push?.request.training.rounds).toEqual([]);
 			expect(push?.manifest.calibrationPuzzle).toEqual([]);
+		});
+
+		it('counts the bytes an attempt carries, not just the row', async () => {
+			await repository.insert('training', sealed(training(TRAINING)));
+			await repository.insert('calibrationRound', sealed(round('round-1')));
+			await repository.insert('attempt', born(played('attempt-1', { record: [longRecord()] })));
+			await repository.insert('attempt', born(played('attempt-2')));
+
+			const push = await trees.build(TRAINING);
+
+			expect(push?.manifest.attempt).toEqual(['attempt-1']);
 		});
 	});
 });

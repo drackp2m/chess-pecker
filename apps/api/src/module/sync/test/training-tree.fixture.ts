@@ -107,6 +107,7 @@ export function cycleNode(refs: TreeRefs): PlainNode<PushCycleNodeDto> {
 		updatedAt: BORN,
 		index: 1,
 		status: TrainingCycleStatus.Running,
+		itemCount: 1,
 		items: [
 			{
 				clientRef: refs.item,

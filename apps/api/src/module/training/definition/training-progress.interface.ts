@@ -10,12 +10,12 @@ export interface CycleProgress {
 	attempted: number;
 	total: number;
 	solved: number;
-	/** Between 0 and 1; it should hold or rise with each pass. */
+	/** Between 0 and 1; it should hold or rise with each cycle. */
 	accuracy: number;
-	/** The solving times added up; it should fall with each pass. */
+	/** The solving times added up; it should fall with each cycle. */
 	totalDurationMs: number;
 	averageDurationMs: number;
-	/** The total time this pass is held to. Null on cycle 1, which sets the bar. */
+	/** The total time this cycle is held to. Null on cycle 1, which sets the bar. */
 	targetDurationMs: number | null;
 	/** The cycle's last exercise closing, which is when it ended. */
 	lastAttemptAt: Date | null;

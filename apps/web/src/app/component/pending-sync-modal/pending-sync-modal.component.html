@@ -1,7 +1,15 @@
 <div class="flex-col gap-4 p-4">
-	<p class="fs-sm color-contrast-mid">
-		{{ I18n.common.PENDING_SYNC_MESSAGE | i18n: { pending: pending() } }}
-	</p>
+	@if (0 < pending()) {
+		<p class="fs-sm color-contrast-mid">
+			{{ I18n.common.PENDING_SYNC_MESSAGE | i18n: { pending: pending() } }}
+		</p>
+	}
+
+	@if (0 < rejected()) {
+		<p class="fs-sm color-contrast-mid">
+			{{ I18n.common.PENDING_SYNC_REJECTED | i18n: { rejected: rejected() } }}
+		</p>
+	}
 
 	<div class="flex-row gap-2">
 		<button appThemed class="flex-grow" color="accent" (click)="confirm()">

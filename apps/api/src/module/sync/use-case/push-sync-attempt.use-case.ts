@@ -10,7 +10,7 @@ import { Training } from '../../training/training.entity';
 import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-timestamps.use-case';
 import { SyncPushContext } from '../definition/sync-push-context.interface';
 import { PushAttemptNodeDto } from '../dto/request/push-attempt-node.dto';
-import { claimSyncRow, reuseSyncRow, syncKey } from '../util/sync-node.util';
+import { claimSyncRow, reuseSyncRow } from '../util/sync-node.util';
 
 /**
  * The attempt: the leaf of the tree, and the only table that grows without a ceiling. Its
@@ -20,13 +20,13 @@ import { claimSyncRow, reuseSyncRow, syncKey } from '../util/sync-node.util';
 export class PushSyncAttemptUseCase {
 	constructor(private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase) {}
 
-	async calibration(
+	calibration(
 		context: SyncPushContext,
 		training: Training,
 		round: TrainingCalibrationRound,
 		node: PushAttemptNodeDto,
-	): Promise<void> {
-		await this.push(
+	): void {
+		this.push(
 			context,
 			node,
 			{ training, kind: PuzzleAttemptKind.Calibration, calibrationRound: round },
@@ -34,13 +34,13 @@ export class PushSyncAttemptUseCase {
 		);
 	}
 
-	async cycle(
+	cycle(
 		context: SyncPushContext,
 		training: Training,
 		item: TrainingCycleItem,
 		node: PushAttemptNodeDto,
-	): Promise<void> {
-		await this.push(
+	): void {
+		this.push(
 			context,
 			node,
 			{ training, kind: PuzzleAttemptKind.Cycle, cycleItem: item },
@@ -48,15 +48,15 @@ export class PushSyncAttemptUseCase {
 		);
 	}
 
-	private async push(
+	private push(
 		context: SyncPushContext,
 		node: PushAttemptNodeDto,
 		parent: EntityData<PuzzleAttempt>,
 		belongsHere: (attempt: PuzzleAttempt) => boolean,
-	): Promise<void> {
-		const existing = await context.entityManager.findOne(PuzzleAttempt, syncKey(node, 'attempt'));
+	): void {
+		const existing = context.rows.attempt.find(node, 'attempt');
 
-		if (null !== existing) {
+		if (undefined !== existing) {
 			reuseSyncRow(context, 'attempt', node, existing, belongsHere(existing), OTHER_SLOT);
 
 			return;

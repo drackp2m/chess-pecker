@@ -10,11 +10,11 @@ import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-t
 import { SyncPushContext } from '../definition/sync-push-context.interface';
 import { PushCycleItemNodeDto } from '../dto/request/push-cycle-item-node.dto';
 import { PushCycleNodeDto } from '../dto/request/push-cycle-node.dto';
-import { claimSyncRow, isFresherNode, reuseSyncRow, syncKey } from '../util/sync-node.util';
+import { claimSyncRow, isFresherNode, reuseSyncRow } from '../util/sync-node.util';
 
 import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
 
-/** The pass branch: the cycles, the order they fixed, and what was played in each slot. */
+/** The cycle branch: the cycles, the order they fixed, and what was played in each slot. */
 @Injectable()
 export class PushCycleBranchUseCase {
 	constructor(
@@ -29,14 +29,14 @@ export class PushCycleBranchUseCase {
 		set: ReadonlyMap<string, TrainingPuzzle>,
 	): Promise<void> {
 		for (const node of nodes) {
-			const pushed = await this.pushCycle(context, training, node);
+			const pushed = this.pushCycle(context, training, node);
 
 			if (undefined === pushed) {
 				continue;
 			}
 
 			for (const itemNode of node.items) {
-				await this.pushItem(context, training, pushed.row, itemNode, set);
+				this.pushItem(context, training, pushed.row, itemNode, set);
 			}
 
 			if (pushed.closedHere) {
@@ -45,14 +45,14 @@ export class PushCycleBranchUseCase {
 		}
 	}
 
-	private async pushCycle(
+	private pushCycle(
 		context: SyncPushContext,
 		training: Training,
 		node: PushCycleNodeDto,
-	): Promise<PushedCycle | undefined> {
-		const existing = await context.entityManager.findOne(TrainingCycle, syncKey(node, 'cycle'));
+	): PushedCycle | undefined {
+		const existing = context.rows.cycle.find(node, 'cycle');
 
-		if (null !== existing) {
+		if (undefined !== existing) {
 			const belongsHere = existing.training.uuid === training.uuid;
 			const reused = reuseSyncRow(context, 'cycle', node, existing, belongsHere, OTHER_TREE);
 
@@ -64,7 +64,12 @@ export class PushCycleBranchUseCase {
 		}
 
 		const cycle = this.applySyncTimestampsUseCase.execute(
-			new TrainingCycle({ training, index: node.index, status: node.status }),
+			new TrainingCycle({
+				training,
+				index: node.index,
+				status: node.status,
+				itemCount: node.itemCount,
+			}),
 			node,
 		);
 
@@ -75,10 +80,12 @@ export class PushCycleBranchUseCase {
 	}
 
 	/**
-	 * A pass uploads open and closes when the device says so. Returns whether this push is
+	 * A cycle uploads open and closes when the device says so. Returns whether this push is
 	 * the one that finished it, which is the only claim the server checks afterwards.
 	 */
 	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto): boolean {
+		row.itemCount = Math.max(row.itemCount, node.itemCount);
+
 		if (!isFresherNode(node, row)) {
 			return false;
 		}
@@ -92,7 +99,8 @@ export class PushCycleBranchUseCase {
 
 	/**
 	 * "Finished" is the one claim the server verifies, so it runs after the slots and behind a
-	 * flush. A close that does not add up leaves the cycle open rather than refusing the row.
+	 * flush. A close that does not add up leaves the cycle open rather than refusing the row:
+	 * either a slot is still missing up here, or one of them was never played.
 	 */
 	private async reopenIfUnfinished(context: SyncPushContext, row: TrainingCycle): Promise<void> {
 		await context.entityManager.flush();
@@ -109,28 +117,28 @@ export class PushCycleBranchUseCase {
 		);
 		const attempted = new Set(attempts.map((attempt) => attempt.cycleItem?.uuid));
 
-		if (0 < items.length && items.every((item) => attempted.has(item.uuid))) {
+		if (row.itemCount <= items.length && items.every((item) => attempted.has(item.uuid))) {
 			return;
 		}
 
 		row.status = TrainingCycleStatus.Running;
 	}
 
-	private async pushItem(
+	private pushItem(
 		context: SyncPushContext,
 		training: Training,
 		cycle: TrainingCycle,
 		node: PushCycleItemNodeDto,
 		set: ReadonlyMap<string, TrainingPuzzle>,
-	): Promise<void> {
-		const item = await this.resolveItem(context, cycle, node, set);
+	): void {
+		const item = this.resolveItem(context, cycle, node, set);
 
 		if (undefined === item) {
 			return;
 		}
 
 		for (const attempt of node.attempts) {
-			await this.pushSyncAttemptUseCase.cycle(context, training, item, attempt);
+			this.pushSyncAttemptUseCase.cycle(context, training, item, attempt);
 		}
 	}
 
@@ -138,18 +146,15 @@ export class PushCycleBranchUseCase {
 	 * The slot needs its set exercise already resolved, so a branch refused for being outside
 	 * the catalogue takes the slot down with it, and its attempts too.
 	 */
-	private async resolveItem(
+	private resolveItem(
 		context: SyncPushContext,
 		cycle: TrainingCycle,
 		node: PushCycleItemNodeDto,
 		set: ReadonlyMap<string, TrainingPuzzle>,
-	): Promise<TrainingCycleItem | undefined> {
-		const existing = await context.entityManager.findOne(
-			TrainingCycleItem,
-			syncKey(node, 'cycleItem'),
-		);
+	): TrainingCycleItem | undefined {
+		const existing = context.rows.cycleItem.find(node, 'cycleItem');
 
-		if (null !== existing) {
+		if (undefined !== existing) {
 			const belongsHere = existing.cycle.uuid === cycle.uuid;
 
 			return reuseSyncRow(context, 'cycleItem', node, existing, belongsHere, OTHER_CYCLE);

@@ -110,6 +110,7 @@
 	"01KZS8AGRV1YW49KHZWA9S4S3Y": "Il n'est pas possible d'obtenir les dernières données : l'affichage montre ce qui est enregistré sur cet appareil.",
 	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Il reste des exercices à faire.",
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} Les exercices pour cet appareil n'ont pas encore été téléchargés sur le serveur. Lorsqu'on se déconnecte, ils sont supprimés, et il n'y a aucun moyen de les récupérer.",
+	"01M0WDEDFAJ2PMX8BFXKKQFD0A": "Le serveur a refusé {{ rejected }} exercices de cet appareil et ne les réessaiera pas. La déconnexion les supprime, sans aucun moyen de les récupérer.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Se déconnecter également",
 	"01KZS8AGRWVYYDY12EVBWAY17D": "Rester",
 	"01M0V31ZYJ33PDSBPVDKYG7HYT": "Cet appareil va perdre ce qu’il contient",

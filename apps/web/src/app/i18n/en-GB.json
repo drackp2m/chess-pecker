@@ -110,6 +110,7 @@
 	"01KZS8AGRV1YW49KHZWA9S4S3Y": "The latest data could not be fetched: this is what was stored on this device.",
 	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Some exercises have not been uploaded",
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} exercises from this device have not reached the server yet. Logging out deletes them, with no way to get them back.",
+	"01M0WDEDFAJ2PMX8BFXKKQFD0A": "The server refused {{ rejected }} exercises from this device and will not retry them. Logging out deletes them, with no way to get them back.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Log out anyway",
 	"01KZS8AGRWVYYDY12EVBWAY17D": "Stay",
 	"01M0V31ZYJ33PDSBPVDKYG7HYT": "This device will lose what it holds",

@@ -66,36 +66,36 @@ export interface TrainingSchema extends DBSchema {
 	training: {
 		key: string;
 		value: TrainingRow;
-		indexes: { status: string; pendingSince: Date };
+		indexes: { status: string; pendingSince: Date; rejectedAt: Date };
 	};
 	trainingGoal: {
 		key: string;
 		value: TrainingGoalRow;
-		indexes: { trainingUuid: string; pendingSince: Date };
+		indexes: { trainingUuid: string; pendingSince: Date; rejectedAt: Date };
 	};
 	calibrationRound: {
 		key: string;
 		value: CalibrationRoundRow;
-		indexes: { trainingUuid: string; pendingSince: Date };
+		indexes: { trainingUuid: string; pendingSince: Date; rejectedAt: Date };
 	};
 	calibrationPuzzle: {
 		key: string;
 		value: CalibrationPuzzleRow;
-		indexes: { roundUuid: string; pendingSince: Date };
+		indexes: { roundUuid: string; pendingSince: Date; rejectedAt: Date };
 	};
 	trainingPuzzle: {
 		key: string;
 		value: TrainingPuzzleRow;
-		indexes: { trainingUuid: string; pendingSince: Date };
+		indexes: { trainingUuid: string; pendingSince: Date; rejectedAt: Date };
 	};
 	cycle: {
 		key: string;
 		value: TrainingCycleRow;
-		indexes: { trainingUuid: string; pendingSince: Date };
+		indexes: { trainingUuid: string; pendingSince: Date; rejectedAt: Date };
 	};
 	cycleItem: {
 		key: string;
 		value: CycleItemRow;
-		indexes: { cycleUuid: string; pendingSince: Date };
+		indexes: { cycleUuid: string; pendingSince: Date; rejectedAt: Date };
 	};
 }

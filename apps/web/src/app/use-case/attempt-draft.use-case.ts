@@ -20,7 +20,7 @@ export interface AttemptDraft {
 	readonly uuid: string;
 	readonly identity: AttemptIdentity;
 	readonly createdAt: Date;
-	/** Its place in the pass, so the row can name it without the plan in front of it. */
+	/** Its place in the cycle, so the row can name it without the plan in front of it. */
 	readonly position?: number;
 }
 

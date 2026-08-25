@@ -4,6 +4,7 @@ import type { SyncSummary } from '@chesspecker/api-definitions';
 import { SYNC_ENTITIES, TREE_SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { SyncCursorRepository } from '@app/repository/sync-cursor.repository';
 import { TrainingRepository } from '@app/repository/training.repository';
+import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { PullTreeUseCase } from '@app/use-case/sync/pull-tree.use-case';
 import { SyncStatus } from '@app/use-case/sync/sync-summary.use-case';
 import { TrainingRestoreUseCase } from '@app/use-case/training-restore.use-case';
@@ -37,9 +38,12 @@ export class SyncPullUseCase {
 	private readonly trees = inject(PullTreeUseCase);
 	private readonly restore = inject(TrainingRestoreUseCase);
 	private readonly cursors = inject(SyncCursorRepository);
+	private readonly cycles = inject(LocalCycleUseCase);
 
 	async execute(status: SyncStatus): Promise<SyncPullReport> {
 		const wanted = toWanted(status);
+
+		await this.declarePartialCycles(status);
 
 		if (!wanted.tree && !wanted.attempts) {
 			return NOTHING_PULLED;
@@ -58,6 +62,18 @@ export class SyncPullUseCase {
 		}
 
 		return report;
+	}
+
+	/**
+	 * A cycle truncated up in the cloud is whole down here until the download brings the short
+	 * one, so the summary says it outright and the device writes the size it should have.
+	 */
+	private async declarePartialCycles(status: SyncStatus): Promise<void> {
+		try {
+			await this.cycles.declarePartial(status.summary.partialCycles);
+		} catch (error) {
+			console.error('Could not mark the cycles the server reported as partial', error);
+		}
 	}
 
 	private async list(): Promise<readonly string[] | undefined> {

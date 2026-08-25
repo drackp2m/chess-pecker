@@ -18,13 +18,16 @@ async function bootstrap(): Promise<void> {
 
 	useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-	// Express' default 100kb is well under a puzzle import batch: 5000 puzzles is close to 1MB.
-	app.useBodyParser('json', { limit: '2mb' });
-
 	app.setGlobalPrefix(...BootstrapHelper.globalPrefix(apiConfig));
 	app.useGlobalPipes(BootstrapHelper.validationPipe);
 	app.useGlobalFilters(BootstrapHelper.exceptionsFilter);
+
 	app.enableCors(BootstrapHelper.corsOptions(apiConfig));
+
+	// Express' default 100kb is well under a puzzle import batch: 5000 puzzles is close to 1MB.
+	app.useBodyParser('json', { limit: '2mb' });
+	app.use(BootstrapHelper.payloadFilter);
+
 	app.use(cookieParser(apiConfig.cookieSecret));
 
 	const port = apiConfig.port;

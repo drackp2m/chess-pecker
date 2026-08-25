@@ -84,7 +84,7 @@ export class GetTrainingProgressUseCase {
 	}
 
 	/**
-	 * Every pass is held to the first one's real time, which is what the method measures
+	 * Every cycle is held to the first one's real time, which is what the method measures
 	 * success against. Cycle 1 has no target: it is the bar.
 	 */
 	private static resolveTarget(index: number, firstCycleDurationMs: number | null): number | null {
@@ -166,7 +166,7 @@ export class GetTrainingProgressUseCase {
 	}
 
 	/**
-	 * One pass per cycle, in order: each target measures against the first cycle's real
+	 * One walk per cycle, in order: each target measures against the first cycle's real
 	 * duration, so that one has to be walked before anything can be asked of the rest.
 	 */
 	private async resolveCycles(training: Training): Promise<CycleProgress[]> {

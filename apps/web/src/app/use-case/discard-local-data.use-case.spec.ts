@@ -1,11 +1,14 @@
 import { TestBed } from '@angular/core/testing';
+import type { SyncEntity } from '@chesspecker/api-definitions';
 import { of } from 'rxjs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import {
 	LocalDataRepository,
-	NO_PENDING,
-	PendingCount,
+	NO_UNSAVED,
+	UnsavedByEntity,
+	UnsavedCount,
 } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
@@ -16,23 +19,27 @@ import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-ca
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 
 interface Options {
-	readonly pending?: PendingCount;
+	readonly unsaved?: UnsavedByEntity;
 	readonly countFails?: boolean;
 	readonly puzzleSets?: number;
 	readonly answer?: boolean;
 }
 
-function withAttempts(attempt: number): PendingCount {
-	return { ...NO_PENDING, attempt };
+const NOTHING_UNSAVED: UnsavedByEntity = Object.fromEntries(
+	SYNC_ENTITIES.map((entity): readonly [SyncEntity, UnsavedCount] => [entity, NO_UNSAVED]),
+) as UnsavedByEntity;
+
+function withAttempts(attempt: UnsavedCount): UnsavedByEntity {
+	return { ...NOTHING_UNSAVED, attempt };
 }
 
 function configure(options: Options = {}) {
 	const order: string[] = [];
 	const localData = {
-		countPendingByEntity: vi.fn(() =>
+		countUnsavedByEntity: vi.fn(() =>
 			true === options.countFails
 				? Promise.reject(new Error('database closed'))
-				: Promise.resolve(options.pending ?? NO_PENDING),
+				: Promise.resolve(options.unsaved ?? NOTHING_UNSAVED),
 		),
 		countPuzzleSets: vi.fn(() => Promise.resolve(options.puzzleSets ?? 0)),
 		clearUserData: vi.fn(() => {
@@ -98,16 +105,26 @@ describe('DiscardLocalDataUseCase.confirm', () => {
 	});
 
 	it('asks before dropping work that never reached the server', async () => {
-		const { discard, modalStore } = configure({ pending: withAttempts(3), answer: true });
+		const unsaved = withAttempts({ pending: 3, rejected: 0 });
+		const { discard, modalStore } = configure({ unsaved, answer: true });
 
 		expect(await discard.confirm()).toBe(true);
 		expect(modalStore.open).toHaveBeenCalledTimes(1);
 	});
 
 	it('reports the refusal back so the caller can stop', async () => {
-		const { discard } = configure({ pending: withAttempts(3), answer: false });
+		const unsaved = withAttempts({ pending: 3, rejected: 0 });
+		const { discard } = configure({ unsaved, answer: false });
 
 		expect(await discard.confirm()).toBe(false);
+	});
+
+	it('asks about work the server refused, which is not pending any more', async () => {
+		const unsaved = withAttempts({ pending: 0, rejected: 2 });
+		const { discard, modalStore } = configure({ unsaved, answer: true });
+
+		expect(await discard.confirm()).toBe(true);
+		expect(modalStore.open).toHaveBeenCalledTimes(1);
 	});
 
 	it('counts an imported library as work worth asking about', async () => {

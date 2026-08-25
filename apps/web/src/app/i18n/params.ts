@@ -39,6 +39,9 @@ export interface CommonI18nParams {
 	'01KZS8AGRW2GFXT6E5GZ6HHZPQ': {
 		pending: number;
 	};
+	'01M0WDEDFAJ2PMX8BFXKKQFD0A': {
+		rejected: number;
+	};
 	'01M08S2E7YMKHXMG6TBMMFGPP0': {
 		pending: number;
 	};

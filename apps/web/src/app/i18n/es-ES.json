@@ -110,6 +110,7 @@
 	"01KZS8AGRV1YW49KHZWA9S4S3Y": "No se han podido traer los últimos datos: se muestra lo guardado en este dispositivo.",
 	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Quedan ejercicios sin subir",
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.",
+	"01M0WDEDFAJ2PMX8BFXKKQFD0A": "El servidor rechazó {{ rejected }} ejercicios de este dispositivo y no se van a reintentar. Al cerrar sesión se borran, y no hay forma de recuperarlos.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Cerrar sesión igualmente",
 	"01KZS8AGRWVYYDY12EVBWAY17D": "Quedarme",
 	"01M0V31ZYJ33PDSBPVDKYG7HYT": "Este dispositivo perderá lo que guarda",

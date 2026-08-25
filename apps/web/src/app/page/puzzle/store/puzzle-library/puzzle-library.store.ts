@@ -32,7 +32,7 @@ function buildLibraryState(): PuzzleLibraryProps {
  * rows came from stays a concern of its own.
  */
 // ToDo => a set is persisted but a *cycle* is not: `index` alone cannot express "puzzle 40
-// of cycle 3, 12 still unsolved this pass".
+// of cycle 3, 12 still unsolved this cycle".
 @Injectable()
 export class PuzzleLibraryStore extends signalStore(
 	{ protectedState: false },

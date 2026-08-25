@@ -15,13 +15,8 @@ import { PushGoalNodeDto } from '../dto/request/push-goal-node.dto';
 import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
 import { PushTrainingPuzzleNodeDto } from '../dto/request/push-training-puzzle-node.dto';
 import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
-import {
-	claimSyncRow,
-	isFresherNode,
-	loadTreePuzzles,
-	reuseSyncRow,
-	syncKey,
-} from '../util/sync-node.util';
+import { claimSyncRow, isFresherNode, loadTreePuzzles, reuseSyncRow } from '../util/sync-node.util';
+import { loadTreeRows } from '../util/sync-tree-rows.util';
 
 import { PushCalibrationBranchUseCase } from './push-calibration-branch.use-case';
 import { PushCycleBranchUseCase } from './push-cycle-branch.use-case';
@@ -46,14 +41,15 @@ export class PushTrainingTreeUseCase {
 
 		await this.entityManager.transactional(async (entityManager) => {
 			const puzzles = await loadTreePuzzles(entityManager, node);
-			const context: SyncPushContext = { entityManager, receivedAt, puzzles, outcome };
-			const training = await this.pushTraining(context, user, node);
+			const rows = await loadTreeRows(entityManager, node);
+			const context: SyncPushContext = { entityManager, receivedAt, puzzles, rows, outcome };
+			const training = this.pushTraining(context, user, node);
 
-			await this.pushGoals(context, training, node.goals);
+			this.pushGoals(context, training, node.goals);
 
 			const set = await this.pushSet(context, training, node.puzzles);
 
-			await this.pushCalibrationBranchUseCase.execute(context, training, node.rounds);
+			this.pushCalibrationBranchUseCase.execute(context, training, node.rounds);
 			await this.pushCycleBranchUseCase.execute(context, training, node.cycles, set);
 		});
 
@@ -61,14 +57,10 @@ export class PushTrainingTreeUseCase {
 	}
 
 	/** The gate: the tree belongs to whoever pushes it, and that is all that is checked. */
-	private async pushTraining(
-		context: SyncPushContext,
-		user: User,
-		node: PushTrainingNodeDto,
-	): Promise<Training> {
-		const existing = await context.entityManager.findOne(Training, syncKey(node, 'training'));
+	private pushTraining(context: SyncPushContext, user: User, node: PushTrainingNodeDto): Training {
+		const existing = context.rows.training.find(node, 'training');
 
-		if (null !== existing) {
+		if (undefined !== existing) {
 			if (existing.user.uuid !== user.uuid) {
 				throw new ForbiddenException('not allowed', 'training');
 			}
@@ -113,27 +105,16 @@ export class PushTrainingTreeUseCase {
 		);
 	}
 
-	private async pushGoals(
-		context: SyncPushContext,
-		training: Training,
-		nodes: PushGoalNodeDto[],
-	): Promise<void> {
+	private pushGoals(context: SyncPushContext, training: Training, nodes: PushGoalNodeDto[]): void {
 		for (const node of nodes) {
-			await this.pushGoal(context, training, node);
+			this.pushGoal(context, training, node);
 		}
 	}
 
-	private async pushGoal(
-		context: SyncPushContext,
-		training: Training,
-		node: PushGoalNodeDto,
-	): Promise<void> {
-		const existing = await context.entityManager.findOne(
-			TrainingGoal,
-			syncKey(node, 'trainingGoal'),
-		);
+	private pushGoal(context: SyncPushContext, training: Training, node: PushGoalNodeDto): void {
+		const existing = context.rows.trainingGoal.find(node, 'trainingGoal');
 
-		if (null !== existing) {
+		if (undefined !== existing) {
 			const belongsHere = existing.training.uuid === training.uuid;
 
 			reuseSyncRow(context, 'trainingGoal', node, existing, belongsHere, OTHER_TREE);
@@ -178,7 +159,7 @@ export class PushTrainingTreeUseCase {
 		}
 
 		for (const node of nodes) {
-			const entry = await this.pushSetEntry(context, training, node);
+			const entry = this.pushSetEntry(context, training, node);
 
 			if (undefined !== entry) {
 				indexSetEntry(set, entry);
@@ -188,17 +169,14 @@ export class PushTrainingTreeUseCase {
 		return set;
 	}
 
-	private async pushSetEntry(
+	private pushSetEntry(
 		context: SyncPushContext,
 		training: Training,
 		node: PushTrainingPuzzleNodeDto,
-	): Promise<TrainingPuzzle | undefined> {
-		const existing = await context.entityManager.findOne(
-			TrainingPuzzle,
-			syncKey(node, 'trainingPuzzle'),
-		);
+	): TrainingPuzzle | undefined {
+		const existing = context.rows.trainingPuzzle.find(node, 'trainingPuzzle');
 
-		if (null !== existing) {
+		if (undefined !== existing) {
 			const belongsHere = existing.training.uuid === training.uuid;
 
 			return reuseSyncRow(context, 'trainingPuzzle', node, existing, belongsHere, OTHER_TREE);

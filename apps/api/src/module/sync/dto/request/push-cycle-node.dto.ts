@@ -15,6 +15,10 @@ export class PushCycleNodeDto extends SyncNodeDto implements PushCycleNode<Date>
 	@IsEnum(TrainingCycleStatus)
 	status!: TrainingCycleStatus;
 
+	@IsInt()
+	@Min(1)
+	itemCount!: number;
+
 	@IsArray()
 	@ValidateNested({ each: true })
 	@Type(() => PushCycleItemNodeDto)

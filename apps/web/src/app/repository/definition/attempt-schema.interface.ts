@@ -13,8 +13,8 @@ export interface AttemptRow extends LocalRecord {
 	readonly roundUuid?: string;
 	readonly cycleItemUuid?: string;
 	/**
-	 * Its place inside the pass, from 0. It travels on the row because the plan it belongs
-	 * to may not be here: a restored device only knows the slots it was served.
+	 * Its place inside the round or the cycle, from 0. It travels on the row because the plan
+	 * it belongs to may not be here: a restored device only knows the slots it was served.
 	 */
 	readonly position?: number;
 	readonly puzzleUuid: string;
@@ -40,6 +40,7 @@ export interface AttemptSchema extends DBSchema {
 			cycleItemUuid: string;
 			'roundUuid-puzzleUuid': [string, string];
 			pendingSince: Date;
+			rejectedAt: Date;
 		};
 	};
 }

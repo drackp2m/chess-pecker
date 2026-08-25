@@ -19,6 +19,7 @@ import { TrainingGoal } from '../../training/training-goal.entity';
 import { TrainingPuzzle } from '../../training/training-puzzle.entity';
 import { Training } from '../../training/training.entity';
 import { User } from '../../user/user.entity';
+import { PushCycleNodeDto } from '../dto/request/push-cycle-node.dto';
 import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
 import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
 import { SyncModule } from '../sync.module';
@@ -40,6 +41,7 @@ import {
 	uuid,
 } from '../test/training-tree.fixture';
 
+import { GetTrainingTreeUseCase } from './get-training-tree.use-case';
 import { PushTrainingTreeUseCase } from './push-training-tree.use-case';
 
 interface TreeCounts {
@@ -64,6 +66,7 @@ describe('PushTrainingTreeUseCase', () => {
 	let module: TestingModule;
 	let entityManager: EntityManager;
 	let useCase: PushTrainingTreeUseCase;
+	let getTrainingTreeUseCase: GetTrainingTreeUseCase;
 	let user: User;
 
 	const push = async (refs: TreeRefs): Promise<PushTrainingResult> =>
@@ -89,6 +92,7 @@ describe('PushTrainingTreeUseCase', () => {
 
 		entityManager = module.get(EntityManager);
 		useCase = module.get(PushTrainingTreeUseCase);
+		getTrainingTreeUseCase = module.get(GetTrainingTreeUseCase);
 	});
 
 	afterAll(async () => {
@@ -292,6 +296,7 @@ describe('PushTrainingTreeUseCase', () => {
 							updatedAt: BORN,
 							index: 1,
 							status: TrainingCycleStatus.Running,
+							itemCount: 2,
 							items: [
 								{
 									clientRef: refs.item,
@@ -326,6 +331,110 @@ describe('PushTrainingTreeUseCase', () => {
 		});
 	});
 
+	describe('a push cut halfway through the slots', () => {
+		const cutCycle = (
+			refs: TreeRefs,
+			over: Partial<PlainNode<PushCycleNodeDto>> = {},
+		): PlainNode<PushCycleNodeDto> => ({
+			clientRef: refs.cycle,
+			createdAt: BORN,
+			updatedAt: BORN,
+			index: 1,
+			status: TrainingCycleStatus.Running,
+			itemCount: 3,
+			items: [
+				{
+					clientRef: refs.item,
+					createdAt: BORN,
+					updatedAt: BORN,
+					trainingPuzzleRef: refs.set,
+					position: 0,
+					attempts: [],
+				},
+			],
+			...over,
+		});
+
+		const truncated = (refs: TreeRefs): PushTrainingRequestDto =>
+			tree(refs, { cycles: [cutCycle(refs)] });
+
+		it('leaves the cycle saying how many slots it should have, not how many arrived', async () => {
+			const refs = buildRefs();
+
+			await useCase.execute(user, truncated(refs));
+
+			const em = entityManager.fork();
+			const cycle = await em.findOneOrFail(TrainingCycle, { clientRef: refs.cycle });
+
+			expect(cycle.itemCount).toStrictEqual(3);
+			await expect(em.count(TrainingCycleItem, { cycle })).resolves.toStrictEqual(1);
+		});
+
+		it('comes back down incomplete instead of agreeing with itself', async () => {
+			const refs = buildRefs();
+
+			await useCase.execute(user, truncated(refs));
+
+			const em = entityManager.fork();
+			const training = await em.findOneOrFail(Training, { clientRef: refs.training });
+			const pulled = await getTrainingTreeUseCase.execute(training);
+			const cycle = pulled.cycles.find((node) => node.clientRef === refs.cycle);
+
+			expect(cycle?.itemCount).toStrictEqual(3);
+			expect(cycle?.items).toHaveLength(1);
+		});
+
+		it('takes the wider size when a device declares it, because truncating never widens', async () => {
+			const refs = buildRefs();
+
+			await useCase.execute(user, truncated(refs));
+			await useCase.execute(
+				user,
+				tree(refs, { cycles: [cutCycle(refs, { itemCount: 10, updatedAt: CLOSED })] }),
+			);
+
+			const em = entityManager.fork();
+			const cycle = await em.findOneOrFail(TrainingCycle, { clientRef: refs.cycle });
+
+			expect(cycle.itemCount).toStrictEqual(10);
+		});
+
+		it('refuses to close a cycle whose every stored slot was played but some never arrived', async () => {
+			const refs = buildRefs();
+
+			const result = await useCase.execute(
+				user,
+				tree(refs, {
+					cycles: [
+						{
+							clientRef: refs.cycle,
+							createdAt: BORN,
+							updatedAt: CLOSED,
+							index: 1,
+							status: TrainingCycleStatus.Finished,
+							itemCount: 3,
+							items: [
+								{
+									clientRef: refs.item,
+									createdAt: BORN,
+									updatedAt: BORN,
+									trainingPuzzleRef: refs.set,
+									position: 0,
+									attempts: [attemptNode(refs.cycleAttempt, SET_PUZZLE)],
+								},
+							],
+						},
+					],
+				}),
+			);
+			const em = entityManager.fork();
+			const cycle = await em.findOneOrFail(TrainingCycle, { clientRef: refs.cycle });
+
+			expect(result.rejected).toStrictEqual([]);
+			expect(cycle.status).toStrictEqual(TrainingCycleStatus.Running);
+		});
+	});
+
 	describe('a training that is over', () => {
 		it('keeps how it finished, and a cycle with every slot played stays closed', async () => {
 			const refs = buildRefs();
@@ -343,6 +452,7 @@ describe('PushTrainingTreeUseCase', () => {
 							updatedAt: CLOSED,
 							index: 1,
 							status: TrainingCycleStatus.Finished,
+							itemCount: 1,
 							items: [
 								{
 									clientRef: refs.item,
@@ -390,6 +500,7 @@ describe('PushTrainingTreeUseCase', () => {
 							updatedAt: CLOSED,
 							index: 1,
 							status: TrainingCycleStatus.Finished,
+							itemCount: 2,
 							items: [
 								{
 									clientRef: refs.item,
@@ -439,6 +550,7 @@ describe('PushTrainingTreeUseCase', () => {
 							updatedAt: CLOSED,
 							index: 1,
 							status: TrainingCycleStatus.Cancelled,
+							itemCount: 1,
 							items: [
 								{
 									clientRef: refs.item,
@@ -486,6 +598,7 @@ describe('PushTrainingTreeUseCase', () => {
 							updatedAt: BORN,
 							index: 1,
 							status: TrainingCycleStatus.Running,
+							itemCount: 2,
 							items: [
 								{
 									clientRef: refs.item,

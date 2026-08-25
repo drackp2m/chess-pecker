@@ -51,9 +51,12 @@ export class DiscardLocalDataUseCase {
 
 	private async hasLocalWork(): Promise<boolean> {
 		try {
-			const pending = await this.localDataRepository.countPendingByEntity();
+			const { attempt } = await this.localDataRepository.countUnsavedByEntity();
 
-			return 0 < pending.attempt || 0 < (await this.localDataRepository.countPuzzleSets());
+			return (
+				0 < attempt.pending + attempt.rejected ||
+				0 < (await this.localDataRepository.countPuzzleSets())
+			);
 		} catch (error) {
 			console.error('Could not count what this device would lose', error);
 

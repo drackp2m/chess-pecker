@@ -75,6 +75,7 @@ export interface PushTrainingPuzzleNode<TDate = string> extends SyncNode<TDate> 
 export interface PushCycleNode<TDate = string> extends SyncNode<TDate> {
 	index: number;
 	status: TrainingCycleStatus;
+	itemCount: number;
 	items: PushCycleItemNode<TDate>[];
 }
 
@@ -170,6 +171,20 @@ export interface SyncEntitySummary {
 }
 
 /**
+ * A cycle the server holds fewer slots for than the device declared it has. It is a cycle
+ * that never made it up whole, and neither side may close it or move past it.
+ */
+export interface SyncPartialCycle {
+	readonly uuid: string;
+	readonly trainingUuid: string;
+	readonly index: number;
+	/** How many slots the cycle was declared to have, by whoever generated it. */
+	readonly itemCount: number;
+	/** How many made it up here. Always below `itemCount`. */
+	readonly storedItems: number;
+}
+
+/**
  * What is on the other side, in one question: what decides whether there is anything to pull
  * without asking table by table or training by training.
  */
@@ -180,6 +195,8 @@ export interface SyncSummary {
 	readonly entities: Record<SyncEntity, SyncEntitySummary>;
 	/** `puzzle` belongs to nobody: it is a global catalogue and has its own shape. */
 	readonly catalog: SyncCatalogSummary;
+	/** Empty in the ordinary case: a truncated upload is what puts anything in here. */
+	readonly partialCycles: readonly SyncPartialCycle[];
 }
 
 export interface SyncCatalogSummary {

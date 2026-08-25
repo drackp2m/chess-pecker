@@ -9,7 +9,7 @@ import type {
 import { ApiSdkService } from '@app/service/api-sdk.service';
 
 /**
- * What the server knows about a calibration and its passes. Reads only: the device decides
+ * What the server knows about a calibration and its rounds. Reads only: the device decides
  * all of it, and everything written comes in through `POST /sync/training`.
  */
 @Injectable({

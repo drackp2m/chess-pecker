@@ -156,7 +156,7 @@
       "checks": [
         {
           "name": "friendship_check",
-          "columnName": "addressee_uuid",
+          "columnName": "requester_uuid",
           "definition": "CHECK (((requester_uuid)::text <> (addressee_uuid)::text))",
           "expression": "requester_uuid <> addressee_uuid"
         }
@@ -724,7 +724,7 @@
       "checks": [
         {
           "name": "puzzle_attempt_kind_parent_check",
-          "columnName": "kind",
+          "columnName": "calibration_round_uuid",
           "definition": "CHECK ((((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))))",
           "expression": "((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))"
         }
@@ -982,7 +982,7 @@
       "checks": [
         {
           "name": "training_cancelled_matches_reason_check",
-          "columnName": "finished_reason",
+          "columnName": "status",
           "definition": "CHECK (((finished_reason IS NULL) OR ((status = 'cancelled'::text) = (finished_reason = 'cancelled'::text))))",
           "expression": "(finished_reason IS NULL) OR ((status = 'cancelled'::text) = (finished_reason = 'cancelled'::text))"
         }
@@ -1580,6 +1580,22 @@
           "comment": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "item_count": {
+          "name": "item_count",
+          "type": "int4",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": 32,
+          "scale": 0,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "integer"
         }
       },
       "name": "training_cycle",
@@ -2499,7 +2515,7 @@
       "checks": [
         {
           "name": "user_block_check",
-          "columnName": "blocker_uuid",
+          "columnName": "blocked_uuid",
           "definition": "CHECK (((blocker_uuid)::text <> (blocked_uuid)::text))",
           "expression": "blocker_uuid <> blocked_uuid"
         }

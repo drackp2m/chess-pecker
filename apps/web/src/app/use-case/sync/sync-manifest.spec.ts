@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
+import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { SyncableRow } from '@app/use-case/sync/local-record';
-import { SyncManifestBuilder, syncNode, syncRef } from '@app/use-case/sync/sync-manifest';
+import {
+	SyncManifestBuilder,
+	attemptWeight,
+	isWaiting,
+	syncNode,
+	syncRef,
+	travels,
+} from '@app/use-case/sync/sync-manifest';
 
 const CREATED = new Date('2026-08-11T09:00:00.000Z');
 const UPDATED = new Date('2026-08-11T09:30:00.000Z');
@@ -92,5 +100,93 @@ describe('SyncManifestBuilder', () => {
 		expect(builder.add('attempt', row({ uuid: 'sealed', syncedAt: UPDATED }))).toBe(true);
 		expect(builder.pending).toBe(SyncPolicy.pushBatchSize);
 		expect(builder.build().attempt).not.toContain('over');
+	});
+});
+
+describe('isWaiting', () => {
+	it('takes a row that is still to go up', () => {
+		expect(isWaiting(row({ pendingSince: UPDATED }))).toBe(true);
+	});
+
+	it('leaves out a row the server already has', () => {
+		expect(isWaiting(row({ syncedAt: UPDATED }))).toBe(false);
+	});
+
+	it('leaves out a row the server refused', () => {
+		expect(isWaiting(row({ pendingSince: UPDATED, rejectedAt: UPDATED }))).toBe(false);
+	});
+});
+
+describe('travels', () => {
+	it('sends a branch that is waiting itself', () => {
+		expect(travels(row({ pendingSince: UPDATED }), [])).toBe(true);
+	});
+
+	it('sends a branch that is up but names something under it', () => {
+		expect(travels(row({ syncedAt: UPDATED }), [], ['a child'])).toBe(true);
+	});
+
+	it('leaves out a branch that is up with nothing under it', () => {
+		expect(travels(row({ syncedAt: UPDATED }), [], [])).toBe(false);
+	});
+});
+
+describe('attemptWeight', () => {
+	function attempt(over: Partial<AttemptRow> = {}): AttemptRow {
+		return {
+			uuid: 'attempt-1',
+			trainingUuid: 'training-1',
+			kind: 'cycle',
+			puzzleUuid: 'puzzle-1',
+			lichessId: 'L-1',
+			durationMs: 4000,
+			record: [],
+			freePlayRuns: [],
+			solved: true,
+			closure: 'found',
+			hintUsed: false,
+			mistakeCount: 0,
+			createdAt: CREATED,
+			updatedAt: UPDATED,
+			...over,
+		};
+	}
+
+	it('weighs an empty attempt as a plain row', () => {
+		expect(attemptWeight(attempt())).toBe(SyncPolicy.rowBytes);
+	});
+
+	it('grows with the moves the record carries', () => {
+		const weight = attemptWeight(attempt({ record: ['e2e4', 'e7e5'] }));
+
+		expect(weight).toBeGreaterThan(attemptWeight(attempt()));
+	});
+
+	it('grows with what was played outside the solution', () => {
+		const runs = [{ at: 1, events: ['e2e4'] }];
+
+		expect(attemptWeight(attempt({ freePlayRuns: runs }))).toBeGreaterThan(
+			attemptWeight(attempt()),
+		);
+	});
+});
+
+describe('SyncManifestBuilder, by bytes', () => {
+	it('refuses a row once the bytes are spent, however few rows travelled', () => {
+		const builder = new SyncManifestBuilder();
+		const half = SyncPolicy.pushBatchBytes / 2;
+
+		expect(builder.add('attempt', row({ uuid: 'a-1', pendingSince: UPDATED }), half)).toBe(true);
+		expect(builder.add('attempt', row({ uuid: 'a-2', pendingSince: UPDATED }), half)).toBe(true);
+		expect(builder.add('attempt', row({ uuid: 'a-3', pendingSince: UPDATED }), half)).toBe(false);
+		expect(builder.pending).toBe(2);
+	});
+
+	it('sends a row heavier than the whole budget when it goes first', () => {
+		const builder = new SyncManifestBuilder();
+		const over = SyncPolicy.pushBatchBytes + 1;
+
+		expect(builder.add('attempt', row({ uuid: 'a-1', pendingSince: UPDATED }), over)).toBe(true);
+		expect(builder.add('attempt', row({ uuid: 'a-2', pendingSince: UPDATED }))).toBe(false);
 	});
 });
