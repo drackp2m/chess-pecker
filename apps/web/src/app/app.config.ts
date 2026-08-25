@@ -1,6 +1,7 @@
+import { LocationStrategy } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
-import { TitleStrategy, provideRouter, withHashLocation, withRouterConfig } from '@angular/router';
+import { TitleStrategy, provideRouter, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideTransloco } from '@jsverse/transloco';
 
@@ -14,6 +15,7 @@ import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
+import { SingleEntryLocationStrategy } from '@app/strategy/single-entry-location.strategy';
 import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.strategy';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 
@@ -39,7 +41,6 @@ export const appConfig: ApplicationConfig = {
 		}),
 		provideRouter(
 			APP_ROUTES,
-			withHashLocation(),
 			withRouterConfig({
 				paramsInheritanceStrategy: 'always',
 				onSameUrlNavigation: 'reload',
@@ -55,6 +56,7 @@ export const appConfig: ApplicationConfig = {
 			},
 			loader: TranslocoLoaderService,
 		}),
+		{ provide: LocationStrategy, useClass: SingleEntryLocationStrategy },
 		{ provide: TitleStrategy, useClass: TemplatePageTitleStrategy },
 		provideServiceWorker('ngsw-worker.js', {
 			enabled: !isDevMode(),
