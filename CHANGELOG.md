@@ -1,3 +1,32 @@
+# v1.25.0 (2026-08-25)
+
+## What's Changed
+
+### ✨ Features
+
+- add first-run intro flow with step indicator and progress tracking ([65dc938](https://github.com/drackp2m/chess-pecker/commit/65dc938721ecacb79505eff3d602f7b7fee843f1)) by Marc Jovaní González
+- let a move be given while the rival is still moving ([273bef8](https://github.com/drackp2m/chess-pecker/commit/273bef89219afbfcba696e9ba8baa72b33dd0e78)) by Marc Jovaní González
+- let a training start with no account and no network ([bbb7024](https://github.com/drackp2m/chess-pecker/commit/bbb702420890a6a2c88596b2df482b00062485b3)) by Marc Jovaní González
+- stamp who this device belongs to, and empty it for anyone else ([45d4b83](https://github.com/drackp2m/chess-pecker/commit/45d4b8347b9c5b4af29d82dc4e5d2656053488a7)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- cover who owns the device when a session opens ([927e171](https://github.com/drackp2m/chess-pecker/commit/927e171c175419a84f7d75e425e97a6e4b7d9825)) by Marc Jovaní González
+- pin the contracts that let a device train without an account ([b0cae99](https://github.com/drackp2m/chess-pecker/commit/b0cae99e079cae3fbacc61d85bb2bcfff5628d3e)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- all comments compressed and translated into english ([4ce4d02](https://github.com/drackp2m/chess-pecker/commit/4ce4d025f927440a1f9a1a12f7df225199ae31f1)) by Marc Jovaní González
+- give every concept a single name in the glossary ([c971404](https://github.com/drackp2m/chess-pecker/commit/c9714047319722aec09d6f1fd7c0f8d7f90faf62)) by Marc Jovaní González
+- settle activity verdict and free-play run naming ([4a567db](https://github.com/drackp2m/chess-pecker/commit/4a567db0303946d90c17144bdbd9b95de2dbf4f2)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- keep one history entry so the back gesture lands nowhere ([016445a](https://github.com/drackp2m/chess-pecker/commit/016445a472b72df250f69a5d953a23908297b9eb)) by Marc Jovaní González
+- keep the board closed while the opponent's move is still announcing ([519ad35](https://github.com/drackp2m/chess-pecker/commit/519ad3505dae77f17020f34fef8ad3a3e5d4a179)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.24.0...v1.25.0
+
 # v1.24.0 (2026-08-23)
 
 ## What's Changed

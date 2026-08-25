@@ -1,6 +1,6 @@
 {
 	"name": "chesspecker",
-	"version": "1.24.0",
+	"version": "1.25.0",
 	"author": "Marc Jovaní González",
 	"private": true,
 	"packageManager": "pnpm@11.22.0",
