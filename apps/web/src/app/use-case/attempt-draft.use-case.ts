@@ -20,7 +20,7 @@ export interface AttemptDraft {
 	readonly uuid: string;
 	readonly identity: AttemptIdentity;
 	readonly createdAt: Date;
-	/** Su sitio en la pasada, para que la fila sepa nombrarlo sin el plan delante. */
+	/** Its place in the pass, so the row can name it without the plan in front of it. */
 	readonly position?: number;
 }
 
@@ -56,8 +56,8 @@ export class AttemptDraftUseCase {
 	}
 
 	/**
-	 * El hueco que el intento ocupa, que es por lo que se le reconoce: el uuid lo pone cada
-	 * lado por su cuenta, así que casar por él duplicaría lo que ya está aquí.
+	 * The slot the attempt fills, which is what it is recognised by: each side issues its own
+	 * uuid, so matching on that would duplicate what is already here.
 	 */
 	findClosed(identity: AttemptIdentity): Promise<AttemptRow | undefined> {
 		if (undefined !== identity.cycleItemUuid) {
@@ -79,8 +79,8 @@ export class AttemptDraftUseCase {
 	}
 
 	/**
-	 * Cerrar un ejercicio es una sola transacción: el intento entra y el borrador se va, así
-	 * que no hay instante en el que el mismo hueco esté en los dos sitios ni en ninguno.
+	 * Closing an exercise is one transaction — the attempt in, the draft out — so there is no
+	 * instant where the same slot is in both places or in neither.
 	 */
 	async seal(draft: AttemptDraft, outcome: AttemptOutcome): Promise<void> {
 		const row = this.toAttemptRow(draft, outcome);
@@ -108,7 +108,7 @@ export class AttemptDraftUseCase {
 			lichessId: identity.lichessId,
 			durationMs: progress.durationMs,
 			record: progress.record,
-			explorations: progress.explorations,
+			freePlayRuns: progress.freePlayRuns,
 			hintUsed: progress.hintUsed,
 			mistakeCount: progress.mistakeCount,
 			createdAt: draft.createdAt,
@@ -131,7 +131,7 @@ export class AttemptDraftUseCase {
 			lichessId: identity.lichessId,
 			durationMs: outcome.durationMs,
 			record: outcome.record,
-			explorations: outcome.explorations,
+			freePlayRuns: outcome.freePlayRuns,
 			solved: outcome.solved,
 			closure: outcome.closure,
 			hintUsed: outcome.hintUsed,

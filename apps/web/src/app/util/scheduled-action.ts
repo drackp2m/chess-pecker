@@ -1,7 +1,6 @@
 /**
- * A single pending timeout that always replaces the previous one. Both the machine
- * opponent and the puzzle replay use it to play a move after a short pause without
- * each store hand-rolling its own timer bookkeeping.
+ * A single pending timeout that always replaces the previous one, so neither the machine
+ * opponent nor the puzzle replay has to hand-roll its own timer bookkeeping.
  */
 export class ScheduledAction {
 	private timeoutId: ReturnType<typeof setTimeout> | undefined;

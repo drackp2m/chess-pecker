@@ -3,17 +3,17 @@ import { Injectable, inject } from '@angular/core';
 import { SyncCursorRepository } from '@app/repository/sync-cursor.repository';
 
 export interface CatalogCursorState {
-	/** La última página servida, o `null` cuando no queda nada por pedir. */
+	/** The last page served, or `null` when there is nothing left to ask for. */
 	readonly cursor: string | null;
 	readonly total: number;
-	/** La versión que decía el resumen al empezar la barrida, o `null` si no se pudo pedir. */
+	/** The version the summary reported when the sweep began, or `null` if it could not ask. */
 	readonly version: string | null;
 	readonly completedAt: Date | null;
 }
 
 /**
- * Por dónde va la bajada del catálogo. Desde la v17 la fila vive en `syncCursor` como una
- * más; aquí sólo se le pone el nombre que usa la barrida, que es la que la lee y la escribe.
+ * Where the catalogue download stands. Since v17 the row lives in `syncCursor` like any
+ * other; this only gives it the name the sweep uses.
  */
 @Injectable({
 	providedIn: 'root',

@@ -10,8 +10,8 @@ import { GenericRepository } from '@app/repository/generic.repository';
 export type SyncCursorState = Omit<SyncCursorRow, 'key' | 'updatedAt'>;
 
 /**
- * Hasta dónde llega la réplica, tabla a tabla. Es lo que se contrasta con `GET /sync` para
- * saber qué hay que bajar sin preguntar entrenamiento a entrenamiento.
+ * How far the replica reaches, table by table. It is what `GET /sync` is checked against to
+ * know what to pull without asking training by training.
  */
 @Injectable({
 	providedIn: 'root',

@@ -16,9 +16,8 @@ export const MOVE_SPEED_LABEL = {
 export const REPLAY_DELAY = 300;
 
 /**
- * The longer pause a board that is being come back to takes before it replays anything:
- * nothing here is the answer to something just done, so the position has to be there to
- * be read first.
+ * The longer pause a board being come back to takes: nothing here answers something just
+ * done, so the position has to be readable first.
  */
 export const RESUME_DELAY = 700;
 

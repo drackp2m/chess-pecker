@@ -27,9 +27,8 @@ export interface BoardDragOptions {
 }
 
 /**
- * The press-drag-release gesture, kept apart from any one board so the full board and
- * the demo strip behave the same under the pointer. Only the geometry differs, and it
- * arrives as `squareAt`.
+ * The press-drag-release gesture, kept off any one board so the full board and the demo
+ * strip behave alike. Only the geometry differs, and it arrives as `squareAt`.
  */
 export class BoardDragGesture {
 	readonly draggingFrom: Signal<Square | undefined>;

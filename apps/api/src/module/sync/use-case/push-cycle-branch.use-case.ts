@@ -14,7 +14,7 @@ import { claimSyncRow, isFresherNode, reuseSyncRow, syncKey } from '../util/sync
 
 import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
 
-/** La rama de las pasadas: los ciclos, el orden que fijaron y lo que se jugó en cada hueco. */
+/** The pass branch: the cycles, the order they fixed, and what was played in each slot. */
 @Injectable()
 export class PushCycleBranchUseCase {
 	constructor(
@@ -75,9 +75,8 @@ export class PushCycleBranchUseCase {
 	}
 
 	/**
-	 * La pasada sube abierta y se cierra —o se abandona— cuando el dispositivo lo decide.
-	 * Devuelve si ha sido esta subida la que la ha dado por terminada, que es lo único que
-	 * el servidor va a contrastar después.
+	 * A pass uploads open and closes when the device says so. Returns whether this push is
+	 * the one that finished it, which is the only claim the server checks afterwards.
 	 */
 	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto): boolean {
 		if (!isFresherNode(node, row)) {
@@ -92,13 +91,8 @@ export class PushCycleBranchUseCase {
 	}
 
 	/**
-	 * «Terminado» es lo único que el dispositivo afirma y el servidor comprueba: abandonar
-	 * es voluntad del usuario y vale siempre, pero un ciclo sólo está hecho cuando todos sus
-	 * huecos tienen intento, y aquí están todos para contarlos. Va después de los huecos y
-	 * con un `flush` delante porque los intentos que lo cierran suben en esta misma petición.
-	 *
-	 * Un cierre que no cuadra deja el ciclo abierto en vez de rechazar la fila: la bajada
-	 * siguiente le devuelve al dispositivo el estado bueno sin tirar nada de lo que subió.
+	 * "Finished" is the one claim the server verifies, so it runs after the slots and behind a
+	 * flush. A close that does not add up leaves the cycle open rather than refusing the row.
 	 */
 	private async reopenIfUnfinished(context: SyncPushContext, row: TrainingCycle): Promise<void> {
 		await context.entityManager.flush();
@@ -141,8 +135,8 @@ export class PushCycleBranchUseCase {
 	}
 
 	/**
-	 * El hueco necesita el ejercicio del set ya resuelto: si esa rama se rechazó —porque su
-	 * ejercicio no está en el catálogo—, el hueco se va detrás y sus intentos con él.
+	 * The slot needs its set exercise already resolved, so a branch refused for being outside
+	 * the catalogue takes the slot down with it, and its attempts too.
 	 */
 	private async resolveItem(
 		context: SyncPushContext,

@@ -10,8 +10,8 @@ export class StartTrainingUseCase {
 	constructor(private readonly trainingRepository: TrainingRepository) {}
 
 	/**
-	 * Nace calibrando y sin ELO declarado: al usuario no se le pregunta su nivel, lo decide
-	 * la calibración empezando por un sondeo amplio.
+	 * Born calibrating with no declared ELO: the user is never asked their level, the
+	 * calibration decides it, starting from a wide scan.
 	 */
 	async execute(user: User): Promise<Training> {
 		const active = await this.trainingRepository.getActiveByUser(user.uuid);

@@ -20,15 +20,11 @@ export class FinishTrainingUseCase {
 	) {}
 
 	/**
-	 * Cancelar se puede en cualquier momento. Dar por completado exige el mínimo de ciclos:
-	 * el método se sostiene sobre repetir el mismo set unas cuantas veces, y por debajo de
-	 * eso el entrenamiento no ha llegado a hacer lo que promete.
-	 *
-	 * El motivo se guarda porque no se puede reconstruir mirando los datos: "dejó de mejorar"
-	 * y "llegó al tope" y "lo dejó" acaban igual de terminados.
+	 * Cancelling is always allowed; completing demands the minimum cycles the method rests on.
+	 * The reason is stored because plateau, cap and giving up all end up equally finished.
 	 */
 	async execute(training: Training, cancel: boolean): Promise<void> {
-		if ([TrainingStatus.Finished, TrainingStatus.Abandoned].includes(training.status)) {
+		if ([TrainingStatus.Finished, TrainingStatus.Cancelled].includes(training.status)) {
 			throw new PreconditionFailedException('already finished', 'training');
 		}
 
@@ -65,7 +61,7 @@ export class FinishTrainingUseCase {
 		const running = await this.trainingCycleRepository.getRunningByTraining(training.uuid);
 
 		if (undefined !== running) {
-			await this.trainingCycleRepository.updateStatus(running.uuid, TrainingCycleStatus.Abandoned);
+			await this.trainingCycleRepository.updateStatus(running.uuid, TrainingCycleStatus.Cancelled);
 		}
 	}
 }

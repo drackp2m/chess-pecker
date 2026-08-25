@@ -3,9 +3,8 @@ import { readFileSync } from 'node:fs';
 
 import { inStepSummary, writeStepSummary } from '../util/github-summary.mjs';
 
-// The workspace root declares no dependencies of its own, so the version lives
-// in the web project's manifest — reading the root one only ever yielded
-// 'unknown'.
+// The workspace root declares no dependencies, so the version lives in the web project's
+// manifest: reading the root one only ever yielded 'unknown'.
 function angularVersion() {
 	try {
 		const pkg = JSON.parse(readFileSync('apps/web/package.json', 'utf8'));

@@ -88,10 +88,8 @@ export class PuzzlePage implements OnInit {
 	}
 
 	/**
-	 * `file.text()` rejects on an unreadable file — removed from disk, permission
-	 * denied — and the template calls this straight from `(change)`, so the rejection
-	 * has to be handled here. Clearing the input is what lets the same file be picked
-	 * again: without it the value never changes and no further `change` event fires.
+	 * `file.text()` rejects on an unreadable file, and the template calls this from `(change)`.
+	 * Clearing the input is what lets the same file be picked a second time.
 	 */
 	async loadFile(event: Event): Promise<void> {
 		const input = event.target as HTMLInputElement;
@@ -137,9 +135,8 @@ export class PuzzlePage implements OnInit {
 	}
 
 	/**
-	 * A free-play game ends the way any game ends, even though nothing here is graded
-	 * and the board stays open afterwards: it is a sandbox, and there is nothing to
-	 * lock down or record.
+	 * A free-play game ends like any other, though nothing is graded and the board stays
+	 * open: it is a sandbox, with nothing to lock down or record.
 	 */
 	private describeFreePlay(): string {
 		const status = this.store.freePlayStatus();

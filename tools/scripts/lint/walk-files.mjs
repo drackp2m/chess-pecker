@@ -1,6 +1,5 @@
-// Walks the repo tree for the whole-repo Prettier target list. ESLint and
-// Stylelint get "." / a glob and filter via their own ignore config; Prettier
-// processes files one by one, so it needs a concrete list up front.
+// Walks the repo tree for the whole-repo Prettier target list, which the other two tools do
+// not need: they filter through their own ignore config.
 
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -11,14 +10,8 @@ const rel = (absolute) => path.relative(cwd, absolute) || absolute;
 // forward-slash patterns in .prettierignore regardless of OS separator.
 const relPosix = (absolute) => rel(absolute).split(path.sep).join('/');
 
-// Directories pruned before descending, instead of walking in and letting
-// Prettier's per-file ignore check discard every file — descending into e.g.
-// .pnpm-store means enumerating ~50k files just to skip them (the whole-repo
-// slowness). Derived from the root-anchored ("/dir") entries in .prettierignore
-// so it stays a single source of truth, plus .git, which .prettierignore doesn't
-// list. Non-anchored/glob patterns (e.g. "Dockerfile") aren't pruned here: those
-// files are still walked and skipped per-file by Prettier — correct, just not as
-// fast — so nothing is ever missed, only a slow dir would need a "/dir" entry.
+// Pruned before descending, since walking .pnpm-store means enumerating ~50k files just to
+// skip them. Derived from .prettierignore's root-anchored entries, plus .git.
 function prunedDirs() {
 	const dirs = new Set(['.git']);
 

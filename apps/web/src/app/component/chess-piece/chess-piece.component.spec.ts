@@ -85,11 +85,8 @@ describe('ChessPieceComponent', () => {
 	});
 
 	/**
-	 * The rule the whole animation policy rests on: a piece knows a slide only by its
-	 * key, so a key that comes round a second time is one it will refuse to run. This
-	 * is why the tick behind it counts board events for the session and is never reset
-	 * — a restart or a rewind that handed out tick 1 again would leave a piece that
-	 * had already run tick 1 sitting on its square.
+	 * The rule the animation policy rests on: a piece knows a slide only by its key, so a key
+	 * that comes round twice is refused. Hence a tick that counts the session and never resets.
 	 */
 	it('runs the same journey again under a key it has not seen', () => {
 		const piece = createPiece();
@@ -106,10 +103,8 @@ describe('ChessPieceComponent', () => {
 	});
 
 	/**
-	 * The square keeps its element from one position to the next, so a journey left
-	 * running over a board that has jumped away — a restart, a rewind — would be drawn
-	 * on whatever piece stands there now, and the mover would be seen turning into the
-	 * piece it was taking.
+	 * The square keeps its element across positions, so a journey left running over a board
+	 * that jumped would show the mover turning into the piece it was taking.
 	 */
 	it('calls the slide off when the board jumps out from under it', () => {
 		const piece = createPiece();

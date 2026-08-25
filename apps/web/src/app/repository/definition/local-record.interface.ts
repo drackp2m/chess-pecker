@@ -1,13 +1,13 @@
 export interface LocalRecord {
 	readonly createdAt: Date;
 	readonly updatedAt: Date;
-	/** El uuid con el que nació aquí. Inmutable, y la clave de reintento de la subida. */
+	/** The uuid it was born with here. Immutable, and the push's retry key. */
 	readonly clientRef?: string;
-	/** Existe en el servidor. Sella la copia, no la modifica: nunca toca `updatedAt`. */
+	/** It exists on the server. This seals the copy without modifying it: `updatedAt` stands. */
 	readonly syncedAt?: Date;
-	/** Tiene cambios sin subir. Se pone en la primera escritura, se borra al confirmarse. */
+	/** It has unpushed changes: set on the first write, cleared once confirmed. */
 	readonly pendingSince?: Date;
-	/** El servidor la rechazó y no se va a reintentar. Se enseña, no se borra. */
+	/** The server refused it and it will not be retried. It is shown, not deleted. */
 	readonly rejectedAt?: Date;
 	readonly rejectedReason?: string;
 }

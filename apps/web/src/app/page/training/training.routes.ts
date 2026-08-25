@@ -12,10 +12,8 @@ import { TrainingSolveSession } from '@app/page/training/store/training-solve-se
 export default [
 	{
 		path: '',
-		// Provided by the section, not by the page on purpose: the route's injector lives
-		// as long as the route stays activated, so going back to the training page and
-		// returning keeps the exercise, its board and its clock. Pushing any of these down
-		// into `TrainingSolvePage` drops the attempt again.
+		// Provided by the section and not the page: the route's injector outlives the page, so
+		// leaving and coming back keeps the exercise, its board and its clock.
 		providers: [
 			provideI18nScope('training'),
 			PuzzleLibraryStore,

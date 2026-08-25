@@ -5,8 +5,7 @@
 export type SessionStatus = 'anonymous' | 'authenticated' | 'unknown' | 'unreachable';
 
 /**
- * How long the first call has been taking, which is all the interface can honestly say
- * while it waits. A cold start on the free hosting tier takes 30–50 seconds, so staying
- * silent would look like a broken application.
+ * How long the first call has taken, which is all the interface can honestly say. A cold
+ * start on the free tier takes 30–50 seconds, and silence would look broken.
  */
 export type ConnectionPhase = 'connecting' | 'idle' | 'unreachable' | 'waking';

@@ -45,7 +45,7 @@ function attempt(
 		hintUsed: false,
 		mistakeCount: 1,
 		record: ['g8h8', 'a1a8'],
-		explorations: [],
+		freePlayRuns: [],
 		createdAt: '2026-08-11T10:00:00.000Z',
 		updatedAt: '2026-08-11T10:00:30.000Z',
 		...rest,

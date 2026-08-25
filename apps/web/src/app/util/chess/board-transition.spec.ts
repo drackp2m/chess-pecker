@@ -147,9 +147,8 @@ describe('nextTransition', () => {
 	});
 
 	/**
-	 * Both pieces are heard, each on the beat that sends it off: the one that only
-	 * travels says so plainly, and the clip of the move itself belongs to the one that
-	 * lands it — which is the king, and the pawn that does the taking.
+	 * Both pieces are heard, each on the beat that sends it off, and the clip of the move
+	 * itself belongs to the one that lands it.
 	 */
 	it('gives every beat of a two-piece move a clip of its own', () => {
 		expect(soundsOf(build(CASTLING, 'e1g1').transition)).toEqual(['move', 'move']);

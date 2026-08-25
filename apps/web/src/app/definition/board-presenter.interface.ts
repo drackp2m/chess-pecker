@@ -16,9 +16,8 @@ export interface PendingPromotion {
 }
 
 /**
- * Everything the board needs in order to draw itself and report clicks. Both the
- * free-play match and the puzzle trainer implement it, so the board component stays
- * unaware of which mode is driving it.
+ * Everything the board needs to draw itself and report clicks. Both the match and the puzzle
+ * trainer implement it, so the component never knows which is driving it.
  */
 export interface BoardPresenter {
 	readonly position: Signal<ChessPosition>;

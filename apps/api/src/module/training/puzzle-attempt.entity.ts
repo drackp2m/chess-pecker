@@ -12,24 +12,8 @@ import { TrainingCycleItem } from './training-cycle-item.entity';
 import { Training } from './training.entity';
 
 /**
- * Un ejercicio terminado, tanto en calibración como en ciclo. `kind` es lo que
- * diferencia las partidas de calibración de las del entrenamiento.
- *
- * **Append-only**: el front no manda nada hasta que el ejercicio termina —cuando la
- * solución sale, jugada o pedida—, así que el servidor no ve intentos a medias y la fila se
- * escribe una vez. Por eso `updatedAt` es el momento en que se cerró el ejercicio —con eso
- * agrupa por día la pantalla de progreso— y no hay `finishedAt`. `createdAt` es cuándo se
- * abrió por primera vez, que puede ser días antes; ambos viajan desde el cliente y el API no
- * los re-sella.
- *
- * `durationMs` es tiempo acumulado con el ejercicio a la vista hasta dar con la solución, no
- * la diferencia entre dos fechas: el usuario puede abrirlo, dejarlo y volver al día
- * siguiente.
- *
- * `solved` es booleano y no enum porque un ejercicio no se puede saltar: acaba en acierto o
- * en fallo. Y se juzga a la primera, sin reintento, así que `false` es definitivo aunque el
- * usuario siga buscando después. Esa búsqueda es lo que cuentan los demás campos: `closure`
- * dice cómo acabó —encontrada o rendido—, y `hintUsed` y `mistakeCount`, con qué ayuda.
+ * A finished exercise, in calibration as in a cycle. Append-only: nothing is sent until the
+ * solution is out, so the server never sees a half-attempt and the row is written once.
  */
 @Entity({ repository: () => PuzzleAttemptRepository })
 @Index({ properties: ['training', 'kind'] })
@@ -40,7 +24,7 @@ import { Training } from './training.entity';
 	expression: `(kind = 'calibration' and calibration_round_uuid is not null and cycle_item_uuid is null) or (kind = 'cycle' and cycle_item_uuid is not null and calibration_round_uuid is null)`,
 })
 export class PuzzleAttempt extends SyncableBaseEntity<PuzzleAttempt> {
-	/** Desnormalizado a propósito: evita un join en toda consulta de progreso. */
+	/** Denormalized on purpose: it saves a join on every progress query. */
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
 
@@ -57,12 +41,15 @@ export class PuzzleAttempt extends SyncableBaseEntity<PuzzleAttempt> {
 	@ManyToOne(() => Puzzle)
 	puzzle!: Puzzle;
 
+	/** Time accumulated with the exercise on screen, not the gap between two dates. */
 	@Property()
 	durationMs!: number;
 
+	/** Judged on the first try, so `false` is final however long the search goes on. */
 	@Property()
 	solved!: boolean;
 
+	/** What that search came to: found, or given up on. */
 	@Enum({ items: () => PuzzleAttemptClosure })
 	closure!: PuzzleAttemptClosure;
 
@@ -73,13 +60,12 @@ export class PuzzleAttempt extends SyncableBaseEntity<PuzzleAttempt> {
 	mistakeCount!: number;
 
 	/**
-	 * Sin inicializar a propósito: un campo con valor por defecto se escribe *después* de
-	 * `super()`, así que pisaría lo que el constructor de la entidad base acaba de asignar y
-	 * la partida entraría vacía. El defecto lo pone la columna.
+	 * Deliberately uninitialized: a default is written after `super()` and would overwrite
+	 * what the base constructor just assigned. The column supplies it instead.
 	 */
 	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
 	record!: PuzzleEvent[];
 
 	@Property({ type: 'json', defaultRaw: `'[]'::jsonb` })
-	explorations!: FreePlayRun[];
+	freePlayRuns!: FreePlayRun[];
 }

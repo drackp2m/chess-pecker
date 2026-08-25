@@ -49,15 +49,8 @@ export class ChessPieceComponent {
 	}
 
 	/**
-	 * Slides the piece in from the square it came from. Driven by the Web Animations
-	 * API rather than a CSS class, because it has to restart on every move while the
-	 * element itself is reused between them.
-	 *
-	 * That reuse is why a slide is called off rather than left to run out: the square
-	 * keeps its element from one position to the next, so a board that jumps away mid
-	 * flight — a restart, a rewind — would otherwise leave the journey playing over
-	 * whatever piece stands there now, and the mover is seen turning into the piece it
-	 * was taking.
+	 * Slides the piece in from where it came, through the Web Animations API because the
+	 * element is reused between moves. That reuse is why a slide is called off, not left.
 	 */
 	private playSlide(slide: PieceSlide | undefined, piece: string): void {
 		if (undefined === slide || piece !== this.animatedPiece) {

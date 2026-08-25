@@ -6,16 +6,12 @@ import { TrainingLocalRepository } from '@app/repository/training-local.reposito
 import { TrainingRepository } from '@app/repository/training.repository';
 import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
 
-/** Tope de páginas por visita: un dispositivo vacío termina de llenarse en la siguiente. */
+/** Pages per visit: an empty device finishes filling up on the next one. */
 const MAX_PAGES = 20;
 
 /**
- * Vuelve a bajar el histórico que el dispositivo no tiene. Lo local manda —lo que ya está
- * aquí no se toca nunca—, así que esto sólo rellena huecos: los ejercicios resueltos en
- * otro dispositivo, o los que se fueron al vaciar el aparato.
- *
- * El intento se reconoce por el hueco del plan que ocupa y no por su fila: el uuid lo pone
- * cada lado por su cuenta y no viaja, así que casar por él duplicaría.
+ * Pulls back the history this device lacks, filling gaps only, since local always wins. An
+ * attempt is recognised by the plan slot it fills: matching on uuid would duplicate.
  */
 @Injectable({
 	providedIn: 'root',
@@ -26,10 +22,8 @@ export class TrainingRestoreUseCase {
 	private readonly puzzleCache = inject(PuzzleCacheUseCase);
 
 	/**
-	 * Silencioso a propósito: no poder restaurar no puede tumbar el ciclo de sincronización.
-	 * Devuelve si el histórico quedó entero —lo que quede a medias se termina en la pasada
-	 * siguiente, porque el cursor sólo avanza con la página ya guardada—, y es lo que decide
-	 * si el corte global de `attempt` se puede adelantar.
+	 * Silent on purpose: a failed restore must not bring the sync cycle down. Returns whether
+	 * the history came out whole, which is what lets the global `attempt` cut move forward.
 	 */
 	async execute(trainingUuid: string): Promise<boolean> {
 		return this.download(trainingUuid).catch(() => false);
@@ -74,8 +68,8 @@ export class TrainingRestoreUseCase {
 				continue;
 			}
 
-			// Lo de aquí no se pisa, pero un hueco sí se rellena: la posición no la sabía la
-			// fila que se escribió antes de que el servidor la mandara.
+			// Nothing here is overwritten, but a gap is filled: a row written before the server
+			// sent the position never knew it.
 			if (undefined === stored.position && undefined !== row.position) {
 				await this.repository.insert('attempt', { ...stored, position: row.position });
 			}
@@ -112,7 +106,7 @@ export class TrainingRestoreUseCase {
 			uuid: attempt.uuid,
 			durationMs: attempt.durationMs,
 			record: attempt.record,
-			explorations: attempt.explorations,
+			freePlayRuns: attempt.freePlayRuns,
 			solved: attempt.solved,
 			closure: attempt.closure,
 			hintUsed: attempt.hintUsed,
@@ -120,7 +114,7 @@ export class TrainingRestoreUseCase {
 			createdAt: new Date(attempt.createdAt),
 			updatedAt: new Date(attempt.updatedAt),
 			...(undefined === attempt.position ? {} : { position: attempt.position }),
-			// Viene del servidor, así que nunca es lo único que hay: no cuenta como pendiente.
+			// It came from the server, so it is never the only copy: it does not count as pending.
 			syncedAt: new Date(),
 		};
 	}

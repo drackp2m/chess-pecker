@@ -10,9 +10,8 @@ import { SyncNodeDto } from '../dto/request/sync-node.dto';
 export type SyncKey = { uuid: string } | { clientRef: string };
 
 /**
- * Con qué se busca una fila antes de insertarla. El uuid manda cuando viene, porque
- * significa que esa fila ya subió; si no, la clave de reintento. Esa búsqueda es toda la
- * idempotencia de la subida.
+ * How a row is looked up before insert: the uuid when it comes, since it means the row
+ * already went up, and the retry key otherwise. That lookup is the whole idempotency.
  */
 export function syncKey(node: SyncNodeDto, entity: SyncEntity): SyncKey {
 	const uuid = node.uuid ?? undefined;
@@ -30,11 +29,8 @@ export function syncKey(node: SyncNodeDto, entity: SyncEntity): SyncKey {
 }
 
 /**
- * Si lo que llega es más nuevo que lo guardado. Casi todo este dominio es de sólo añadir,
- * pero tres filas cambian de estado después de nacer —el entrenamiento termina, la ronda
- * acepta su franja, el ciclo se cierra— y suelen hacerlo días después de que su árbol
- * subiera. Local manda, pero sólo hacia adelante: una subida que llega tarde no rebobina lo
- * que ya hay.
+ * Whether what arrives is newer than what is stored. Three rows change state after birth,
+ * so local wins — but only forwards: a late push never rewinds what is already there.
  */
 export function isFresherNode(node: SyncNodeDto, row: { updatedAt: Date }): boolean {
 	const updatedAt = node.updatedAt ?? undefined;
@@ -43,9 +39,8 @@ export function isFresherNode(node: SyncNodeDto, row: { updatedAt: Date }): bool
 }
 
 /**
- * Una fila que ya estaba. Se devuelve tal cual —la subida no pisa lo que hay— salvo que
- * cuelgue de otro padre, y entonces es el choque de dos dispositivos sobre el mismo hueco:
- * se queda el primero y el segundo se marca como rechazado para que deje de reintentarse.
+ * A row that was already there, returned untouched — unless it hangs off another parent,
+ * which is two devices colliding: the first keeps the slot and the second is refused.
  */
 export function reuseSyncRow<T extends { uuid: string }>(
 	context: SyncPushContext,
@@ -67,8 +62,8 @@ export function reuseSyncRow<T extends { uuid: string }>(
 }
 
 /**
- * Una fila nueva: se queda con la clave de reintento que traía, con la marca de servidor de
- * esta subida, y su uuid definitivo sale de vuelta para que el dispositivo se reclave.
+ * A new row: it keeps the retry key it arrived with and this push's server stamp, and its
+ * final uuid travels back so the device can rekey.
  */
 export function claimSyncRow<T extends { uuid: string; receivedAt: Date; clientRef?: string }>(
 	context: SyncPushContext,
@@ -90,7 +85,7 @@ export function claimSyncRow<T extends { uuid: string; receivedAt: Date; clientR
 	return row;
 }
 
-/** El catálogo que hace falta para traducir el árbol entero, en una sola consulta. */
+/** The catalogue needed to translate the whole tree, in one query. */
 export async function loadTreePuzzles(
 	entityManager: EntityManager,
 	node: PushTrainingNodeDto,

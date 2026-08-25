@@ -1,8 +1,8 @@
 # Chess Pecker
 
-Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada pasada más rápida que la anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —calibración, sondeo, ajuste, conjunto, ciclo, pasada, ritmo—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 

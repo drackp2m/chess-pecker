@@ -31,7 +31,7 @@ import {
 	syncRef,
 } from '@app/use-case/sync/sync-manifest';
 
-/** Un árbol listo para subir, con la lista de lo que su respuesta tendrá que confirmar. */
+/** A tree ready to push, with the list its response will have to confirm. */
 export interface TrainingTreePush {
 	readonly trainingUuid: string;
 	readonly request: PushTrainingRequest;
@@ -40,7 +40,7 @@ export interface TrainingTreePush {
 
 type PendingTransaction = RepositoryTransaction<AppSchema, 'readonly'>;
 
-/** Los intentos de un árbol repartidos por el hueco que ocupan, que es donde van a viajar. */
+/** A tree's attempts grouped by the slot they fill, which is where they will travel. */
 type AttemptIndex = ReadonlyMap<string, AttemptRow[]>;
 
 interface PendingOwners {
@@ -52,13 +52,8 @@ interface PendingOwners {
 const PENDING_STORES: StoreNames<AppSchema>[] = [...SYNC_ENTITIES];
 
 /**
- * El árbol de un entrenamiento tal como viaja: la unidad de subida es el entrenamiento
- * entero y no la fila, porque un hijo necesita el uuid definitivo de su padre y mandarlos
- * por separado obligaría a coordinar el orden desde fuera.
- *
- * Viaja el árbol completo aunque sólo una hoja esté pendiente. Las ramas ya subidas se
- * nombran por su uuid y al servidor le cuestan una búsqueda, que es el precio de que el
- * padre esté siempre delante del hijo.
+ * A training's tree as it travels: the whole thing, even for one pending leaf, because a
+ * child needs its parent's final uuid and separate requests would need ordering from outside.
  */
 @Injectable({
 	providedIn: 'root',
@@ -67,9 +62,8 @@ export class TrainingTreeUseCase {
 	private readonly repository = inject(LocalDataRepository);
 
 	/**
-	 * Los entrenamientos con algo por subir. El índice de lo pendiente *es* la lista —
-	 * IndexedDB no indexa las filas a las que les falta el campo—, así que esto recorre lo
-	 * que espera y no meses de partidas.
+	 * The trainings with something to push. The pending index *is* the list, since IndexedDB
+	 * does not index rows missing the field, so this walks nothing else.
 	 */
 	async listPending(): Promise<readonly string[]> {
 		return this.repository.runInTransaction(PENDING_STORES, 'readonly', async (transaction) => {
@@ -85,8 +79,8 @@ export class TrainingTreeUseCase {
 				}
 			}
 
-			// Lo repartido y los huecos de ciclo no nombran a su entrenamiento: cuelgan de la
-			// ronda y del ciclo, que sí lo hacen.
+			// Deals and cycle slots do not name their training: they hang off the round and the
+			// cycle, which do.
 			await resolveOwners(transaction, 'calibrationRound', owners.rounds, owners.trainings);
 			await resolveOwners(transaction, 'cycle', owners.cycles, owners.trainings);
 
@@ -94,7 +88,7 @@ export class TrainingTreeUseCase {
 		});
 	}
 
-	/** `undefined` cuando no queda nada que subir de ese árbol, o cuando lo rechazaron entero. */
+	/** `undefined` when the tree has nothing left to push, or was refused whole. */
 	async build(trainingUuid: string): Promise<TrainingTreePush | undefined> {
 		const training = await this.repository.find('training', trainingUuid);
 
@@ -247,7 +241,7 @@ export class TrainingTreeUseCase {
 		for (const row of rows) {
 			const trainingPuzzleRef = refs.get(row.trainingPuzzleUuid);
 
-			// Sin el ejercicio del set al que apunta, el hueco no se puede nombrar.
+			// Without the set exercise it points at, the slot cannot be named.
 			if (isRejected(row) || undefined === trainingPuzzleRef || !manifest.add('cycleItem', row)) {
 				continue;
 			}
@@ -281,7 +275,7 @@ function setNodes(
 	return nodes;
 }
 
-/** Cómo nombran los huecos de ciclo a su ejercicio del set, que es de la otra rama del árbol. */
+/** How cycle slots name their set exercise, which lives on the tree's other branch. */
 function setRefs(rows: readonly TrainingPuzzleRow[]): Map<string, string> {
 	const refs = new Map<string, string>();
 
@@ -295,8 +289,8 @@ function setRefs(rows: readonly TrainingPuzzleRow[]): Map<string, string> {
 }
 
 /**
- * El intento no dice de qué tipo es: lo dice dónde cuelga, así que se reparte una vez por su
- * hueco en vez de recorrer el histórico entero una vez por ronda y otra por hueco de ciclo.
+ * An attempt does not say what kind it is, where it hangs does, so they are grouped once by
+ * slot instead of walking the whole history per round and per cycle slot.
  */
 function groupAttempts(attempts: readonly AttemptRow[]): {
 	byRound: AttemptIndex;
@@ -343,7 +337,7 @@ function attemptNodes(
 			hintUsed: row.hintUsed,
 			mistakeCount: row.mistakeCount,
 			record: [...row.record],
-			explorations: row.explorations.map((run) => ({ at: run.at, events: [...run.events] })),
+			freePlayRuns: row.freePlayRuns.map((run) => ({ at: run.at, events: [...run.events] })),
 		});
 	}
 

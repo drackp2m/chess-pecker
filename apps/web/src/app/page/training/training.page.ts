@@ -36,7 +36,7 @@ const PHASE_LABEL = {
 	planning: I18n.training.PHASE_PLANNING,
 	running: I18n.training.PHASE_RUNNING,
 	finished: I18n.training.PHASE_FINISHED,
-	abandoned: I18n.training.PHASE_ABANDONED,
+	cancelled: I18n.training.PHASE_CANCELLED,
 } as const satisfies Record<TrainingStatus, string>;
 
 const STATUS_LABEL = {
@@ -44,13 +44,13 @@ const STATUS_LABEL = {
 	planning: I18n.training.STATUS_PLANNING,
 	running: I18n.training.STATUS_RUNNING,
 	finished: I18n.training.STATUS_FINISHED,
-	abandoned: I18n.training.STATUS_ABANDONED,
+	cancelled: I18n.training.STATUS_CANCELLED,
 } as const satisfies Record<TrainingStatus, string>;
 
 const CYCLE_STATUS_LABEL = {
 	running: I18n.common.RUNNING,
 	finished: I18n.common.FINISHED,
-	abandoned: I18n.common.CANCELLED,
+	cancelled: I18n.common.CANCELLED,
 } as const satisfies Record<CycleProgress['status'], string>;
 
 @Component({
@@ -102,13 +102,13 @@ export class TrainingPage implements OnInit {
 		overflow: { mode: 'drop' },
 	};
 
-	readonly dailySolved = computed(() =>
-		this.dailyBreakdown().reduce((total, day) => total + day.solved, 0),
+	readonly dailyFirstTry = computed(() =>
+		this.dailyBreakdown().reduce((total, day) => total + day.firstTry, 0),
 	);
 
 	readonly hoveredPaceDay = signal<ChartPoint | null>(null);
 
-	readonly cyclePace = computed<readonly CyclePaceDay[]>(() => {
+	readonly cyclePaceDays = computed<readonly CyclePaceDay[]>(() => {
 		const cycle = this.store.runningCycle();
 		const pace = this.store.progress()?.goal?.puzzlesPerDay ?? null;
 
@@ -118,7 +118,7 @@ export class TrainingPage implements OnInit {
 	});
 
 	readonly cyclePaceChart = computed<ChartData>(() => {
-		const days = [...this.cyclePace()].reverse();
+		const days = [...this.cyclePaceDays()].reverse();
 
 		return {
 			points: days.map((day) => this.toPacePoint(day)),
@@ -147,9 +147,9 @@ export class TrainingPage implements OnInit {
 		labels: { show: false },
 	};
 
-	readonly cyclePaceGoal = computed(() => this.store.progress()?.goal?.puzzlesPerDay ?? 0);
+	readonly cyclePace = computed(() => this.store.progress()?.goal?.puzzlesPerDay ?? 0);
 
-	readonly cyclePaceDrift = computed(() => this.cyclePace().at(-1)?.drift ?? 0);
+	readonly cyclePaceDrift = computed(() => this.cyclePaceDays().at(-1)?.drift ?? 0);
 
 	readonly setForm = new FormGroup({
 		size: new FormControl(DEFAULT_SET_SIZE, {
@@ -158,11 +158,9 @@ export class TrainingPage implements OnInit {
 		}),
 	});
 
-	// ToDo => the goal only offers exercises per day. `SetTrainingGoalRequestDto` also
-	// takes an `endDate`, which is the other half of the question the method asks ("how
-	// long do you want the first pass to take"), and it is missing here because
-	// `InputDirective` has no date type yet.
-	readonly goalForm = new FormGroup({
+	// ToDo => the goal only offers exercises per day; `SetTrainingGoalRequestDto` also takes
+	// an `endDate`, missing here because `InputDirective` has no date type yet.
+	readonly paceForm = new FormGroup({
 		puzzlesPerDay: new FormControl(DEFAULT_PUZZLES_PER_DAY, {
 			nonNullable: true,
 			validators: [Validators.required, Validators.min(1)],
@@ -184,9 +182,9 @@ export class TrainingPage implements OnInit {
 		}
 	}
 
-	saveGoal(): void {
-		if (this.goalForm.valid) {
-			void this.store.setGoal({ puzzlesPerDay: this.goalForm.getRawValue().puzzlesPerDay });
+	savePace(): void {
+		if (this.paceForm.valid) {
+			void this.store.setGoal({ puzzlesPerDay: this.paceForm.getRawValue().puzzlesPerDay });
 		}
 	}
 
@@ -229,16 +227,15 @@ export class TrainingPage implements OnInit {
 
 	describeCycle(cycle: CycleProgress): string {
 		return this.i18n.translate(I18n.training.CYCLE_SUMMARY, {
-			solved: cycle.solved,
+			done: cycle.attempted,
 			total: cycle.total,
 			percent: Math.round(cycle.accuracy * 100),
 		});
 	}
 
 	/**
-	 * El entrenamiento va primero porque decide cuánta actividad hace falta: el desglose
-	 * diario mira los últimos días, pero el ritmo del ciclo se dibuja desde que arrancó, y
-	 * un día del ciclo que no llegue cuenta como cero y hunde la deriva.
+	 * The training goes first because it decides how much activity is needed: a cycle day that
+	 * never arrives counts as zero and drags the trend down.
 	 */
 	private async loadTraining(): Promise<void> {
 		await this.store.load();
@@ -260,19 +257,19 @@ export class TrainingPage implements OnInit {
 	private dailyBars(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {
 		return [
 			{
-				id: 'solved',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_SOLVED),
-				values: days.map((day) => day.solved),
+				id: 'firstTry',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_FIRST_TRY),
+				values: days.map((day) => day.firstTry),
 			},
 			{
-				id: 'failed',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_FAILED),
-				values: days.map((day) => day.failed),
+				id: 'afterMiss',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_AFTER_MISS),
+				values: days.map((day) => day.afterMiss),
 			},
 			{
-				id: 'resigned',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_RESIGNED),
-				values: days.map((day) => day.resigned),
+				id: 'shown',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_SHOWN),
+				values: days.map((day) => day.shown),
 			},
 		];
 	}
@@ -302,9 +299,9 @@ export class TrainingPage implements OnInit {
 			label: Number(day.date.slice(8)).toString(),
 			description: this.i18n.translate(I18n.training.DAILY_DAY_DETAIL, {
 				date: day.date,
-				solved: day.solved,
-				failed: day.failed,
-				resigned: day.resigned,
+				firstTry: day.firstTry,
+				afterMiss: day.afterMiss,
+				shown: day.shown,
 				mistakes: day.mistakes,
 				hints: day.hints,
 				minutes: Math.round(day.durationMs / MS_PER_MINUTE),

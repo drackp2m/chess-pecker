@@ -3,9 +3,8 @@ import { DBSchema, IDBPObjectStore } from 'idb';
 import { LocalRecord } from '@app/repository/definition/local-record.interface';
 
 /**
- * Una fila sincronizable cualquiera, vista por lo único que la sincronización mira de ella:
- * su clave, sus marcas y con qué nombra al árbol del que cuelga —cada tabla lleva una de las
- * tres—.
+ * Any syncable row, seen through the only part sync looks at: its key, its stamps and how it
+ * names the tree it hangs off.
  */
 export interface PendingRow extends LocalRecord {
 	readonly uuid: string;
@@ -19,9 +18,8 @@ export interface PendingSchema extends DBSchema {
 }
 
 /**
- * `objectStore` es genérico y una unión de firmas genéricas no se puede llamar, así que la
- * vista estructural es lo que permite recorrer las ocho tablas con un solo trozo de código en
- * vez de con ocho copias.
+ * `objectStore` is generic and a union of generic signatures cannot be called, so this
+ * structural view is what walks the eight tables with one piece of code instead of eight.
  */
 export type PendingStore<M extends IDBTransactionMode> = IDBPObjectStore<
 	PendingSchema,

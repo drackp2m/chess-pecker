@@ -34,9 +34,8 @@ export class FriendshipController {
 		private readonly listFriendRequestsUseCase: ListFriendRequestsUseCase,
 	) {}
 
-	// Devuelve la otra persona, no la fila de `friendship`: es lo que la pantalla pinta y
-	// el uuid de la fila no le sirve de nada. Dar de baja la amistad va por el uuid del
-	// usuario, con `DELETE /friendship/user/:uuid`.
+	// Returns the other person and not the `friendship` row: the row uuid is of no use to
+	// the screen, so removal goes by user uuid too.
 	@Get()
 	async listFriends(@CurrentUser() user: User): Promise<User[]> {
 		return this.listFriendsUseCase.execute(user);
@@ -49,8 +48,8 @@ export class FriendshipController {
 		return this.listFriendRequestsUseCase.execute(user);
 	}
 
-	// Identifica al destinatario por username y no por uuid porque es lo que se teclea.
-	// Para encontrarlo antes de pedírselo está `GET /user?username=`.
+	// Names the addressee by username and not uuid, because that is what gets typed;
+	// `GET /user?username=` is how they are found first.
 	@Post('request')
 	async sendRequest(
 		@CurrentUser() user: User,
@@ -69,7 +68,7 @@ export class FriendshipController {
 		return this.answerFriendRequestUseCase.execute(user, uuid, FriendshipStatus.Declined);
 	}
 
-	/** Deja de ser amigo de alguien, o cancela la solicitud que le mandaste. */
+	/** Unfriends someone, or cancels the request you sent them. */
 	@Delete('user/:uuid')
 	@HttpCode(HttpStatus.NO_CONTENT)
 	async removeByUser(@CurrentUser() user: User, @Param('uuid') uuid: string): Promise<void> {

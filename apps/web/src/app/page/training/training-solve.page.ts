@@ -51,9 +51,8 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	);
 
 	/**
-	 * Said out loud as soon as the miss is in — which is where the note is sealed, long
-	 * before the exercise is over — so playing on never leaves any doubt about what will
-	 * be recorded, least of all in a calibration round.
+	 * Said out loud as soon as the miss is in, which is where the note is sealed, so playing
+	 * on leaves no doubt about what will be recorded.
 	 */
 	readonly practiceNotice = computed(() => {
 		if (!this.board.isPractice()) {

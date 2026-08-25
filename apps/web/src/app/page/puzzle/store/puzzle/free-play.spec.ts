@@ -40,9 +40,8 @@ const TAKEN_BACK = [...MISTAKEN, -1];
 const REVIEWED = [...TAKEN_BACK, 1];
 
 /**
- * Where each of the three explorations hangs off the main record — the number of events
- * it had written at that moment, hint included, which is what makes `record.slice(0, at)`
- * the board the exploration was handed.
+ * Where each free-play run hangs off the main record: the events written at that moment,
+ * which is what makes `record.slice(0, at)` the board it was handed.
  */
 const ANCHORS = [THREE_PLY.length, LOOKED_BACK.length, REVIEWED.length];
 
@@ -66,33 +65,31 @@ function seen(plies: number, ...strayed: string[]): string[] {
 	return [...SOLUTION.slice(0, plies), ...strayed];
 }
 
-/** The explorations opened so far, each one given the events it holds at this beat. */
+/** The freePlayRuns opened so far, each one given the events it holds at this beat. */
 function runs(...opened: readonly (readonly PuzzleEvent[])[]): readonly FreePlayRun[] {
 	return opened.map((events, index) => ({ at: ANCHORS[index] ?? 0, events }));
 }
 
 /**
- * Everything the board reads on the main line, plus the two things only an exploration
+ * Everything the board reads on the main line, plus the two things only a free-play run
  * has to say: whether one is open, and what every one of them has written down.
  */
 interface SessionReading extends BoardReading {
 	readonly exploring: boolean;
-	readonly explorations: readonly FreePlayRun[];
+	readonly freePlayRuns: readonly FreePlayRun[];
 }
 
 function describeSession(store: PuzzleStore): SessionReading {
 	return {
 		...describeBoard(store),
 		exploring: store.isFreePlay(),
-		explorations: store.explorations(),
+		freePlayRuns: store.freePlayRuns(),
 	};
 }
 
 /**
- * One press of one control, and everything the board reads afterwards — the same walk
- * `main-line.spec.ts` makes, taken this time through the magnifying glass. Two of the
- * readings carry the whole point of the mode: `record`, which an exploration may never
- * touch, and `explorations`, which is the only place anything done inside one is kept.
+ * One press of one control, and everything the board reads afterwards. `record` is what an
+ * free-play run may never touch, and `freePlayRuns` the only place its own moves are kept.
  */
 interface Beat {
 	readonly press: string;
@@ -123,7 +120,7 @@ const APPROACH: readonly Beat[] = [
 			...OPEN,
 			record: OPENING,
 			exploring: false,
-			explorations: runs(),
+			freePlayRuns: runs(),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -142,7 +139,7 @@ const APPROACH: readonly Beat[] = [
 			...OPEN,
 			record: OPENING,
 			exploring: false,
-			explorations: runs(),
+			freePlayRuns: runs(),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -163,7 +160,7 @@ const APPROACH: readonly Beat[] = [
 			...OPEN,
 			record: OPENING,
 			exploring: false,
-			explorations: runs(),
+			freePlayRuns: runs(),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -184,7 +181,7 @@ const APPROACH: readonly Beat[] = [
 			// push every index after it along by one, anchors included.
 			record: ASKED,
 			exploring: false,
-			explorations: runs(),
+			freePlayRuns: runs(),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -200,12 +197,11 @@ const APPROACH: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			// The answer is written before it is shown: what walks it is a programme, and a
-			// programme only ever walks line that is already there. So the record runs a ply
-			// ahead of the board for as long as the beat lasts.
+			// The answer is written before it is shown, since a programme only walks line that
+			// already exists, so the record runs a ply ahead for as long as the beat lasts.
 			record: THREE_PLY,
 			exploring: false,
-			explorations: runs(),
+			freePlayRuns: runs(),
 			cursor: 2,
 			move: 'b2b1',
 			canPlay: false,
@@ -223,7 +219,7 @@ const APPROACH: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: false,
-			explorations: runs(),
+			freePlayRuns: runs(),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -235,12 +231,12 @@ const APPROACH: readonly Beat[] = [
 ];
 
 /**
- * The first exploration: the exercise started over from inside it, walked back up to
+ * The first free-play run: the exercise started over from inside it, walked back up to
  * where the main line had got to, and a line tried out there and refuted.
  */
-const FIRST_EXPLORATION: readonly Beat[] = [
+const FIRST_FREE_PLAY: readonly Beat[] = [
 	{
-		press: 'the magnifying glass, which opens an exploration',
+		press: 'the magnifying glass, which opens a free-play run',
 		act: (store): void => {
 			store.toggleFreePlay();
 		},
@@ -249,7 +245,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			record: THREE_PLY,
 			exploring: true,
 			// The line is inherited whole; the actions that built it are not.
-			explorations: runs([]),
+			freePlayRuns: runs([]),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -259,7 +255,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 		},
 	},
 	{
-		press: 'the restart button, inside the exploration',
+		press: 'the restart button, inside the free-play run',
 		act: (store): void => {
 			store.restart();
 		},
@@ -267,7 +263,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0]),
+			freePlayRuns: runs([0]),
 			cursor: 0,
 			move: undefined,
 			canPlay: false,
@@ -287,7 +283,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			exploring: true,
 			// Shown, not played: the line was already holding it, so there is nothing to
 			// write down but the restart itself.
-			explorations: runs([0]),
+			freePlayRuns: runs([0]),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -305,7 +301,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1]),
+			freePlayRuns: runs([0, -1]),
 			cursor: 0,
 			move: undefined,
 			canPlay: true,
@@ -323,7 +319,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1, 1]),
+			freePlayRuns: runs([0, -1, 1]),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -341,7 +337,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1, 2]),
+			freePlayRuns: runs([0, -1, 2]),
 			cursor: 2,
 			move: 'b2b1',
 			canPlay: true,
@@ -359,7 +355,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1, 3]),
+			freePlayRuns: runs([0, -1, 3]),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -377,7 +373,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1, 3, 'h5g3']),
+			freePlayRuns: runs([0, -1, 3, 'h5g3']),
 			cursor: 4,
 			move: 'h5g3',
 			canPlay: true,
@@ -395,7 +391,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1, 3, 'h5g3', 'h2g3']),
+			freePlayRuns: runs([0, -1, 3, 'h5g3', 'h2g3']),
 			cursor: 5,
 			move: 'h2g3',
 			canPlay: true,
@@ -413,7 +409,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1, 3, 'h5g3', 'h2g3', -1]),
+			freePlayRuns: runs([0, -1, 3, 'h5g3', 'h2g3', -1]),
 			cursor: 4,
 			move: 'h5g3',
 			canPlay: true,
@@ -431,7 +427,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs([0, -1, 3, 'h5g3', 'h2g3', -2]),
+			freePlayRuns: runs([0, -1, 3, 'h5g3', 'h2g3', -2]),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -449,7 +445,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: true,
-			explorations: runs(FIRST),
+			freePlayRuns: runs(FIRST),
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: true,
@@ -459,7 +455,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 		},
 	},
 	{
-		press: 'the magnifying glass again, which closes the exploration',
+		press: 'the magnifying glass again, which closes the free-play run',
 		act: (store): void => {
 			store.toggleFreePlay();
 		},
@@ -467,7 +463,7 @@ const FIRST_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: THREE_PLY,
 			exploring: false,
-			explorations: runs(FIRST),
+			freePlayRuns: runs(FIRST),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -490,7 +486,7 @@ const CONTINUED: readonly Beat[] = [
 			// A ply ahead again, for as long as the answer takes to arrive.
 			record: PLAYED,
 			exploring: false,
-			explorations: runs(FIRST),
+			freePlayRuns: runs(FIRST),
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: false,
@@ -508,7 +504,7 @@ const CONTINUED: readonly Beat[] = [
 			...OPEN,
 			record: PLAYED,
 			exploring: false,
-			explorations: runs(FIRST),
+			freePlayRuns: runs(FIRST),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -526,7 +522,7 @@ const CONTINUED: readonly Beat[] = [
 			...OPEN,
 			record: [...PLAYED, -1],
 			exploring: false,
-			explorations: runs(FIRST),
+			freePlayRuns: runs(FIRST),
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: false,
@@ -544,7 +540,7 @@ const CONTINUED: readonly Beat[] = [
 			...OPEN,
 			record: [...PLAYED, -2],
 			exploring: false,
-			explorations: runs(FIRST),
+			freePlayRuns: runs(FIRST),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: false,
@@ -562,7 +558,7 @@ const CONTINUED: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: false,
-			explorations: runs(FIRST),
+			freePlayRuns: runs(FIRST),
 			cursor: 2,
 			move: 'b2b1',
 			canPlay: false,
@@ -574,12 +570,10 @@ const CONTINUED: readonly Beat[] = [
 ];
 
 /**
- * The second exploration, entered from a cursor that is three plies behind what the
- * exercise had reached. Walking forward inside it, starting over, and walking forward
- * again all reach the same end: the restart gives back the whole main line, not the
- * ply the cursor happened to be resting on.
+ * The second free-play run, entered three plies behind what the exercise had reached: the
+ * restart gives back the whole main line, not the ply the cursor was resting on.
  */
-const SECOND_EXPLORATION: readonly Beat[] = [
+const SECOND_FREE_PLAY: readonly Beat[] = [
 	{
 		press: 'the magnifying glass, a second time, from three plies back',
 		act: (store): void => {
@@ -591,7 +585,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			exploring: true,
 			// Anchored to everything the main line has written by now — the looking back
 			// included — and not to the ply the cursor is standing on.
-			explorations: runs(FIRST, []),
+			freePlayRuns: runs(FIRST, []),
 			cursor: 2,
 			// The main line refuses a move here; the sandbox does not.
 			canPlay: true,
@@ -610,7 +604,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [1]),
+			freePlayRuns: runs(FIRST, [1]),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -628,7 +622,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [2]),
+			freePlayRuns: runs(FIRST, [2]),
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: true,
@@ -646,7 +640,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [3]),
+			freePlayRuns: runs(FIRST, [3]),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -664,7 +658,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [3, 0]),
+			freePlayRuns: runs(FIRST, [3, 0]),
 			cursor: 0,
 			move: undefined,
 			canPlay: false,
@@ -682,7 +676,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [3, 0]),
+			freePlayRuns: runs(FIRST, [3, 0]),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -700,7 +694,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [3, 0, 1]),
+			freePlayRuns: runs(FIRST, [3, 0, 1]),
 			cursor: 2,
 			move: 'b2b1',
 			canPlay: true,
@@ -718,7 +712,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [3, 0, 2]),
+			freePlayRuns: runs(FIRST, [3, 0, 2]),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -736,7 +730,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [3, 0, 3]),
+			freePlayRuns: runs(FIRST, [3, 0, 3]),
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: true,
@@ -756,7 +750,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			exploring: true,
 			// Four presses, not three: the restart handed back everything the exercise
 			// had reached, and not the two plies the cursor was resting behind.
-			explorations: runs(FIRST, [3, 0, 4]),
+			freePlayRuns: runs(FIRST, [3, 0, 4]),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -774,7 +768,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, [3, 0, 4, 'd1d5']),
+			freePlayRuns: runs(FIRST, [3, 0, 4, 'd1d5']),
 			cursor: 6,
 			move: 'd1d5',
 			canPlay: true,
@@ -792,7 +786,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: true,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			cursor: 7,
 			move: 'c5d5',
 			canPlay: true,
@@ -810,7 +804,7 @@ const SECOND_EXPLORATION: readonly Beat[] = [
 			...OPEN,
 			record: LOOKED_BACK,
 			exploring: false,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			// Everything the sandbox did is undone at a stroke, cursor included: the main
 			// line is exactly three plies back, where it was left.
 			cursor: 2,
@@ -834,7 +828,7 @@ const MISS: readonly Beat[] = [
 			...OPEN,
 			record: [...LOOKED_BACK, 1],
 			exploring: false,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: false,
@@ -852,7 +846,7 @@ const MISS: readonly Beat[] = [
 			...OPEN,
 			record: [...LOOKED_BACK, 2],
 			exploring: false,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: false,
@@ -870,7 +864,7 @@ const MISS: readonly Beat[] = [
 			...OPEN,
 			record: REJOINED,
 			exploring: false,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -888,7 +882,7 @@ const MISS: readonly Beat[] = [
 			...MISSED,
 			record: MISTAKEN,
 			exploring: false,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			cursor: 6,
 			move: 'd1d3',
 			canPlay: false,
@@ -906,7 +900,7 @@ const MISS: readonly Beat[] = [
 			...MISSED,
 			record: TAKEN_BACK,
 			exploring: false,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -924,7 +918,7 @@ const MISS: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: false,
-			explorations: runs(FIRST, SECOND),
+			freePlayRuns: runs(FIRST, SECOND),
 			cursor: 6,
 			move: 'd1d3',
 			canPlay: false,
@@ -936,11 +930,10 @@ const MISS: readonly Beat[] = [
 ];
 
 /**
- * The third exploration: entered on a refuted board, the right move found there, and the
- * exercise started over from inside it — which is where the sandbox is thrown away and
- * the wrong move goes with it, being no part of what the exercise reached.
+ * The third free-play run: entered on a refuted board and restarted from inside, which throws
+ * the sandbox away and the wrong move with it.
  */
-const THIRD_EXPLORATION: readonly Beat[] = [
+const THIRD_FREE_PLAY: readonly Beat[] = [
 	{
 		press: 'the magnifying glass, a third time',
 		act: (store): void => {
@@ -950,11 +943,11 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, []),
+			freePlayRuns: runs(FIRST, SECOND, []),
 			cursor: 6,
 			move: 'd1d3',
 			canPlay: true,
-			// Rd3 is still on the board, but nothing inside an exploration is graded
+			// Rd3 is still on the board, but nothing inside a free-play run is graded
 			// against the script, so nothing in here is called a mistake.
 			mistake: undefined,
 			visible: seen(5, 'Rd3'),
@@ -970,7 +963,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, [-1]),
+			freePlayRuns: runs(FIRST, SECOND, [-1]),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -988,7 +981,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, [-1, 'd1f1']),
+			freePlayRuns: runs(FIRST, SECOND, [-1, 'd1f1']),
 			cursor: 6,
 			move: 'd1f1',
 			canPlay: true,
@@ -998,7 +991,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 		},
 	},
 	{
-		press: 'the restart button, from inside the exploration',
+		press: 'the restart button, from inside the free-play run',
 		act: (store): void => {
 			store.restart();
 		},
@@ -1006,7 +999,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, [-1, 'd1f1', 0]),
+			freePlayRuns: runs(FIRST, SECOND, [-1, 'd1f1', 0]),
 			cursor: 0,
 			move: undefined,
 			canPlay: false,
@@ -1024,7 +1017,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, [-1, 'd1f1', 0]),
+			freePlayRuns: runs(FIRST, SECOND, [-1, 'd1f1', 0]),
 			cursor: 1,
 			move: 'f1f8',
 			canPlay: true,
@@ -1042,7 +1035,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, [-1, 'd1f1', 0, 1]),
+			freePlayRuns: runs(FIRST, SECOND, [-1, 'd1f1', 0, 1]),
 			cursor: 2,
 			move: 'b2b1',
 			canPlay: true,
@@ -1060,7 +1053,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, [-1, 'd1f1', 0, 2]),
+			freePlayRuns: runs(FIRST, SECOND, [-1, 'd1f1', 0, 2]),
 			cursor: 3,
 			move: 'b3d1',
 			canPlay: true,
@@ -1078,7 +1071,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: true,
-			explorations: runs(FIRST, SECOND, [-1, 'd1f1', 0, 3]),
+			freePlayRuns: runs(FIRST, SECOND, [-1, 'd1f1', 0, 3]),
 			cursor: 4,
 			move: 'b1d1',
 			canPlay: true,
@@ -1098,7 +1091,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			exploring: true,
 			// Rxf1# was the sandbox's and went with it; Rd3 was never the exercise's, so
 			// five plies is everything there is left to walk.
-			explorations: runs(FIRST, SECOND, THIRD),
+			freePlayRuns: runs(FIRST, SECOND, THIRD),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -1116,7 +1109,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 			...MISSED,
 			record: REVIEWED,
 			exploring: false,
-			explorations: runs(FIRST, SECOND, THIRD),
+			freePlayRuns: runs(FIRST, SECOND, THIRD),
 			cursor: 6,
 			move: 'd1d3',
 			canPlay: false,
@@ -1128,7 +1121,7 @@ const THIRD_EXPLORATION: readonly Beat[] = [
 	},
 ];
 
-/** What the third exploration was for: the move, played where it counts. */
+/** What the third free-play run was for: the move, played where it counts. */
 const CLOSE: readonly Beat[] = [
 	{
 		press: 'a step back off the wrong move, for the last time',
@@ -1139,7 +1132,7 @@ const CLOSE: readonly Beat[] = [
 			...MISSED,
 			record: [...REVIEWED, -1],
 			exploring: false,
-			explorations: runs(FIRST, SECOND, THIRD),
+			freePlayRuns: runs(FIRST, SECOND, THIRD),
 			cursor: 5,
 			move: 'f8f1',
 			canPlay: true,
@@ -1157,7 +1150,7 @@ const CLOSE: readonly Beat[] = [
 			...MISSED,
 			record: [...REVIEWED, -1, 'd1f1'],
 			exploring: false,
-			explorations: runs(FIRST, SECOND, THIRD),
+			freePlayRuns: runs(FIRST, SECOND, THIRD),
 			cursor: 6,
 			move: 'd1f1',
 			canPlay: false,
@@ -1171,11 +1164,11 @@ const CLOSE: readonly Beat[] = [
 
 const WALK: readonly Beat[] = [
 	...APPROACH,
-	...FIRST_EXPLORATION,
+	...FIRST_FREE_PLAY,
 	...CONTINUED,
-	...SECOND_EXPLORATION,
+	...SECOND_FREE_PLAY,
 	...MISS,
-	...THIRD_EXPLORATION,
+	...THIRD_FREE_PLAY,
 	...CLOSE,
 ];
 
@@ -1189,14 +1182,14 @@ function beatAt(press: string): number {
 	return WALK.findIndex((beat) => beat.press.startsWith(press));
 }
 
-/** The board an exploration describes: the main line up to its anchor, then its events. */
-function replayExploration(store: PuzzleStore, index: number) {
-	const run = store.explorations()[index] ?? { at: 0, events: [] };
+/** The board a free-play run describes: the main line up to its anchor, then its events. */
+function replayFreePlayRun(store: PuzzleStore, index: number) {
+	const run = store.freePlayRuns()[index] ?? { at: 0, events: [] };
 
 	return replayRecord(MATE_IN_3_FEN, [...store.record().slice(0, run.at), ...run.events]);
 }
 
-describe('the exploration mode', () => {
+describe('free play', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
 	});
@@ -1215,9 +1208,8 @@ describe('the exploration mode', () => {
 
 				expect(describeSession(store)).toEqual(beat.reads);
 
-				// The main record describes the main board and only ever that one: inside
-				// an exploration it describes the board waiting to be come back to, and
-				// mid-beat it describes where the beat is going rather than where it is.
+				// The main record only ever describes the main board: inside a free-play run, the
+				// one waiting to be returned to, and mid-beat, where the beat is going.
 				if (!store.isFreePlay() && !store.isBusy()) {
 					expect(replayRecord(MATE_IN_3_FEN, store.record())).toEqual(
 						describeLine(snapshot(store)),
@@ -1238,7 +1230,7 @@ describe('the exploration mode', () => {
 
 			store.toggleFreePlay();
 
-			expect(store.explorations()).toEqual([{ at: record.length, events: [] }]);
+			expect(store.freePlayRuns()).toEqual([{ at: record.length, events: [] }]);
 			expect(snapshot(store)).toEqual(entry);
 			expect(store.record()).toEqual(record);
 		});
@@ -1248,9 +1240,8 @@ describe('the exploration mode', () => {
 
 			playFivePlyLine(store);
 
-			// All the way back to the board the exercise opened on: it is White — the
-			// opponent — to move there, and it is the one turn of theirs that is not an
-			// answer to a check, so they have a move of their own to play.
+			// Back to the board the exercise opened on, the one White turn that is not an answer
+			// to a check, so they have a move of their own to play.
 			for (const cursor of [4, 3, 2, 1, 0]) {
 				store.stepBackward();
 
@@ -1268,7 +1259,7 @@ describe('the exploration mode', () => {
 
 			expect(store.cursor()).toBe(1);
 			expect(sanHistory(store)).toEqual(['a3']);
-			expect(store.explorations()).toEqual([{ at: 6, events: ['a2a3'] }]);
+			expect(store.freePlayRuns()).toEqual([{ at: 6, events: ['a2a3'] }]);
 		});
 	});
 
@@ -1301,7 +1292,7 @@ describe('the exploration mode', () => {
 			expect(sanHistory(store)).toEqual(seen(5));
 		});
 
-		it('leaves the main line where the exploration found it, restart and all', () => {
+		it('leaves the main line where the free-play run found it, restart and all', () => {
 			const store = board();
 
 			walkTo(store, beatAt('a third step back'));
@@ -1317,7 +1308,7 @@ describe('the exploration mode', () => {
 
 			expect(snapshot(store)).toEqual(entry);
 			expect(store.record()).toEqual(record);
-			expect(store.explorations().at(-1)).toEqual({
+			expect(store.freePlayRuns().at(-1)).toEqual({
 				at: record.length,
 				events: [0, 'b2c2'],
 			});
@@ -1348,7 +1339,7 @@ describe('the exploration mode', () => {
 			store.stepBackward();
 			play(store, 'd1', 'f1');
 
-			// Mate is the board's own too, and an exploration is a real game on it.
+			// Mate is the board's own too, and a free-play run is a real game on it.
 			expect(store.freePlayStatus()).toBe('checkmate');
 			expect(store.checkedSquare()).toBe('h1');
 			expect(store.mistake()).toBeUndefined();
@@ -1369,7 +1360,7 @@ describe('the exploration mode', () => {
 			// There is no mistake in here to take back, so the sandbox is left alone —
 			// a rewind of the main line has no business moving it, or writing into it.
 			expect(store.cursor()).toBe(2);
-			expect(store.explorations()).toEqual([{ at: 2, events: [] }]);
+			expect(store.freePlayRuns()).toEqual([{ at: 2, events: [] }]);
 
 			store.toggleFreePlay();
 
@@ -1381,14 +1372,14 @@ describe('the exploration mode', () => {
 	});
 
 	describe('the hint', () => {
-		it('stays behind its clock inside an exploration, and is written into it', () => {
+		it('stays behind its clock inside a free-play run, and is written into it', () => {
 			const store = board();
 
 			store.toggleFreePlay();
 			store.useHint();
 
 			expect(store.hintUsed()).toBe(false);
-			expect(store.explorations()).toEqual([{ at: 1, events: [] }]);
+			expect(store.freePlayRuns()).toEqual([{ at: 1, events: [] }]);
 
 			vi.advanceTimersByTime(HINT_TOTAL);
 			store.useHint();
@@ -1397,15 +1388,14 @@ describe('the exploration mode', () => {
 			// Where it was written is the whole answer to where it was asked for.
 			expect(store.hintUsed()).toBe(true);
 			expect(store.record()).toEqual(OPENING);
-			expect(store.explorations()).toEqual([{ at: 1, events: [HINT] }]);
+			expect(store.freePlayRuns()).toEqual([{ at: 1, events: [HINT] }]);
 		});
 
 		/**
-		 * A sandbox is the exercise being worked on, so the clock behind the hint goes on
-		 * running inside one — and stops there for the same reason it stops anywhere else:
-		 * a tab in the background is nobody looking at the position.
+		 * A sandbox is the exercise being worked on, so the hint's clock runs inside one — and
+		 * stops for the same reason it stops anywhere else.
 		 */
-		it('runs on inside an exploration, and stops with the tab there too', () => {
+		it('runs on inside a free-play run, and stops with the tab there too', () => {
 			const store = board();
 
 			store.toggleFreePlay();
@@ -1423,11 +1413,11 @@ describe('the exploration mode', () => {
 
 			expect(store.hintUsed()).toBe(true);
 			expect(store.record()).toEqual(OPENING);
-			expect(store.explorations()).toEqual([{ at: 1, events: [HINT] }]);
+			expect(store.freePlayRuns()).toEqual([{ at: 1, events: [HINT] }]);
 		});
 	});
 
-	it('replays an exploration onto the very board the main line handed it', () => {
+	it('replays a free-play run onto the very board the main line handed it', () => {
 		const store = board();
 
 		walkTo(store, beatAt('a third step back'));
@@ -1438,7 +1428,7 @@ describe('the exploration mode', () => {
 
 		// The hint marker sits in the anchored prefix and moves nothing, which is the only
 		// thing a replay has to know about it.
-		expect(replayExploration(store, 1)).toEqual(describeLine(snapshot(store)));
+		expect(replayFreePlayRun(store, 1)).toEqual(describeLine(snapshot(store)));
 	});
 
 	it('keeps everything the three of them did out of the main line', () => {
@@ -1447,6 +1437,6 @@ describe('the exploration mode', () => {
 		walkTo(store, WALK.length - 1);
 
 		expect(store.record()).toEqual([...REVIEWED, -1, 'd1f1']);
-		expect(store.explorations()).toEqual(runs(FIRST, SECOND, THIRD));
+		expect(store.freePlayRuns()).toEqual(runs(FIRST, SECOND, THIRD));
 	});
 });

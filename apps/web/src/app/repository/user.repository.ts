@@ -10,9 +10,8 @@ export class UserRepository {
 	private readonly apiSdk = inject(ApiSdkService);
 
 	/**
-	 * Prefix search over the username, which is what the friends screen needs to tell a
-	 * typo from a stranger before sending a request. Never answers with yourself, and
-	 * carries nothing but uuid and username.
+	 * Prefix search over the username, so the friends screen can tell a typo from a stranger.
+	 * Never answers with yourself, and carries nothing but uuid and username.
 	 */
 	async search(username: string): Promise<readonly UserSummary[]> {
 		return this.apiSdk.GET.user('', { query: { username } });

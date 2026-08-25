@@ -73,8 +73,8 @@
 	"01M2K7B4X00MZRZS3YJ612PS3H": "हारने वाले",
 	"01M2K7B4X0R38PJDYSHMFA35W3": "त्रुटियाँ",
 	"01M2K7B4X04KBQBJ29EGR0QY3K": "संकेत",
-	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} {{ solved }} • {{ failed }} हल किए {{ resigned }} गए, • गलत, {{ mistakes }} • अधूरे · • {{ hints }} त्रुटियाँ, • {{ minutes }} संकेत · • मिनट",
-	"01M2K7B4X0B4GWJVX17EFKMFCF": "अंतिम {{ days }} दिन · हल किए गए {{ solved }} अभ्यास",
+	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} {{ firstTry }} • {{ afterMiss }} हल किए {{ shown }} गए, • गलत, {{ mistakes }} • अधूरे · • {{ hints }} त्रुटियाँ, • {{ minutes }} संकेत · • मिनट",
+	"01M2K7B4X0B4GWJVX17EFKMFCF": "अंतिम {{ days }} दिन · हल किए गए {{ firstTry }} अभ्यास",
 	"01KZNRPGG0KYNNVF8SHK72BG4S": "गति के सामने",
 	"01KZNRPGG051V1E9B3N5MECMHE": "संचित शेष",
 	"01KZNRPGG0PJ1FZ6K0MNAYBNYB": "• {{ date }} · {{ done }} की {{ expected }} • {{ delta }} उस दिन, {{ drift }} कुल मिलाकर",
@@ -83,5 +83,5 @@
 	"01KZPWVGSDGS53J80H7DYGWN3A": "{{ exercises }} पीछे की ओर अभ्यास",
 	"01M3Q0R8PQZRWMKVYGJJ5DTPHG": "प्रशिक्षण रद्द करना?",
 	"01M3Q0R8PQKC4YMVG92S56C0F5": "अभी तक की प्रगति को बरकरार रखा जाता है, लेकिन प्रशिक्षण यहाँ समाप्त होता है और आपको एक नया शुरू करना होगा।",
-	"01KZQ04WTYZVJCVY0BGR68T4MZ": "पूर्ण {{ solved }} में {{ total }} अभ्यास · {{ percent }}% सही"
+	"01KZQ04WTYZVJCVY0BGR68T4MZ": "पूर्ण {{ done }} में {{ total }} अभ्यास · {{ percent }}% सही"
 }

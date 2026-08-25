@@ -7,8 +7,8 @@ import { SyncNodeDto } from './sync-node.dto';
 
 export class PushCycleItemNodeDto extends SyncNodeDto implements PushCycleItemNode<Date> {
 	/**
-	 * El hueco apunta a un ejercicio del set, que es la única referencia del árbol que
-	 * cruza de rama: por eso viaja como nombre y no como anidamiento.
+	 * The slot points at an exercise in the set, the only reference in the tree that crosses
+	 * branches, which is why it travels as a name and not as nesting.
 	 */
 	@IsUUID()
 	trainingPuzzleRef!: string;

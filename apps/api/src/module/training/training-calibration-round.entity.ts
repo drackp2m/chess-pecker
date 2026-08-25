@@ -8,15 +8,8 @@ import { TrainingCalibrationRoundRepository } from './training-calibration-round
 import { Training } from './training.entity';
 
 /**
- * Sondeo y afinado en la misma tabla: estructuralmente son lo mismo —una franja de ELO,
- * unos intentos y una decisión—, sólo cambia cuántos intentos cuelgan.
- *
- * `rating` es el mínimo de la centena (600 ⇒ 600-699). El máximo es siempre `rating + 99`,
- * así que guardarlo sería guardar una constante.
- *
- * No hay `finishedAt`: `outcome <> 'pending'` ya dice que está cerrada. Ni tasa de acierto
- * ni tiempo medio: salen de `puzzle_attempt`. Qué ejercicios repartió está en
- * `training_calibration_puzzle`.
+ * Exploration and refine in one table: an ELO band, some attempts and a decision, differing only in
+ * how many attempts hang off them. Everything derived lives in `puzzle_attempt`.
  */
 @Entity({ repository: () => TrainingCalibrationRoundRepository })
 @Unique({ properties: ['training', 'index'] })
@@ -25,20 +18,22 @@ export class TrainingCalibrationRound extends SyncableBaseEntity<TrainingCalibra
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
 
-	/** Orden global de las rondas dentro del entrenamiento, empezando en 1. */
+	/** Global order of the rounds within the training, from 1. */
 	@Property()
 	index!: number;
 
 	/**
-	 * La intención con la que se creó, no algo derivado del número de intentos: un sondeo
-	 * que acabe teniendo dos intentos no debe convertirse en un afinado para las consultas.
+	 * What it was created as, never derived from the attempt count: a scan that ends up with
+	 * two attempts must not read as a refine.
 	 */
 	@Enum({ items: () => CalibrationRoundKind })
 	kind!: CalibrationRoundKind;
 
+	/** The bottom of the hundred (600 ⇒ 600-699); the top is always `rating + 99`. */
 	@Property()
 	rating!: number;
 
+	/** Anything but `pending` says the round is closed, so there is no `finishedAt`. */
 	@Enum({ items: () => CalibrationRoundOutcome, default: CalibrationRoundOutcome.Pending })
 	outcome!: CalibrationRoundOutcome;
 }

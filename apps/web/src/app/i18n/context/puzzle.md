@@ -18,7 +18,7 @@ Se acaba de enseñar la línea completa de la solución. «Línea» es la secuen
 
 ## SOLVED_AFTER_MISS
 
-Resuelto, pero después de haber fallado al menos una vez. La distinción con `SOLVED` importa, porque es la que el método usa para medir la pasada siguiente: no se pueden traducir igual.
+Resuelto, pero después de haber fallado al menos una vez. La distinción con `SOLVED` importa, porque es la que el método usa para medir el ciclo siguiente: no se pueden traducir igual.
 
 ## PASTE_CSV_ROWS
 

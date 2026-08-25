@@ -4,20 +4,20 @@ import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 import { ActivityRepository } from '@app/repository/activity.repository';
 import { ActivityDayRow } from '@app/repository/definition/activity-schema.interface';
 import { TrainingRepository } from '@app/repository/training.repository';
+import { SessionStore } from '@app/store/session.store';
 import { fillActivityDays } from '@app/util/activity-day';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { addUtcDays, diffUtcDays, toIsoDate, utcMidnight } from '@app/util/utc-date';
 
 /**
- * El tope que aplica `TrainingPolicy.activityMaxDays` en el API, repetido aquí a mano.
- * Pedir por encima devolvería un tramo más corto del que se guardaría, y los días de más
- * quedarían archivados como vacíos sin haberlos preguntado nunca.
+ * `TrainingPolicy.activityMaxDays` from the API, repeated by hand: asking past it would
+ * archive the extra days as empty without ever having asked for them.
  */
 const API_MAX_RANGE_DAYS = 53 * 7;
 
 export interface ActivityHistory {
 	readonly days: readonly TrainingActivityDay[];
-	/** No se pudo traer lo nuevo: lo que va dentro es sólo lo que había guardado. */
+	/** Nothing new could be fetched: what comes back is only what was stored. */
 	readonly isStale: boolean;
 }
 
@@ -27,16 +27,11 @@ export interface ActivityHistory {
 export class ActivityHistoryUseCase {
 	private readonly activityRepository = inject(ActivityRepository);
 	private readonly trainingRepository = inject(TrainingRepository);
+	private readonly sessionStore = inject(SessionStore);
 
 	/**
-	 * El desglose diario de los últimos `rangeDays` días, local primero.
-	 *
-	 * Lo guardado es siempre un tramo seguido que acaba hoy, así que basta contar cuántos
-	 * días de ese tramo hay para saber si tiene huecos. Con huecos se pide entero; sin
-	 * ellos se pregunta por el cursor, y sólo vuelven los días que hayan recibido algo
-	 * después —de este dispositivo o de cualquier otro—. Si el rango pedido es más ancho
-	 * que lo guardado, manda el ancho: el cursor sólo puede avanzar cubriendo todo lo que
-	 * hay, o un día viejo se quedaría mal para siempre.
+	 * The last `rangeDays` days, local first. What is stored is always one run ending today,
+	 * so counting its days is enough to spot a gap; a gap asks for the whole range again.
 	 */
 	async read(rangeDays: number, today: Date = new Date()): Promise<ActivityHistory> {
 		const to = utcMidnight(today);
@@ -49,7 +44,7 @@ export class ActivityHistoryUseCase {
 		return { days: fillActivityDays(days, wantedFrom, to), isStale };
 	}
 
-	/** El tramo que hay que mantener al día: lo guardado y lo pedido, lo que abarque más. */
+	/** The run to keep current: whichever of the stored and the asked-for reaches further. */
 	private async keptFrom(wantedFrom: Date): Promise<Date> {
 		const firstDate = await this.activityRepository.firstDate();
 
@@ -63,6 +58,12 @@ export class ActivityHistoryUseCase {
 	}
 
 	private async refresh(from: Date, to: Date): Promise<boolean> {
+		// The aggregate belongs to a user, so without a session there is nothing to ask for and
+		// nothing missing: what is stored is all there is.
+		if (!this.sessionStore.isAuthenticated()) {
+			return false;
+		}
+
 		const days = diffUtcDays(from, to) + 1;
 		const stored = await this.activityRepository.countRange(toIsoDate(from), toIsoDate(to));
 		const cursor = await this.activityRepository.findCursor();
@@ -79,9 +80,8 @@ export class ActivityHistoryUseCase {
 	}
 
 	/**
-	 * El tramo se guarda completo, con los días vacíos a cero incluidos: el API sólo
-	 * devuelve los días con actividad, y sin esa marca no habría forma de distinguir
-	 * después un día en blanco de uno que nunca se pidió.
+	 * The run is stored whole, zeroed empty days included: the API only returns days with
+	 * activity, and nothing else could tell a blank day from one never asked for.
 	 */
 	private async pullWhole(from: Date, to: Date, days: number): Promise<void> {
 		const activity = await this.trainingRepository.getActivity(days);
@@ -91,9 +91,8 @@ export class ActivityHistoryUseCase {
 	}
 
 	/**
-	 * Sólo llegan los días tocados, y sólo ellos se reescriben: un día que no viene es un
-	 * día que sigue valiendo. Ninguno puede quedarse vacío por el camino, porque los
-	 * intentos no se borran.
+	 * Only touched days arrive and only they are rewritten: one that does not come still
+	 * holds. None can empty out along the way, since attempts are never deleted.
 	 */
 	private async pullChanges(days: number, cursor: string): Promise<void> {
 		const activity = await this.trainingRepository.getActivity(days, cursor);

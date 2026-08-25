@@ -5,7 +5,7 @@ import { PieceColor } from '@app/definition/chess.type';
 import { FreePlayRun, PuzzleClosure, PuzzleEvent } from '@app/definition/puzzle.type';
 import { LocalRecord } from '@app/repository/definition/local-record.interface';
 
-/** Un ejercicio terminado. Espejo exacto de `puzzle_attempt`, y append-only como allí. */
+/** A finished exercise: an exact mirror of `puzzle_attempt`, and append-only as there. */
 export interface AttemptRow extends LocalRecord {
 	readonly uuid: string;
 	readonly trainingUuid: string;
@@ -23,9 +23,9 @@ export interface AttemptRow extends LocalRecord {
 	/** Everything that happened outside free play, in order. */
 	readonly record: readonly PuzzleEvent[];
 	/** Every visit to free play, anchored to a length of `record`. */
-	readonly explorations: readonly FreePlayRun[];
+	readonly freePlayRuns: readonly FreePlayRun[];
 	readonly solved: boolean;
-	/** Cómo acabó el ejercicio. Una fila aquí está cerrada por definición. */
+	/** How the exercise ended. A row here is closed by definition. */
 	readonly closure: PuzzleAttemptClosure;
 	readonly hintUsed: boolean;
 	readonly mistakeCount: number;

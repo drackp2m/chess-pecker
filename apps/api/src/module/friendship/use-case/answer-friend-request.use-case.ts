@@ -18,7 +18,7 @@ export class AnswerFriendRequestUseCase {
 	): Promise<Friendship> {
 		const friendship = await this.friendshipRepository.getOne({ uuid: friendshipUuid });
 
-		// Sólo contesta quien la recibió; quien la envió puede cancelarla, que es un delete.
+		// Only the addressee answers; the sender cancels instead, which is a delete.
 		if (friendship.addressee.uuid !== user.uuid) {
 			throw new ForbiddenException('not allowed', 'friendship');
 		}

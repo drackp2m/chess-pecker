@@ -16,20 +16,14 @@ import { ChessSquare } from '@app/util/chess/chess-square';
 type StagePlan = Pick<BoardStage, 'slides' | 'board' | 'sound'>;
 
 /**
- * Board events so far, counted here rather than in any store on purpose. A slide is
- * keyed by its tick, and a piece that is handed the key of a slide it has already run
- * will not run it again — so a tick may never come round a second time. Every store
- * clears its transition when the board jumps rather than moves (a restart, a rewind,
- * a new game), and a count kept alongside it would be cleared with it: the next move
- * would then be handed tick 1 again, and a piece still standing where an earlier
- * tick 1 had landed would sit there refusing to slide.
+ * Board events so far, counted here and not in a store on purpose: a tick may never come
+ * round twice, and a store clears its transition whenever the board jumps.
  */
 let lastTick = 0;
 
 /**
- * Builds the transition for a board event, every stage under a tick nothing else can
- * hold. `position` is the board the move is played from, whichever way it is about to
- * be travelled: a take-back runs the very same stages the other way round.
+ * Builds the transition for a board event. `position` is the board the move is played from
+ * either way round: a take-back runs the very same stages backwards.
  */
 export function nextTransition(
 	position: ChessPosition,
@@ -75,11 +69,8 @@ function played(position: ChessPosition, move: ChessMove): StagePlan {
 }
 
 /**
- * A pawn reaching the last rank is two things at once, and only one of them travels.
- * The pawn crosses first, over a board holding the pawn on the square it is promoting
- * on, and the piece it becomes takes its place on a beat that moves nothing at all —
- * so what is seen crossing the board is the pawn, and the queen arrives by arriving
- * rather than by sailing in from a square no queen ever stood on.
+ * A promotion is two things at once and only the pawn travels: the piece it becomes takes
+ * its place on a beat that moves nothing, rather than sailing in from nowhere.
  */
 function planPromotion(position: ChessPosition, move: ChessMove): StagePlan[] {
 	const travel: BoardSlideStep = {
@@ -95,9 +86,8 @@ function planPromotion(position: ChessPosition, move: ChessMove): StagePlan[] {
 }
 
 /**
- * Castling travels two pieces, and a single beat carrying both of them arrives once and
- * is heard once. The rook goes round first and the king follows, so each sets off on a
- * beat of its own — the rook merely travelling, the king landing the move.
+ * Castling travels two pieces, so each gets a beat of its own or the move would be heard
+ * once: the rook goes round first, the king follows and lands it.
  */
 function planCastling(position: ChessPosition, move: ChessMove, side: CastlingSide): StagePlan[] {
 	const rook = rookSlide(move, side);
@@ -106,10 +96,8 @@ function planCastling(position: ChessPosition, move: ChessMove, side: CastlingSi
 }
 
 /**
- * A pawn taken en passant is captured on a square it does not stand on, which no
- * slide can say. Walking it back onto that square first leaves an ordinary capture,
- * so the two beats between them describe a move nothing else has to know about. The
- * retreat is just a pawn travelling; the capture is what the move came to.
+ * A pawn taken en passant is captured on a square it does not stand on, which no slide can
+ * say. Walking it back there first leaves an ordinary capture on the beat after.
  */
 function planEnPassant(position: ChessPosition, move: ChessMove): StagePlan[] {
 	const pawn = ChessSquare.fromIndex(capturedPawn(move));
@@ -127,10 +115,8 @@ function planEnPassant(position: ChessPosition, move: ChessMove): StagePlan[] {
 }
 
 /**
- * The same beats, run the other way: the last one first, every slide travelling back
- * the way it came. The boards stay where they are rather than reversing with the
- * stages — a rewind passes through the very same intermediate position, and its final
- * beat lands on the one the state has already gone back to.
+ * The same beats run the other way. The boards do not reverse with the stages: a rewind
+ * passes through the very same intermediate position.
  */
 function reversePlans(plans: readonly StagePlan[]): StagePlan[] {
 	const boards = plans.slice(0, -1).map((plan) => plan.board);
@@ -160,10 +146,7 @@ function capturedPawn(move: ChessMove): number {
 	return ChessSquare.toIndex(move.to) - ChessSquare.pawnDirection(move.color) * BOARD_SIZE;
 }
 
-/**
- * The board a beat that is not the last one lands on: the piece it sent travelling has
- * arrived, and everything else stands exactly as the move found it.
- */
+/** Where a non-final beat lands: its piece has arrived, everything else is untouched. */
 function slid(position: ChessPosition, { from, to }: BoardSlideStep): ChessPosition {
 	const board = [...position.board];
 
@@ -174,9 +157,8 @@ function slid(position: ChessPosition, { from, to }: BoardSlideStep): ChessPosit
 }
 
 /**
- * What the move itself sounds like, judged from the position it produces — the side to
- * move there is the one that received it. Mate outranks check, which outranks a
- * capture, and a plain move is what is left.
+ * What the move sounds like, judged from the position it produces. Mate outranks check,
+ * which outranks a capture; a plain move is what is left.
  */
 function landing(position: ChessPosition, move: ChessMove): MoveSound {
 	const landed = ChessBoard.apply(position, move);

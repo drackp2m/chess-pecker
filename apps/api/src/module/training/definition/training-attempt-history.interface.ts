@@ -24,7 +24,7 @@ export interface TrainingAttempt {
 	hintUsed: boolean;
 	mistakeCount: number;
 	record: PuzzleEvent[];
-	explorations: FreePlayRun[];
+	freePlayRuns: FreePlayRun[];
 	createdAt: string;
 	updatedAt: string;
 }

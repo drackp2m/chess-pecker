@@ -7,14 +7,8 @@ import { TrainingCycleRepository } from './training-cycle.repository';
 import { Training } from './training.entity';
 
 /**
- * Una pasada completa sobre el set.
- *
- * Ningún tiempo objetivo vive aquí: el del ciclo 1 lo fija el usuario en `training_goal` y
- * el del resto lo calcula el caso de uso sobre el tiempo real del ciclo 1.
- *
- * Sin `startedAt` ni `finishedAt`: los ciclos se crean de uno en uno al terminar el
- * anterior, así que `createdAt` es cuando arranca, y el cierre es el `max(updatedAt)` de sus
- * intentos, que sale en la misma consulta que ya suma sus duraciones.
+ * One full pass over the set. No target time and no start or end dates: cycles are created
+ * one at a time, so `createdAt` is the start and the close is their attempts' `max`.
  */
 @Entity({ repository: () => TrainingCycleRepository })
 @Unique({ properties: ['training', 'index'] })
@@ -22,7 +16,7 @@ export class TrainingCycle extends SyncableBaseEntity<TrainingCycle> {
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
 
-	/** Número de pasada, empezando en 1. */
+	/** Pass number, starting at 1. */
 	@Property()
 	index!: number;
 

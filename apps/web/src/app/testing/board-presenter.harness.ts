@@ -49,10 +49,8 @@ interface SlideRecord {
 type BoardFixture = ComponentFixture<ChessBoardComponent>;
 
 /**
- * A board driven by hand: it holds a real position and plays real moves through the very
- * transition builder the stores use, but nothing grades anything and nothing is written
- * down. What it does keep is every square the board asked it to select, which is how the
- * view is held to refusing input it must not accept.
+ * A board driven by hand: real positions and real moves through the stores' own transition
+ * builder, grading nothing. It keeps every square the board asked to select.
  */
 export class FakeBoardPresenter implements BoardPresenter {
 	readonly position: WritableSignal<ChessPosition>;
@@ -154,6 +152,10 @@ export interface MountedBoard {
 	takenAt(square: Square): string | undefined;
 	isChecked(square: Square): boolean;
 	isAnnounced(square: Square): boolean;
+	/** Whether the square is drawn picked up, whoever picked it up. */
+	isSelected(square: Square): boolean;
+	/** Every square marked as somewhere the piece taken up may go, in square order. */
+	targets(): readonly Square[];
 	isPromotionOpen(): boolean;
 	/** Everything still travelling at this instant, cancelled slides excluded. */
 	sliding(): SlideReading[];
@@ -167,9 +169,8 @@ let originalAnimate: Element['animate'];
 let isPatched = false;
 
 /**
- * The test DOM has no Web Animations API, so this stands in for it and keeps the ledger
- * the readings are taken from: what was asked to travel, for how long, and whether
- * anybody ever called it off.
+ * The test DOM has no Web Animations API, so this stands in and keeps the ledger: what was
+ * asked to travel, for how long, and whether anyone called it off.
  */
 function spyOnAnimations(): SlideRecord[] {
 	const records: SlideRecord[] = [];
@@ -291,6 +292,16 @@ function inFlight(
 	return readings;
 }
 
+function markedTargets(fixture: BoardFixture, presenter: FakeBoardPresenter): Square[] {
+	const marked = squareElements(fixture).flatMap((button, order) =>
+		button.classList.contains('target')
+			? [ChessSquare.fromIndex(indexAtOrder(order, presenter.orientation()))]
+			: [],
+	);
+
+	return marked.sort((left, right) => left.localeCompare(right));
+}
+
 function hasClass(
 	fixture: BoardFixture,
 	presenter: FakeBoardPresenter,
@@ -360,6 +371,8 @@ function readings(
 		takenAt: (square: Square): string | undefined => pieceOn(fixture, presenter, square, true),
 		isChecked: (square: Square): boolean => hasClass(fixture, presenter, square, 'checked'),
 		isAnnounced: (square: Square): boolean => hasClass(fixture, presenter, square, 'announced'),
+		isSelected: (square: Square): boolean => hasClass(fixture, presenter, square, 'selected'),
+		targets: (): readonly Square[] => markedTargets(fixture, presenter),
 		isPromotionOpen: (): boolean => null !== root.querySelector('.promotion'),
 		sliding: (): SlideReading[] => inFlight(fixture, presenter, records),
 		slideCount: (): number => records.length,
@@ -384,9 +397,8 @@ function providersFor(presenter: FakeBoardPresenter, animation: MoveAnimation, s
 }
 
 /**
- * The real board, drawn against a presenter nobody has to solve an exercise to drive.
- * Everything is read back off the DOM it produced, so what a test asserts is what a
- * player would see rather than what a store happens to hold.
+ * The real board against a presenter nobody has to solve an exercise to drive. Everything is
+ * read off the DOM, so a test asserts what a player would see.
  */
 export function mountBoard(
 	fen: string,

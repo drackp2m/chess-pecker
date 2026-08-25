@@ -18,7 +18,7 @@ El servidor no responde y no hay forma de saber si la sesión sigue abierta. El 
 
 ## ANONYMOUS_EXPLANATION
 
-Para quien no ha iniciado sesión: para qué sirve una cuenta. Lo que vende es que el programa te acompaña entre dispositivos.
+Para quien no ha iniciado sesión: para qué sirve una cuenta. Lo que vende es que el entrenamiento te acompaña entre dispositivos.
 
 ## ADD_FRIEND*
 

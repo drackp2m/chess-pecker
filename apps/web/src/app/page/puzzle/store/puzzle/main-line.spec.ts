@@ -55,11 +55,8 @@ function seen(plies: number, ...strayed: string[]): string[] {
 }
 
 /**
- * One press of one control, and everything the board reads afterwards. The walk below
- * is the exercise of the specification, beat by beat, and every one of them is a test:
- * the record so far, the board it stands on, the move that is up, whether a piece may
- * be moved, whether a wrong move is showing, what the scoresheet lists, and which of
- * the three line controls the player can press.
+ * One press of one control, and everything the board reads afterwards. The walk below is the
+ * specification beat by beat, and every beat is a test.
  */
 interface Beat {
 	readonly press: string;
@@ -112,9 +109,8 @@ const WALK: readonly Beat[] = [
 			mistake: undefined,
 			visible: seen(1),
 			nav: NO_FORWARD,
-			// The clock is the one the attempt's own duration is measured on, and it
-			// only runs while the exercise is being looked at. Coming back to a board
-			// left in the background finds the hint exactly where it was left.
+			// The clock only runs while the exercise is on screen, so a board left in the
+			// background is found with the hint exactly where it was left.
 			hint: 'locked',
 		},
 	},
@@ -160,9 +156,8 @@ const WALK: readonly Beat[] = [
 		},
 		reads: {
 			...OPEN,
-			// The answer is written before it is shown: what walks it is a programme, and a
-			// programme only ever walks line that is already there. So the record runs a ply
-			// ahead of the board for as long as the beat lasts.
+			// The answer is written before it is shown, since a programme only walks line that
+			// already exists, so the record runs a ply ahead for as long as the beat lasts.
 			record: [...ASKED, 'b2b1', 'b3d1'],
 			cursor: 2,
 			move: 'b2b1',
@@ -725,10 +720,8 @@ describe('the main line', () => {
 	});
 
 	/**
-	 * The wait behind the hint is measured the way the attempt's own duration is: only
-	 * while the exercise is on screen. Anything else would hand the themes over to a
-	 * player who opened the exercise, walked off and came back — which is the one case
-	 * the wait exists for.
+	 * The hint's wait is measured like the attempt's duration, only while the exercise is on
+	 * screen: otherwise walking off and back would hand the themes over.
 	 */
 	describe('the clock the hint waits on', () => {
 		it('counts what was watched, in as many sittings as it takes', () => {
@@ -850,7 +843,7 @@ describe('the main line', () => {
 		});
 	});
 
-	it('replays the main line back into the board each exploration started from', () => {
+	it('replays the main line back into the board each free-play run started from', () => {
 		const store = board();
 		const entries: LineSnapshot[] = [];
 
@@ -871,10 +864,10 @@ describe('the main line', () => {
 		store.toggleFreePlay();
 		store.toggleFreePlay();
 
-		const anchors = store.explorations().map((run) => run.at);
+		const anchors = store.freePlayRuns().map((run) => run.at);
 
 		expect(store.record()).toEqual([...FIVE_PLY, -2, 1, 0]);
-		expect(store.explorations()).toEqual([
+		expect(store.freePlayRuns()).toEqual([
 			{ at: 6, events: ['a7a6'] },
 			{ at: 8, events: [] },
 		]);

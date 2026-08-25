@@ -9,9 +9,8 @@ export class RemoveFriendshipUseCase {
 	constructor(private readonly friendshipRepository: FriendshipRepository) {}
 
 	/**
-	 * Sirve para dejar de ser amigos y para cancelar una solicitud que aún no han contestado.
-	 * Borra la fila en lugar de marcarla, para que el par vuelva a quedar libre y se pueda
-	 * volver a pedir sin chocar con el índice único parcial.
+	 * Unfriending, and cancelling an unanswered request. The row is deleted rather than
+	 * marked, so the pair is free to ask again without hitting the partial unique index.
 	 */
 	async execute(user: User, friendshipUuid: string): Promise<void> {
 		const friendship = await this.friendshipRepository.getOne({ uuid: friendshipUuid });

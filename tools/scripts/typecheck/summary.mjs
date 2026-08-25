@@ -15,11 +15,8 @@ function typescriptVersion() {
 	}
 }
 
-// `tsc --noEmit` says nothing at all when it passes, so every number here comes from
-// `--diagnostics`, which prints a `Name:<padding>value` block after the run. Errors are
-// counted from the diagnostic lines themselves and not from tsc's `Found N errors` footer:
-// that footer changes shape with `--pretty` and with how many files are involved, while the
-// per-error lines are the same ones `.github/matchers/tsc.json` already annotates.
+// `tsc --noEmit` says nothing when it passes, so the numbers come from `--diagnostics`.
+// Errors are counted from the diagnostic lines, since the footer changes shape with `--pretty`.
 const STAT_LINE = /^(?<name>[A-Za-z][\w /]*):\s+(?<value>\S+)$/gmu;
 const ERROR_LINE = /^(?<file>[^\s(].*)\(\d+,\d+\):\s+error\s+TS\d+:/gmu;
 

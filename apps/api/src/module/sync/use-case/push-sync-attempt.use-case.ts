@@ -13,9 +13,8 @@ import { PushAttemptNodeDto } from '../dto/request/push-attempt-node.dto';
 import { claimSyncRow, reuseSyncRow, syncKey } from '../util/sync-node.util';
 
 /**
- * El intento, que es la hoja del árbol y la única tabla que crece sin techo. De qué tipo es
- * no lo dice la fila: lo dice de quién cuelga, y así el `check` de la tabla se cumple por
- * construcción.
+ * The attempt: the leaf of the tree, and the only table that grows without a ceiling. Its
+ * kind comes from what it hangs off, so the table's `check` holds by construction.
  */
 @Injectable()
 export class PushSyncAttemptUseCase {
@@ -89,7 +88,7 @@ export class PushSyncAttemptUseCase {
 				hintUsed: node.hintUsed,
 				mistakeCount: node.mistakeCount,
 				record: node.record,
-				explorations: node.explorations,
+				freePlayRuns: node.freePlayRuns,
 			}),
 			node,
 		);
@@ -97,7 +96,7 @@ export class PushSyncAttemptUseCase {
 }
 
 /**
- * El mismo hueco resuelto en dos dispositivos. El servidor se queda con el primero, y el
- * segundo no se pierde —sigue en su dispositivo— pero deja de reintentarse.
+ * The same slot solved on two devices. The server keeps the first; the second is not lost,
+ * still being on its device, but it stops being retried.
  */
 const OTHER_SLOT = 'belongs to another slot';

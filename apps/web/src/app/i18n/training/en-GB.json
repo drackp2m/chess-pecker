@@ -73,8 +73,8 @@
 	"01M2K7B4X00MZRZS3YJ612PS3H": "Resigned",
 	"01M2K7B4X0R38PJDYSHMFA35W3": "Mistakes",
 	"01M2K7B4X04KBQBJ29EGR0QY3K": "Hints",
-	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ solved }} solved, {{ failed }} failed, {{ resigned }} resigned · {{ mistakes }} mistakes, {{ hints }} hints · {{ minutes }} min",
-	"01M2K7B4X0B4GWJVX17EFKMFCF": "Last {{ days }} days · {{ solved }} exercises solved",
+	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ firstTry }} solved, {{ afterMiss }} failed, {{ shown }} resigned · {{ mistakes }} mistakes, {{ hints }} hints · {{ minutes }} min",
+	"01M2K7B4X0B4GWJVX17EFKMFCF": "Last {{ days }} days · {{ firstTry }} exercises solved",
 	"01KZNRPGG0KYNNVF8SHK72BG4S": "Vs. pace",
 	"01KZNRPGG051V1E9B3N5MECMHE": "Running balance",
 	"01KZNRPGG0PJ1FZ6K0MNAYBNYB": "{{ date }} · {{ done }} of {{ expected }} · {{ delta }} that day, {{ drift }} overall",
@@ -83,5 +83,5 @@
 	"01KZPWVGSDGS53J80H7DYGWN3A": "{{ exercises }} exercises behind",
 	"01M3Q0R8PQZRWMKVYGJJ5DTPHG": "Cancel the training?",
 	"01M3Q0R8PQKC4YMVG92S56C0F5": "Progress made so far is kept, but the training stops here and you will need to start a new one.",
-	"01KZQ04WTYZVJCVY0BGR68T4MZ": "Finalized {{ solved }} of {{ total }} exercises · {{ percent }}% accuracy"
+	"01KZQ04WTYZVJCVY0BGR68T4MZ": "Finalized {{ done }} of {{ total }} exercises · {{ percent }}% accuracy"
 }

@@ -9,7 +9,7 @@ import { SyncCursorKey } from '@app/repository/definition/sync-cursor-schema.int
 import { GenericRepository } from '@app/repository/generic.repository';
 import { requeued } from '@app/use-case/sync/local-record';
 
-/** Lo que queda por subir, tabla a tabla. */
+/** What is left to push, table by table. */
 export type PendingCount = Readonly<Record<SyncEntity, number>>;
 
 export const NO_PENDING: PendingCount = Object.fromEntries(
@@ -41,18 +41,16 @@ export type SyncAudit = Readonly<Record<SyncEntity, EntityAudit>>;
 })
 export class LocalDataRepository extends GenericRepository<AppSchema> {
 	/**
-	 * Cuántas filas del entrenamiento no han llegado al servidor. IndexedDB no indexa las
-	 * filas a las que les falta el campo, así que el índice de lo pendiente *es* la lista:
-	 * contarlo no recorre meses de partidas.
+	 * How many training rows never reached the server. IndexedDB does not index rows missing
+	 * the field, so the pending index *is* the list and counting it walks nothing else.
 	 */
 	async countPendingSync(): Promise<number> {
 		return sumPending(await this.countPendingByEntity());
 	}
 
 	/**
-	 * Lo mismo, tabla a tabla. Es el desglose que enseña el splash mientras sube y el que
-	 * la pantalla de estado leerá después: ocho recuentos sobre índice cuestan lo mismo
-	 * que su suma.
+	 * The same, table by table: the breakdown the splash shows while pushing. Eight counts
+	 * over an index cost the same as their sum.
 	 */
 	async countPendingByEntity(): Promise<PendingCount> {
 		return this.runInTransaction(syncStores, 'readonly', async (transaction) => {
@@ -98,13 +96,15 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 		});
 	}
 
+	async countPuzzleSets(): Promise<number> {
+		return this.runInTransaction(['puzzleSet'], 'readonly', (transaction) =>
+			transaction.objectStore('puzzleSet').count(),
+		);
+	}
+
 	/**
-	 * Todo lo que es del usuario, en una sola transacción. Fuera quedan `puzzle` —el
-	 * catálogo de Lichess, que no es de nadie— y `setting`, que son preferencias del
-	 * dispositivo y siguen valiendo sin sesión.
-	 *
-	 * `syncCursor` no se vacía entero por lo mismo: dentro está también el corte del
-	 * catálogo, que sigue sirviendo a quien entre después. Se borran sólo sus llaves.
+	 * Everything the user owns, in one transaction. `puzzle` and `setting` stay, and only the
+	 * user's keys leave `syncCursor`, since the catalogue's cut still serves whoever comes next.
 	 */
 	async clearUserData(): Promise<void> {
 		await this.runInTransaction(clearedStores, 'readwrite', async (transaction) => {
@@ -169,8 +169,8 @@ const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'activity'];
 const userStores: StoreNames<AppSchema>[] = [
 	'activityDay',
 	'attempt',
-	// El corte de lo ya restaurado se va con los intentos: si sobreviviera, el siguiente
-	// usuario del dispositivo pediría sólo lo posterior a un cursor que no es suyo.
+	// The restore cut leaves with the attempts: surviving, it would have the next user of
+	// the device ask only for what follows a cursor that is not theirs.
 	'attemptCursor',
 	'attemptDraft',
 	'calibrationPuzzle',

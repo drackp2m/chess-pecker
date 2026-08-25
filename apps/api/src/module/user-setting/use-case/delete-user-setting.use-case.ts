@@ -8,8 +8,8 @@ export class DeleteUserSettingUseCase {
 	constructor(private readonly userSettingRepository: UserSettingRepository) {}
 
 	/**
-	 * Borrar el ajuste es devolverlo a su valor por defecto, porque el defecto vive en el
-	 * código y no como fila. Por eso no falla si la clave no existía.
+	 * Deleting a setting returns it to its default, which lives in the code and not as a row,
+	 * so a key that never existed is not an error.
 	 */
 	async execute(user: User, key: string): Promise<void> {
 		await this.userSettingRepository.deleteMany({ user: user.uuid, key });

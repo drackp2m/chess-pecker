@@ -13,15 +13,15 @@ describe('jwtCookiePath', () => {
 		expect(jwtCookiePath('/v2', JwtEndpoints.refresh)).toBe('/v2/auth/refresh-session');
 	});
 
-	// `setGlobalPrefix` acepta las tres formas como el mismo prefijo, así que el `Path` de la
-	// cookie no puede depender de cuál se haya escrito en el `.env`.
+	// `setGlobalPrefix` takes all three forms as the same prefix, so the cookie's `Path`
+	// cannot depend on which one was written in the `.env`.
 	it.each(['api', '/api', '/api/'])('normalizes the prefix written as %s', (prefix) => {
 		expect(jwtCookiePath(prefix, JwtEndpoints.access)).toBe('/api');
 		expect(jwtCookiePath(prefix, JwtEndpoints.refresh)).toBe('/api/auth/refresh-session');
 	});
 
-	// Sin prefijo el path de la cookie de acceso sale vacío, y `Path=` no es válido: el
-	// navegador la descartaría y no habría sesión.
+	// With no prefix the access cookie's path comes out empty, and `Path=` is invalid: the
+	// browser would discard it and there would be no session.
 	it('falls back to the root when there is no prefix', () => {
 		expect(jwtCookiePath('', JwtEndpoints.access)).toBe('/');
 		expect(jwtCookiePath('/', JwtEndpoints.access)).toBe('/');

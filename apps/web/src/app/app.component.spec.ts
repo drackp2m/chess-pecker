@@ -11,8 +11,8 @@ describe('AppComponent', () => {
 			imports: [AppComponent],
 			providers: [
 				provideTestingI18n(),
-				// La puerta de arranque, y nada más: detrás del store real cuelga el ciclo
-				// entero con su HTTP y su IndexedDB, y el componente sólo mira si está abierta.
+				// The boot gate and nothing else: the real store drags the whole cycle behind it,
+				// and the component only reads whether the gate is open.
 				{ provide: SyncStore, useValue: { isReady: signal(true) } },
 			],
 		}).compileComponents();

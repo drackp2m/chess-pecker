@@ -4,12 +4,12 @@ import { UserSetting } from './user-setting.entity';
 
 export class UserSettingRepository extends CustomRepository<UserSetting> {
 	/**
-	 * `insert … on conflict (user_uuid, key) do update`: guardar un ajuste es idempotente y
-	 * no necesita leer antes, así que dos pestañas guardando a la vez no se pisan.
+	 * `insert … on conflict do update`: saving a setting is idempotent and reads nothing
+	 * first, so two tabs saving at once do not overwrite each other.
 	 */
 	async upsertByKey(setting: UserSetting): Promise<UserSetting> {
-		// Los datos van explícitos y no como instancia: de una entidad que el EntityManager
-		// nunca ha visto, `upsert` no saca ningún campo y manda un insert vacío.
+		// The data goes in explicitly and not as an instance: from an entity the EntityManager
+		// has never seen, `upsert` reads no fields and sends an empty insert.
 		return this.entityManager.fork().upsert(
 			UserSetting,
 			{

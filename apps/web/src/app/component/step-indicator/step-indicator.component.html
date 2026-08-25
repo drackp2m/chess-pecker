@@ -1,0 +1,13 @@
+<span class="track" aria-hidden="true">
+	<span class="line">
+		<span class="rail"></span>
+
+		<span class="progress"></span>
+
+		@for (slot of slots(); track slot.index) {
+			<span class="dot" [style.--step-offset]="slot.offset"></span>
+		}
+
+		<span class="marker"></span>
+	</span>
+</span>

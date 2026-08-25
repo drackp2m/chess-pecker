@@ -8,8 +8,8 @@ import { UserRepository } from '../user.repository';
 const DEFAULT_LIMIT = 10;
 
 /**
- * `%` y `_` son comodines de LIKE: sin escapar, buscar «a%» listaría a todo el mundo en vez
- * de a nadie, que es lo que un username con esos caracteres debería devolver.
+ * `%` and `_` are LIKE wildcards: unescaped, searching "a%" would list everybody instead of
+ * nobody, which is what a username holding those characters should return.
  */
 const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/gu, '\\$&');
 
@@ -18,12 +18,8 @@ export class SearchUsersUseCase {
 	constructor(private readonly userRepository: UserRepository) {}
 
 	/**
-	 * Búsqueda por prefijo, para poder encontrar a alguien antes de pedirle amistad. Es lo
-	 * mínimo que hace falta para que la pantalla de amigos distinga un error de tecleo de un
-	 * desconocido, y por eso devuelve `UserSummary` y no la entidad.
-	 *
-	 * Uno mismo no aparece: pedirse amistad a uno mismo lo rechaza el caso de uso de después,
-	 * así que no tiene sentido ofrecerlo aquí.
+	 * Prefix search, so someone can be found before being asked. Returns `UserSummary` and
+	 * never the caller themselves, whom the next use case would refuse anyway.
 	 */
 	async execute(currentUser: User, search: SearchUserRequestDto): Promise<UserSummary[]> {
 		const users = await this.userRepository.getMany(

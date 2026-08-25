@@ -73,8 +73,8 @@
 	"01M2K7B4X00MZRZS3YJ612PS3H": "Abandonés",
 	"01M2K7B4X0R38PJDYSHMFA35W3": "Erreurs",
 	"01M2K7B4X04KBQBJ29EGR0QY3K": "indices",
-	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} échecs, {{ solved }} abandonés, {{ failed }} erreurs, {{ resigned }} indices · {{ mistakes }} minutes · {{ hints }} minutes · {{ minutes }} min",
-	"01M2K7B4X0B4GWJVX17EFKMFCF": "{{ days }} derniers {{ solved }} exercices resueltos⟧",
+	"01M2K7B4X0NTWEBKKW6K0ZAZ0R": "{{ date }} · {{ firstTry }} du premier coup, {{ afterMiss }} après une erreur, {{ shown }} avec la solution montrée · {{ mistakes }} erreurs, {{ hints }} indices · {{ minutes }} min",
+	"01M2K7B4X0B4GWJVX17EFKMFCF": "{{ days }} derniers {{ firstTry }} exercices resueltos⟧",
 	"01KZNRPGG0KYNNVF8SHK72BG4S": "Avant le rythme",
 	"01KZNRPGG051V1E9B3N5MECMHE": "Saldo accumulé",
 	"01KZNRPGG0PJ1FZ6K0MNAYBNYB": "{{ date }} · {{ done }} de {{ expected }} · {{ delta }} ce jour, {{ drift }} en total",
@@ -83,5 +83,5 @@
 	"01KZPWVGSDGS53J80H7DYGWN3A": "{{ exercises }} exercices en retard",
 	"01M3Q0R8PQZRWMKVYGJJ5DTPHG": "Annuler l'entraînement ?",
 	"01M3Q0R8PQKC4YMVG92S56C0F5": "Le progrès réalisé jusqu'à présent est conservé, mais l'entraînement prend fin ici et vous devrez en commencer un nouveau.",
-	"01KZQ04WTYZVJCVY0BGR68T4MZ": "{{ solved }} {{ total }} exercices terminés · {{ percent }}% de réussite"
+	"01KZQ04WTYZVJCVY0BGR68T4MZ": "{{ done }} sur {{ total }} exercices faits · {{ percent }}% du premier coup"
 }

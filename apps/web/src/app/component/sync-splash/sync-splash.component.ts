@@ -9,9 +9,8 @@ import { SyncStore } from '@app/store/sync.store';
 import { WatchedDelay } from '@app/util/watched-delay';
 
 /**
- * Lo que se ve mientras la aplicación aún no sirve datos. El detalle sólo sale si hay
- * algo que sincronizar y la espera ha durado lo bastante como para que enseñarlo no sea un
- * parpadeo: el caso normal —nada pendiente y nada nuevo— no debe enseñar nada.
+ * What shows while the app cannot serve data yet. The detail only appears once the wait is
+ * long enough not to be a flicker: the normal case, nothing pending, shows nothing.
  */
 @Component({
 	selector: 'app-sync-splash',
@@ -40,8 +39,8 @@ export class SyncSplashComponent implements OnDestroy {
 
 	private readonly waited = signal(false);
 
-	// El retardo cuenta sólo el tiempo que la pestaña está a la vista, que es el único que
-	// el usuario ha pasado esperando: una pestaña de fondo no está mirando nada.
+	// The delay counts only the time the tab is visible, which is the only time the user has
+	// spent waiting.
 	private readonly delay = new WatchedDelay();
 
 	constructor() {

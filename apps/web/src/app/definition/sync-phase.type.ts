@@ -1,15 +1,13 @@
 import { I18n } from '@app/i18n';
 
 /**
- * Por dónde va el ciclo de sincronización. `idle` es antes de la primera pasada; las tres
- * de en medio son la pasada; y las tres últimas son sus finales, todos igual de finales:
- * `failed` y `offline` abren la puerta de arranque igual que `ready`, porque «no se sirven
- * datos hasta que termine» tiene que significar *hasta que termine*, con éxito o sin él.
+ * Where the sync cycle stands. The last three are all equally final: `failed` and `offline`
+ * open the boot gate like `ready`, since "until it ends" has to mean until it ends.
  */
 export type SyncPhase =
 	'checking' | 'failed' | 'idle' | 'offline' | 'pulling' | 'pushing' | 'ready';
 
-/** Los tres finales: la pasada ya no está corriendo. */
+/** The three endings: the pass is no longer running. */
 export function isSettledPhase(phase: SyncPhase): boolean {
 	return 'ready' === phase || 'failed' === phase || 'offline' === phase;
 }

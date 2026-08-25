@@ -48,11 +48,8 @@ export class ConnectionStore extends signalStore(
 	private nextId = 0;
 
 	/**
-	 * Sólo el sondeo de sesión cronometra: el arranque y la revalidación que lo repite
-	 * cuando la app vuelve tras un rato son los dos únicos momentos en que se está
-	 * esperando a que el servidor despierte, y centralizar ahí el «va lento» evita que una
-	 * llamada larga cualquiera —un trabajo de fondo, sin ir más lejos— lo afirme por su
-	 * cuenta. No avisa: quien mira la sesión ya tiene su propia pantalla para decirlo.
+	 * Only the session probe is timed, since boot and revalidation are the two moments spent
+	 * waiting for the server to wake: any other slow call must not claim "it is slow" itself.
 	 */
 	async track<T>(answer: Promise<T>): Promise<T> {
 		const id = this.start();
@@ -65,9 +62,8 @@ export class ConnectionStore extends signalStore(
 	}
 
 	/**
-	 * El resto de llamadas. No cronometran, pero sí dicen si el servidor está ahí: un
-	 * timeout o una red caída son la única forma de enterarse fuera del sondeo, y quien
-	 * la sufrió no tiene por qué estar mirando la nube.
+	 * Every other call. They are not timed but they do say whether the server is there, which
+	 * outside the probe is the only way to find out.
 	 */
 	async check<T>(answer: Promise<T>): Promise<T> {
 		return this.settle(answer, true);
@@ -126,9 +122,8 @@ export class ConnectionStore extends signalStore(
 	}
 
 	/**
-	 * The phase follows the oldest call still out: a stream of quick requests must never
-	 * add up to a "waking the server up" that no single one of them justifies. Timers
-	 * rather than a ticking clock, and only for the thresholds still ahead.
+	 * The phase follows the oldest call still out, so quick requests never add up to a "waking
+	 * the server up" none of them justifies. Timers, and only for the thresholds ahead.
 	 */
 	private schedule(): void {
 		this.clearTimers();

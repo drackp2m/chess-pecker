@@ -1,7 +1,6 @@
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-// ─── ANSI helpers ─────────────────────────────────────────────────────
 const R = '\x1b[0m';
 const B = '\x1b[1m';
 const C = '\x1b[94m';
@@ -60,10 +59,8 @@ const colorDiff = (exp, found, type) => {
 	return 0 === i ? `${B}${color}${found}${R}` : `${prefix}.${B}${color}${suffix}${R}`;
 };
 
-// ─── 0. Parse args ────────────────────────────────────────────────────
 const fixMode = process.argv.includes('--fix');
 
-// ─── 1. Read package.json version ─────────────────────────────────────
 const pkg = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8'));
 
 const pm = pkg.packageManager;
@@ -77,7 +74,6 @@ const pkgVer = pm.replace('pnpm@', '');
 console.log(`🔍 ${fixMode ? 'Fixing' : 'Checking'} pnpm version sync...\n`);
 console.log(`ℹ️  Found version ${B}${C}${pkgVer}${R} on package.json\n`);
 
-// ─── 2. Scan workflows ────────────────────────────────────────────────
 const wDir = join(process.cwd(), '.github', 'workflows');
 
 if (!existsSync(wDir)) {
@@ -193,7 +189,6 @@ for (const file of files) {
 	}
 }
 
-// ─── 3. Fix ───────────────────────────────────────────────────────────
 if (fixMode && mismatches.size) {
 	for (const [file, { bad, content }] of mismatches) {
 		let fixed = content;
@@ -213,7 +208,6 @@ if (fixMode && mismatches.size) {
 	process.exit(0);
 }
 
-// ─── 4. Report ────────────────────────────────────────────────────────
 if (mismatches.size) {
 	for (const [file, { bad }] of mismatches) {
 		const wJob = Math.max(...bad.map((m) => visWidth(m.job)), visWidth('Job'));

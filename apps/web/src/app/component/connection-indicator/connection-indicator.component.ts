@@ -6,9 +6,8 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { SessionStore } from '@app/store/session.store';
 
 /**
- * Only what the sync icon beside it cannot say on its own: a call long enough to look
- * broken, and a server that never answered. The long version of all this lives on the
- * dashboard.
+ * Only what the sync icon beside it cannot say: a call long enough to look broken, and a
+ * server that never answered. The long version lives on the dashboard.
  */
 const PHASE_MESSAGES = {
 	idle: null,

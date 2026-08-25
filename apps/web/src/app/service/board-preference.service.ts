@@ -17,9 +17,8 @@ import { Setting } from '@app/model/setting.model';
 import { SettingStore } from '@app/store/setting.store';
 
 /**
- * Board preferences that outlive a single game, persisted through the same setting
- * store the theme uses. Reads once the stored settings have loaded, then writes
- * back on every change.
+ * Board preferences that outlive a game, through the same setting store the theme uses:
+ * read once the settings have loaded, written back on every change.
  */
 @Injectable({
 	providedIn: 'root',

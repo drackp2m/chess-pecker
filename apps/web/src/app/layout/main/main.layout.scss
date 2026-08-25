@@ -2,15 +2,14 @@ main {
 	position: relative;
 	height: 100dvh;
 
-	// A stacking context of its own, so whatever a screen stacks inside itself — the
-	// pieces riding over each other on a board, most of all — is settled in here and
-	// never reaches the navbar sitting over it.
+	// Its own stacking context, so whatever a screen stacks inside itself is settled here
+	// and never reaches the navbar above it.
 	#router-outlet {
 		scroll-padding-bottom: var(--nav-height);
 
 		isolation: isolate;
 
-		overflow: scroll;
+		overflow: hidden scroll;
 		flex: 1;
 
 		min-height: 0;

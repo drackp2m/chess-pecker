@@ -11,10 +11,8 @@ import { LogoutUseCase } from './use-case/logout.use-case';
 import { RefreshSessionUseCase } from './use-case/refresh-session.use-case';
 import { RegisterUseCase } from './use-case/register.use-case';
 
-// Session lifecycle endpoints. `@Public()` goes route by route instead of on the
-// controller: the entry points are reachable without an access token (you don't have
-// one yet when registering / logging in, or it's expired when refreshing), but `me`
-// only answers to a session that already exists.
+// Session lifecycle endpoints. `@Public()` goes route by route: the entry points need no
+// access token, but `me` only answers to a session that already exists.
 @Controller('auth')
 export class AuthController {
 	constructor(
@@ -52,11 +50,8 @@ export class AuthController {
 	}
 
 	/**
-	 * Quién es el dueño de las cookies. Es lo que pregunta el front al cargar la página: le
-	 * hace falta el usuario de la sesión, no tokens nuevos, y `refresh-session` responde sin
-	 * cuerpo. La cookie de acceso vive en `/api`, así que llega aquí; la de refresco no, de
-	 * modo que un acceso caducado se responde con un 401 y es el cliente quien decide si
-	 * pasar por `refresh-session` y volver a preguntar.
+	 * Who owns the cookies, which is what the front asks on load. Only the access cookie
+	 * reaches here, so an expired one gets a 401 and the client decides whether to refresh.
 	 */
 	@Get('me')
 	me(@CurrentUser() user: User): User {

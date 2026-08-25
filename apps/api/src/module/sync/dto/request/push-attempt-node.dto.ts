@@ -17,9 +17,8 @@ import { FreePlayRunDto } from '../../../training/dto/request/free-play-run.dto'
 import { SyncNodeDto } from './sync-node.dto';
 
 /**
- * El ejercicio va por `lichessId` y no por uuid: el store local de ejercicios se clava por
- * él, y uno importado de un CSV no tiene uuid de servidor. Traducirlo al catálogo es cosa
- * del servidor.
+ * The exercise travels as a `lichessId`: one imported from a CSV has no server uuid, so
+ * translating it to the catalogue is the server's job.
  */
 export class PushAttemptNodeDto extends SyncNodeDto implements PushAttemptNode<Date> {
 	@IsString()
@@ -49,5 +48,5 @@ export class PushAttemptNodeDto extends SyncNodeDto implements PushAttemptNode<D
 	@IsArray()
 	@ValidateNested({ each: true })
 	@Type(() => FreePlayRunDto)
-	explorations!: FreePlayRun[];
+	freePlayRuns!: FreePlayRun[];
 }

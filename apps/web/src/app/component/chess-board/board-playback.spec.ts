@@ -158,9 +158,8 @@ describe('createBoardPlayback', () => {
 	});
 
 	/**
-	 * The reason the setting is read outside the reactive graph: the move is long over
-	 * and the piece is standing on its square, so turning the animation on now would
-	 * have it come sailing in from a square it left minutes ago.
+	 * Why the setting is read outside the reactive graph: turning the animation on long after
+	 * a move would send the settled piece sailing in from the square it left.
 	 */
 	it('does not replay a move already on screen when the setting is turned up', () => {
 		const board = createBoard('never');

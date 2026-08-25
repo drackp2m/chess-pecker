@@ -13,21 +13,21 @@ import { SyncCursorRepository } from '@app/repository/sync-cursor.repository';
 export class ActivityRepository extends GenericRepository<ActivitySchema> {
 	private readonly cursors = inject(SyncCursorRepository);
 
-	/** Ambos extremos entran, y el rango va sobre la propia clave: no hace falta índice. */
+	/** Both ends are included, and the range runs over the key itself: no index needed. */
 	async findRange(from: string, to: string): Promise<ActivityDayRow[]> {
 		return this.runInTransaction(['activityDay'], 'readonly', (transaction) =>
 			transaction.objectStore('activityDay').getAll(IDBKeyRange.bound(from, to)),
 		);
 	}
 
-	/** Cuántos días del rango hay guardados, que comparado con su tamaño delata los huecos. */
+	/** How many days of the range are stored, which against its size reveals the gaps. */
 	async countRange(from: string, to: string): Promise<number> {
 		return this.runInTransaction(['activityDay'], 'readonly', (transaction) =>
 			transaction.objectStore('activityDay').count(IDBKeyRange.bound(from, to)),
 		);
 	}
 
-	/** El día más antiguo guardado, que es donde empieza el tramo que hay que mantener. */
+	/** The oldest day stored, where the run that has to be kept current begins. */
 	async firstDate(): Promise<string | undefined> {
 		const keys = await this.runInTransaction(['activityDay'], 'readonly', (transaction) =>
 			transaction.objectStore('activityDay').getAllKeys(undefined, 1),

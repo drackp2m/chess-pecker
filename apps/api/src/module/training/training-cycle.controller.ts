@@ -10,8 +10,8 @@ import { GetNextCycleItemUseCase } from './use-case/get-next-cycle-item.use-case
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
 
 /**
- * Sólo lecturas: abrir una pasada y decidir qué hueco toca es del dispositivo. Lo que se
- * escribe entra por `POST /sync/training`.
+ * Reads only: opening a pass and deciding which slot is next belong to the device.
+ * Everything written comes in through `POST /sync/training`.
  */
 @Controller('training/:uuid/cycle')
 export class TrainingCycleController {
@@ -28,7 +28,7 @@ export class TrainingCycleController {
 		return this.trainingCycleRepository.getManyByTraining(training.uuid);
 	}
 
-	/** El ejercicio que toca ahora. 404 cuando la pasada ya está entera. */
+	/** The exercise that is up now. 404 once the pass is complete. */
 	@Get('next')
 	async next(@CurrentUser() user: User, @Param('uuid') uuid: string): Promise<TrainingCycleItem> {
 		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);

@@ -15,11 +15,8 @@ import { ChessAttack } from '@app/util/chess/chess-attack';
 import { ChessSquare } from '@app/util/chess/chess-square';
 
 /**
- * Reads and writes Forsyth–Edwards Notation, the format chess exercises ship in.
- *
- * `parse` is strict on purpose: it is the door a pasted CSV comes in through, so
- * every field is either understood or the whole string is rejected. Nothing here
- * returns a half-parsed position.
+ * Reads and writes Forsyth–Edwards Notation. `parse` is strict because it is the door a
+ * pasted CSV comes in through: nothing here returns a half-parsed position.
  */
 export abstract class ChessFen {
 	static parse(fen: string): ChessPosition {
@@ -56,14 +53,8 @@ export abstract class ChessFen {
 	}
 
 	/**
-	 * What decides whether two positions are *the same one* for the repetition rule:
-	 * placement, side to move, castling rights and the moves available. The counters
-	 * are left out precisely because they always differ.
-	 *
-	 * The en passant target is not the FEN field but the capture itself: a target that
-	 * nobody can legally answer changes nothing about what can be played, so the
-	 * position it belongs to is the same one as the position without it. Writing the
-	 * raw field here would split those two apart and delay a draw by a full repetition.
+	 * What makes two positions the same one for the repetition rule. The en passant target is
+	 * the legal capture and not the FEN field, or a draw would be delayed a full repetition.
 	 */
 	static positionKey(position: ChessPosition): string {
 		return [
@@ -75,9 +66,8 @@ export abstract class ChessFen {
 	}
 
 	/**
-	 * Sanity check for a user supplied position: it has to parse, both kings must be
-	 * present, and the side that just moved may not be left in check — that position
-	 * is unreachable.
+	 * Sanity check for a user-supplied position: it must parse, both kings must be there, and
+	 * the side that just moved may not be left in check.
 	 */
 	static isValid(fen: string): boolean {
 		try {
@@ -146,9 +136,8 @@ export abstract class ChessFen {
 	}
 
 	/**
-	 * Whether the side to move could really take en passant: a pawn beside the pushed
-	 * one — which sits a row further on than the target, seen from the mover — and a
-	 * capture that does not hand over its own king.
+	 * Whether the side to move could really take en passant: a pawn beside the pushed one, and
+	 * a capture that does not hand over its own king.
 	 */
 	private static hasEnPassantAnswer(position: ChessPosition): boolean {
 		if (undefined === position.enPassant) {
@@ -176,10 +165,8 @@ export abstract class ChessFen {
 	}
 
 	/**
-	 * Plays the capture on a copy and asks whether it leaves the own king in check.
-	 * Two pawns leave the board at once and land on neither's square, which is why
-	 * this cannot be shortened to "is the capturing pawn pinned": the classic case is
-	 * a rook already staring down the rank both of them are standing on.
+	 * Played on a copy rather than shortened to "is the pawn pinned": two pawns leave the board
+	 * at once, and a rook may already be staring down the rank they share.
 	 */
 	private static isEnPassantLegal(position: ChessPosition, from: number, target: number): boolean {
 		const board = [...position.board];
@@ -204,9 +191,8 @@ export abstract class ChessFen {
 	}
 
 	/**
-	 * A FEN counter is a plain non-negative integer. `Number` would take `"1e3"` and
-	 * hand back `NaN` for anything else, which then leaks into the fifty-move rule —
-	 * `100 <= NaN` is false, so the draw never fires — and back out through `serialize`.
+	 * A FEN counter is a plain non-negative integer. `Number` would take `"1e3"` and leak `NaN`
+	 * into the fifty-move rule, where `100 <= NaN` is false and the draw never fires.
 	 */
 	private static parseCounter(counter: string, field: string): number {
 		if (!/^\d+$/.test(counter)) {

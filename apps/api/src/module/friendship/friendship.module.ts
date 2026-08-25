@@ -18,9 +18,8 @@ import { UserBlockController } from './user-block.controller';
 import { UserBlock } from './user-block.entity';
 
 /**
- * Amistad y bloqueo van juntos: son dos tablas del mismo grafo social y se necesitan la
- * una a la otra (no se puede pedir amistad a quien te bloqueó, y bloquear borra la
- * amistad que hubiera). Separarlos en dos módulos deja una dependencia circular.
+ * Friendship and blocking ship together: each needs the other, so two modules would leave
+ * a circular dependency.
  */
 @Module({
 	imports: [MikroOrmModule.forFeature([Friendship, UserBlock]), UserModule],

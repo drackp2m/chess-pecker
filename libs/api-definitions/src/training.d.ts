@@ -1,21 +1,21 @@
 import { ApiPuzzle } from './puzzle';
 import { SyncTimestamps } from './sync';
 
-export type TrainingStatus = 'calibrating' | 'planning' | 'running' | 'finished' | 'abandoned';
+export type TrainingStatus = 'calibrating' | 'planning' | 'running' | 'finished' | 'cancelled';
 
 export type TrainingFinishedReason = 'completed' | 'plateau' | 'max-cycles' | 'cancelled';
 
-export type CalibrationRoundKind = 'scan' | 'refine';
+export type CalibrationRoundKind = 'exploration' | 'refine';
 
 export type CalibrationRoundOutcome = 'pending' | 'raise' | 'lower' | 'accept';
 
-export type TrainingCycleStatus = 'running' | 'finished' | 'abandoned';
+export type TrainingCycleStatus = 'running' | 'finished' | 'cancelled';
 
 export type PuzzleAttemptKind = 'calibration' | 'cycle';
 
 /**
- * Cómo acabó el ejercicio: el usuario dio con la línea, o se rindió y se la enseñaron. No
- * hay estado abierto porque el intento no se manda hasta que la solución está fuera.
+ * How the exercise ended: the line was found, or it was given up on and shown. There is no
+ * open state because an attempt is not sent until the solution is out.
  */
 export type PuzzleAttemptClosure = 'found' | 'revealed';
 
@@ -37,8 +37,8 @@ export interface CalibrationRound {
 }
 
 /**
- * Una ronda a medias: lo que queda por intentar no basta para situarse en ella, así que
- * el reparto entero viaja aparte y es lo que cuenta el indicador.
+ * A half-finished round: what is left to attempt does not locate you within it, so the
+ * whole set travels separately and is what the indicator counts.
  */
 export interface CalibrationRoundPuzzles {
 	readonly total: number;
@@ -72,21 +72,18 @@ export interface SetTrainingGoalRequest<TDate = string> extends SyncTimestamps<T
 	endDate?: TDate;
 }
 
-/** Un paso de la partida: una jugada en notación larga, o un marcador negativo. */
+/** One step of the game: a move in long notation, or a negative marker. */
 export type PuzzleEvent = string | number;
 
-/** Una visita al juego libre: dónde estaba la línea principal, y qué se jugó dentro. */
+/** A visit to free play: where the main line stood, and what was played inside. */
 export interface FreePlayRun {
 	at: number;
 	events: PuzzleEvent[];
 }
 
 /**
- * Cómo fue el intento, igual en calibración que en ciclo. `solved` es la nota, sellada al
- * primer intento; el resto cuenta lo que costó llegar hasta la solución.
- *
- * `record` y `explorations` son la partida entera —la línea principal y lo que se probó
- * fuera de ella—, con la que se puede volver a dibujar el ejercicio tal como se resolvió.
+ * How the attempt went, the same in calibration as in a cycle. `solved` is the grade, sealed
+ * on the first try; `record` and `freePlayRuns` redraw the exercise exactly as it was solved.
  */
 export interface PuzzleAttemptRecord {
 	durationMs: number;
@@ -95,7 +92,7 @@ export interface PuzzleAttemptRecord {
 	hintUsed: boolean;
 	mistakeCount: number;
 	record: PuzzleEvent[];
-	explorations: FreePlayRun[];
+	freePlayRuns: FreePlayRun[];
 }
 
 export interface CycleProgress {
@@ -142,42 +139,32 @@ export interface TrainingProgress {
 
 export interface GetTrainingAttemptsRequest {
 	/**
-	 * El `cursor` de la respuesta anterior, opaco: es el intento por el que se cortó la
-	 * página, no una fecha. Sin él se empieza por el principio, que es lo que necesita un
-	 * dispositivo vacío; con él, sólo lo que venga después, venga del dispositivo que venga.
-	 * Uno que el servidor ya no reconoce se ignora y la bajada vuelve a empezar entera.
+	 * The previous response's opaque `cursor`: the attempt the page was cut at, not a date.
+	 * Without it the download starts over, which is what an empty device needs.
 	 */
 	since?: string;
-	/** Intentos por página. El backend recorta al máximo que sirve. */
+	/** Attempts per page. The backend clamps it to the maximum it serves. */
 	limit?: number;
 }
 
 /**
- * El histórico de un entrenamiento tal como lo guardó el servidor, que es de donde un
- * dispositivo sin nada —recién estrenado, o vaciado al cerrar sesión— vuelve a levantar
- * los ejercicios ya resueltos.
+ * A training's history as the server stored it, which is where a device with nothing —
+ * brand new, or emptied on logout — rebuilds the exercises already solved from.
  */
 export interface TrainingAttemptHistory {
 	readonly attempts: readonly TrainingAttempt[];
 	/**
-	 * El último intento de esta respuesta, que es por donde sigue la siguiente. Se guarda
-	 * tal cual y se devuelve sin mirarlo, sea para seguir paginando o para preguntar mañana;
-	 * una respuesta vacía devuelve el cursor que recibió, porque nada ha avanzado.
-	 *
-	 * Es una fila y no una marca de tiempo a propósito: el reloj del servidor tiene
-	 * microsegundos y el del cliente sólo milisegundos, así que una fecha que va y vuelve no
-	 * sirve para cortar —y una compartida por media tabla, como la que deja una migración
-	 * que sella todo con el mismo `now()`, no corta en absoluto.
+	 * Where the next response carries on from, stored as given and returned unread. A row and
+	 * not a timestamp on purpose: the server clock has microseconds and the client's does not.
 	 */
 	readonly cursor: string;
-	/** Quedan intentos después del cursor: hay que volver a preguntar con él. */
+	/** Attempts remain past the cursor, so it has to be asked again. */
 	readonly hasMore: boolean;
 }
 
 /**
- * Un intento cerrado, con la partida entera dentro: `record` y `explorations` son lo que
- * permite volver a dibujarlo. Lo que no viaja es la orientación del tablero, que no se
- * guarda —se deduce del FEN— y el volteo manual no sobrevive al viaje.
+ * A closed attempt with the whole game inside. Board orientation does not travel: it is
+ * derived from the FEN, so a manual flip does not survive the trip.
  */
 export interface TrainingAttempt extends PuzzleAttemptRecord {
 	readonly uuid: string;
@@ -186,51 +173,43 @@ export interface TrainingAttempt extends PuzzleAttemptRecord {
 	readonly roundUuid?: string;
 	readonly cycleItemUuid?: string;
 	/**
-	 * Su sitio dentro de la pasada, empezando en 0. Viaja con el intento porque el
-	 * dispositivo que lo restaura puede no tener el orden del ciclo: sólo conoce los huecos
-	 * que le fueron sirviendo.
+	 * Its place in the pass, from 0. It travels with the attempt because the device restoring
+	 * it may not have the cycle order, only the slots it was served.
 	 */
 	readonly position?: number;
-	/** Cuándo se abrió el ejercicio y cuándo se cerró, ambos con el reloj del cliente. */
+	/** When the exercise was opened and closed, both on the client clock. */
 	readonly createdAt: string;
 	readonly updatedAt: string;
 }
 
 export interface GetTrainingActivityRequest<TDate = string> {
-	/** Días que cubre el desglose, hoy incluido. El backend recorta al máximo que sirve. */
+	/** Days the breakdown covers, today included. The backend clamps it to its maximum. */
 	days?: number;
 	/**
-	 * El `cursor` de la respuesta anterior. Con él sólo vuelven los días que hayan
-	 * recibido intentos después, que es lo que permite guardar el resto en local sin
-	 * quedarse con una foto vieja cuando otro dispositivo sube lo suyo.
+	 * The previous response's `cursor`. With it only the days touched since come back, so the
+	 * rest can be cached locally without going stale when another device uploads.
 	 */
 	since?: TDate;
 }
 
 export interface TrainingActivity {
-	/** Todos los días del rango con actividad, o sólo los tocados si se mandó `since`. */
+	/** Every day in range with activity, or only those touched when `since` was sent. */
 	readonly days: readonly TrainingActivityDay[];
-	/**
-	 * Hasta dónde llega esta respuesta, en tiempo de servidor. Se guarda tal cual y se
-	 * devuelve en la siguiente petición.
-	 */
+	/** How far this response reaches, in server time. Stored as given and sent back next time. */
 	readonly cursor: string;
 }
 
 /**
- * Un día con al menos un ejercicio cerrado; los días sin actividad no viajan.
- *
- * Dos lecturas del mismo día que no se derivan la una de la otra. `solved` / `failed` /
- * `resigned` reparten por el veredicto, que se sella en la primera jugada. Los `found*` /
- * `revealed*` reparten por cómo acabó el ejercicio cruzado con qué ayuda hizo falta, y ahí
- * un `foundMissed` puede ser un acierto que falló más adelante en la línea.
+ * A day with at least one closed exercise. `firstTry`/`afterMiss`/`shown` split the day's
+ * `done` by verdict, `found*`/`revealed*` by ending crossed with help taken; the two splits
+ * cover the same attempts and neither is derived from the other.
  */
 export interface TrainingActivityDay {
 	readonly date: string;
-	readonly count: number;
-	readonly solved: number;
-	readonly failed: number;
-	readonly resigned: number;
+	readonly done: number;
+	readonly firstTry: number;
+	readonly afterMiss: number;
+	readonly shown: number;
 	readonly foundClean: number;
 	readonly foundHinted: number;
 	readonly foundMissed: number;

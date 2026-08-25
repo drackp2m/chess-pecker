@@ -12,6 +12,8 @@ const CASTLING = 'r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1';
 const EN_PASSANT = '4k3/8/8/3pP3/8/8/8/4K3 w - d6 0 2';
 /** A pawn one square from home, promoting on a file no king can see. */
 const PROMOTION = '8/7P/8/8/8/k7/8/4K3 w - - 0 1';
+/** Black to move, against a white knight at home with three squares to go to. */
+const REPLY = '4k3/8/8/8/8/8/3r4/4K1N1 b - - 0 1';
 
 describe('the board as a move crosses it', () => {
 	beforeEach(() => {
@@ -110,9 +112,8 @@ describe('the board as a move crosses it', () => {
 	});
 
 	/**
-	 * The square keeps its element from one position to the next, so a slide left
-	 * running over a board that has jumped would be drawn on whatever piece stands
-	 * there now: the mover seen turning into the piece it was taking.
+	 * The square keeps its element across positions, so a slide left running over a board
+	 * that jumped would show the mover turning into the piece it was taking.
 	 */
 	it('calls off a slide when the board jumps out from under it', () => {
 		const board = mountBoard(CAPTURE);
@@ -173,7 +174,7 @@ describe('the board as a move crosses it', () => {
 		expect(board.isChecked('e8')).toBe(true);
 	});
 
-	it('refuses a piece pressed while something is still travelling', () => {
+	it('holds a piece pressed while something is still travelling, and gives it up on arrival', () => {
 		const board = mountBoard(CAPTURE);
 
 		board.play('e4d4');
@@ -182,8 +183,124 @@ describe('the board as a move crosses it', () => {
 		expect(board.picked()).toEqual([]);
 
 		board.advance(SLIDE_DURATION);
-		board.click('e1');
 
 		expect(board.picked()).toEqual(['e1']);
+	});
+
+	it('holds a piece pressed while a move is only lit and has not set off', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.announce('e4d4');
+		board.click('e1');
+
+		expect(board.picked()).toEqual([]);
+
+		board.play('e4d4');
+		board.advance(SLIDE_DURATION);
+
+		expect(board.picked()).toEqual(['e1']);
+	});
+
+	it('holds a piece pressed in the pause between the beats of a line', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.presenter.isBusy.set(true);
+		board.play('e4d4');
+		board.advance(SLIDE_DURATION);
+
+		expect(board.sliding()).toEqual([]);
+
+		board.click('e1');
+
+		expect(board.picked()).toEqual([]);
+
+		board.presenter.isBusy.set(false);
+		board.render();
+
+		expect(board.picked()).toEqual(['e1']);
+	});
+
+	/** A whole move given over the opponent's, which is what the holding is for. */
+	it('gives up a move pressed while the opponent was crossing, in the order it was given', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.play('e4d4');
+		board.click('e1');
+		board.click('e2');
+
+		expect(board.picked()).toEqual([]);
+
+		board.advance(SLIDE_DURATION);
+
+		expect(board.picked()).toEqual(['e1', 'e2']);
+	});
+
+	/** The whole point of holding rather than playing: the piece on screen is left alone. */
+	it('leaves the piece travelling when a move is pressed over it', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.play('e4d4');
+		board.click('e1');
+		board.click('e2');
+
+		expect(board.sliding()).toEqual([{ square: 'd4', transform: 'translate(100%, 0%)' }]);
+		expect(board.slideCount()).toBe(1);
+	});
+
+	it('draws the piece it is holding as picked up until the board takes it', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.play('e4d4');
+		board.click('e1');
+
+		expect(board.isSelected('e1')).toBe(true);
+
+		board.advance(SLIDE_DURATION);
+
+		expect(board.isSelected('e1')).toBe(false);
+	});
+
+	/** Only a piece of the player's is echoed: an empty square is nothing to pick up. */
+	it('draws nothing picked up for a held square with no piece of its own', () => {
+		const board = mountBoard(CAPTURE);
+
+		board.play('e4d4');
+		board.click('e2');
+
+		expect(board.isSelected('e2')).toBe(false);
+	});
+
+	it('marks where a piece held while the opponent is crossing may go', () => {
+		const board = mountBoard(REPLY);
+
+		board.play('d2a2');
+		board.click('g1');
+
+		expect(board.isSelected('g1')).toBe(true);
+		expect(board.targets()).toEqual(['e2', 'f3', 'h3']);
+	});
+
+	/**
+	 * The move being lit up is going to be played, so the marks are read past it: the knight
+	 * has one square left once the rook lands beside the king, and it is the rook's own.
+	 */
+	it('marks a held piece against the board the move being lit up is heading for', () => {
+		const board = mountBoard(REPLY);
+
+		board.announce('d2e2');
+		board.click('g1');
+
+		expect(board.targets()).toEqual(['e2']);
+	});
+
+	it('takes no piece up at all while the board is shut', () => {
+		const board = mountBoard(REPLY);
+
+		board.presenter.isLocked.set(true);
+		board.play('d2a2');
+		board.click('g1');
+
+		expect(board.isSelected('g1')).toBe(false);
+		expect(board.targets()).toEqual([]);
 	});
 });

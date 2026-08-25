@@ -6,8 +6,8 @@ import { CustomBaseEntity } from './custom-base.entity';
 
 export class CustomRepository<T extends CustomBaseEntity<T>> {
 	constructor(
-		// `protected` para que los repositorios que extienden esta clase puedan escribir
-		// consultas que no encajan en los métodos genéricos de abajo (upserts, agregados).
+		// `protected` so repositories extending this can write the queries the generic methods
+		// below do not cover: upserts, aggregates.
 		protected readonly entityManager: EntityManager,
 		private readonly entityName: string,
 	) {}
@@ -45,9 +45,8 @@ export class CustomRepository<T extends CustomBaseEntity<T>> {
 	}
 
 	/**
-	 * Alias de `insert`, y funciona: MikroORM decide entre insert y update según si la
-	 * entidad trae los datos con los que se cargó, aunque venga de otro fork. Existe para que
-	 * el caso de uso diga qué pretende, no porque haga otra cosa.
+	 * An alias for `insert`: MikroORM picks insert or update from the entity itself. It exists
+	 * so the use case can say what it means, not because it does anything different.
 	 */
 	async update(entity: T): Promise<T> {
 		return this.insert(entity);

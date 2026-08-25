@@ -1,6 +1,7 @@
+import { LocationStrategy } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
-import { TitleStrategy, provideRouter, withHashLocation, withRouterConfig } from '@angular/router';
+import { TitleStrategy, provideRouter, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideTransloco } from '@jsverse/transloco';
 
@@ -14,7 +15,9 @@ import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
+import { SingleEntryLocationStrategy } from '@app/strategy/single-entry-location.strategy';
 import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.strategy';
+import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -24,14 +27,10 @@ export const appConfig: ApplicationConfig = {
 			const _themeService = inject(ThemeService);
 			const _languageService = inject(LanguageService);
 			const _updateService = inject(UpdateService);
+			const _localOwnerUseCase = inject(LocalOwnerUseCase);
 
-			// The session restore is a background refresh, not a boot gate: the app
-			// starts as `unknown` and whatever reads the store reacts when it settles,
-			// so the initializer fires it without awaiting the result.
-			//
-			// El ciclo de sincronización sí es una puerta, y va detrás: quién ha entrado
-			// decide si hay resumen que pedir, y hasta que la pasada termina la aplicación
-			// enseña el splash en vez de datos a medias.
+			// The session restore is a background refresh and not a boot gate, so it is fired
+			// without awaiting; the sync cycle behind it is the gate.
 			const sessionStore = inject(SessionStore);
 			const syncStore = inject(SyncStore);
 
@@ -42,7 +41,6 @@ export const appConfig: ApplicationConfig = {
 		}),
 		provideRouter(
 			APP_ROUTES,
-			withHashLocation(),
 			withRouterConfig({
 				paramsInheritanceStrategy: 'always',
 				onSameUrlNavigation: 'reload',
@@ -58,6 +56,7 @@ export const appConfig: ApplicationConfig = {
 			},
 			loader: TranslocoLoaderService,
 		}),
+		{ provide: LocationStrategy, useClass: SingleEntryLocationStrategy },
 		{ provide: TitleStrategy, useClass: TemplatePageTitleStrategy },
 		provideServiceWorker('ngsw-worker.js', {
 			enabled: !isDevMode(),

@@ -113,18 +113,16 @@ export class SelectStore extends signalStore({ protectedState: false }, withStat
 	}
 
 	/**
-	 * While true, the keyboard owns the highlight and mouse hovers are
-	 * ignored — set on arrow navigation, released when the pointer actually
-	 * moves (see SelectOutsideDismissal).
+	 * While true the keyboard owns the highlight and hovers are ignored: set on arrow
+	 * navigation, released when the pointer really moves.
 	 */
 	setKeyboardNavigating(keyboardNavigating: boolean): void {
 		patchState(this, { keyboardNavigating });
 	}
 
 	/**
-	 * Arrow navigation also declares the intent to pick the highlight (see
-	 * `arrowNavigated`): Space then confirms it instead of behaving as one
-	 * more search / type-ahead character. Typing again withdraws the intent.
+	 * Arrowing declares the intent to pick the highlight, so Space confirms it instead of
+	 * being one more search character. Typing again withdraws that intent.
 	 */
 	moveHighlight(step: 1 | -1): void {
 		patchState(this, { arrowNavigated: true });
@@ -152,10 +150,8 @@ export class SelectStore extends signalStore({ protectedState: false }, withStat
 	}
 
 	/**
-	 * Moves the highlight to the first enabled option whose label starts
-	 * with the type-ahead query, case-insensitively (the empty placeholder
-	 * option doesn't count). A query without matches leaves the current
-	 * highlight untouched, like a native select.
+	 * Highlights the first enabled option whose label starts with the query. A query with no
+	 * match leaves the highlight untouched, like a native select.
 	 */
 	highlightTypeahead(query: string): void {
 		patchState(this, { arrowNavigated: false });

@@ -74,7 +74,7 @@ export function attemptNode(clientRef: string, lichessId: string): PlainNode<Pus
 		hintUsed: false,
 		mistakeCount: 0,
 		record: [],
-		explorations: [],
+		freePlayRuns: [],
 	};
 }
 
@@ -84,7 +84,7 @@ export function roundNode(refs: TreeRefs): PlainNode<PushCalibrationRoundNodeDto
 		createdAt: BORN,
 		updatedAt: CLOSED,
 		index: 1,
-		kind: CalibrationRoundKind.Scan,
+		kind: CalibrationRoundKind.Exploration,
 		rating: 1500,
 		outcome: CalibrationRoundOutcome.Accept,
 		puzzles: [
@@ -121,8 +121,8 @@ export function cycleNode(refs: TreeRefs): PlainNode<PushCycleNodeDto> {
 }
 
 /**
- * Un árbol con una fila de cada tabla, que es lo que hace falta para que un recuento
- * signifique algo: si la subida duplicase, duplicaría en alguna de las ocho.
+ * A tree with one row per table, which is what makes a count mean anything: a push that
+ * duplicated would duplicate in one of the eight.
  */
 export function trainingNode(refs: TreeRefs): PlainNode<PushTrainingNodeDto> {
 	return {

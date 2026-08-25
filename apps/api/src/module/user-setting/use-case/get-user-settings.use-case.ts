@@ -9,8 +9,8 @@ export class GetUserSettingsUseCase {
 	constructor(private readonly userSettingRepository: UserSettingRepository) {}
 
 	/**
-	 * Devuelve sólo las filas que existen. La ausencia de una clave significa "valor por
-	 * defecto del código", así que el front rellena los huecos y aquí no se inventa nada.
+	 * Only the rows that exist. A missing key means the code's default, so the front fills the
+	 * gaps and nothing is invented here.
 	 */
 	async execute(user: User): Promise<UserSetting[]> {
 		return this.userSettingRepository.getMany({ user: user.uuid });

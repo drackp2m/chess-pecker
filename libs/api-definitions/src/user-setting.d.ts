@@ -1,6 +1,6 @@
 /**
- * El payload va envuelto en lugar de suelto para que un ajuste escalar pueda ganar campos
- * más adelante sin cambiar el tipo de la columna.
+ * The payload is wrapped rather than bare, so a scalar setting can gain fields later without
+ * changing the column's type.
  */
 export interface SettingValue<T = unknown> {
 	value: T;

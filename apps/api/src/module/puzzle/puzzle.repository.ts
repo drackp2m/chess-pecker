@@ -11,8 +11,8 @@ interface CatalogVersionRow {
 
 export class PuzzleRepository extends CustomRepository<Puzzle> {
 	/**
-	 * La importación es un upsert por `lichessId`: reimportar el mismo CSV no duplica y
-	 * refresca rating y popularidad, que en Lichess se mueven.
+	 * The import upserts on `lichessId`, so re-importing the same CSV duplicates nothing and
+	 * refreshes rating and popularity, both of which move on Lichess.
 	 */
 	async upsertManyByLichessId(puzzles: Puzzle[]): Promise<Puzzle[]> {
 		if (0 === puzzles.length) {
@@ -35,9 +35,8 @@ export class PuzzleRepository extends CustomRepository<Puzzle> {
 	}
 
 	/**
-	 * La versión del catálogo. La importación es un upsert que refresca rating y popularidad,
-	 * así que esta marca se mueve aunque el total no cambie, que es justo lo que hace falta
-	 * para que una réplica sepa que se ha quedado vieja.
+	 * The catalogue version. The import upserts rating and popularity, so this moves even when
+	 * the total does not, which is how a replica learns it has gone stale.
 	 */
 	async lastUpdatedAt(): Promise<Date | null> {
 		const rows = (await this.entityManager
@@ -53,13 +52,8 @@ export class PuzzleRepository extends CustomRepository<Puzzle> {
 	}
 
 	/**
-	 * Una muestra de una franja de ELO cerrada por arriba. Lo usan tanto la calibración
-	 * (sondeos y rondas de diez) como la selección del set de trabajo.
-	 *
-	 * La muestra sale de una ventana con desplazamiento aleatorio sobre el orden de `uuid`
-	 * —que al ser v4 no guarda relación con nada— en lugar de un `order by random()`, que
-	 * obligaría a bajar al QueryBuilder del driver. Así el coste es el del `limit` y no el de
-	 * ordenar la tabla entera.
+	 * A sample of an ELO band, drawn through a randomly offset window over `uuid` order rather
+	 * than `order by random()`: the cost is the `limit` and not sorting the whole table.
 	 */
 	async getManyRandomByRating(
 		ratingMin: number,

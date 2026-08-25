@@ -205,9 +205,8 @@ describe('PuzzleSolverComponent', () => {
 	});
 
 	/**
-	 * The store decides what may be pressed; the row only paints it. Every state here is
-	 * checked twice — against the buttons and against `navControls`, which is what the
-	 * store's own specs read — so neither side can drift away from the other.
+	 * The store decides what may be pressed; the row only paints it. Every state is checked
+	 * against both, so neither side can drift away from the other.
 	 */
 	it('gates the line controls on what the store says, and only on that', () => {
 		const host = createHost();

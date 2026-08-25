@@ -81,7 +81,7 @@ describe('openPuzzle', () => {
 		expect(opened.outcome).toBe('opening');
 		// The line is the log folded out, so opening one is emptying the log.
 		expect(opened.record).toEqual([]);
-		expect(opened.explorations).toEqual([]);
+		expect(opened.freePlayRuns).toEqual([]);
 	});
 });
 
@@ -97,7 +97,7 @@ describe('the free play anchor', () => {
 		expect(anchorFreePlay(LINE, undefined).deviation).toBeUndefined();
 	});
 
-	it('lets go of the exploration rather than unwriting it', () => {
+	it('lets go of the free-play run rather than unwriting it', () => {
 		const anchor = anchorFreePlay(LINE, undefined);
 		const patch = restore(anchor, 6);
 

@@ -65,11 +65,8 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * The board outlives the page it is drawn on, so an exercise picked up again is the
-	 * one that was left — cursor, line and all. What it must not be is the beat it was
-	 * left mid-way through: the board is redrawn from scratch here, and a rewind still
-	 * standing in it would be run again as if it had just been asked for. It is replayed
-	 * from the line instead, which is what the position on screen was arrived at by.
+	 * The board outlives its page, so an exercise comes back cursor and line intact — but not
+	 * mid-beat: a rewind left standing would be run again as if just asked for.
 	 */
 	async open(): Promise<void> {
 		if (this.isReviewing) {
@@ -158,8 +155,8 @@ export class TrainingSolveSession {
 			hintUnlocked: this.board.hintUnlocked(),
 			restore: {
 				record: [...this.board.record()],
-				explorations: this.board
-					.explorations()
+				freePlayRuns: this.board
+					.freePlayRuns()
 					.map((run) => ({ at: run.at, events: [...run.events] })),
 				closure: this.board.closure(),
 				hintUsed: this.board.hintUsed(),
@@ -178,8 +175,8 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * Both the slot and the board are set in the same synchronous block, so the grading
-	 * effect can never pair a fresh exercise with the verdict of the previous one.
+	 * Slot and board are set in one synchronous block, so the grading effect cannot pair a
+	 * fresh exercise with the previous verdict.
 	 */
 	private syncBoard(slot: TrainingRunSlot | null): void {
 		if (null === slot || this.isReviewing) {
@@ -204,12 +201,8 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * An exercise is reopened on the row it left behind, not from zero: the clock is picked
-	 * up where it stopped and the board is folded back out of the record, so what comes back
-	 * is the exercise as it was left rather than a fresh one about to overwrite it.
-	 *
-	 * The board is restored before anything is written, which is what makes the draft safe
-	 * to flush again — a reload that touches nothing writes back what it read.
+	 * Reopened on the row it left behind: the clock resumes and the board is folded back out
+	 * of the record before anything is written, so a reload that touches nothing is safe.
 	 */
 	private async openDraft(
 		slot: TrainingRunSlot,
@@ -245,8 +238,8 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * Un ejercicio ya cerrado se vuelve a poner en el tablero —está ahí para mirarlo— pero
-	 * es definitivo: no se le abre borrador y no se le escribe nada más.
+	 * A closed exercise goes back on the board to be looked at, but it is final: no draft is
+	 * opened for it and nothing more is written.
 	 */
 	private async openClosed(slot: TrainingRunSlot, identity: AttemptIdentity): Promise<boolean> {
 		const closed = await this.drafts.findClosed(identity).catch(() => undefined);
@@ -267,7 +260,7 @@ export class TrainingSolveSession {
 
 		return {
 			record: row.record,
-			explorations: row.explorations,
+			freePlayRuns: row.freePlayRuns,
 			closure,
 			hintUsed: row.hintUsed,
 			mistakeCount: row.mistakeCount,
@@ -296,16 +289,8 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * Everything the row is composed from is read synchronously, so a flush in flight
-	 * while the next exercise opens still writes the clock of the one it belongs to.
-	 * A failed write is swallowed on purpose: losing the draft must not stop the solve.
-	 *
-	 * The verdict goes in as soon as the board settles it, which is not the end of the
-	 * exercise any more: what says the row is finished is its closure.
-	 *
-	 * Nothing guards what it writes any more: the board it reads is the one the stored row
-	 * was folded back onto, so a reload that touches nothing writes the very record it
-	 * came in with.
+	 * The row is read synchronously, so a flush in flight while the next exercise opens still
+	 * writes the clock it belongs to. A failed write is swallowed: the solve must not stop.
 	 */
 	private flush(): Promise<void> {
 		const draft = this.draft;
@@ -322,7 +307,7 @@ export class TrainingSolveSession {
 				durationMs,
 				updatedAt,
 				record: this.board.record(),
-				explorations: this.board.explorations(),
+				freePlayRuns: this.board.freePlayRuns(),
 				hintUsed: this.board.hintUsed(),
 				mistakeCount: this.board.mistakeCount(),
 				...(undefined === result ? {} : { solved: 'solved' === result }),
@@ -331,10 +316,8 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * Submits the attempt when the exercise closes, which is once the solution is out —
-	 * found or given up on — and not when the verdict was settled: the board seals that
-	 * on the first try, but the clock runs for as long as the exercise is still being
-	 * worked on. The closure is settled once too, so this submits exactly once.
+	 * Submits when the exercise closes, not when the verdict settles: the clock runs while it
+	 * is still worked on. The closure settles once, so this submits exactly once.
 	 */
 	private submitIfClosed(closure: PuzzleClosure): void {
 		const slot = this.slot;
@@ -354,8 +337,8 @@ export class TrainingSolveSession {
 	}
 
 	/**
-	 * Todo lo que hay que leer del tablero se lee de una vez, antes del primer `await`:
-	 * para cuando la fila esté sellada, la partida en pantalla puede ser ya la siguiente.
+	 * Everything is read off the board before the first `await`: by the time the row is
+	 * sealed, the game on screen may already be the next one.
 	 */
 	private async submit(closure: TrainingAttemptRecord['closure'], solved: boolean): Promise<void> {
 		const draft = this.draft;
@@ -366,8 +349,8 @@ export class TrainingSolveSession {
 			hintUsed: this.board.hintUsed(),
 			mistakeCount: this.board.mistakeCount(),
 			record: [...this.board.record()],
-			explorations: this.board
-				.explorations()
+			freePlayRuns: this.board
+				.freePlayRuns()
 				.map((run) => ({ at: run.at, events: [...run.events] })),
 		};
 
@@ -383,14 +366,13 @@ export class TrainingSolveSession {
 
 		await this.run.grade(attempt);
 
-		// El ejercicio cerrado sube en cuanto está sellado, sin esperar a la pasada siguiente:
-		// entrenar es justo cuando el dispositivo se puede quedar sin batería o sin pestaña.
+		// Uploaded as soon as it is sealed: training is exactly when a device loses battery.
 		void this.sync.push();
 	}
 
 	/**
-	 * El borrador se convierte en intento en cuanto el ejercicio se cierra: de aquí en
-	 * adelante la fila es la que sube, y ya no la toca nadie más.
+	 * The draft becomes an attempt the moment the exercise closes: from here on the row is
+	 * the one that uploads, and nothing else touches it.
 	 */
 	private async seal(
 		draft: AttemptDraft,
@@ -402,7 +384,7 @@ export class TrainingSolveSession {
 				durationMs: timing.durationMs,
 				updatedAt: new Date(timing.updatedAt),
 				record: attempt.record,
-				explorations: attempt.explorations,
+				freePlayRuns: attempt.freePlayRuns,
 				hintUsed: attempt.hintUsed,
 				mistakeCount: attempt.mistakeCount,
 				solved: attempt.solved,

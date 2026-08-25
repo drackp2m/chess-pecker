@@ -7,6 +7,8 @@ export enum SettingType {
 	MOVE_INPUT = 'move-input',
 	MOVE_SPEED = 'move-speed',
 	SOUND = 'sound',
+	INTRO = 'intro',
+	OWNER = 'owner',
 }
 
 export type SettingTypeKey = keyof typeof SettingType;

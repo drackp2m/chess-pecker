@@ -16,8 +16,8 @@ export class GetCalibrationRoundPuzzlesUseCase {
 	) {}
 
 	/**
-	 * Reanudar una ronda a medias es lo que hace un F5, y lo que quedaba por intentar no
-	 * dice por sí solo por dónde iba: de ahí que el reparto entero viaje con la respuesta.
+	 * Resuming a half-finished round is what an F5 does, and what is left to attempt does not
+	 * say where it stood, which is why the whole deal travels with the response.
 	 */
 	async execute(training: Training, roundUuid: string): Promise<CalibrationRoundPuzzles> {
 		const round = await this.calibrationRoundRepository.getOne({ uuid: roundUuid });

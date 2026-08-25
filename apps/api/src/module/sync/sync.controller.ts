@@ -13,8 +13,8 @@ import { GetTrainingTreeUseCase } from './use-case/get-training-tree.use-case';
 import { PushTrainingTreeUseCase } from './use-case/push-training-tree.use-case';
 
 /**
- * El almacén de la réplica. Aquí no se entrena: se guarda lo que el dispositivo ya decidió,
- * que es donde vive el dominio desde que la aplicación es local-first.
+ * The replica's store. No training happens here: it keeps what the device already decided,
+ * which is where the domain lives.
  */
 @Controller('sync')
 export class SyncController {
@@ -25,7 +25,7 @@ export class SyncController {
 		private readonly pushTrainingTreeUseCase: PushTrainingTreeUseCase,
 	) {}
 
-	/** Qué hay aquí: por tabla, hasta dónde llega el reloj de servidor y cuántas filas hay. */
+	/** What is here: per table, how far the server clock reaches and how many rows there are. */
 	@Get()
 	async getSummary(@CurrentUser() user: User): Promise<SyncSummary> {
 		return this.getSyncSummaryUseCase.execute(user);

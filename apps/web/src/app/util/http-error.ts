@@ -2,6 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { I18n, i18nRef } from '@app/i18n';
+import { LocalFailureError } from '@app/util/local-failure-error';
 
 export const API_FAILURE = {
 	emptyCatalog: 'rating/not enough puzzles',
@@ -17,6 +18,12 @@ const FAILURE_KEYS: Readonly<Record<string, string>> = {
 
 export abstract class HttpError {
 	static toRef(error: unknown, fallback: TranslationRef): TranslationRef {
+		const local = LocalFailureError.toRef(error);
+
+		if (undefined !== local) {
+			return local;
+		}
+
 		if (!(error instanceof HttpErrorResponse)) {
 			return fallback;
 		}

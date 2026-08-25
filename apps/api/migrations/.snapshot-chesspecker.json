@@ -604,8 +604,8 @@
           "enumItems": [],
           "mappedType": "json"
         },
-        "explorations": {
-          "name": "explorations",
+        "free_play_runs": {
+          "name": "free_play_runs",
           "type": "jsonb",
           "unsigned": false,
           "autoincrement": false,
@@ -870,7 +870,7 @@
             "planning",
             "running",
             "finished",
-            "abandoned"
+            "cancelled"
           ],
           "mappedType": "enum"
         },
@@ -981,10 +981,10 @@
       ],
       "checks": [
         {
-          "name": "training_abandoned_matches_reason_check",
-          "columnName": "status",
-          "definition": "CHECK (((finished_reason IS NULL) OR ((status = 'abandoned'::text) = (finished_reason = 'cancelled'::text))))",
-          "expression": "(finished_reason IS NULL) OR ((status = 'abandoned'::text) = (finished_reason = 'cancelled'::text))"
+          "name": "training_cancelled_matches_reason_check",
+          "columnName": "finished_reason",
+          "definition": "CHECK (((finished_reason IS NULL) OR ((status = 'cancelled'::text) = (finished_reason = 'cancelled'::text))))",
+          "expression": "(finished_reason IS NULL) OR ((status = 'cancelled'::text) = (finished_reason = 'cancelled'::text))"
         }
       ],
       "foreignKeys": {
@@ -1311,7 +1311,7 @@
           "default": null,
           "comment": null,
           "enumItems": [
-            "scan",
+            "exploration",
             "refine"
           ],
           "mappedType": "enum"
@@ -1545,7 +1545,7 @@
           "enumItems": [
             "running",
             "finished",
-            "abandoned"
+            "cancelled"
           ],
           "mappedType": "enum"
         },
@@ -2015,7 +2015,7 @@
       "checks": [
         {
           "name": "training_goal_has_target_check",
-          "columnName": "puzzles_per_day",
+          "columnName": "end_date",
           "definition": "CHECK (((puzzles_per_day IS NOT NULL) OR (end_date IS NOT NULL)))",
           "expression": "(puzzles_per_day IS NOT NULL) OR (end_date IS NOT NULL)"
         }

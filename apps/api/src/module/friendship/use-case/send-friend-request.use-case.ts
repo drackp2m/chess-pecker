@@ -25,12 +25,12 @@ export class SendFriendRequestUseCase {
 		}
 
 		if (await this.userBlockRepository.existsBetween(requester.uuid, addressee.uuid)) {
-			// Sin detallar quién bloqueó a quién: decirlo confirmaría al bloqueado que lo está.
+			// Without saying who blocked whom, which would confirm the block to the blocked.
 			throw new ForbiddenException('not allowed', 'friendship');
 		}
 
-		// Las rechazadas no cuentan: se puede volver a pedir. Las pendientes y las aceptadas
-		// sí, y el índice único parcial lo garantiza aunque dos peticiones lleguen a la vez.
+		// Rejected ones do not count, since asking again is allowed; pending and accepted do,
+		// and the partial unique index holds even for two requests arriving at once.
 		if (
 			undefined !==
 			(await this.friendshipRepository.getActiveBetween(requester.uuid, addressee.uuid))

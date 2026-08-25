@@ -35,6 +35,10 @@ export class TrainingStore
 
 	readonly runningCycle = computed(() => this.cycles().find((cycle) => 'running' === cycle.status));
 
+	readonly canSolve = computed(
+		() => 'calibrating' === this.active()?.status || undefined !== this.runningCycle(),
+	);
+
 	/** A cycle can only be opened when the previous one is closed and the set is fixed. */
 	readonly canStartCycle = computed(() => {
 		const progress = this.progress();
@@ -52,9 +56,8 @@ export class TrainingStore
 	private readonly engine = inject(TrainingEngineUseCase);
 
 	/**
-	 * Sólo lee lo que hay aquí. El histórico lo baja el ciclo de sincronización antes de que
-	 * la aplicación sirva datos, así que al llegar aquí los ejercicios ya resueltos están
-	 * donde se los va a buscar.
+	 * Reads only what is already here: the sync cycle pulls the history before the app serves
+	 * data, so the solved exercises are in place by the time this runs.
 	 */
 	async load(): Promise<void> {
 		patchState(this, { isLoading: true, error: null });
@@ -96,7 +99,7 @@ export class TrainingStore
 	async setGoal(goal: SetTrainingGoalRequest): Promise<boolean> {
 		return this.withActive(
 			(uuid) => this.engine.setGoal(uuid, goal),
-			i18nRef(I18n.training.SET_GOAL_ERROR),
+			i18nRef(I18n.training.SAVE_PACE_ERROR),
 		);
 	}
 

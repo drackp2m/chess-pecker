@@ -5,13 +5,13 @@ import { IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validato
 import { TrainingPolicy } from '../../definition/training-policy';
 
 export class GetTrainingAttemptsRequestDto implements GetTrainingAttemptsRequest {
-	/** El `cursor` de la respuesta anterior: el intento por el que se cortó la página. */
+	/** The previous response's `cursor`: the attempt the page was cut at. */
 	@IsOptional()
 	@IsString()
 	@MaxLength(255)
 	since?: string;
 
-	/** Intentos por página. Por defecto, la página entera. */
+	/** Attempts per page. Defaults to the whole page. */
 	@IsOptional()
 	@Type(() => Number)
 	@IsInt()

@@ -15,9 +15,8 @@ export class FriendshipRepository {
 	private readonly apiSdk = inject(ApiSdkService);
 
 	/**
-	 * Answers with the *other person*, not with the `friendship` row, which is what the
-	 * screen paints. Undoing a friendship therefore goes by the friend's uuid — see
-	 * `removeByUser()` — because the uuid of the row never reaches the client.
+	 * Answers with the other person and not the `friendship` row, which is why undoing goes
+	 * by the friend's uuid: the row's own never reaches the client.
 	 */
 	async listFriends(): Promise<readonly FriendUser[]> {
 		return this.apiSdk.GET.friendship('');
@@ -49,9 +48,8 @@ export class FriendshipRepository {
 	}
 
 	/**
-	 * The same removal, by the uuid of the other person: the friends list is made of
-	 * users, so this is the one the "unfriend" button can call. At most one live row
-	 * exists between two people, so there is nothing to disambiguate.
+	 * The same removal by the other person's uuid, which is the one the button can call. At
+	 * most one live row exists per pair, so there is nothing to disambiguate.
 	 */
 	async removeByUser(userUuid: string): Promise<void> {
 		return this.apiSdk.DELETE.friendship('/user/:uuid', { path: { uuid: userUuid } });

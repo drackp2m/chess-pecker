@@ -31,9 +31,8 @@ export class GetTrainingProgressUseCase {
 	) {}
 
 	/**
-	 * Todo lo que se enseña del entrenamiento sale de aquí, y todo es agregado sobre
-	 * `puzzle_attempt`: ni el tiempo por ciclo ni la tasa de acierto se almacenan, porque son
-	 * sumas sobre filas que ya no cambian.
+	 * Everything shown about a training, aggregated over `puzzle_attempt`: none of it is
+	 * stored, being sums over rows that no longer change.
 	 */
 	async execute(training: Training): Promise<TrainingProgress> {
 		const calibration = await this.resolveCalibration(training);
@@ -48,11 +47,8 @@ export class GetTrainingProgressUseCase {
 				undefined === goal
 					? null
 					: { puzzlesPerDay: goal.puzzlesPerDay ?? null, endDate: goal.endDate ?? null },
-			// ToDo => la estimación ignora las dos cosas que la harían personalizada: el
-			// tiempo medio de la calibración —que es de donde sale cuántos ejercicios entran
-			// en los minutos al día que el usuario quiere dedicar— y el `endDate` del
-			// objetivo, que es la otra mitad del ritmo y aquí no se mira, así que un objetivo
-			// fijado sólo por fecha estima `null`.
+			// ToDo => the estimate ignores the two things that would personalise it: the
+			// calibration average, and the goal's `endDate`, so a date-only goal estimates `null`.
 			estimatedFirstCycleDays:
 				undefined === goal?.puzzlesPerDay || 0 === setSize
 					? null
@@ -88,16 +84,16 @@ export class GetTrainingProgressUseCase {
 	}
 
 	/**
-	 * Cada pasada se exige sobre el tiempo real de la primera, que es contra lo que el método
-	 * mide el éxito. El ciclo 1 no tiene objetivo: es el listón.
+	 * Every pass is held to the first one's real time, which is what the method measures
+	 * success against. Cycle 1 has no target: it is the bar.
 	 */
 	private static resolveTarget(index: number, firstCycleDurationMs: number | null): number | null {
 		if (1 === index || null === firstCycleDurationMs || 0 === firstCycleDurationMs) {
 			return null;
 		}
 
-		// A partir del último factor se mantiene el último: los ciclos 5, 6 y 7 se exigen como
-		// el 4, que ya es "lo más rápido posible manteniendo aciertos".
+		// The last factor holds from there on: cycles 5, 6 and 7 are held to cycle 4, already
+		// "as fast as possible without losing accuracy".
 		const factors = TrainingPolicy.cycleTargetFactors;
 		const factor = factors[Math.min(index - 2, factors.length - 1)];
 
@@ -128,7 +124,7 @@ export class GetTrainingProgressUseCase {
 		return improvement < TrainingPolicy.plateauImprovement;
 	}
 
-	/** El ELO con el que se cerró la calibración, y lo que costó llegar hasta él. */
+	/** The ELO the calibration closed on, and what it took to get there. */
 	private async resolveCalibration(training: Training): Promise<TrainingProgress['calibration']> {
 		const rounds = await this.resolveCalibrationRounds(training);
 		const accepted = rounds.find((round) => CalibrationRoundOutcome.Accept === round.outcome);
@@ -141,8 +137,8 @@ export class GetTrainingProgressUseCase {
 	}
 
 	/**
-	 * Ronda a ronda, que es como se lee una calibración: dónde probó, cuánto se acertó allí y
-	 * hacia dónde mandó eso a la siguiente.
+	 * Round by round, which is how a calibration reads: where it tried, how much landed there,
+	 * and where that sent the next one.
 	 */
 	private async resolveCalibrationRounds(training: Training): Promise<CalibrationRoundProgress[]> {
 		const rounds = await this.calibrationRoundRepository.getManyByTraining(training.uuid);
@@ -170,8 +166,8 @@ export class GetTrainingProgressUseCase {
 	}
 
 	/**
-	 * Una pasada por ciclo, en orden: el objetivo de cada uno se mide contra la duración real
-	 * del primero, así que hay que haberlo recorrido antes de poder exigir nada a los demás.
+	 * One pass per cycle, in order: each target measures against the first cycle's real
+	 * duration, so that one has to be walked before anything can be asked of the rest.
 	 */
 	private async resolveCycles(training: Training): Promise<CycleProgress[]> {
 		const cycles = await this.trainingCycleRepository.getManyByTraining(training.uuid);

@@ -17,9 +17,9 @@ import { HttpError } from '@app/util/http-error';
 export interface SyncPushReport {
 	readonly confirmed: number;
 	readonly rejected: number;
-	/** Entrenamientos que siguen con algo por subir cuando la pasada termina. */
+	/** Trainings still holding something to push when the pass ends. */
 	readonly pendingTrainings: number;
-	/** Se cortó por algo pasajero: la red, un 5xx o una petición que no llegó a volver. */
+	/** Cut short by something transient: the network, a 5xx, a request that never returned. */
 	readonly interrupted: boolean;
 }
 
@@ -34,22 +34,19 @@ interface PushOutcome {
 }
 
 interface PushPass extends PushOutcome {
-	/** El uuid definitivo del entrenamiento, si esta petición es la que se lo acaba de dar. */
+	/** The training's final uuid, when this request is the one that just gave it one. */
 	readonly trainingUuid: string | undefined;
 }
 
 /**
- * Un 4xx sobre el árbol entero no es un choque de datos: es una petición que el servidor no
- * va a aceptar nunca, y reintentarla sería girar en el sitio para siempre.
+ * A 4xx over the whole tree is not a data clash but a request the server will never accept,
+ * and retrying it would spin in place forever.
  */
 const REFUSING_STATUS = new Set([400, 403, 409, 422]);
 
 /**
- * Todo lo que se escribió aquí y no está arriba, subido solo.
- *
- * La unidad es el árbol de un entrenamiento y no la fila, y una subida cortada se repite sin
- * miedo: el servidor busca por la clave de reintento antes de insertar, así que lo que ya
- * entró vuelve con el uuid que tiene en vez de duplicarse.
+ * Everything written here and not up there, pushed on its own. The unit is a training's tree,
+ * and a cut push repeats safely: the server looks up the retry key before inserting.
  */
 @Injectable({
 	providedIn: 'root',
@@ -69,7 +66,7 @@ export class SyncPushUseCase {
 
 			settled = addSettled(settled, outcome.settled);
 
-			// La red no vuelve para el árbol siguiente: lo que queda espera a la pasada que viene.
+			// The network will not be back for the next tree: the rest waits for the next pass.
 			if (outcome.interrupted) {
 				interrupted = true;
 
@@ -82,7 +79,7 @@ export class SyncPushUseCase {
 		return { ...settled, pendingTrainings: pending.length, interrupted };
 	}
 
-	/** Un árbol, en tantas peticiones como haga falta: lo que no cabe en una va en la siguiente. */
+	/** One tree in as many requests as it takes: what does not fit goes in the next. */
 	private async pushTraining(uuid: string): Promise<PushOutcome> {
 		let trainingUuid = uuid;
 		let settled = NOTHING_SETTLED;
@@ -99,7 +96,7 @@ export class SyncPushUseCase {
 			settled = addSettled(settled, pass.settled);
 			trainingUuid = pass.trainingUuid ?? trainingUuid;
 
-			// Sin una sola fila sellada ni rechazada, volver a mandar lo mismo daría lo mismo.
+			// With not one row sealed or refused, sending the same again would change nothing.
 			if (pass.interrupted || 0 === pass.settled.confirmed + pass.settled.rejected) {
 				return { settled, interrupted: pass.interrupted };
 			}
@@ -121,8 +118,8 @@ export class SyncPushUseCase {
 			return { settled, interrupted: false, trainingUuid: undefined };
 		}
 
-		// Las claves antes que los sellos: sellar una fila que todavía no se ha movido la
-		// dejaría al servidor con un uuid y aquí con otro.
+		// Keys before seals: sealing a row that has not moved yet would leave the server on one
+		// uuid and this side on another.
 		await this.rekey.execute(push.trainingUuid, answer.result.uuids);
 
 		return {

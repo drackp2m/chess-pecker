@@ -5,10 +5,10 @@ import { TrainingActivityDay } from './definition/training-activity.interface';
 import { PuzzleAttempt } from './puzzle-attempt.entity';
 
 const ACTIVITY_BY_DAY = `select to_char(pa.updated_at, 'YYYY-MM-DD') as date,
-        count(*)::int as count,
-        count(*) filter (where pa.solved)::int as solved,
-        count(*) filter (where not pa.solved and pa.closure <> 'revealed')::int as failed,
-        count(*) filter (where not pa.solved and pa.closure = 'revealed')::int as resigned,
+        count(*)::int as done,
+        count(*) filter (where pa.solved)::int as "firstTry",
+        count(*) filter (where not pa.solved and pa.closure <> 'revealed')::int as "afterMiss",
+        count(*) filter (where not pa.solved and pa.closure = 'revealed')::int as shown,
         count(*) filter (where pa.closure = 'found' and not pa.hint_used and pa.mistake_count = 0)::int as "foundClean",
         count(*) filter (where pa.closure = 'found' and pa.hint_used and pa.mistake_count = 0)::int as "foundHinted",
         count(*) filter (where pa.closure = 'found' and not pa.hint_used and pa.mistake_count > 0)::int as "foundMissed",

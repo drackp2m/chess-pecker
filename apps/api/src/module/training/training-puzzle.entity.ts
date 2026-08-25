@@ -7,12 +7,8 @@ import { TrainingPuzzleRepository } from './training-puzzle.repository';
 import { Training } from './training.entity';
 
 /**
- * Los X ejercicios seleccionados, sin orden: define **qué** entra en el entrenamiento. El
- * orden es propio de cada ciclo y vive en `training_cycle_item`.
- *
- * Separar set y orden garantiza por construcción que todos los ciclos recorren el mismo
- * set: un ciclo no puede meter un ejercicio que no esté aquí. X es `count(*)`, y la franja
- * de ELO de cada ejercicio es `puzzle.rating / 100`, calculada al vuelo al barajar.
+ * The selected exercises, unordered: what is in the training. Keeping the order out, in
+ * `training_cycle_item`, is what guarantees every cycle walks the same set.
  */
 @Entity({ repository: () => TrainingPuzzleRepository })
 @Unique({ properties: ['training', 'puzzle'] })

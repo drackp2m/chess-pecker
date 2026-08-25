@@ -22,7 +22,7 @@ type ConfirmTransaction = RepositoryTransaction<AppSchema, 'readwrite'>;
 interface Settlement {
 	readonly receivedAt: Date;
 	readonly uuids: PushTrainingResult['uuids'];
-	/** Por `entidad/uuid local`, el motivo por el que el servidor no la quiso. */
+	/** By `entity/local uuid`, the reason the server would not take it. */
 	readonly reasons: ReadonlyMap<string, string>;
 }
 
@@ -38,12 +38,8 @@ export function addSettled(left: SyncConfirmCount, right: SyncConfirmCount): Syn
 }
 
 /**
- * Lo que la respuesta de una subida deja escrito aquí: lo que entró queda sellado y deja de
- * estar pendiente, y lo que no va a entrar nunca queda marcado con su motivo para que no se
- * reintente en cada arranque hasta el fin de los tiempos.
- *
- * Va después del reclavado, así que las filas confirmadas ya viven bajo el uuid del
- * servidor; las rechazadas no se movieron y siguen bajo el suyo.
+ * What a push response writes back: what landed is sealed, what never will is marked with
+ * its reason. It runs after the rekey, so confirmed rows already live under server uuids.
  */
 @Injectable({
 	providedIn: 'root',
@@ -70,8 +66,8 @@ export class SyncConfirmUseCase {
 	}
 
 	/**
-	 * El servidor devolvió un 4xx sobre el árbol entero: no es un choque de datos sino una
-	 * petición que no va a aceptar nunca, así que todo lo que iba dentro deja de reintentarse.
+	 * A 4xx over the whole tree is not a data clash but a request the server will never take,
+	 * so everything inside it stops being retried.
 	 */
 	async rejectAll(push: TrainingTreePush, reason: string): Promise<SyncConfirmCount> {
 		const rejectedAt = new Date();
@@ -123,7 +119,7 @@ async function settleEntity(
 	return settled;
 }
 
-/** `0` cuando la fila ya no está: otra pestaña pudo llevársela mientras la subida viajaba. */
+/** `0` when the row is gone: another tab may have taken it while the push was in flight. */
 async function settleRow(
 	store: ConfirmStore,
 	uuid: string,

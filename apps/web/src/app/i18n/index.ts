@@ -6,6 +6,8 @@ import { AuthI18n } from '@app/i18n/auth/keys';
 import type { AuthI18nParams } from '@app/i18n/auth/params';
 import { DashboardI18n } from '@app/i18n/dashboard/keys';
 import type { DashboardI18nParams } from '@app/i18n/dashboard/params';
+import { IntroI18n } from '@app/i18n/intro/keys';
+import type { IntroI18nParams } from '@app/i18n/intro/params';
 import { CommonI18n } from '@app/i18n/keys';
 import { MatchI18n } from '@app/i18n/match/keys';
 import type { MatchI18nParams } from '@app/i18n/match/params';
@@ -23,6 +25,7 @@ export const I18n = {
 	auth: AuthI18n,
 	common: CommonI18n,
 	dashboard: DashboardI18n,
+	intro: IntroI18n,
 	match: MatchI18n,
 	profile: ProfileI18n,
 	puzzle: PuzzleI18n,
@@ -33,6 +36,7 @@ export const I18n = {
 type I18nParams = AuthI18nParams &
 	CommonI18nParams &
 	DashboardI18nParams &
+	IntroI18nParams &
 	MatchI18nParams &
 	ProfileI18nParams &
 	PuzzleI18nParams &

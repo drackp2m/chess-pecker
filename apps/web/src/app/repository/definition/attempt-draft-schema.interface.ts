@@ -3,10 +3,10 @@ import { DBSchema } from 'idb';
 
 import { FreePlayRun, PuzzleEvent } from '@app/definition/puzzle.type';
 
-/** El ejercicio a medias: sólo vive aquí, nunca sube, y se borra al sellarse. */
+/** The half-finished exercise: it lives only here, never uploads, and goes on sealing. */
 export interface AttemptDraftRow {
 	readonly slotId: string;
-	/** El que llevará el intento al sellarse. */
+	/** The one the attempt will carry once sealed. */
 	readonly uuid: string;
 	readonly trainingUuid: string;
 	readonly kind: PuzzleAttemptKind;
@@ -17,8 +17,8 @@ export interface AttemptDraftRow {
 	readonly lichessId: string;
 	readonly durationMs: number;
 	readonly record: readonly PuzzleEvent[];
-	readonly explorations: readonly FreePlayRun[];
-	/** Aún puede no haber veredicto. */
+	readonly freePlayRuns: readonly FreePlayRun[];
+	/** There may still be no verdict. */
 	readonly solved?: boolean;
 	readonly hintUsed: boolean;
 	readonly mistakeCount: number;

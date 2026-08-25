@@ -6,11 +6,8 @@ import { Migration } from '@app/repository/definition/migration.interface';
 type Closure = Pick<AttemptRowV14, 'closure' | 'hintUsed' | 'mistakeCount'>;
 
 /**
- * How an attempt written before v6 ended, which its verdict gives back exactly: back then
- * the exercise was over the moment it was graded, so a solved one was found first try with
- * no miss behind it, and a failed one ended on that single miss without the line ever being
- * played out —which is what giving up is. Nothing was ever hinted, because there was no
- * hint to take.
+ * How a pre-v6 attempt ended, which its verdict gives back exactly: the exercise was over
+ * the moment it was graded, and there was no hint to take.
  */
 function closeAsGraded(solved: boolean | undefined): Closure {
 	if (undefined === solved) {

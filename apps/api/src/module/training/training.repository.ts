@@ -25,8 +25,8 @@ export class TrainingRepository extends CustomRepository<Training> {
 	}
 
 	/**
-	 * Actualización dirigida: el cambio de estado se dispara desde sitios que ya tienen el
-	 * uuid pero no la entidad cargada, y así se ahorra el `select` previo.
+	 * A targeted update: the status change fires from places that hold the uuid but not the
+	 * loaded entity, so this saves the `select` in front of it.
 	 */
 	async updateStatus(uuid: string, status: TrainingStatus): Promise<void> {
 		await this.entityManager.fork().nativeUpdate(Training, { uuid }, { status });
@@ -35,7 +35,7 @@ export class TrainingRepository extends CustomRepository<Training> {
 	async finish(uuid: string, reason: TrainingFinishedReason, finishedAt: Date): Promise<void> {
 		const status =
 			TrainingFinishedReason.Cancelled === reason
-				? TrainingStatus.Abandoned
+				? TrainingStatus.Cancelled
 				: TrainingStatus.Finished;
 
 		await this.entityManager

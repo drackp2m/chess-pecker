@@ -42,7 +42,7 @@ function row(over: Partial<AttemptRow> = {}): AttemptRow {
 		lichessId: 'AAA11',
 		durationMs: 1000,
 		record: ['g8h8'],
-		explorations: [],
+		freePlayRuns: [],
 		solved: true,
 		closure: 'found',
 		hintUsed: false,

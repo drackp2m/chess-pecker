@@ -7,9 +7,8 @@ import { ChessFile, ChessRank, PieceColor, Square } from '@app/definition/chess.
  */
 export abstract class ChessSquare {
 	/**
-	 * Throws a `RangeError` on an off-board string, the way `fromIndex` does on an
-	 * off-board index. Unreachable from typed code, but a `Square` parsed out of a
-	 * user-supplied FEN is only as trustworthy as whoever cast it.
+	 * Throws a `RangeError` off the board, like `fromIndex`. Unreachable from typed code, but
+	 * a `Square` cast out of a user-supplied FEN is only as good as whoever cast it.
 	 */
 	static toIndex(square: Square): number {
 		const file = FILES.indexOf(square.charAt(0) as ChessFile);

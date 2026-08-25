@@ -6,10 +6,8 @@ export interface SelectOutsideDismissalHooks {
 }
 
 /**
- * Window-level listeners active only while the dropdown is open: the
- * pointerdown outside the shell that dismisses it (swallowed so it stays
- * inert, like a native popup's) and the mouse activity that decides whether
- * hovering may take the highlight back from the keyboard.
+ * Window listeners live only while the dropdown is open: the pointerdown that dismisses it,
+ * and the mouse activity deciding whether hovering may take the highlight back.
  */
 export class SelectOutsideDismissal {
 	private lastMousePosition: { x: number; y: number } | null = null;
@@ -34,10 +32,8 @@ export class SelectOutsideDismissal {
 	}
 
 	/**
-	 * Mimics native popup dismissal: the pointerdown that closes the dropdown
-	 * is swallowed before reaching its target (hence the capture phase), so
-	 * it neither moves the focus nor activates whatever sits under the
-	 * pointer — e.g. another select's shell.
+	 * Native popup dismissal: the closing pointerdown is swallowed in the capture phase, so it
+	 * neither moves focus nor activates whatever sits under the pointer.
 	 */
 	private readonly onPointerDown = (event: PointerEvent): void => {
 		if (this.hooks.isInsideShell(event.target as Node)) {
@@ -51,10 +47,8 @@ export class SelectOutsideDismissal {
 	};
 
 	/**
-	 * A swallowed pointerdown still produces a click; consume it too so the
-	 * dismissing interaction stays inert end to end. Disarmed by the next
-	 * pointerdown in case the click never fires (e.g. the pointer was
-	 * dragged away before release).
+	 * A swallowed pointerdown still produces a click, so that is consumed too. Disarmed by the
+	 * next pointerdown in case the click never fires.
 	 */
 	private swallowNextClick(): void {
 		const controller = new AbortController();
@@ -95,11 +89,8 @@ export class SelectOutsideDismissal {
 	};
 
 	/**
-	 * After a keyboard-driven scroll the browser re-synthesizes a mousemove
-	 * at the unchanged pointer position to refresh the hover state. While
-	 * the keyboard owns the highlight those echoes must not hand it back to
-	 * the mouse — only an actual pointer movement (changed coordinates)
-	 * releases the flag.
+	 * A keyboard-driven scroll makes the browser re-synthesise a mousemove at the unchanged
+	 * position, so only changed coordinates release the keyboard's hold on the highlight.
 	 */
 	private isMouseEcho(event: MouseEvent): boolean {
 		const last = this.lastMousePosition;

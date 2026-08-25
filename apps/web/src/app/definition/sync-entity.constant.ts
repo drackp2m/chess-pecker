@@ -3,8 +3,8 @@ import type { SyncEntity } from '@chesspecker/api-definitions';
 import { I18n } from '@app/i18n';
 
 /**
- * Las ocho tablas del entrenamiento, que se llaman igual aquí y en el servidor, en el orden
- * topológico en el que suben: un hijo necesita el uuid definitivo de su padre.
+ * The eight training tables, named the same here as on the server, in the topological order
+ * they upload in: a child needs its parent's final uuid.
  */
 export const SYNC_ENTITIES: readonly SyncEntity[] = [
 	'training',

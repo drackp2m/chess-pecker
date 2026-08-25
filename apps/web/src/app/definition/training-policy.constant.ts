@@ -2,9 +2,9 @@ export const TrainingPolicy = {
 	minRating: 400,
 	maxRating: 2500,
 
-	scanRounds: 4,
-	scanStartRating: 1200,
-	scanInitialStep: 600,
+	explorationRounds: 4,
+	explorationStartRating: 1200,
+	explorationInitialStep: 600,
 
 	refinePuzzles: 10,
 	refineUpperAccuracy: 0.9,

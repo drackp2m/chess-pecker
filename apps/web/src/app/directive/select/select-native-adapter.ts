@@ -1,9 +1,6 @@
 /**
- * Wraps the native `<select>` element reads/writes the directive needs:
- * resolving its id, reading the currently selected text, checking whether
- * it has a value, and applying a new value while notifying reactive forms
- * via a synthetic `change` event (since setting `.value` programmatically
- * doesn't fire one on its own).
+ * Wraps the reads and writes the directive needs on the native `<select>`, including the
+ * synthetic `change` a programmatic `.value` write does not fire on its own.
  */
 export class SelectNativeAdapter {
 	private optionsObserver: MutationObserver | null = null;
@@ -11,11 +8,8 @@ export class SelectNativeAdapter {
 	constructor(private readonly selectElement: HTMLSelectElement) {}
 
 	/**
-	 * Watches the projected `<option>` list, which the directive only scans
-	 * once at init: options rendered asynchronously or relabeled later would
-	 * otherwise never reach the store. Text edits arrive as characterData
-	 * mutations; note that property-only writes (e.g. `[value]` re-bound on
-	 * a reused element) are invisible to a MutationObserver.
+	 * Watches the projected options, scanned only once at init, so late or relabelled ones
+	 * still reach the store. Property-only writes stay invisible to a MutationObserver.
 	 */
 	observeOptionChanges(onChange: () => void): void {
 		this.optionsObserver = new MutationObserver(() => {
@@ -44,11 +38,8 @@ export class SelectNativeAdapter {
 	}
 
 	/**
-	 * When the select has no empty-valued option, prepends a generic
-	 * placeholder so the field can start "unset". It only becomes the active
-	 * selection when nothing was explicitly pre-selected (no `selected`
-	 * attribute and no non-first option chosen), otherwise the existing
-	 * selection is preserved.
+	 * Prepends a placeholder when no option carries an empty value, so the field can start
+	 * unset. It only becomes the selection when nothing was explicitly pre-selected.
 	 */
 	ensurePlaceholder(text: string): void {
 		const options = Array.from(this.selectElement.options);
@@ -68,10 +59,8 @@ export class SelectNativeAdapter {
 	}
 
 	/**
-	 * Replaces the element's `value` accessor with a notifying wrapper:
-	 * programmatic writes (reactive forms' `writeValue`, direct assignments)
-	 * update the DOM without firing any event, so intercepting the setter is
-	 * the only way to observe them.
+	 * Replaces the `value` accessor with a notifying wrapper: programmatic writes update the
+	 * DOM without firing anything, so the setter is the only place to observe them.
 	 */
 	observeValueWrites(onWrite: () => void): void {
 		const descriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
@@ -115,9 +104,8 @@ export class SelectNativeAdapter {
 	}
 
 	/**
-	 * The select keeps carrying the form value but plays no interactive role
-	 * (the shell's combobox search input owns focus and keyboard), so it must
-	 * be unreachable for both Tab and assistive technology.
+	 * The select still carries the form value but owns no interaction, so it has to be
+	 * unreachable for both Tab and assistive technology.
 	 */
 	hide(): void {
 		this.selectElement.tabIndex = -1;

@@ -13,19 +13,13 @@ const SAN_PATTERN = /^([KQRBN])?([a-h])?([1-8])?x?([a-h][1-8])(?:=?([QRBN]))?$/;
 const LONG_PATTERN = /^([a-h][1-8])([a-h][1-8])([qrbn])?$/;
 
 /**
- * Standard Algebraic Notation, in both directions. `describe` renders a played move,
- * `describeLong` writes the same move in the position-free UCI form, and `parse` turns
- * a written move (`Nf3`, `exd5`, `O-O`, `e7e8=Q`, or the long form `e2e4`) back into
- * the concrete move a caller can play.
+ * Standard Algebraic Notation both ways: `describe` renders a played move, `describeLong`
+ * the position-free UCI form, and `parse` turns either back into a concrete move.
  */
 export abstract class ChessNotation {
 	/** Full SAN for a move about to be played from `position`, suffix included. */
-	// ToDo => one `describe` runs the move generator three times: `disambiguate`
-	// generates from `position`, then `suffix` generates from the resulting position
-	// and, when it is check, again to tell `+` from `#`. Every generated move is
-	// legality-checked by applying it to a copied 64-slot board, so this is the
-	// hottest path in the app and it is called once per committed move. Threading a
-	// precomputed `legalMoves` through the private helpers removes two of the three.
+	// ToDo => one `describe` runs the move generator three times, each legality-checking
+	// against a copied board. Threading a precomputed `legalMoves` through removes two.
 	static describe(position: ChessPosition, move: ChessMove): string {
 		return this.describeBody(position, move) + this.suffix(position, move);
 	}

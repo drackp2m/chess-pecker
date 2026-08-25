@@ -1,7 +1,6 @@
 /**
- * How long an exercise has been on screen, which is what `puzzle_attempt.durationMs`
- * records — not the difference between two dates. A backgrounded tab would otherwise
- * inflate every measurement, so the clock only runs while the page is being looked at.
+ * How long an exercise has been on screen, which is what `durationMs` records rather than
+ * the gap between two dates: a backgrounded tab would inflate every measurement.
  */
 export interface SolveTiming {
 	readonly durationMs: number;
@@ -68,9 +67,8 @@ export class SolveTimer {
 	}
 
 	/**
-	 * Stops the clock and reports the attempt as the API records it: how long it was on
-	 * screen, when it was first opened and when it settled. The two dates are domain data
-	 * and travel with the request, so the server does not stamp them with its own clock.
+	 * Stops the clock and reports the attempt as the API records it. The two dates are domain
+	 * data and travel with the request, so the server never stamps them itself.
 	 */
 	stop(): SolveTiming {
 		this.pause();

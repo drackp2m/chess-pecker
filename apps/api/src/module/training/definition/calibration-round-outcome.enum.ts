@@ -1,5 +1,5 @@
 export enum CalibrationRoundOutcome {
-	/** Aún le faltan intentos. */
+	/** It still has attempts to go. */
 	Pending = 'pending',
 	Raise = 'raise',
 	Lower = 'lower',

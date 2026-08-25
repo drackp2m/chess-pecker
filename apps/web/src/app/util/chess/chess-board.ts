@@ -55,13 +55,8 @@ export abstract class ChessBoard {
 	}
 
 	/**
-	 * Positions no sequence of legal moves can ever mate from: bare kings, a king with
-	 * a single minor piece, and any number of bishops as long as they all travel
-	 * squares of one colour — half the board is then unreachable for every one of them,
-	 * so the four-piece K+B vs K+B draw falls out of the same rule.
-	 *
-	 * Two knights are deliberately not here: mate is unreachable by force but not
-	 * impossible, so the rule does not call it dead.
+	 * Positions no legal sequence can mate from: bare kings, a single minor piece, or bishops
+	 * all on one colour. Two knights are deliberately absent, being unforceable but possible.
 	 */
 	static hasInsufficientMaterial(position: ChessPosition): boolean {
 		const rest = this.placed(position).filter(({ piece }) => 'king' !== piece.type);
@@ -74,10 +69,8 @@ export abstract class ChessBoard {
 	}
 
 	/**
-	 * Three occurrences of the same position, as `ChessFen.positionKey` defines it —
-	 * an en passant target nobody can use does not make a position a different one.
-	 * `history` holds the positions the game passed through *before* the current one,
-	 * so two matches in it make this one the third.
+	 * Three occurrences of the same position, as `ChessFen.positionKey` defines it. `history`
+	 * holds what came before this one, so two matches in it make this the third.
 	 */
 	static isThreefoldRepetition(
 		position: ChessPosition,

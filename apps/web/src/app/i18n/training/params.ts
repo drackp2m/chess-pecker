@@ -43,16 +43,16 @@ export interface TrainingI18nParams {
 	};
 	'training.01M2K7B4X0NTWEBKKW6K0ZAZ0R': {
 		date: string;
-		solved: number;
-		failed: number;
-		resigned: number;
+		firstTry: number;
+		afterMiss: number;
+		shown: number;
 		mistakes: number;
 		hints: number;
 		minutes: number;
 	};
 	'training.01M2K7B4X0B4GWJVX17EFKMFCF': {
 		days: number;
-		solved: number;
+		firstTry: number;
 	};
 	'training.01KZNRPGG0PJ1FZ6K0MNAYBNYB': {
 		date: string;
@@ -71,7 +71,7 @@ export interface TrainingI18nParams {
 		exercises: number;
 	};
 	'training.01KZQ04WTYZVJCVY0BGR68T4MZ': {
-		solved: number;
+		done: number;
 		total: number;
 		percent: number;
 	};

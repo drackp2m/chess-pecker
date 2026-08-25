@@ -1,10 +1,8 @@
 import { ScheduledAction } from '@app/util/scheduled-action';
 
 /**
- * A one-shot delay that only counts the time the page is actually being looked at, which
- * is the same time an attempt records as its duration: a backgrounded tab measures
- * nothing there, and must not measure anything here either. Waiting somewhere else is
- * not waiting.
+ * A one-shot delay counting only the time the page is looked at, like an attempt's own
+ * duration: waiting somewhere else is not waiting.
  */
 export class WatchedDelay {
 	private readonly scheduled = new ScheduledAction();

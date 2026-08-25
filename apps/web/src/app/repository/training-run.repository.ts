@@ -9,9 +9,8 @@ import type {
 import { ApiSdkService } from '@app/service/api-sdk.service';
 
 /**
- * Lo que el servidor sabe de una calibración y de sus pasadas. Sólo lecturas: quién abre una
- * ronda, qué hueco toca y qué se hizo en él lo decide el dispositivo desde que la aplicación
- * es local-first, y lo que se escribe entra por `POST /sync/training`.
+ * What the server knows about a calibration and its passes. Reads only: the device decides
+ * all of it, and everything written comes in through `POST /sync/training`.
  */
 @Injectable({
 	providedIn: 'root',

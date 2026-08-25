@@ -20,12 +20,27 @@ const credentials = { username: 'pecker', password: 'secret42' };
 
 const authUser: AuthUser = { uuid: 'uuid', username: 'pecker', role: 'registered' };
 
-// `HttpErrorResponse` implements `Error` without extending it, so a stub throws it
-// instead of handing it to `Promise.reject`, which only takes real errors. Every
-// caller awaits inside a `try`, so a thrown response is caught the same way.
+// `HttpErrorResponse` implements `Error` without extending it, so a stub throws it rather
+// than rejecting with it. Every caller awaits inside a `try` either way.
 function rejectsWith(status: number, error: unknown): () => never {
 	return () => {
 		throw new HttpErrorResponse({ status, error });
+	};
+}
+
+function anonymousUntilLogIn(onRead: () => void = () => undefined): () => Promise<AuthUser> {
+	let probed = false;
+
+	return () => {
+		if (!probed) {
+			probed = true;
+
+			throw new HttpErrorResponse({ status: 401, error: { message: { jwt: 'invalid' } } });
+		}
+
+		onRead();
+
+		return Promise.resolve(authUser);
 	};
 }
 
@@ -72,9 +87,8 @@ describe('SessionStore', () => {
 		expect(store.username()).toBe('pecker');
 	});
 
-	// Renewing the access cookie lives in `authInterceptor` now, and it fires one refresh
-	// per request that failed. Rotating tokens make the second one close the session, so
-	// what the store owes it is a single round trip shared by everything that raced.
+	// `authInterceptor` fires one refresh per failed request, and rotating tokens make the
+	// second close the session, so the store owes it a single shared round trip.
 	it('shares one refresh between everything that failed at the same instant', async () => {
 		const refreshSession = vi.fn(() => Promise.resolve());
 		const store = await createStore(createRepository({ refreshSession }));
@@ -114,10 +128,8 @@ describe('SessionStore', () => {
 		expect(store.isAnonymous()).toBe(true);
 	});
 
-	// The distinction the whole connection state rests on: a 401 is an answer, no network
-	// is the absence of one. Reading the second as `anonymous` logs out a user whose
-	// session may well be open, and sends them to a login page the same dead server would
-	// have to accept.
+	// The distinction the connection state rests on: a 401 is an answer, no network is the
+	// absence of one, and reading the second as `anonymous` logs out an open session.
 	it('separates a server that does not answer from a session that does not exist', async () => {
 		const store = await createStore(
 			createRepository({ getCurrentUser: vi.fn(rejectsWith(0, null)) }),
@@ -227,6 +239,46 @@ describe('SessionStore', () => {
 		expect(store.error()).toEqual({ key: I18n.common.WRONG_CREDENTIALS });
 	});
 
+	it('runs the hook after the API answers and before the session is adopted', async () => {
+		const order: string[] = [];
+		const repository = createRepository({
+			logIn: vi.fn(() => {
+				order.push('log-in');
+
+				return Promise.resolve();
+			}),
+			getCurrentUser: vi.fn(
+				anonymousUntilLogIn(() => {
+					order.push('who');
+				}),
+			),
+		});
+		const store = await createStore(repository);
+
+		const succeeded = await store.logIn(credentials, (user) => {
+			order.push(`adopt ${user.uuid} while ${store.status()}`);
+
+			return Promise.resolve();
+		});
+
+		expect(succeeded).toBe(true);
+		expect(order).toEqual(['log-in', 'who', 'adopt uuid while anonymous']);
+		expect(store.isAuthenticated()).toBe(true);
+	});
+
+	it('adopts nothing when the credentials are refused', async () => {
+		const store = await createStore(
+			createRepository({
+				getCurrentUser: vi.fn(rejectsWith(401, { message: { jwt: 'invalid' } })),
+				logIn: vi.fn(rejectsWith(401, { message: { password: 'not match' } })),
+			}),
+		);
+		const beforeAdopting = vi.fn(() => Promise.resolve());
+
+		expect(await store.logIn(credentials, beforeAdopting)).toBe(false);
+		expect(beforeAdopting).not.toHaveBeenCalled();
+	});
+
 	it('logs in with the credentials it just registered', async () => {
 		const logIn = vi.fn(() => Promise.resolve());
 		const store = await createStore(createRepository({ logIn }));
@@ -236,6 +288,22 @@ describe('SessionStore', () => {
 		expect(succeeded).toBe(true);
 		expect(logIn).toHaveBeenCalledWith(credentials);
 		expect(store.isAuthenticated()).toBe(true);
+	});
+
+	it('hands the same hook down from register to log in', async () => {
+		const store = await createStore(
+			createRepository({ getCurrentUser: vi.fn(anonymousUntilLogIn()) }),
+		);
+		const seen: string[] = [];
+
+		const succeeded = await store.register(credentials, (user) => {
+			seen.push(`${user.uuid} while ${store.status()}`);
+
+			return Promise.resolve();
+		});
+
+		expect(succeeded).toBe(true);
+		expect(seen).toEqual(['uuid while anonymous']);
 	});
 
 	it('reports the field the API complains about when registering', async () => {
@@ -264,8 +332,8 @@ describe('SessionStore', () => {
 		expect(store.username()).toBeNull();
 	});
 
-	// Las cookies son `httpOnly`: si el API no las caduca, la sesión sigue abierta y
-	// pasar a `anonymous` sólo escondería que el logout no ha hecho nada.
+	// The cookies are `httpOnly`: if the API does not expire them the session is still open,
+	// and going `anonymous` would only hide that logout did nothing.
 	it('keeps the session when the API cannot close it', async () => {
 		const store = await createStore(createRepository({ logOut: vi.fn(rejectsWith(500, null)) }));
 

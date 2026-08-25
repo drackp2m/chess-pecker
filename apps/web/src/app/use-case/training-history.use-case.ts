@@ -98,8 +98,8 @@ export class TrainingHistoryUseCase {
 
 		return {
 			total: items.length,
-			// Un intento es de la pasada si su hueco está entre los suyos. El criterio por fecha
-			// —y su respaldo a `row.position`— sólo vale para la pasada que no está entera aquí.
+			// An attempt belongs to the pass when its slot is one of the pass's. The date rule is
+			// only for the pass that is not fully here.
 			keeps: (row) => null !== placeOwn(row) || (!whole && opened <= row.updatedAt.getTime()),
 			place: (row) => placeOwn(row) ?? (whole ? null : toPlace(row.position)),
 		};

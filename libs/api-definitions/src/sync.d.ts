@@ -15,7 +15,7 @@ export interface SyncTimestamps<TDate = string> {
 	updatedAt?: TDate;
 }
 
-/** Las ocho tablas que se sincronizan, con el nombre que llevan a los dos lados. */
+/** The eight tables that sync, under the name they carry on both sides. */
 export type SyncEntity =
 	| 'training'
 	| 'trainingGoal'
@@ -27,10 +27,8 @@ export type SyncEntity =
 	| 'attempt';
 
 /**
- * Cómo se nombra una fila en la subida. `clientRef` es el uuid con el que nació en un
- * dispositivo y es la clave de reintento: el servidor busca por él antes de insertar, así
- * que repetir una subida cortada no duplica nada. `uuid` sólo lo llevan las filas que ya
- * están arriba —el servidor es quien reparte las claves primarias, siempre—.
+ * How a row is named in a push. `clientRef` is the uuid it was born with and the retry key;
+ * `uuid` only appears once a row is up, since the server always issues primary keys.
  */
 export interface SyncNode<TDate = string> extends SyncTimestamps<TDate> {
 	clientRef?: string;
@@ -81,16 +79,15 @@ export interface PushCycleNode<TDate = string> extends SyncNode<TDate> {
 }
 
 export interface PushCycleItemNode<TDate = string> extends SyncNode<TDate> {
-	/** El `clientRef` del ejercicio del set al que apunta, o su uuid si ya está arriba. */
+	/** The `clientRef` of the set exercise it points at, or its uuid once that is up. */
 	trainingPuzzleRef: string;
 	position: number;
 	attempts: PushAttemptNode<TDate>[];
 }
 
 /**
- * El intento no dice de qué tipo es: lo dice dónde cuelga. Uno que viaja dentro de una
- * ronda es de calibración y uno que viaja dentro de un hueco de ciclo es de ciclo, que es
- * exactamente lo que exige el `check` de la tabla.
+ * An attempt does not say what kind it is: where it hangs does, which is exactly what the
+ * table's `check` demands.
  */
 export interface PushAttemptNode<TDate = string> extends SyncNode<TDate> {
 	lichessId: string;
@@ -100,7 +97,7 @@ export interface PushAttemptNode<TDate = string> extends SyncNode<TDate> {
 	hintUsed: boolean;
 	mistakeCount: number;
 	record: PuzzleEvent[];
-	explorations: FreePlayRun[];
+	freePlayRuns: FreePlayRun[];
 }
 
 export interface GetSyncTrainingTreeRequest<TDate = string> {
@@ -166,32 +163,32 @@ export interface SyncTreeItemNode<TDate = string> extends SyncTreeRow<TDate> {
 }
 
 export interface SyncEntitySummary {
-	/** `MAX(received_at)` del usuario en esa tabla, o `null` si no tiene ni una fila. */
+	/** The user's `MAX(received_at)` in that table, or `null` with not a single row. */
 	readonly cursor: string | null;
-	/** Porque un `MAX` no ve los borrados: marca y recuento iguales es «al día». */
+	/** Because a `MAX` cannot see deletions: matching stamp and count means current. */
 	readonly count: number;
 }
 
 /**
- * Qué hay del otro lado, en una sola pregunta. Es lo que decide si hay algo que bajar sin
- * tener que preguntar tabla a tabla ni entrenamiento a entrenamiento.
+ * What is on the other side, in one question: what decides whether there is anything to pull
+ * without asking table by table or training by training.
  */
 export interface SyncSummary {
 	readonly serverTime: string;
-	/** El modelo que corre el servidor. Un cliente más viejo baja, pero no sube. */
+	/** The model the server runs. An older client pulls, but never pushes. */
 	readonly schemaVersion: number;
 	readonly entities: Record<SyncEntity, SyncEntitySummary>;
-	/** `puzzle` no es de nadie: es catálogo global y tiene su propia forma. */
+	/** `puzzle` belongs to nobody: it is a global catalogue and has its own shape. */
 	readonly catalog: SyncCatalogSummary;
 }
 
 export interface SyncCatalogSummary {
-	/** `MAX(updated_at)` del catálogo. Se mueve cuando se reimporta, aunque el total no. */
+	/** The catalogue's `MAX(updated_at)`. It moves on a re-import even when the total does not. */
 	readonly version: string;
 	readonly total: number;
 }
 
-/** Una fila que el servidor no va a aceptar nunca. El cliente la marca y deja de reintentarla. */
+/** A row the server will never accept. The client marks it and stops retrying. */
 export interface SyncRejection {
 	readonly clientRef: string;
 	readonly entity: SyncEntity;
@@ -200,11 +197,11 @@ export interface SyncRejection {
 
 export interface PushTrainingResult {
 	/**
-	 * El reloj de servidor con el que entró todo lo de esta subida. El cliente adelanta su
-	 * cursor con él, y así la bajada siguiente no se trae lo que acaba de subir.
+	 * The server clock everything in this push came in under. The client moves its cursor to
+	 * it, so the next pull does not fetch back what it just sent.
 	 */
 	readonly receivedAt: string;
-	/** Por entidad, `clientRef` → uuid definitivo. Es con lo que el cliente reclava sus filas. */
+	/** Per entity, `clientRef` → final uuid: what the client rekeys its rows with. */
 	readonly uuids: Record<SyncEntity, Record<string, string>>;
 	readonly rejected: readonly SyncRejection[];
 }

@@ -16,8 +16,8 @@ export class GetNextCycleItemUseCase {
 	) {}
 
 	/**
-	 * El siguiente ejercicio de la pasada en curso: el primero por posición que aún no tiene
-	 * intento. `undefined` significa que el ciclo está terminado.
+	 * The next exercise of the running pass: the first by position with no attempt yet.
+	 * `undefined` means the cycle is finished.
 	 */
 	async execute(training: Training): Promise<TrainingCycleItem | undefined> {
 		const cycle = await this.trainingCycleRepository.getRunningByTraining(training.uuid);

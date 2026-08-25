@@ -5,8 +5,8 @@ import { Friendship } from './friendship.entity';
 
 export class FriendshipRepository extends CustomRepository<Friendship> {
 	/**
-	 * La solicitud viva entre dos personas, si la hay, mirando en los dos sentidos. Es lo
-	 * que el índice único parcial garantiza que sea como mucho una.
+	 * The live request between two people, if there is one, looked up both ways round: the
+	 * partial unique index is what guarantees there is at most one.
 	 */
 	async getActiveBetween(oneUuid: string, otherUuid: string): Promise<Friendship | undefined> {
 		const friendships = await this.getMany({

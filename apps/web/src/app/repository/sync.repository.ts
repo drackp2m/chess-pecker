@@ -15,8 +15,8 @@ export class SyncRepository {
 	private readonly apiSdk = inject(ApiSdkService);
 
 	/**
-	 * Qué hay del otro lado, por tabla. No se cancela al navegar: se pregunta en el arranque,
-	 * y la primera navegación del router cortaría justo la llamada que abre la puerta.
+	 * What is on the other side, per table. Not cancelled on navigation: it is asked at boot,
+	 * and the router's first navigation would cut the very call that opens the gate.
 	 */
 	async getSummary(): Promise<SyncSummary> {
 		return this.apiSdk.GET.sync('', { cancellable: false });
@@ -31,8 +31,8 @@ export class SyncRepository {
 	}
 
 	/**
-	 * El árbol entero de un entrenamiento. Es idempotente por `clientRef`, así que repetir
-	 * una subida que se cortó a mitad devuelve los mismos uuid en vez de duplicar nada.
+	 * A training's whole tree. Idempotent through `clientRef`, so repeating a push that was
+	 * cut short returns the same uuids instead of duplicating anything.
 	 */
 	async pushTraining(request: PushTrainingRequest): Promise<PushTrainingResult> {
 		return this.apiSdk.POST.sync('/training', { params: request });

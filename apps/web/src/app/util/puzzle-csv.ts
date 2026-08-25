@@ -23,10 +23,8 @@ interface CsvScan {
 }
 
 /**
- * Reads the Lichess puzzle CSV. A header row is honoured when present — columns are
- * then matched by name, so extra columns or a different order are fine — and falls
- * back to the published column order otherwise. Unreadable rows are counted and
- * dropped rather than failing the whole import.
+ * Reads the Lichess puzzle CSV, matching columns by name when a header is present and
+ * falling back to the published order. Unreadable rows are counted and dropped.
  */
 export abstract class PuzzleCsv {
 	static parse(text: string): PuzzleParseResult {
@@ -62,21 +60,11 @@ export abstract class PuzzleCsv {
 	}
 
 	/**
-	 * Splits RFC 4180 text: quoted fields may hold commas, newlines and `""`.
-	 * Line endings are normalised up front so the scanner only ever sees `\n`.
+	 * Splits RFC 4180 text: quoted fields may hold commas, newlines and `""`. Line endings are
+	 * normalised up front so the scanner only ever sees `\n`.
 	 */
-	// ToDo => this is the scalability ceiling for the Woodpecker feature. Everything
-	// is synchronous and fully materialised: the whole file is read into a string,
-	// copied again by `replace`, accumulated character-by-character into `field`, and
-	// every row of every column is kept as `string[][]` before a single puzzle is
-	// built. The published Lichess database is ~5M rows / ~1GB — that freezes the tab
-	// long before it runs out of memory, and `PuzzlePage.loadFile` reads it with
-	// `file.text()`, which needs the entire file resident first.
-	//
-	// A Woodpecker set is only a few hundred exercises, so the fix is not a faster
-	// parser but a narrower one: stream the file (`file.stream()`), parse in a worker
-	// so the UI keeps painting, and stop at the number of rows the set actually needs
-	// — with filtering by rating/theme applied during the scan rather than after it.
+	// ToDo => the scalability ceiling: everything is synchronous and fully materialised, so the
+	// ~1GB Lichess database freezes the tab. Stream it in a worker and stop at the rows needed.
 	private static toRows(text: string): string[][] {
 		const source = text.replace(/\r\n?/g, '\n');
 		const scan: CsvScan = { rows: [], row: [], field: '', isQuoted: false };
@@ -100,9 +88,8 @@ export abstract class PuzzleCsv {
 	}
 
 	/**
-	 * One character inside a quoted field: `""` is a literal quote and eats the next
-	 * character, a lone quote closes the field, anything else is content. Returns how
-	 * many extra characters it swallowed.
+	 * One character inside a quoted field: `""` is a literal quote, a lone quote closes it.
+	 * Returns how many extra characters it swallowed.
 	 */
 	private static readQuoted(scan: CsvScan, character: string, next: string): number {
 		if ('"' === character && '"' === next) {

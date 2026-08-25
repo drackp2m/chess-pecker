@@ -1,0 +1,119 @@
+@property --step-position {
+	inherits: true;
+	initial-value: 0;
+	syntax: '<number>';
+}
+
+@property --step-open {
+	inherits: true;
+	initial-value: 1;
+	syntax: '<number>';
+}
+
+:host {
+	--rail-size: 6px;
+	--dot-size: 12px;
+	--dot-visited-size: 14px;
+	--dot-fill-ramp: 4;
+	--marker-size: 18px;
+	--marker-travel-size: var(--rail-size);
+	--hole-size: 10px;
+	--hole-travel-size: 4px;
+	--rail-color: var(--color-primary-mid);
+	--resize-duration: 130ms;
+	--travel-duration: 280ms;
+	--step-open: 1;
+	--marker-x: calc(var(--marker-size) / 2 + var(--step-position) * (100% - var(--marker-size)));
+	--marker-width: calc(
+		var(--marker-travel-size) + var(--step-open) * (var(--marker-size) - var(--marker-travel-size))
+	);
+	--hole-width: calc(
+		var(--hole-travel-size) + var(--step-open) * (var(--hole-size) - var(--hole-travel-size))
+	);
+
+	display: block;
+	transition:
+		--step-position var(--travel-duration) var(--transition-easing),
+		--step-open var(--resize-duration) var(--transition-easing);
+}
+
+:host(.is-traveling) {
+	--step-open: 0;
+}
+
+.track {
+	display: block;
+	mask-image: radial-gradient(
+		circle at var(--marker-x) 50%,
+		transparent calc(var(--hole-width) / 2),
+		rgb(0 0 0) calc(var(--hole-width) / 2 + 0.5px)
+	);
+	mask-repeat: no-repeat;
+}
+
+.line {
+	position: relative;
+	display: block;
+	height: var(--marker-size);
+}
+
+.rail,
+.progress {
+	position: absolute;
+	top: 50%;
+	transform: translateY(-50%);
+	height: var(--rail-size);
+}
+
+.rail {
+	inset-inline: calc(var(--marker-size) / 2);
+	background-color: var(--rail-color);
+}
+
+.progress {
+	left: calc(var(--marker-size) / 2);
+	width: calc(var(--step-position) * (100% - var(--marker-size)));
+	background-color: var(--color-accent);
+}
+
+.dot {
+	--dot-fill: clamp(
+		0,
+		1 + (var(--step-position) - var(--step-offset, 0)) * var(--step-gaps, 1) * var(--dot-fill-ramp),
+		1
+	);
+
+	position: absolute;
+	top: 50%;
+	left: calc(var(--marker-size) / 2 + var(--step-offset, 0) * (100% - var(--marker-size)));
+	transform: translate(-50%, -50%);
+
+	aspect-ratio: 1;
+	width: calc(var(--dot-size) + var(--dot-fill) * (var(--dot-visited-size) - var(--dot-size)));
+	border-radius: 50%;
+
+	background-color: color-mix(
+		in oklab,
+		var(--color-accent) calc(var(--dot-fill) * 100%),
+		var(--rail-color)
+	);
+}
+
+.marker {
+	position: absolute;
+	top: 50%;
+	left: var(--marker-x);
+	transform: translate(-50%, -50%);
+
+	aspect-ratio: 1;
+	width: var(--marker-width);
+	border-radius: 50%;
+
+	background-color: var(--color-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:host {
+		transition-duration: 0s;
+	}
+}

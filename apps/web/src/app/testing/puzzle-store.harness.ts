@@ -38,9 +38,8 @@ export const UNDO_TOTAL = 1000;
 /** Long enough for the exercise to count as looked at, which is what offers the hint. */
 export const HINT_TOTAL = HINT_DELAY_MS;
 /**
- * What is left of that clock once `createStore` has returned. The clock starts when the
- * exercise opens, which is inside it, so the opening move it waits out has already been
- * spent — only a test reading the exact moment the hint appears has to care.
+ * What is left of that clock once `createStore` returns: it starts when the exercise opens,
+ * so the opening move it waits out has already been spent.
  */
 export const HINT_REMAINING = HINT_TOTAL - REPLAY_TOTAL * 2;
 
@@ -92,9 +91,8 @@ export function miss(store: PuzzleStore): void {
 }
 
 /**
- * The tab left for `duration` and then come back to, which is what the page's own
- * visibility handler does to the board. The clock behind the hint is the only thing that
- * hears about it, and time spent away is not time spent looking at the exercise.
+ * The tab left for `duration` and come back to, as the page's visibility handler does. Only
+ * the hint's clock hears about it: time away is not time spent looking.
  */
 export function lookAway(store: PuzzleStore, duration: number): void {
 	store.pauseClock();
@@ -140,9 +138,8 @@ export const NAV_LABELS: Record<NavControl, string> = {
 export const NAV_ORDER: readonly NavControl[] = ['restart', 'back', 'forward'];
 
 /**
- * Which of the three the player can press, worked out from the store exactly as the
- * template works it out. `PuzzleSolverComponent`'s own spec holds the two together, so
- * a control that stops matching this is caught there rather than drifting quietly.
+ * Which of the three can be pressed, worked out from the store as the template does.
+ * `PuzzleSolverComponent`'s spec holds the two together so neither drifts.
  */
 export function navControls(store: PuzzleStore): NavControl[] {
 	const enabled: NavControl[] = [];

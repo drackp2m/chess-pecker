@@ -1,0 +1,13 @@
+<div class="flex-col gap-4 p-4">
+	<p class="fs-sm color-contrast-mid">{{ I18n.common.DISCARD_LOCAL_MESSAGE | i18n }}</p>
+
+	<div class="flex-row gap-2">
+		<button appThemed class="flex-grow" color="accent" (click)="confirm()">
+			{{ I18n.common.LOG_IN | i18n }}
+		</button>
+
+		<button appThemed class="flex-grow" (click)="dismiss()">
+			{{ I18n.common.CANCEL | i18n }}
+		</button>
+	</div>
+</div>
