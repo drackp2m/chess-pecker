@@ -8,6 +8,7 @@ import {
 } from '@app/repository/definition/training-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
+import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
 import { RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
 import { cycleBlock } from '@app/util/cycle-order';
 
@@ -22,6 +23,7 @@ interface Options {
 	readonly set?: readonly TrainingPuzzleRow[];
 	readonly items?: readonly CycleItemRow[];
 	readonly running?: TrainingCycleRow | undefined;
+	readonly trainings?: readonly { readonly uuid: string; readonly status: string }[];
 }
 
 function cycle(over: Partial<TrainingCycleRow> = {}): TrainingCycleRow {
@@ -102,19 +104,31 @@ function configure(options: Options = {}) {
 	};
 	const localCycles = {
 		listSet: vi.fn(() => Promise.resolve(options.set ?? [])),
+		countSet: vi.fn(() => Promise.resolve((options.set ?? []).length)),
 		listCycles: vi.fn(() => Promise.resolve(cycles)),
 		listItems: vi.fn(() => Promise.resolve(options.items ?? [])),
+		countItems: vi.fn(() => Promise.resolve((options.items ?? []).length)),
 		findRunningCycle: vi.fn(() => Promise.resolve(options.running)),
+	};
+	const localTrainings = {
+		list: vi.fn(() => Promise.resolve(options.trainings ?? [])),
 	};
 
 	TestBed.configureTestingModule({
 		providers: [
 			{ provide: TrainingLocalRepository, useValue: repository },
 			{ provide: LocalCycleUseCase, useValue: localCycles },
+			{ provide: LocalTrainingUseCase, useValue: localTrainings },
 		],
 	});
 
-	return { repository, localCycles, written, repair: TestBed.inject(RepairCycleUseCase) };
+	return {
+		repository,
+		localCycles,
+		localTrainings,
+		written,
+		repair: TestBed.inject(RepairCycleUseCase),
+	};
 }
 
 describe('RepairCycleUseCase.listPartial', () => {
@@ -281,5 +295,80 @@ describe('RepairCycleUseCase.execute', () => {
 		});
 
 		await expect(repair.execute(CYCLE)).rejects.toThrow('Another cycle is in progress');
+	});
+});
+
+describe('RepairCycleUseCase.repairAll', () => {
+	afterEach(() => {
+		TestBed.resetTestingModule();
+	});
+
+	const running = [{ uuid: TRAINING, status: 'running' }];
+
+	it('puts a truncated cycle back without anybody asking for it', async () => {
+		const entries = set({ 1100: 6 });
+		const { repair, written } = configure({
+			cycles: [cycle({ expectedItems: 6 })],
+			set: entries,
+			items: survivors(entries),
+			trainings: running,
+		});
+
+		await expect(repair.repairAll()).resolves.toEqual([
+			{ cycleUuid: CYCLE, expectedItems: 6, storedItems: 2, restoredItems: 4 },
+		]);
+		expect(written.cycleItem).toHaveLength(4);
+	});
+
+	it('sees the truncation the declared count hid, because the set is the size that counts', async () => {
+		const entries = set({ 1100: 6 });
+		const { repair } = configure({
+			cycles: [cycle({ expectedItems: 2 })],
+			set: entries,
+			items: survivors(entries),
+			trainings: running,
+		});
+
+		await expect(repair.repairAll()).resolves.toMatchObject([
+			{ expectedItems: 6, restoredItems: 4 },
+		]);
+	});
+
+	it('leaves alone a training that is no longer in play', async () => {
+		const entries = set({ 1100: 6 });
+		const { repair, written } = configure({
+			cycles: [cycle({ expectedItems: 6 })],
+			set: entries,
+			items: survivors(entries),
+			trainings: [{ uuid: TRAINING, status: 'cancelled' }],
+		});
+
+		await expect(repair.repairAll()).resolves.toEqual([]);
+		expect(written.cycleItem).toHaveLength(0);
+	});
+
+	it('waits instead of repairing while the set is still coming down', async () => {
+		const entries = set({ 1100: 600 });
+		const { repair, written } = configure({
+			set: entries,
+			items: survivors(entries),
+			trainings: running,
+		});
+
+		await expect(repair.repairAll()).resolves.toEqual([]);
+		expect(written.cycleItem).toHaveLength(0);
+	});
+
+	it('swallows a cycle it cannot repair instead of dropping the pass', async () => {
+		const entries = set({ 1100: 6 });
+		const { repair } = configure({
+			cycles: [cycle({ expectedItems: 6 })],
+			set: entries,
+			items: survivors(entries),
+			running: cycle({ uuid: 'cycle-3', index: 3 }),
+			trainings: running,
+		});
+
+		await expect(repair.repairAll()).resolves.toEqual([]);
 	});
 });

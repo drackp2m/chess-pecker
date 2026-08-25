@@ -18,7 +18,7 @@ import { born, touch } from '@app/use-case/sync/local-record';
 import { buildCycleOrder } from '@app/util/cycle-order';
 import { LocalFailureError } from '@app/util/local-failure-error';
 import { clampRatingBucket, ratingBucketCeiling } from '@app/util/rating-bucket';
-import { isWholeCycle } from '@app/util/whole-cycle';
+import { expectedCycleItems, isWholeCycle } from '@app/util/whole-cycle';
 
 interface StartableTraining {
 	readonly training: TrainingRow;
@@ -41,6 +41,10 @@ export class LocalCycleUseCase {
 
 	async listSet(trainingUuid: string): Promise<readonly TrainingPuzzleRow[]> {
 		return this.repository.findAllByIndex('trainingPuzzle', 'trainingUuid', trainingUuid);
+	}
+
+	async countSet(trainingUuid: string): Promise<number> {
+		return this.repository.countByIndex('trainingPuzzle', 'trainingUuid', trainingUuid);
 	}
 
 	async selectSet(trainingUuid: string, size: number): Promise<number> {
@@ -115,7 +119,8 @@ export class LocalCycleUseCase {
 			throw new Error('The set is empty');
 		}
 
-		const previous = cycles.at(-1)?.expectedItems;
+		const last = cycles.at(-1);
+		const previous = undefined === last ? undefined : expectedCycleItems(last, set.length);
 
 		if (undefined !== previous && previous !== set.length) {
 			throw new Error('The set is not fully replicated on this device');
@@ -134,6 +139,10 @@ export class LocalCycleUseCase {
 		return rows.sort((left, right) => left.position - right.position);
 	}
 
+	async countItems(cycleUuid: string): Promise<number> {
+		return this.repository.countByIndex('cycleItem', 'cycleUuid', cycleUuid);
+	}
+
 	async findItem(uuid: string): Promise<CycleItemRow | undefined> {
 		return this.repository.find('cycleItem', uuid);
 	}
@@ -147,7 +156,7 @@ export class LocalCycleUseCase {
 
 		const items = await this.listItems(cycle.uuid);
 
-		if (!isWholeCycle(cycle, items)) {
+		if (!isWholeCycle(cycle, items, await this.countSet(trainingUuid))) {
 			throw new LocalFailureError(
 				i18nRef(I18n.training.CYCLE_NEEDS_REPAIR),
 				'The cycle is missing slots on this device and has to be repaired',
@@ -181,7 +190,7 @@ export class LocalCycleUseCase {
 
 		const items = await this.listItems(cycleUuid);
 
-		if (!isWholeCycle(cycle, items)) {
+		if (!isWholeCycle(cycle, items, await this.countSet(trainingUuid))) {
 			return false;
 		}
 

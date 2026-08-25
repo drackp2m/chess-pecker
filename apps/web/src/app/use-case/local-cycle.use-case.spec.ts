@@ -61,6 +61,12 @@ function configure(
 	};
 	const repository = {
 		findAllByIndex: vi.fn((store: string) => Promise.resolve(byStore[store] ?? [])),
+		countByIndex: vi.fn((store: string, index: string, value: unknown) =>
+			Promise.resolve(
+				(byStore[store] ?? []).filter((row) => (row as Record<string, unknown>)[index] === value)
+					.length,
+			),
+		),
 		find: vi.fn((store: string, uuid: string) =>
 			Promise.resolve(
 				(byStore[store] ?? []).find((row) => (row as { uuid?: string }).uuid === uuid),
@@ -142,15 +148,16 @@ describe('LocalCycleUseCase.startCycle', () => {
 		);
 	});
 
-	it('measures the set against the pass before, not the widest one', async () => {
+	it('does not read a truncated pass as a set that shrank', async () => {
 		const { cycles } = configure(
 			[cycle(1, { expectedItems: 1000 }), cycle(2, { expectedItems: 399 })],
 			set(1000),
 		);
 
-		await expect(cycles.startCycle(TRAINING)).rejects.toThrow(
-			'The set is not fully replicated on this device',
-		);
+		await expect(cycles.startCycle(TRAINING)).resolves.toMatchObject({
+			index: 3,
+			expectedItems: 1000,
+		});
 	});
 
 	it('starts over a pass before that says what the set says', async () => {

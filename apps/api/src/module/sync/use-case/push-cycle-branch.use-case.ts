@@ -28,8 +28,10 @@ export class PushCycleBranchUseCase {
 		nodes: PushCycleNodeDto[],
 		set: ReadonlyMap<string, TrainingPuzzle>,
 	): Promise<void> {
+		const setSize = new Set(set.values()).size;
+
 		for (const node of nodes) {
-			const pushed = this.pushCycle(context, training, node);
+			const pushed = this.pushCycle(context, training, node, setSize);
 
 			if (undefined === pushed) {
 				continue;
@@ -49,6 +51,7 @@ export class PushCycleBranchUseCase {
 		context: SyncPushContext,
 		training: Training,
 		node: PushCycleNodeDto,
+		setSize: number,
 	): PushedCycle | undefined {
 		const existing = context.rows.cycle.find(node, 'cycle');
 
@@ -60,7 +63,7 @@ export class PushCycleBranchUseCase {
 				return undefined;
 			}
 
-			return { row: reused, closedHere: this.refreshCycle(reused, node) };
+			return { row: reused, closedHere: this.refreshCycle(reused, node, setSize) };
 		}
 
 		const cycle = this.applySyncTimestampsUseCase.execute(
@@ -68,7 +71,7 @@ export class PushCycleBranchUseCase {
 				training,
 				index: node.index,
 				status: node.status,
-				itemCount: node.itemCount,
+				itemCount: Math.max(node.itemCount, setSize),
 			}),
 			node,
 		);
@@ -83,8 +86,8 @@ export class PushCycleBranchUseCase {
 	 * A cycle uploads open and closes when the device says so. Returns whether this push is
 	 * the one that finished it, which is the only claim the server checks afterwards.
 	 */
-	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto): boolean {
-		row.itemCount = Math.max(row.itemCount, node.itemCount);
+	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto, setSize: number): boolean {
+		row.itemCount = Math.max(row.itemCount, node.itemCount, setSize);
 
 		if (!isFresherNode(node, row)) {
 			return false;

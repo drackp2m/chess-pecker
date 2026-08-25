@@ -92,7 +92,7 @@ export class TrainingHistoryUseCase {
 
 		const items = await this.cycles.listItems(cycle.uuid);
 		const positions = new Map(items.map((item) => [item.uuid, item.position]));
-		const whole = isWholeCycle(cycle, items);
+		const whole = isWholeCycle(cycle, items, await this.cycles.countSet(trainingUuid));
 		const opened = cycle.createdAt.getTime();
 		const placeOwn = (row: AttemptRow): number | null =>
 			toPlace(undefined === row.cycleItemUuid ? undefined : positions.get(row.cycleItemUuid));
