@@ -28,6 +28,22 @@ function rejectsWith(status: number, error: unknown): () => never {
 	};
 }
 
+function anonymousUntilLogIn(onRead: () => void = () => undefined): () => Promise<AuthUser> {
+	let probed = false;
+
+	return () => {
+		if (!probed) {
+			probed = true;
+
+			throw new HttpErrorResponse({ status: 401, error: { message: { jwt: 'invalid' } } });
+		}
+
+		onRead();
+
+		return Promise.resolve(authUser);
+	};
+}
+
 function createRepository(overrides: Partial<AuthRepositoryStub> = {}): AuthRepositoryStub {
 	return {
 		register: vi.fn(() => Promise.resolve(authUser)),
@@ -223,6 +239,46 @@ describe('SessionStore', () => {
 		expect(store.error()).toEqual({ key: I18n.common.WRONG_CREDENTIALS });
 	});
 
+	it('runs the hook after the API answers and before the session is adopted', async () => {
+		const order: string[] = [];
+		const repository = createRepository({
+			logIn: vi.fn(() => {
+				order.push('log-in');
+
+				return Promise.resolve();
+			}),
+			getCurrentUser: vi.fn(
+				anonymousUntilLogIn(() => {
+					order.push('who');
+				}),
+			),
+		});
+		const store = await createStore(repository);
+
+		const succeeded = await store.logIn(credentials, (user) => {
+			order.push(`adopt ${user.uuid} while ${store.status()}`);
+
+			return Promise.resolve();
+		});
+
+		expect(succeeded).toBe(true);
+		expect(order).toEqual(['log-in', 'who', 'adopt uuid while anonymous']);
+		expect(store.isAuthenticated()).toBe(true);
+	});
+
+	it('adopts nothing when the credentials are refused', async () => {
+		const store = await createStore(
+			createRepository({
+				getCurrentUser: vi.fn(rejectsWith(401, { message: { jwt: 'invalid' } })),
+				logIn: vi.fn(rejectsWith(401, { message: { password: 'not match' } })),
+			}),
+		);
+		const beforeAdopting = vi.fn(() => Promise.resolve());
+
+		expect(await store.logIn(credentials, beforeAdopting)).toBe(false);
+		expect(beforeAdopting).not.toHaveBeenCalled();
+	});
+
 	it('logs in with the credentials it just registered', async () => {
 		const logIn = vi.fn(() => Promise.resolve());
 		const store = await createStore(createRepository({ logIn }));
@@ -232,6 +288,22 @@ describe('SessionStore', () => {
 		expect(succeeded).toBe(true);
 		expect(logIn).toHaveBeenCalledWith(credentials);
 		expect(store.isAuthenticated()).toBe(true);
+	});
+
+	it('hands the same hook down from register to log in', async () => {
+		const store = await createStore(
+			createRepository({ getCurrentUser: vi.fn(anonymousUntilLogIn()) }),
+		);
+		const seen: string[] = [];
+
+		const succeeded = await store.register(credentials, (user) => {
+			seen.push(`${user.uuid} while ${store.status()}`);
+
+			return Promise.resolve();
+		});
+
+		expect(succeeded).toBe(true);
+		expect(seen).toEqual(['uuid while anonymous']);
 	});
 
 	it('reports the field the API complains about when registering', async () => {
