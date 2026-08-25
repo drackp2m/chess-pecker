@@ -1,36 +1,41 @@
 :host {
 	pointer-events: none;
 
-	display: block;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 
 	width: 100%;
 	height: 100%;
 
-	filter: drop-shadow(var(--outline-width) 0 0 var(--piece-outline))
-		drop-shadow(calc(-1 * var(--outline-width)) 0 0 var(--piece-outline))
-		drop-shadow(0 var(--outline-width) 0 var(--piece-outline))
-		drop-shadow(0 calc(-1 * var(--outline-width)) 0 var(--piece-outline));
+	svg {
+		overflow: visible;
+		width: 90%;
+		height: 90%;
+	}
 
-	div {
-		width: 100%;
-		height: 100%;
+	// The outline is the artwork's own edge, stroked underneath the fill so only its outer
+	// half shows, instead of a silhouette padded out with shadows.
+	path {
+		paint-order: stroke;
 
-		background-color: var(--piece-color);
-
-		mask-repeat: no-repeat;
-		mask-position: center;
-		mask-size: 90%;
+		fill: var(--piece-color);
+		stroke: var(--piece-outline);
+		stroke-linejoin: round;
+		stroke-width: var(--board-piece-outline-width);
 	}
 
 	&.white {
-		--outline-width: 1px;
-		--piece-color: rgb(225 226 225);
-		--piece-outline: rgb(30 34 36 / 75%);
+		--piece-color: var(--board-piece-white);
+		--piece-outline: var(--board-piece-white-outline);
 	}
 
 	&.black {
-		--outline-width: 1px;
-		--piece-color: rgb(30 34 36);
-		--piece-outline: rgb(225 226 225 / 75%);
+		--piece-color: var(--board-piece-black);
+		--piece-outline: var(--board-piece-black-outline);
+
+		path {
+			stroke-width: calc(var(--board-piece-outline-width) / 1.5);
+		}
 	}
 }

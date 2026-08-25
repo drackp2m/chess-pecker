@@ -1,5 +1,6 @@
 import { Component, ElementRef, computed, effect, inject, input } from '@angular/core';
 
+import { PIECE_SHAPE } from '@app/definition/chess-piece.constant';
 import { PieceColor, PieceType } from '@app/definition/chess.type';
 import { SLIDE_DURATION, scaleForSpeed } from '@app/definition/move-speed.type';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
@@ -13,8 +14,8 @@ export interface PieceSlide {
 }
 
 /**
- * Draws one piece by masking a flat colour with the silhouette extracted from the
- * artwork, which keeps the piece readable on any square and in any theme.
+ * Draws one piece from the artwork's own outlines, filled and stroked with the board
+ * colours, which keeps the piece readable on any square and in any theme.
  */
 @Component({
 	selector: 'app-chess-piece',
@@ -30,7 +31,7 @@ export class ChessPieceComponent {
 	readonly color = input.required<PieceColor>();
 	readonly slide = input<PieceSlide>();
 
-	readonly maskImage = computed(() => `url(svg/chess/${this.type()}.svg)`);
+	readonly shapes = computed(() => PIECE_SHAPE[this.type()]);
 
 	private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
