@@ -2,6 +2,7 @@ import { MoveAnimation } from '@app/definition/board-animation.type';
 import { MoveInputMethod } from '@app/definition/board-input.type';
 import { Language } from '@app/definition/language.type';
 import { IntroProgress } from '@app/definition/model/setting/intro-progress.type';
+import { LocalOwner } from '@app/definition/model/setting/local-owner.type';
 import { MoveSpeed } from '@app/definition/move-speed.type';
 import { Theme } from '@app/definition/service/theme.type';
 
@@ -15,6 +16,7 @@ export interface SettingType {
 	MOVE_SPEED: 'MOVE_SPEED';
 	SOUND: 'SOUND';
 	INTRO: 'INTRO';
+	OWNER: 'OWNER';
 }
 
 export interface SettingPayload {
@@ -27,4 +29,5 @@ export interface SettingPayload {
 	MOVE_SPEED: MoveSpeed;
 	SOUND: boolean;
 	INTRO: IntroProgress;
+	OWNER: LocalOwner;
 }

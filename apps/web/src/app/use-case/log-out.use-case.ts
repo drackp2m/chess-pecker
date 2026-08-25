@@ -2,14 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { PendingSyncModalComponent } from '@app/component/pending-sync-modal/pending-sync-modal.component';
-import { Resettable } from '@app/definition/resettable.interface';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
-import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
-import { ProfileStore } from '@app/store/profile.store';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
-import { TrainingStore } from '@app/store/training.store';
+import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
 
 /**
  * Logging out, whole and in one place: ask whether anything exists only here, close against
@@ -24,17 +21,7 @@ export class LogOutUseCase {
 	private readonly sessionStore = inject(SessionStore);
 
 	private readonly syncStore = inject(SyncStore);
-
-	/**
-	 * Everything holding user data in memory. A new store with any of it is added here, which
-	 * is the only thing to remember for it to leave with the rest.
-	 */
-	private readonly stores: readonly Resettable[] = [
-		inject(ActivityStore),
-		inject(ProfileStore),
-		this.syncStore,
-		inject(TrainingStore),
-	];
+	private readonly discardLocalDataUseCase = inject(DiscardLocalDataUseCase);
 
 	/** `false` when it never closed: the user cancelled, or the API could not. */
 	async execute(): Promise<boolean> {
@@ -79,12 +66,8 @@ export class LogOutUseCase {
 
 	/** The session is already closed, so a failed wipe cannot bring the logout down. */
 	private async forgetEverything(): Promise<void> {
-		for (const store of this.stores) {
-			store.reset();
-		}
-
 		try {
-			await this.localDataRepository.clearUserData();
+			await this.discardLocalDataUseCase.execute();
 		} catch (error) {
 			console.error('Could not clear the local data on log out', error);
 		}

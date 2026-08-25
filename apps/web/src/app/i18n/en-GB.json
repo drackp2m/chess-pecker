@@ -112,6 +112,8 @@
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} exercises from this device have not reached the server yet. Logging out deletes them, with no way to get them back.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Log out anyway",
 	"01KZS8AGRWVYYDY12EVBWAY17D": "Stay",
+	"01M0V31ZYJ33PDSBPVDKYG7HYT": "This device will lose what it holds",
+	"01M0V31ZYJVZTMCYXCYAJFG6EE": "The training and the exercises on this device are not this account’s, so signing in deletes them, with no way to get them back.",
 	"01M08S2E7Y4N1GH1WEYNE2PHH2": "Checking what changed…",
 	"01M08S2E7Y82F1D1EC3SSESMAC": "Uploading what is on this device…",
 	"01M08S2E7YD0QHYKHGFRKC95KQ": "Downloading your training…",

@@ -96,6 +96,12 @@ export class LocalDataRepository extends GenericRepository<AppSchema> {
 		});
 	}
 
+	async countPuzzleSets(): Promise<number> {
+		return this.runInTransaction(['puzzleSet'], 'readonly', (transaction) =>
+			transaction.objectStore('puzzleSet').count(),
+		);
+	}
+
 	/**
 	 * Everything the user owns, in one transaction. `puzzle` and `setting` stay, and only the
 	 * user's keys leave `syncCursor`, since the catalogue's cut still serves whoever comes next.

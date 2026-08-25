@@ -112,6 +112,8 @@
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} exercicis d’aquest dispositiu encara no han arribat al servidor. En tancar la sessió s’esborren, i no hi ha manera de recuperar-los.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Tanca la sessió igualment",
 	"01KZS8AGRWVYYDY12EVBWAY17D": "Em quedo",
+	"01M0V31ZYJ33PDSBPVDKYG7HYT": "Aquest dispositiu perdrà el que guarda",
+	"01M0V31ZYJVZTMCYXCYAJFG6EE": "L’entrenament i els exercicis d’aquest dispositiu no són del compte amb què entres, així que en entrar s’esborren i no hi ha manera de recuperar-los.",
 	"01M08S2E7Y4N1GH1WEYNE2PHH2": "Comprovant què ha canviat…",
 	"01M08S2E7Y82F1D1EC3SSESMAC": "Pujant el que hi ha en aquest dispositiu…",
 	"01M08S2E7YD0QHYKHGFRKC95KQ": "Baixant el teu entrenament…",

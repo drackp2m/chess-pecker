@@ -104,15 +104,21 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		return this.restore();
 	}
 
-	async logIn(request: LoginRequest): Promise<boolean> {
+	async logIn(
+		request: LoginRequest,
+		beforeAdopting?: (user: AuthUser) => Promise<void>,
+	): Promise<boolean> {
 		patchState(this, { isSubmitting: true, error: null });
 
 		try {
 			await this.authRepository.logIn(request);
 
+			const user = await this.authRepository.getCurrentUser();
+			await beforeAdopting?.(user);
+
 			patchState(this, {
 				status: 'authenticated',
-				user: await this.authRepository.getCurrentUser(),
+				user,
 				isSubmitting: false,
 			});
 			this.checkedAt = Date.now();
@@ -125,7 +131,10 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 		}
 	}
 
-	async register(request: RegisterRequest): Promise<boolean> {
+	async register(
+		request: RegisterRequest,
+		beforeAdopting?: (user: AuthUser) => Promise<void>,
+	): Promise<boolean> {
 		patchState(this, { isSubmitting: true, error: null });
 
 		try {
@@ -139,7 +148,7 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 			return false;
 		}
 
-		return this.logIn({ username: request.username, password: request.password });
+		return this.logIn({ username: request.username, password: request.password }, beforeAdopting);
 	}
 
 	/**

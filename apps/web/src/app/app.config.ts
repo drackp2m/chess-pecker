@@ -15,6 +15,7 @@ import { UpdateService } from '@app/service/update.service';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.strategy';
+import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -24,6 +25,7 @@ export const appConfig: ApplicationConfig = {
 			const _themeService = inject(ThemeService);
 			const _languageService = inject(LanguageService);
 			const _updateService = inject(UpdateService);
+			const _localOwnerUseCase = inject(LocalOwnerUseCase);
 
 			// The session restore is a background refresh and not a boot gate, so it is fired
 			// without awaiting; the sync cycle behind it is the gate.

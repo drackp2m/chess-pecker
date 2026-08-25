@@ -8,6 +8,7 @@ import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { SessionStore } from '@app/store/session.store';
+import { LogInUseCase } from '@app/use-case/log-in.use-case';
 
 @Component({
 	templateUrl: './login.page.html',
@@ -24,6 +25,7 @@ export class LoginPage {
 	});
 
 	private readonly sessionStore = inject(SessionStore);
+	private readonly logInUseCase = inject(LogInUseCase);
 	private readonly router = inject(Router);
 
 	readonly error = this.sessionStore.error;
@@ -44,7 +46,7 @@ export class LoginPage {
 			return;
 		}
 
-		const succeeded = await this.sessionStore.logIn(this.form.getRawValue());
+		const succeeded = await this.logInUseCase.execute(this.form.getRawValue());
 
 		if (succeeded) {
 			await this.router.navigate(['/']);

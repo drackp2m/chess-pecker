@@ -9,6 +9,7 @@ import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { SessionStore } from '@app/store/session.store';
+import { RegisterUseCase } from '@app/use-case/register.use-case';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -33,6 +34,7 @@ export class RegisterPage {
 	});
 
 	private readonly sessionStore = inject(SessionStore);
+	private readonly registerUseCase = inject(RegisterUseCase);
 	private readonly router = inject(Router);
 
 	readonly error = this.sessionStore.error;
@@ -53,7 +55,7 @@ export class RegisterPage {
 			return;
 		}
 
-		const succeeded = await this.sessionStore.register(this.buildRequest());
+		const succeeded = await this.registerUseCase.execute(this.buildRequest());
 
 		if (succeeded) {
 			await this.router.navigate(['/']);
