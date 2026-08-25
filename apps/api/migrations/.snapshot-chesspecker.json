@@ -982,7 +982,7 @@
       "checks": [
         {
           "name": "training_cancelled_matches_reason_check",
-          "columnName": "status",
+          "columnName": "finished_reason",
           "definition": "CHECK (((finished_reason IS NULL) OR ((status = 'cancelled'::text) = (finished_reason = 'cancelled'::text))))",
           "expression": "(finished_reason IS NULL) OR ((status = 'cancelled'::text) = (finished_reason = 'cancelled'::text))"
         }

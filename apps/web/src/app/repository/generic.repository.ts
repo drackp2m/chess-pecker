@@ -137,6 +137,16 @@ export class GenericRepository<T extends DBSchema> {
 		return values.map((value) => this.hydrate(storeName, value));
 	}
 
+	async countByIndex<K extends StoreNames<T>>(
+		storeName: K,
+		indexName: IndexNames<T, K>,
+		indexValue: IDBKeyRange | IndexKey<T, K, IndexNames<T, K>>,
+	): Promise<number> {
+		return this.runInTransaction([storeName], 'readonly', (transaction) =>
+			transaction.objectStore(storeName).index(indexName).count(indexValue),
+		);
+	}
+
 	async delete<K extends StoreNames<T>>(storeName: K, key: StoreKey<T, K>): Promise<void> {
 		await this.runInTransaction([storeName], 'readwrite', (transaction) =>
 			transaction.objectStore(storeName).delete(key),

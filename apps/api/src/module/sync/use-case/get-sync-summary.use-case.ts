@@ -46,18 +46,25 @@ const ENTITY_SUMMARY = `with owned as (select uuid from training where user_uuid
    from puzzle_attempt pa join owned o on o.uuid = pa.training_uuid`;
 
 /**
- * The cycles that did not make it up whole: fewer slots stored than the device declared. A
- * truncated upload leaves them behind, and counting the slots is the only way to see it.
+ * The cycles that did not make it up whole: fewer slots stored than they should hold. Every
+ * cycle walks the whole set, so the set is the floor no truncated upload can lower — the
+ * count the cycle declares only ever raises it.
  */
-const PARTIAL_CYCLES = `select c.uuid, c.training_uuid as "trainingUuid", c."index",
-        c.item_count::int as "itemCount", count(ci.uuid)::int as "storedItems"
- from training_cycle c
- join training t on t.uuid = c.training_uuid
- left join training_cycle_item ci on ci.cycle_uuid = c.uuid
- where t.user_uuid = ?
- group by c.uuid, c.training_uuid, c."index", c.item_count
- having count(ci.uuid) < c.item_count
- order by c.training_uuid, c."index"`;
+const PARTIAL_CYCLES = `with declared as (
+   select c.uuid, c.training_uuid, c."index",
+          greatest(c.item_count, (select count(*)::int from training_puzzle tp
+                                   where tp.training_uuid = c.training_uuid))::int as item_count
+     from training_cycle c
+     join training t on t.uuid = c.training_uuid
+    where t.user_uuid = ?
+ )
+ select d.uuid, d.training_uuid as "trainingUuid", d."index",
+        d.item_count as "itemCount", count(ci.uuid)::int as "storedItems"
+ from declared d
+ left join training_cycle_item ci on ci.cycle_uuid = d.uuid
+ group by d.uuid, d.training_uuid, d."index", d.item_count
+ having count(ci.uuid) < d.item_count
+ order by d.training_uuid, d."index"`;
 
 interface EntitySummaryRow {
 	entity: SyncEntity;

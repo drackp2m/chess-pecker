@@ -7,9 +7,10 @@ import {
 } from '@app/repository/definition/training-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
+import { LocalTrainingUseCase, isActiveTraining } from '@app/use-case/local-training.use-case';
 import { born, touch } from '@app/use-case/sync/local-record';
 import { CyclePlacement, planCycleRepair } from '@app/util/cycle-repair';
-import { isWholeCycle } from '@app/util/whole-cycle';
+import { expectedCycleItems } from '@app/util/whole-cycle';
 
 export interface PartialCycle {
 	readonly uuid: string;
@@ -33,9 +34,29 @@ export interface CycleRepair {
 export class RepairCycleUseCase {
 	private readonly repository = inject(TrainingLocalRepository);
 	private readonly cycles = inject(LocalCycleUseCase);
+	private readonly trainings = inject(LocalTrainingUseCase);
+
+	async repairAll(): Promise<readonly CycleRepair[]> {
+		const repairs: CycleRepair[] = [];
+		const trainings = (await this.trainings.list()).filter((training) =>
+			isActiveTraining(training),
+		);
+
+		for (const training of trainings) {
+			for (const partial of await this.listPartial(training.uuid)) {
+				const repair = partial.canRepair ? await this.repairOne(partial.uuid) : undefined;
+
+				if (undefined !== repair) {
+					repairs.push(repair);
+				}
+			}
+		}
+
+		return repairs;
+	}
 
 	async listPartial(trainingUuid: string): Promise<readonly PartialCycle[]> {
-		const setSize = (await this.cycles.listSet(trainingUuid)).length;
+		const setSize = await this.cycles.countSet(trainingUuid);
 
 		if (0 === setSize) {
 			return [];
@@ -45,16 +66,15 @@ export class RepairCycleUseCase {
 		const partial: PartialCycle[] = [];
 
 		for (const cycle of cycles) {
-			const items = await this.cycles.listItems(cycle.uuid);
+			const storedItems = await this.cycles.countItems(cycle.uuid);
+			const itemCount = expectedCycleItems(cycle, setSize);
 
-			if (!isWholeCycle(cycle, items)) {
-				const itemCount = cycle.expectedItems ?? setSize;
-
+			if (storedItems < itemCount) {
 				partial.push({
 					uuid: cycle.uuid,
 					index: cycle.index,
 					itemCount,
-					storedItems: items.length,
+					storedItems,
 					canRepair: itemCount <= setSize,
 				});
 			}
@@ -72,7 +92,7 @@ export class RepairCycleUseCase {
 
 		const set = await this.cycles.listSet(cycle.trainingUuid);
 		const items = await this.cycles.listItems(cycleUuid);
-		const expectedItems = cycle.expectedItems ?? set.length;
+		const expectedItems = expectedCycleItems(cycle, set.length);
 
 		if (set.length < expectedItems) {
 			throw new Error('The set is not fully replicated on this device');
@@ -92,6 +112,16 @@ export class RepairCycleUseCase {
 		}
 
 		return { cycleUuid, expectedItems, storedItems: items.length, restoredItems: rows.length };
+	}
+
+	private async repairOne(cycleUuid: string): Promise<CycleRepair | undefined> {
+		try {
+			return await this.execute(cycleUuid);
+		} catch (error) {
+			console.error(`Could not repair the cycle \`${cycleUuid}\``, error);
+
+			return undefined;
+		}
 	}
 
 	private async assertNothingElseRunning(cycle: TrainingCycleRow): Promise<void> {

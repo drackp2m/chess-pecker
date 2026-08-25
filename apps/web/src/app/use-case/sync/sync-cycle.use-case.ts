@@ -12,6 +12,7 @@ import {
 } from '@app/repository/local-data.repository';
 import { SessionStore } from '@app/store/session.store';
 import { PuzzleCatalogReplicaUseCase } from '@app/use-case/puzzle-catalog-replica.use-case';
+import { RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
 import { SyncPullUseCase } from '@app/use-case/sync/sync-pull.use-case';
 import { SyncPushUseCase } from '@app/use-case/sync/sync-push.use-case';
 import { SyncStatus, SyncSummaryUseCase } from '@app/use-case/sync/sync-summary.use-case';
@@ -63,6 +64,7 @@ export class SyncCycleUseCase {
 	private readonly pusher = inject(SyncPushUseCase);
 	private readonly puller = inject(SyncPullUseCase);
 	private readonly catalog = inject(PuzzleCatalogReplicaUseCase);
+	private readonly repair = inject(RepairCycleUseCase);
 	private readonly localData = inject(LocalDataRepository);
 
 	async execute(report: SyncReport): Promise<SyncPhase> {
@@ -93,6 +95,7 @@ export class SyncCycleUseCase {
 
 	private async run(report: SyncReport): Promise<SyncPhase> {
 		report({ phase: 'checking', error: null });
+		await this.heal();
 		await this.countPending(report);
 
 		// `GET /sync` belongs to a user, so there is no summary without a session; the catalogue
@@ -125,13 +128,17 @@ export class SyncCycleUseCase {
 	}
 
 	private async transfer(status: SyncStatus, report: SyncReport): Promise<SyncPhase> {
-		const cut = status.canPush ? await this.push(report) : false;
+		let cut = status.canPush ? await this.push(report) : false;
 
 		report({ phase: 'pulling' });
 
 		const pulled = await this.puller.execute(status);
 
 		report({ downloaded: pulled.rows, ...(pulled.interrupted ? {} : { behind: [] }) });
+
+		if ((await this.heal()) && status.canPush) {
+			cut = (await this.push(report)) || cut;
+		}
 
 		// The catalogue goes last on purpose: ~22,000 exercises against the tree's dozens, and
 		// whoever watches the splash would rather have their own first.
@@ -150,6 +157,16 @@ export class SyncCycleUseCase {
 	 */
 	private async isReplicaComplete(status: SyncStatus): Promise<boolean> {
 		return 0 === status.behind.length && (await this.catalog.isSynced(status.summary.catalog));
+	}
+
+	private async heal(): Promise<boolean> {
+		try {
+			return 0 < (await this.repair.repairAll()).length;
+		} catch (error) {
+			console.error('Could not repair the cycles this device holds half of', error);
+
+			return false;
+		}
 	}
 
 	/** `true` when something transient cut the push short and work is left for the next pass. */

@@ -12,12 +12,15 @@ import { SyncModule } from '../sync.module';
 import {
 	BORN,
 	CATALOG,
+	SET_PUZZLE,
+	SPARE_PUZZLE,
 	TreeRefs,
 	buildRefs,
 	buildTree,
 	resetTrainingFixtures,
 	seedUser,
 	trainingNode,
+	uuid,
 } from '../test/training-tree.fixture';
 
 import { GetSyncSummaryUseCase } from './get-sync-summary.use-case';
@@ -169,6 +172,23 @@ describe('GetSyncSummaryUseCase', () => {
 			const summary = await useCase.execute(user);
 
 			expect(summary.partialCycles).toStrictEqual([]);
+		});
+
+		it('is listed when the set says more than the cycle declares', async () => {
+			const refs = buildRefs();
+			const spare = uuid();
+			const cut = cutTree(refs, 1);
+
+			cut.training.puzzles = [
+				{ clientRef: refs.set, createdAt: BORN, updatedAt: BORN, lichessId: SET_PUZZLE },
+				{ clientRef: spare, createdAt: BORN, updatedAt: BORN, lichessId: SPARE_PUZZLE },
+			];
+
+			await pushTrainingTreeUseCase.execute(user, cut);
+
+			const summary = await useCase.execute(user);
+
+			expect(summary.partialCycles).toMatchObject([{ index: 1, itemCount: 2, storedItems: 1 }]);
 		});
 
 		it("is nobody else's business", async () => {

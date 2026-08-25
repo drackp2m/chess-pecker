@@ -82,6 +82,7 @@ function configure(
 		cycles?: readonly TrainingCycleRow[];
 		items?: readonly CycleItemRow[];
 		dealt?: readonly CalibrationPuzzleRow[];
+		setSize?: number;
 	} = {},
 ) {
 	const puzzles = new Map(
@@ -90,6 +91,7 @@ function configure(
 	const cycles = {
 		listCycles: vi.fn().mockResolvedValue(options.cycles ?? [CYCLE]),
 		listItems: vi.fn().mockResolvedValue(options.items ?? DEFAULT_ITEMS),
+		countSet: vi.fn().mockResolvedValue(options.setSize ?? 0),
 	};
 	const local = {
 		findAllByIndex: vi.fn().mockResolvedValue(options.dealt ?? []),
@@ -203,6 +205,25 @@ describe('TrainingHistoryUseCase', () => {
 		const entries = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
 
 		expect(entries.map((entry) => entry.row.uuid)).toEqual(['attempt-item-1']);
+	});
+
+	it('reads a pass short of the set as one that is not whole, whatever it declares', async () => {
+		const { history } = configure(
+			[
+				row({ cycleItemUuid: 'item-1', lichessId: 'AAA11' }),
+				row({
+					cycleItemUuid: 'lost-item',
+					lichessId: 'BBB22',
+					position: 4,
+					updatedAt: new Date('2026-08-11T11:00:00.000Z'),
+				}),
+			],
+			{ cycles: [WHOLE_CYCLE], setSize: 5 },
+		);
+
+		const entries = await history.list({ trainingUuid: TRAINING, kind: 'cycle' });
+
+		expect(entries.map((entry) => entry.position)).toEqual([1, 5]);
 	});
 
 	it('keeps an exercise of the pass however old the attempt is', async () => {

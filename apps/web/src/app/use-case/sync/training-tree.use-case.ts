@@ -34,6 +34,7 @@ import {
 	setRefs,
 } from '@app/use-case/sync/tree-nodes';
 import { pendingTrainings } from '@app/use-case/sync/tree-owners';
+import { expectedCycleItems } from '@app/util/whole-cycle';
 
 /** A tree ready to push, with the list its response will have to confirm. */
 export interface TrainingTreePush {
@@ -222,7 +223,7 @@ export class TrainingTreeUseCase {
 				...syncNode(row),
 				index: row.index,
 				status: row.status,
-				itemCount: row.expectedItems ?? stored.length,
+				itemCount: Math.max(expectedCycleItems(row, set.length), stored.length),
 				items,
 			});
 		}

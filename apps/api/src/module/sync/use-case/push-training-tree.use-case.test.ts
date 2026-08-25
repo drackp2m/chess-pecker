@@ -399,6 +399,52 @@ describe('PushTrainingTreeUseCase', () => {
 			expect(cycle.itemCount).toStrictEqual(10);
 		});
 
+		it('widens a cycle that declares less than the set it walks', async () => {
+			const refs = buildRefs();
+			const spare = uuid();
+
+			await useCase.execute(
+				user,
+				tree(refs, {
+					puzzles: [
+						{ clientRef: refs.set, createdAt: BORN, updatedAt: BORN, lichessId: SET_PUZZLE },
+						{ clientRef: spare, createdAt: BORN, updatedAt: BORN, lichessId: SPARE_PUZZLE },
+					],
+					cycles: [cutCycle(refs, { itemCount: 1 })],
+				}),
+			);
+
+			const em = entityManager.fork();
+			const cycle = await em.findOneOrFail(TrainingCycle, { clientRef: refs.cycle });
+
+			expect(cycle.itemCount).toStrictEqual(2);
+			await expect(em.count(TrainingCycleItem, { cycle })).resolves.toStrictEqual(1);
+		});
+
+		it('comes back down measured against the set, not against what it declared', async () => {
+			const refs = buildRefs();
+			const spare = uuid();
+
+			await useCase.execute(
+				user,
+				tree(refs, {
+					puzzles: [
+						{ clientRef: refs.set, createdAt: BORN, updatedAt: BORN, lichessId: SET_PUZZLE },
+						{ clientRef: spare, createdAt: BORN, updatedAt: BORN, lichessId: SPARE_PUZZLE },
+					],
+					cycles: [cutCycle(refs, { itemCount: 1 })],
+				}),
+			);
+
+			const em = entityManager.fork();
+			const training = await em.findOneOrFail(Training, { clientRef: refs.training });
+			const pulled = await getTrainingTreeUseCase.execute(training);
+			const cycle = pulled.cycles.find((node) => node.clientRef === refs.cycle);
+
+			expect(cycle?.itemCount).toStrictEqual(2);
+			expect(cycle?.items).toHaveLength(1);
+		});
+
 		it('refuses to close a cycle whose every stored slot was played but some never arrived', async () => {
 			const refs = buildRefs();
 
