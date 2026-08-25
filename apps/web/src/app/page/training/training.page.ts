@@ -192,6 +192,10 @@ export class TrainingPage implements OnInit {
 		void this.store.startCycle();
 	}
 
+	repairCycle(cycle: CycleProgress): void {
+		void this.store.repairCycle(cycle.uuid);
+	}
+
 	finish(): void {
 		void this.store.finish();
 	}

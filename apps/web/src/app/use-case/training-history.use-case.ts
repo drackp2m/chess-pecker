@@ -8,11 +8,12 @@ import { PuzzleRepository } from '@app/repository/puzzle.repository';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
+import { isWholeCycle } from '@app/util/whole-cycle';
 
 export interface SolvedAttempt {
 	readonly row: AttemptRow;
 	readonly puzzle: Puzzle;
-	/** 1-indexed place of the exercise inside its round or its pass, when it is known. */
+	/** 1-indexed place of the exercise inside its round or its cycle, when it is known. */
 	readonly position: number | null;
 	readonly total: number | null;
 }
@@ -83,23 +84,23 @@ export class TrainingHistoryUseCase {
 
 	private async cyclePlacement(trainingUuid: string): Promise<HistoryPlacement | undefined> {
 		const cycles = await this.cycles.listCycles(trainingUuid);
-		const pass = cycles.find((cycle) => 'running' === cycle.status) ?? cycles.at(-1);
+		const cycle = cycles.find((candidate) => 'running' === candidate.status) ?? cycles.at(-1);
 
-		if (undefined === pass) {
+		if (undefined === cycle) {
 			return undefined;
 		}
 
-		const items = await this.cycles.listItems(pass.uuid);
+		const items = await this.cycles.listItems(cycle.uuid);
 		const positions = new Map(items.map((item) => [item.uuid, item.position]));
-		const whole = undefined !== pass.expectedItems && items.length === pass.expectedItems;
-		const opened = pass.createdAt.getTime();
+		const whole = isWholeCycle(cycle, items);
+		const opened = cycle.createdAt.getTime();
 		const placeOwn = (row: AttemptRow): number | null =>
 			toPlace(undefined === row.cycleItemUuid ? undefined : positions.get(row.cycleItemUuid));
 
 		return {
 			total: items.length,
-			// An attempt belongs to the pass when its slot is one of the pass's. The date rule is
-			// only for the pass that is not fully here.
+			// An attempt belongs to the cycle when its slot is one of the cycle's. The date rule
+			// is only for the cycle that is not fully here.
 			keeps: (row) => null !== placeOwn(row) || (!whole && opened <= row.updatedAt.getTime()),
 			place: (row) => placeOwn(row) ?? (whole ? null : toPlace(row.position)),
 		};

@@ -1,8 +1,15 @@
 import { readFileSync } from 'node:fs';
 
-import { INestApplication, Logger, NestApplicationOptions, ValidationPipe } from '@nestjs/common';
+import {
+	HttpStatus,
+	INestApplication,
+	Logger,
+	NestApplicationOptions,
+	ValidationPipe,
+} from '@nestjs/common';
 import { GlobalPrefixOptions } from '@nestjs/common/interfaces';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import { NextFunction, Request, Response } from 'express';
 
 import { ConfigurationService } from '../module/config/configuration.service';
 import { ApiConfig } from '../module/config/definition/api-config.type';
@@ -58,6 +65,27 @@ export class BootstrapHelper {
 		};
 	};
 
+	static readonly payloadFilter = (
+		error: unknown,
+		request: Request,
+		response: Response,
+		next: NextFunction,
+	): void => {
+		if (!isPayloadTooLarge(error)) {
+			next(error);
+
+			return;
+		}
+
+		Logger.warn(`Payload over the ceiling on ${request.originalUrl}`, 'Bootstrap');
+
+		response.status(HttpStatus.PAYLOAD_TOO_LARGE).json({
+			message: { request: 'payload too large' },
+			statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
+			ip: request.ip,
+		});
+	};
+
 	static readonly apiConfig = (app: INestApplication): ApiConfig => {
 		const configService = app.get(ConfigurationService);
 
@@ -74,4 +102,12 @@ export class BootstrapHelper {
 
 		Logger.log(`🚀 API ready at ${url} in ${uptime}s` + exposedPortInfo, 'Bootstrap');
 	};
+}
+
+function isPayloadTooLarge(error: unknown): boolean {
+	if (null === error || 'object' !== typeof error) {
+		return false;
+	}
+
+	return 'entity.too.large' === (error as { type?: unknown }).type;
 }

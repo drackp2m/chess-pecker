@@ -1,4 +1,9 @@
-import type { SyncEntity, SyncEntitySummary, SyncSummary } from '@chesspecker/api-definitions';
+import type {
+	SyncEntity,
+	SyncEntitySummary,
+	SyncPartialCycle,
+	SyncSummary,
+} from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
@@ -40,6 +45,20 @@ const ENTITY_SUMMARY = `with owned as (select uuid from training where user_uuid
  select 'attempt', max(pa.received_at), count(*)::int
    from puzzle_attempt pa join owned o on o.uuid = pa.training_uuid`;
 
+/**
+ * The cycles that did not make it up whole: fewer slots stored than the device declared. A
+ * truncated upload leaves them behind, and counting the slots is the only way to see it.
+ */
+const PARTIAL_CYCLES = `select c.uuid, c.training_uuid as "trainingUuid", c."index",
+        c.item_count::int as "itemCount", count(ci.uuid)::int as "storedItems"
+ from training_cycle c
+ join training t on t.uuid = c.training_uuid
+ left join training_cycle_item ci on ci.cycle_uuid = c.uuid
+ where t.user_uuid = ?
+ group by c.uuid, c.training_uuid, c."index", c.item_count
+ having count(ci.uuid) < c.item_count
+ order by c.training_uuid, c."index"`;
+
 interface EntitySummaryRow {
 	entity: SyncEntity;
 	cursor: Date | string | null;
@@ -58,10 +77,13 @@ export class GetSyncSummaryUseCase {
 	) {}
 
 	async execute(user: User): Promise<SyncSummary> {
-		const rows = (await this.entityManager
-			.fork()
-			.getConnection()
-			.execute<EntitySummaryRow[]>(ENTITY_SUMMARY, [user.uuid])) as EntitySummaryRow[];
+		const connection = this.entityManager.fork().getConnection();
+		const rows = (await connection.execute<EntitySummaryRow[]>(ENTITY_SUMMARY, [
+			user.uuid,
+		])) as EntitySummaryRow[];
+		const partial = (await connection.execute<SyncPartialCycle[]>(PARTIAL_CYCLES, [
+			user.uuid,
+		])) as SyncPartialCycle[];
 
 		return {
 			serverTime: new GenerateNowDateUseCase().execute().toISOString(),
@@ -71,6 +93,7 @@ export class GetSyncSummaryUseCase {
 				version: (await this.puzzleRepository.lastUpdatedAt())?.toISOString() ?? EMPTY_VERSION,
 				total: await this.puzzleRepository.countAll(),
 			},
+			partialCycles: partial,
 		};
 	}
 }

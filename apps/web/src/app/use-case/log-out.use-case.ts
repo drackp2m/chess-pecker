@@ -45,7 +45,7 @@ export class LogOutUseCase {
 	private async confirmPending(): Promise<boolean> {
 		await this.syncStore.flush();
 
-		if (!(await this.hasPending())) {
+		if (!(await this.hasUnsaved())) {
 			return true;
 		}
 
@@ -54,11 +54,14 @@ export class LogOutUseCase {
 		return firstValueFrom(modal.instance.onClose$);
 	}
 
-	private async hasPending(): Promise<boolean> {
+	/** A refused row is as lost as a pending one, and it is the case where it hurts most. */
+	private async hasUnsaved(): Promise<boolean> {
 		try {
-			return 0 < (await this.localDataRepository.countPendingSync());
+			const { pending, rejected } = await this.localDataRepository.countUnsavedSync();
+
+			return 0 < pending + rejected;
 		} catch (error) {
-			console.error('Could not count the attempts pending upload', error);
+			console.error('Could not count what this device has not saved', error);
 
 			return true;
 		}

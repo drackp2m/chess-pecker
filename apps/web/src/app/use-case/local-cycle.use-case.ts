@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import type { SyncPartialCycle } from '@chesspecker/api-definitions';
 
 import { TrainingPolicy } from '@app/definition/training-policy.constant';
 import { I18n, i18nRef } from '@app/i18n';
@@ -8,6 +9,7 @@ import {
 	CycleItemRow,
 	TrainingCycleRow,
 	TrainingPuzzleRow,
+	TrainingRow,
 } from '@app/repository/definition/training-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCalibrationUseCase } from '@app/use-case/local-calibration.use-case';
@@ -16,6 +18,12 @@ import { born, touch } from '@app/use-case/sync/local-record';
 import { buildCycleOrder } from '@app/util/cycle-order';
 import { LocalFailureError } from '@app/util/local-failure-error';
 import { clampRatingBucket, ratingBucketCeiling } from '@app/util/rating-bucket';
+import { isWholeCycle } from '@app/util/whole-cycle';
+
+interface StartableTraining {
+	readonly training: TrainingRow;
+	readonly cycles: readonly TrainingCycleRow[];
+}
 
 export interface LocalCycleSlot {
 	readonly cycle: TrainingCycleRow;
@@ -76,26 +84,46 @@ export class LocalCycleUseCase {
 		return (await this.listCycles(trainingUuid)).find((cycle) => 'running' === cycle.status);
 	}
 
+	/**
+	 * What the server says a cycle should hold, when it is more than this device believed.
+	 * Without it a truncation living only in the cloud stays invisible here until the download
+	 * happens to bring the short cycle down. The number is the server's own, so the row is not
+	 * marked pending: pushing it back would only tell the server what it just said.
+	 */
+	async declarePartial(partial: readonly SyncPartialCycle[]): Promise<number> {
+		let declared = 0;
+
+		for (const entry of partial) {
+			const cycle = await this.repository.find('cycle', entry.uuid);
+
+			if (undefined === cycle || entry.itemCount <= (cycle.expectedItems ?? 0)) {
+				continue;
+			}
+
+			await this.repository.insert('cycle', { ...cycle, expectedItems: entry.itemCount });
+			declared++;
+		}
+
+		return declared;
+	}
+
 	async startCycle(trainingUuid: string): Promise<TrainingCycleRow> {
-		const cycles = await this.assertCanStart(trainingUuid);
+		const { training, cycles } = await this.assertCanStart(trainingUuid);
 		const set = await this.listSet(trainingUuid);
 
 		if (0 === set.length) {
 			throw new Error('The set is empty');
 		}
 
-		const expected = cycles
-			.map((cycle) => cycle.expectedItems)
-			.filter((count): count is number => undefined !== count);
+		const previous = cycles.at(-1)?.expectedItems;
 
-		if (0 < expected.length && Math.max(...expected) !== set.length) {
+		if (undefined !== previous && previous !== set.length) {
 			throw new Error('The set is not fully replicated on this device');
 		}
 
-		const cycle = await this.insertCycle(trainingUuid, cycles.length + 1, set.length);
+		const cycle = this.newCycle(trainingUuid, cycles.length + 1, set.length);
 
-		await this.repository.batchInsert('cycleItem', this.toItemRows(cycle, buildCycleOrder(set)));
-		await this.trainings.updateStatus(trainingUuid, 'running');
+		await this.openCycle(training, cycle, this.toItemRows(cycle, buildCycleOrder(set)));
 
 		return cycle;
 	}
@@ -120,7 +148,10 @@ export class LocalCycleUseCase {
 		const items = await this.listItems(cycle.uuid);
 
 		if (!isWholeCycle(cycle, items)) {
-			throw new Error('The cycle is not fully replicated on this device');
+			throw new LocalFailureError(
+				i18nRef(I18n.training.CYCLE_NEEDS_REPAIR),
+				'The cycle is missing slots on this device and has to be repaired',
+			);
 		}
 
 		const attempted = new Set(
@@ -190,7 +221,7 @@ export class LocalCycleUseCase {
 		}
 	}
 
-	private async assertCanStart(trainingUuid: string): Promise<readonly TrainingCycleRow[]> {
+	private async assertCanStart(trainingUuid: string): Promise<StartableTraining> {
 		const training = await this.trainings.find(trainingUuid);
 
 		if (undefined === training || !['planning', 'running'].includes(training.status)) {
@@ -211,7 +242,7 @@ export class LocalCycleUseCase {
 			throw new Error('A goal is required before the first cycle');
 		}
 
-		return cycles;
+		return { training, cycles };
 	}
 
 	private async sampleBand(rating: number, size: number): Promise<readonly PuzzleRow[]> {
@@ -224,24 +255,44 @@ export class LocalCycleUseCase {
 		);
 	}
 
-	private async insertCycle(
-		trainingUuid: string,
-		index: number,
-		expectedItems: number,
-	): Promise<TrainingCycleRow> {
+	private newCycle(trainingUuid: string, index: number, expectedItems: number): TrainingCycleRow {
 		const now = new Date();
 
-		return this.repository.insert(
-			'cycle',
-			born<TrainingCycleRow>({
-				uuid: crypto.randomUUID(),
-				trainingUuid,
-				index,
-				status: 'running',
-				expectedItems,
-				createdAt: now,
-				updatedAt: now,
-			}),
+		return born<TrainingCycleRow>({
+			uuid: crypto.randomUUID(),
+			trainingUuid,
+			index,
+			status: 'running',
+			expectedItems,
+			createdAt: now,
+			updatedAt: now,
+		});
+	}
+
+	/**
+	 * The cycle, its slots and the training status commit together. Split apart, a crash
+	 * between the first two leaves a cycle with no slots, which blocks like a truncated one.
+	 */
+	private async openCycle(
+		training: TrainingRow,
+		cycle: TrainingCycleRow,
+		items: readonly CycleItemRow[],
+	): Promise<void> {
+		await this.repository.runInTransaction(
+			['cycle', 'cycleItem', 'training'],
+			'readwrite',
+			async (transaction) => {
+				const slots = transaction.objectStore('cycleItem');
+
+				await transaction.objectStore('cycle').put(cycle);
+				await Promise.all(items.map((item) => slots.put(item)));
+
+				if ('running' !== training.status) {
+					await transaction
+						.objectStore('training')
+						.put(touch<TrainingRow>({ ...training, status: 'running' }));
+				}
+			},
 		);
 	}
 
@@ -281,8 +332,4 @@ export class LocalCycleUseCase {
 
 		return rows.filter((row) => 'cycle' === row.kind);
 	}
-}
-
-function isWholeCycle(cycle: TrainingCycleRow, items: readonly CycleItemRow[]): boolean {
-	return undefined !== cycle.expectedItems && items.length === cycle.expectedItems;
 }

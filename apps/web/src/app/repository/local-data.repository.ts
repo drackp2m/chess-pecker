@@ -20,6 +20,26 @@ export function sumPending(pending: PendingCount): number {
 	return SYNC_ENTITIES.reduce((total, entity) => total + pending[entity], 0);
 }
 
+/** What a device would lose if it were emptied now: never pushed, or pushed and refused. */
+export interface UnsavedCount {
+	readonly pending: number;
+	readonly rejected: number;
+}
+
+export type UnsavedByEntity = Readonly<Record<SyncEntity, UnsavedCount>>;
+
+export const NO_UNSAVED: UnsavedCount = { pending: 0, rejected: 0 };
+
+export function sumUnsaved(unsaved: UnsavedByEntity): UnsavedCount {
+	return SYNC_ENTITIES.reduce(
+		(total, entity) => ({
+			pending: total.pending + unsaved[entity].pending,
+			rejected: total.rejected + unsaved[entity].rejected,
+		}),
+		NO_UNSAVED,
+	);
+}
+
 export interface EntityRejection {
 	readonly uuid: string;
 	readonly rejectedAt: Date;
@@ -41,16 +61,35 @@ export type SyncAudit = Readonly<Record<SyncEntity, EntityAudit>>;
 })
 export class LocalDataRepository extends GenericRepository<AppSchema> {
 	/**
-	 * How many training rows never reached the server. IndexedDB does not index rows missing
-	 * the field, so the pending index *is* the list and counting it walks nothing else.
+	 * What logging out would delete, table by table: what never reached the server and what
+	 * the server refused. A refusal clears `pendingSince`, so counting the pending index
+	 * alone reads a device that lost everything as having nothing to lose.
 	 */
-	async countPendingSync(): Promise<number> {
-		return sumPending(await this.countPendingByEntity());
+	async countUnsavedByEntity(): Promise<UnsavedByEntity> {
+		return this.runInTransaction(syncStores, 'readonly', async (transaction) => {
+			const counts = await Promise.all(
+				SYNC_ENTITIES.map(async (entity): Promise<readonly [SyncEntity, UnsavedCount]> => {
+					const store = transaction.objectStore(entity) as unknown as PendingStore<'readonly'>;
+					const [pending, rejected] = await Promise.all([
+						store.index('pendingSince').count(),
+						store.index('rejectedAt').count(),
+					]);
+
+					return [entity, { pending, rejected }];
+				}),
+			);
+
+			return Object.fromEntries(counts) as UnsavedByEntity;
+		});
+	}
+
+	async countUnsavedSync(): Promise<UnsavedCount> {
+		return sumUnsaved(await this.countUnsavedByEntity());
 	}
 
 	/**
-	 * The same, table by table: the breakdown the splash shows while pushing. Eight counts
-	 * over an index cost the same as their sum.
+	 * What is left to push, table by table: the breakdown the splash shows while pushing.
+	 * Eight counts over an index cost the same as their sum.
 	 */
 	async countPendingByEntity(): Promise<PendingCount> {
 		return this.runInTransaction(syncStores, 'readonly', async (transaction) => {

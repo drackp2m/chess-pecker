@@ -114,7 +114,7 @@ Errores de los ajustes guardados en este dispositivo. `SETTINGS_BLOCKED_UPGRADE`
 
 ## PENDING_SYNC_*
 
-Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{{ pending }}` es el número de ejercicios en peligro.
+Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{{ pending }}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{{ rejected }}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.
 
 ## SYNC_*
 

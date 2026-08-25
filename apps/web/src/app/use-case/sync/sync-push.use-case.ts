@@ -40,9 +40,10 @@ interface PushPass extends PushOutcome {
 
 /**
  * A 4xx over the whole tree is not a data clash but a request the server will never accept,
- * and retrying it would spin in place forever.
+ * and retrying it would spin in place forever. A 413 is one of them: with the byte budget the
+ * tree already fits, so being over the ceiling means one row is too big on its own.
  */
-const REFUSING_STATUS = new Set([400, 403, 409, 422]);
+const REFUSING_STATUS = new Set([400, 403, 409, 413, 422]);
 
 /**
  * Everything written here and not up there, pushed on its own. The unit is a training's tree,

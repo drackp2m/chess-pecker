@@ -123,7 +123,32 @@
 									</span>
 								</div>
 
-								@if ('running' === cycle.status) {
+								@if (store.partialCycle(cycle.uuid); as partial) {
+									<div class="flex-col gap-2">
+										<p class="error fs-sm" role="alert">
+											{{
+												I18n.training.CYCLE_INCOMPLETE
+													| i18n: { stored: partial.storedItems, expected: partial.itemCount }
+											}}
+										</p>
+
+										@if (partial.canRepair) {
+											<button
+												appThemed
+												class="fs-sm p-1"
+												color="accent"
+												[disabled]="store.isSubmitting()"
+												(click)="repairCycle(cycle)"
+											>
+												{{ I18n.training.REPAIR_CYCLE | i18n }}
+											</button>
+										} @else {
+											<p class="fs-sm">{{ I18n.training.SET_STILL_DOWNLOADING | i18n }}</p>
+										}
+									</div>
+								}
+
+								@if ('running' === cycle.status && undefined === store.partialCycle(cycle.uuid)) {
 									<div class="flex-col gap-1">
 										@if (0 < cyclePaceChart().points.length) {
 											<app-activity-chart

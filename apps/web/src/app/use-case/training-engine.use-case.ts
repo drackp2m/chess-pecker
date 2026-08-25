@@ -6,6 +6,7 @@ import { TrainingRow } from '@app/repository/definition/training-schema.interfac
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { LocalProgressUseCase } from '@app/use-case/local-progress.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
+import { PartialCycle, RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
 
 @Injectable({
 	providedIn: 'root',
@@ -14,6 +15,7 @@ export class TrainingEngineUseCase {
 	private readonly trainings = inject(LocalTrainingUseCase);
 	private readonly cycles = inject(LocalCycleUseCase);
 	private readonly progress = inject(LocalProgressUseCase);
+	private readonly repair = inject(RepairCycleUseCase);
 
 	async list(): Promise<readonly TrainingRow[]> {
 		return this.trainings.list();
@@ -37,6 +39,14 @@ export class TrainingEngineUseCase {
 
 	async startCycle(uuid: string): Promise<void> {
 		await this.cycles.startCycle(uuid);
+	}
+
+	async listPartialCycles(uuid: string): Promise<readonly PartialCycle[]> {
+		return this.repair.listPartial(uuid);
+	}
+
+	async repairCycle(cycleUuid: string): Promise<void> {
+		await this.repair.execute(cycleUuid);
 	}
 
 	async finish(uuid: string): Promise<void> {

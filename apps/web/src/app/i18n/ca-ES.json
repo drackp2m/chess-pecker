@@ -110,6 +110,7 @@
 	"01KZS8AGRV1YW49KHZWA9S4S3Y": "No s’han pogut portar les últimes dades: es mostra el que hi ha desat en aquest dispositiu.",
 	"01KZS8AGRWGFP8X9KFM4GS6Z41": "Queden exercicis sense pujar",
 	"01KZS8AGRW2GFXT6E5GZ6HHZPQ": "{{ pending }} exercicis d’aquest dispositiu encara no han arribat al servidor. En tancar la sessió s’esborren, i no hi ha manera de recuperar-los.",
+	"01M0WDEDFAJ2PMX8BFXKKQFD0A": "El servidor va rebutjar {{ rejected }} exercicis d’aquest dispositiu i no es tornaran a intentar. En tancar la sessió s’esborren, i no hi ha manera de recuperar-los.",
 	"01KZS8AGRWES0GY7DRQM4RQVPC": "Tanca la sessió igualment",
 	"01KZS8AGRWVYYDY12EVBWAY17D": "Em quedo",
 	"01M0V31ZYJ33PDSBPVDKYG7HYT": "Aquest dispositiu perdrà el que guarda",

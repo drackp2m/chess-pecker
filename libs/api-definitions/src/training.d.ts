@@ -173,7 +173,7 @@ export interface TrainingAttempt extends PuzzleAttemptRecord {
 	readonly roundUuid?: string;
 	readonly cycleItemUuid?: string;
 	/**
-	 * Its place in the pass, from 0. It travels with the attempt because the device restoring
+	 * Its place in the cycle, from 0. It travels with the attempt because the device restoring
 	 * it may not have the cycle order, only the slots it was served.
 	 */
 	readonly position?: number;

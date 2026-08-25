@@ -5,6 +5,10 @@ export const SyncPolicy = {
 	 */
 	pushBatchSize: 200,
 
+	pushBatchBytes: 512 * 1024,
+
+	rowBytes: 320,
+
 	/** Requests per pass, so a tree that makes no progress cannot spin forever. */
 	maxRequestsPerRun: 50,
 
@@ -25,6 +29,8 @@ export const SyncPolicy = {
 	 * floor, switching tabs would fire a pass per switch.
 	 */
 	revisitAfterMs: 5 * 60 * 1000,
+
+	cutBackoffMs: [30 * 1000, 60 * 1000, 2 * 60 * 1000, 5 * 60 * 1000],
 
 	/** Past this a row has been waiting too long, and it has to be said. */
 	staleAfterMs: 7 * 24 * 60 * 60 * 1000,

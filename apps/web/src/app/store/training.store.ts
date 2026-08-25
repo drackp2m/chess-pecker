@@ -8,6 +8,7 @@ import { I18n, i18nRef } from '@app/i18n';
 import { TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { NO_SYNC_STATE, withSyncState } from '@app/store/feature/with-sync-state';
 import { isActiveTraining } from '@app/use-case/local-training.use-case';
+import { PartialCycle } from '@app/use-case/repair-cycle.use-case';
 import { TrainingEngineUseCase } from '@app/use-case/training-engine.use-case';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { API_FAILURE, HttpError } from '@app/util/http-error';
@@ -16,12 +17,14 @@ interface TrainingStoreProps {
 	trainings: readonly TrainingRow[];
 	active: TrainingRow | null;
 	progress: TrainingProgress | null;
+	partialCycles: readonly PartialCycle[];
 }
 
 const initialState: TrainingStoreProps = {
 	trainings: [],
 	active: null,
 	progress: null,
+	partialCycles: [],
 };
 
 @Injectable({
@@ -35,9 +38,15 @@ export class TrainingStore
 
 	readonly runningCycle = computed(() => this.cycles().find((cycle) => 'running' === cycle.status));
 
-	readonly canSolve = computed(
-		() => 'calibrating' === this.active()?.status || undefined !== this.runningCycle(),
-	);
+	/** A cycle missing slots on this device blocks until it is repaired: it cannot be solved. */
+	readonly canSolve = computed(() => {
+		const running = this.runningCycle();
+
+		return (
+			'calibrating' === this.active()?.status ||
+			(undefined !== running && undefined === this.partialCycle(running.uuid))
+		);
+	});
 
 	/** A cycle can only be opened when the previous one is closed and the set is fixed. */
 	readonly canStartCycle = computed(() => {
@@ -71,6 +80,7 @@ export class TrainingStore
 				trainings,
 				active,
 				progress: null === active ? null : await this.engine.getProgress(active.uuid),
+				partialCycles: null === active ? [] : await this.engine.listPartialCycles(active.uuid),
 				isLoading: false,
 			});
 		} catch (error) {
@@ -108,6 +118,17 @@ export class TrainingStore
 			(uuid) => this.engine.startCycle(uuid),
 			i18nRef(I18n.training.START_CYCLE_ERROR),
 		);
+	}
+
+	partialCycle(cycleUuid: string): PartialCycle | undefined {
+		return this.partialCycles().find((partial) => partial.uuid === cycleUuid);
+	}
+
+	/** Fills back the slots a truncated upload left behind, so the cycle can go on. */
+	async repairCycle(cycleUuid: string): Promise<boolean> {
+		return this.mutate(async () => {
+			await this.engine.repairCycle(cycleUuid);
+		}, i18nRef(I18n.training.REPAIR_CYCLE_ERROR));
 	}
 
 	async finish(): Promise<boolean> {

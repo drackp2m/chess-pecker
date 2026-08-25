@@ -76,6 +76,8 @@ export class SyncStore
 	private gate: Promise<void> | null = null;
 	private resolveGate: (() => void) | undefined;
 	private lastRunAt = 0;
+	private cutPasses = 0;
+	private retryTimer: ReturnType<typeof setTimeout> | undefined;
 
 	/** Boot: one pass, and the gate open when it ends or when the deadline runs out. */
 	start(): Promise<void> {
@@ -165,19 +167,56 @@ export class SyncStore
 
 	/** The counts belong to whoever is leaving. The gate does not: it stays open. */
 	reset(): void {
+		this.cancelRetry();
+		this.cutPasses = 0;
 		patchState(this, { ...initialState, isReady: this.isReady() });
 	}
 
 	private revisit(): void {
-		if (Date.now() - this.lastRunAt < SyncPolicy.revisitAfterMs) {
+		if (Date.now() - this.lastRunAt < this.waitBeforeNextPass()) {
 			return;
 		}
 
 		void this.sync();
 	}
 
+	private scheduleRetry(phase: SyncPhase): void {
+		this.cancelRetry();
+
+		if ('offline' !== phase || 0 === this.pending()) {
+			this.cutPasses = 0;
+
+			return;
+		}
+
+		const delay = this.waitBeforeNextPass();
+
+		this.cutPasses += 1;
+		this.retryTimer = setTimeout(() => {
+			void this.sync();
+		}, delay);
+	}
+
+	private waitBeforeNextPass(): number {
+		if (0 === this.cutPasses) {
+			return SyncPolicy.revisitAfterMs;
+		}
+
+		const index = Math.min(this.cutPasses - 1, SyncPolicy.cutBackoffMs.length - 1);
+
+		return SyncPolicy.cutBackoffMs[index] ?? SyncPolicy.revisitAfterMs;
+	}
+
+	private cancelRetry(): void {
+		if (undefined !== this.retryTimer) {
+			clearTimeout(this.retryTimer);
+			this.retryTimer = undefined;
+		}
+	}
+
 	private async runCycle(): Promise<void> {
 		this.lastRunAt = Date.now();
+		this.cancelRetry();
 		patchState(this, { uploaded: 0, rejected: 0, downloaded: 0, error: null });
 
 		try {
@@ -193,6 +232,7 @@ export class SyncStore
 				phase,
 				...('ready' === phase ? { lastSyncedAt: new Date() } : {}),
 			});
+			this.scheduleRetry(phase);
 		} catch (error) {
 			console.error('The sync pass broke instead of ending in a phase', error);
 			patchState(this, { phase: 'failed', error: i18nRef(I18n.common.SYNC_FAILED) });

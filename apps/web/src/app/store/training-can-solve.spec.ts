@@ -84,4 +84,40 @@ describe('TrainingStore.canSolve', () => {
 	it('keeps the board shut with no training at all', () => {
 		expect(configure(null, []).canSolve()).toBe(false);
 	});
+
+	it('keeps the board shut on a running cycle missing slots on this device', () => {
+		const store = configure(training('running'), [cycle('running')]);
+
+		patchState(store, {
+			partialCycles: [
+				{
+					uuid: 'cycle-running',
+					index: 1,
+					itemCount: 10,
+					storedItems: 4,
+					canRepair: true,
+				},
+			],
+		});
+
+		expect(store.canSolve()).toBe(false);
+	});
+
+	it('keeps it shut even when the set is too short to repair the cycle yet', () => {
+		const store = configure(training('running'), [cycle('running')]);
+
+		patchState(store, {
+			partialCycles: [
+				{
+					uuid: 'cycle-running',
+					index: 1,
+					itemCount: 10,
+					storedItems: 4,
+					canRepair: false,
+				},
+			],
+		});
+
+		expect(store.canSolve()).toBe(false);
+	});
 });

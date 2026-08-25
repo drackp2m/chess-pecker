@@ -94,15 +94,13 @@ export class GetTrainingTreeUseCase {
 		const items = await this.trainingCycleItemRepository.getManyByTraining(trainingUuid, since);
 		const byCycle = groupBy(items, (row) => row.cycle.uuid);
 
-		return Promise.all(
-			cycles.map(async (cycle) => ({
-				...toRow(cycle),
-				index: cycle.index,
-				status: cycle.status,
-				itemCount: await this.trainingCycleItemRepository.countByCycle(cycle.uuid),
-				items: (byCycle.get(cycle.uuid) ?? []).map((row) => toItemNode(row)),
-			})),
-		);
+		return cycles.map((cycle) => ({
+			...toRow(cycle),
+			index: cycle.index,
+			status: cycle.status,
+			itemCount: cycle.itemCount,
+			items: (byCycle.get(cycle.uuid) ?? []).map((row) => toItemNode(row)),
+		}));
 	}
 }
 

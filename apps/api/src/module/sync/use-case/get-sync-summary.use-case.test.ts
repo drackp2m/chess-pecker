@@ -4,14 +4,20 @@ import { TestingModule } from '@nestjs/testing';
 import { createIntegrationTestingModule } from '../../../shared/test/create-integration-testing-module';
 import { SYNC_SCHEMA_VERSION } from '../../../shared/util/sync-schema-version';
 import { AppModule } from '../../app/app.module';
+import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
+import { TrainingCycle } from '../../training/training-cycle.entity';
 import { User } from '../../user/user.entity';
+import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
 import { SyncModule } from '../sync.module';
 import {
+	BORN,
 	CATALOG,
+	TreeRefs,
 	buildRefs,
 	buildTree,
 	resetTrainingFixtures,
 	seedUser,
+	trainingNode,
 } from '../test/training-tree.fixture';
 
 import { GetSyncSummaryUseCase } from './get-sync-summary.use-case';
@@ -105,6 +111,74 @@ describe('GetSyncSummaryUseCase', () => {
 				attempt: NOTHING,
 			});
 			expect(summary.catalog.total).toStrictEqual(CATALOG.length);
+		});
+	});
+
+	describe('a cycle whose slots did not all make it up', () => {
+		const cutTree = (refs: TreeRefs, itemCount: number): PushTrainingRequestDto => ({
+			training: {
+				...trainingNode(refs),
+				cycles: [
+					{
+						clientRef: refs.cycle,
+						createdAt: BORN,
+						updatedAt: BORN,
+						index: 1,
+						status: TrainingCycleStatus.Running,
+						itemCount,
+						items: [
+							{
+								clientRef: refs.item,
+								createdAt: BORN,
+								updatedAt: BORN,
+								trainingPuzzleRef: refs.set,
+								position: 0,
+								attempts: [],
+							},
+						],
+					},
+				],
+			},
+		});
+
+		it('is listed with what it declared against what is stored', async () => {
+			const refs = buildRefs();
+
+			await pushTrainingTreeUseCase.execute(user, cutTree(refs, 3));
+
+			const summary = await useCase.execute(user);
+			const em = entityManager.fork();
+			const cycle = await em.findOneOrFail(TrainingCycle, { clientRef: refs.cycle });
+
+			expect(summary.partialCycles).toStrictEqual([
+				{
+					uuid: cycle.uuid,
+					trainingUuid: cycle.training.uuid,
+					index: 1,
+					itemCount: 3,
+					storedItems: 1,
+				},
+			]);
+		});
+
+		it('drops off the list once every slot it declared is up', async () => {
+			const refs = buildRefs();
+
+			await pushTrainingTreeUseCase.execute(user, cutTree(refs, 1));
+
+			const summary = await useCase.execute(user);
+
+			expect(summary.partialCycles).toStrictEqual([]);
+		});
+
+		it("is nobody else's business", async () => {
+			const other = await seedUser(entityManager, 'other');
+
+			await pushTrainingTreeUseCase.execute(other, cutTree(buildRefs(), 3));
+
+			const summary = await useCase.execute(user);
+
+			expect(summary.partialCycles).toStrictEqual([]);
 		});
 	});
 });

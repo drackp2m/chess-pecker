@@ -25,6 +25,7 @@ export class PendingSyncModalComponent extends Modal<boolean> implements OnInit 
 	 * whoever opens it has no way to hand anything over.
 	 */
 	readonly pending = signal(0);
+	readonly rejected = signal(0);
 
 	ngOnInit(): void {
 		void this.count();
@@ -40,9 +41,12 @@ export class PendingSyncModalComponent extends Modal<boolean> implements OnInit 
 
 	private async count(): Promise<void> {
 		try {
-			this.pending.set(await this.localDataRepository.countPendingSync());
+			const { pending, rejected } = await this.localDataRepository.countUnsavedSync();
+
+			this.pending.set(pending);
+			this.rejected.set(rejected);
 		} catch (error) {
-			console.error('Could not count the attempts pending upload', error);
+			console.error('Could not count what this device has not saved', error);
 		}
 	}
 }

@@ -40,11 +40,19 @@ Etiqueta de un campo numérico: ejercicios al día.
 
 ## CYCLE_*
 
-Los ciclos del entrenamiento. `{{ index }}` es el número del ciclo empezando por 1. En `CYCLE_TIMES` y `CYCLE_TARGET` los tiempos son duraciones ya formateadas por la aplicación: llegan hechas dentro del parámetro y no se tocan.
+Los ciclos del entrenamiento. `{{ index }}` es el número del ciclo empezando por 1. En `CYCLE_TIMES` y `CYCLE_TARGET` los tiempos son duraciones ya formateadas por la aplicación: llegan hechas dentro del parámetro y no se tocan. `CYCLE_INCOMPLETE` es el aviso de un ciclo al que le faltan ejercicios en este dispositivo: `{{ stored }}` son los que hay y `{{ expected }}` los que debería tener. No es culpa del jugador y tiene arreglo, así que el tono es de aviso, no de alarma.
 
 ## CYCLE_PACE_*
 
 El gráfico que compara lo hecho cada día con el ritmo pactado. `{{ delta }}` es el saldo de ese día y `{{ drift }}` el acumulado; los dos llegan ya con su signo. «Por delante» y «por detrás» son respecto al ritmo, no respecto a otro jugador.
+
+## REPAIR_CYCLE
+
+El botón que recompone un ciclo incompleto: vuelve a repartir los ejercicios que faltan por los huecos libres. Es una acción segura y no borra nada de lo ya hecho, así que la etiqueta no tiene que sonar a última opción.
+
+## SET_STILL_DOWNLOADING
+
+Sustituye al botón de reparar mientras el conjunto de ejercicios del entrenamiento no ha acabado de bajar a este dispositivo. No es un fallo ni pide nada al jugador: sólo dice que hay que esperar antes de poder reparar.
 
 ## DAILY_*
 
@@ -69,6 +77,10 @@ Texto de estado vacío. Explica que empezar un entrenamiento abre la calibració
 ## REPLICA_INCOMPLETE
 
 El entrenamiento todavía se está bajando del servidor a este dispositivo. No es un error: hay que esperar.
+
+## CYCLE_NEEDS_REPAIR
+
+Lo que ve quien entra a resolver por enlace directo con un ciclo al que le faltan ejercicios en este dispositivo. A diferencia de `REPLICA_INCOMPLETE`, aquí no basta con esperar: hay que volver a la pantalla del entrenamiento y reparar el ciclo.
 
 ## EMPTY_BAND
 
