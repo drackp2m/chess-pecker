@@ -53,6 +53,12 @@ export interface BoardPlayback {
 	 * land reads it: the piece being taken, the check lighting up, the board itself.
 	 */
 	readonly isSliding: Signal<boolean>;
+	/**
+	 * Whether the transition the state holds has been drawn all the way to its end. It goes
+	 * false the instant a new one arrives, before any beat of it has run, so nothing can
+	 * mistake the gap between a move being written and being drawn for a board at rest.
+	 */
+	readonly isSettled: Signal<boolean>;
 }
 
 /** What a beat needs to hand the board over to the one after it. */
@@ -63,6 +69,8 @@ interface PlaybackRun {
 	readonly settling: ScheduledAction;
 	readonly beat: WritableSignal<number>;
 	readonly sliding: WritableSignal<boolean>;
+	/** The last transition drawn to its end, which is how a board at rest is recognised. */
+	readonly drawn: WritableSignal<BoardTransition | undefined>;
 	readonly sound: SoundService;
 }
 
@@ -97,6 +105,7 @@ export function createBoardPlayback(input: BoardPlaybackInput): BoardPlayback {
 		slides: computed(() => describeSlides(input, stage())),
 		board: computed(() => stage()?.board),
 		isSliding: run.sliding.asReadonly(),
+		isSettled: computed(() => input.transition() === run.drawn()),
 	};
 }
 
@@ -107,6 +116,7 @@ function createRun(input: BoardPlaybackInput): PlaybackRun {
 		settling: new ScheduledAction(),
 		beat: signal(0),
 		sliding: signal(false),
+		drawn: signal<BoardTransition | undefined>(undefined),
 		sound: inject(SoundService),
 	};
 }
@@ -127,6 +137,7 @@ function hold(run: PlaybackRun): void {
 
 	if (!isTravelling(run)) {
 		run.sliding.set(false);
+		settle(run);
 
 		return;
 	}
@@ -135,9 +146,24 @@ function hold(run: PlaybackRun): void {
 	run.settling.run(
 		() => {
 			run.sliding.set(false);
+			settle(run);
 		},
 		untracked(() => scaleForSpeed(SLIDE_DURATION, run.input.speed())),
 	);
+}
+
+/**
+ * Signs the transition off once its last beat is over. Nothing before that beat ends
+ * anything: the pause in the middle of a castling is a board still on its way.
+ */
+function settle(run: PlaybackRun): void {
+	untracked(() => {
+		const transition = run.input.transition();
+
+		if (run.beat() + 1 >= (transition?.stages.length ?? 0)) {
+			run.drawn.set(transition);
+		}
+	});
 }
 
 function isTravelling(run: PlaybackRun): boolean {

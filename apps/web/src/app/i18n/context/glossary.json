@@ -428,6 +428,18 @@
 			}
 		},
 		{
+			"term": "retener",
+			"group": "ajedrez",
+			"note": "guardar lo que se pulsa mientras el tablero todavía dibuja una jugada, para dárselo en cuanto pare; nunca anular la pulsación ni encolar una segunda jugada",
+			"translations": {
+				"en-GB": "hold",
+				"ru-RU": "придержать",
+				"hi-IN": "रोकना",
+				"fr-FR": "retenir",
+				"ca-ES": "retenir"
+			}
+		},
+		{
 			"term": "jaque",
 			"group": "ajedrez",
 			"translations": {

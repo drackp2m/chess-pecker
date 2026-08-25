@@ -1,4 +1,13 @@
-import { Component, ElementRef, computed, inject, viewChild } from '@angular/core';
+import {
+	Component,
+	ElementRef,
+	computed,
+	effect,
+	inject,
+	signal,
+	untracked,
+	viewChild,
+} from '@angular/core';
 
 import { BoardDragGesture } from '@app/component/chess-board/board-drag';
 import {
@@ -23,6 +32,8 @@ import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { I18nService } from '@app/service/i18n.service';
+import { ChessBoard } from '@app/util/chess/chess-board';
+import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessSquare } from '@app/util/chess/chess-square';
 import { PIECE_LABEL_KEY } from '@app/util/chess/piece-label';
 
@@ -87,8 +98,10 @@ export class ChessBoardComponent {
 		pieceAt: (square) => this.store.position().board[ChessSquare.toIndex(square)],
 		squareSize: () => this.board().nativeElement.getBoundingClientRect().width / BOARD_SIZE,
 		isClickEnabled: () => this.isClickEnabled(),
+		// Read off what is drawn picked up rather than off the store, or a drag begun on a
+		// piece the board is already holding would take the same one up twice.
 		pick: (square) => {
-			if (square !== this.store.selected()) {
+			if (square !== this.pickedUp()) {
 				this.pickSquare(square);
 			}
 		},
@@ -114,11 +127,81 @@ export class ChessBoardComponent {
 
 	readonly promotionColor = computed(() => this.store.position().turn);
 
-	private readonly isRefusingInput = computed(
-		() => this.playback.isSliding() || this.store.isBusy(),
+	/**
+	 * Whether the board still has a move to draw. The beats are the view's own, and the store
+	 * is asked too: its pauses have nothing sliding in them, and a move that is only lit has
+	 * not set off yet.
+	 */
+	private readonly isDrawing = computed(
+		() =>
+			!this.playback.isSettled() || this.store.isBusy() || undefined !== this.store.announcedMove(),
 	);
 
+	/**
+	 * Squares acted on while the board was drawing, in the order they were given. Nothing is
+	 * refused any more: they are played the moment the board stops, so a move given over the
+	 * opponent's queues behind it instead of cutting the piece on screen short.
+	 */
+	private readonly held = signal<readonly Square[]>([]);
+
+	/**
+	 * The board a piece taken up now will move on: what the state holds, plus the move that is
+	 * lit up and has not been played yet. Once it has been, the state already holds it.
+	 */
+	private readonly landing = computed(() => {
+		const announced = this.store.announcedMove();
+		const position = this.store.position();
+
+		return undefined === announced ? position : ChessBoard.apply(position, announced);
+	});
+
+	/**
+	 * Whether the board takes a piece up at all while it is drawing. Being busy is no reason
+	 * not to: what it is busy with is the very move being waited out. A board that is shut for
+	 * good, or holding a refuted move until it is taken back, takes nothing.
+	 */
+	private readonly isTakingUp = computed(
+		() => (!this.store.isLocked() || this.store.isBusy()) && undefined === this.store.mistake(),
+	);
+
+	/** The square the board is holding one of the player's pieces on, if it is holding one. */
+	private readonly heldPick = computed(() =>
+		this.isTakingUp() ? this.lastOwnPiece(this.held()) : undefined,
+	);
+
+	/**
+	 * The square drawn picked up: the one the board is holding, so a press over a move still
+	 * crossing is seen to land, and the store's own otherwise.
+	 */
+	private readonly pickedUp = computed(() => this.heldPick() ?? this.store.selected());
+
+	/**
+	 * The moves the board marks. While it is holding a piece they are read off the board that
+	 * piece will move on, so where it may go is shown before the move on screen has arrived.
+	 */
+	private readonly targets = computed(() => {
+		const held = this.heldPick();
+
+		return undefined === held
+			? this.store.movesFromSelection()
+			: ChessMoveGenerator.movesFrom(this.landing(), ChessSquare.toIndex(held));
+	});
+
 	private readonly board = viewChild.required<ElementRef<HTMLElement>>('board');
+
+	constructor() {
+		// Only the view knows when the last piece has arrived, so it is the view that lets go
+		// of what was given while one was still crossing.
+		effect(() => {
+			if (this.isDrawing() || 0 === this.held().length) {
+				return;
+			}
+
+			untracked(() => {
+				this.releaseHeld();
+			});
+		});
+	}
 
 	/**
 	 * Keyboard activation only. Pointer taps are resolved in `dropSquare`, because a
@@ -141,10 +224,6 @@ export class ChessBoardComponent {
 	}
 
 	pressSquare(square: BoardSquare, event: PointerEvent): void {
-		if (this.isRefusingInput()) {
-			return;
-		}
-
 		const isDraggable = this.isDragEnabled() && undefined !== square.piece;
 
 		this.gesture.press(square.square, isDraggable, { x: event.clientX, y: event.clientY });
@@ -189,15 +268,44 @@ export class ChessBoardComponent {
 	}
 
 	/**
-	 * The one way a square is acted on, so the board refuses the lot at once: the beats are the
-	 * view's own, and the store is also asked, since its pauses have nothing sliding in them.
+	 * The one way a square is acted on, so the board holds the lot at once. Over a board still
+	 * drawing nothing is lost and nothing is played: it waits for the piece on screen to arrive.
 	 */
 	private pickSquare(square: Square): void {
-		if (this.isRefusingInput()) {
+		if (this.isDrawing()) {
+			this.held.update((held) => [...held, square]);
+
 			return;
 		}
 
 		this.store.selectSquare(square);
+	}
+
+	/**
+	 * Gives the board everything it was holding, in the order it was given. It stops at the
+	 * one that sets the board moving again: whatever came after was aimed at a board that
+	 * never existed, and a second move may not be queued onto the opponent's answer.
+	 */
+	private releaseHeld(): void {
+		const held = this.held();
+
+		this.held.set([]);
+
+		for (const square of held) {
+			if (this.isDrawing()) {
+				return;
+			}
+
+			this.store.selectSquare(square);
+		}
+	}
+
+	/** The last square held that has a piece of the player's standing on the landing board. */
+	private lastOwnPiece(held: readonly Square[]): Square | undefined {
+		const color = this.store.playerColor();
+		const board = this.landing().board;
+
+		return held.findLast((square) => color === board[ChessSquare.toIndex(square)]?.color);
 	}
 
 	/** Feature-detected: not every test environment implements pointer capture. */
@@ -219,7 +327,7 @@ export class ChessBoardComponent {
 
 	private describeSquare(index: number, order: number): BoardSquare {
 		const square = ChessSquare.fromIndex(index);
-		const target = this.store.movesFromSelection().find((move) => square === move.to);
+		const target = this.targets().find((move) => square === move.to);
 		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
 		const announced = this.store.announcedMove();
@@ -230,7 +338,7 @@ export class ChessBoardComponent {
 			square,
 			piece,
 			isLight: ChessSquare.isLight(index),
-			isSelected: square === this.store.selected(),
+			isSelected: square === this.pickedUp(),
 			isTarget: undefined !== target,
 			isCapture: undefined !== target?.captured,
 			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),

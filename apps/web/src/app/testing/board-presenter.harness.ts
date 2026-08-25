@@ -152,6 +152,10 @@ export interface MountedBoard {
 	takenAt(square: Square): string | undefined;
 	isChecked(square: Square): boolean;
 	isAnnounced(square: Square): boolean;
+	/** Whether the square is drawn picked up, whoever picked it up. */
+	isSelected(square: Square): boolean;
+	/** Every square marked as somewhere the piece taken up may go, in square order. */
+	targets(): readonly Square[];
 	isPromotionOpen(): boolean;
 	/** Everything still travelling at this instant, cancelled slides excluded. */
 	sliding(): SlideReading[];
@@ -288,6 +292,16 @@ function inFlight(
 	return readings;
 }
 
+function markedTargets(fixture: BoardFixture, presenter: FakeBoardPresenter): Square[] {
+	const marked = squareElements(fixture).flatMap((button, order) =>
+		button.classList.contains('target')
+			? [ChessSquare.fromIndex(indexAtOrder(order, presenter.orientation()))]
+			: [],
+	);
+
+	return marked.sort((left, right) => left.localeCompare(right));
+}
+
 function hasClass(
 	fixture: BoardFixture,
 	presenter: FakeBoardPresenter,
@@ -357,6 +371,8 @@ function readings(
 		takenAt: (square: Square): string | undefined => pieceOn(fixture, presenter, square, true),
 		isChecked: (square: Square): boolean => hasClass(fixture, presenter, square, 'checked'),
 		isAnnounced: (square: Square): boolean => hasClass(fixture, presenter, square, 'announced'),
+		isSelected: (square: Square): boolean => hasClass(fixture, presenter, square, 'selected'),
+		targets: (): readonly Square[] => markedTargets(fixture, presenter),
 		isPromotionOpen: (): boolean => null !== root.querySelector('.promotion'),
 		sliding: (): SlideReading[] => inFlight(fixture, presenter, records),
 		slideCount: (): number => records.length,
