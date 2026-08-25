@@ -1,3 +1,13 @@
+# v1.25.1 (2026-08-25)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- stop a half-uploaded cycle from passing as whole ([a0c8943](https://github.com/drackp2m/chess-pecker/commit/a0c894385b5f66708c2dfb390f60ea7d0da9c39c)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.25.0...v1.25.1
+
 # v1.25.0 (2026-08-25)
 
 ## What's Changed
