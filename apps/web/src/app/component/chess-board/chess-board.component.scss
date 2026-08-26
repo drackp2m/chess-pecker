@@ -60,7 +60,7 @@
 
 	// Picked up: the piece rides with the pointer, so its home square shows empty.
 	&.lifted app-chess-piece {
-		opacity: 0.25;
+		opacity: 0;
 	}
 
 	// A translucent wash over the square's own background and not its contents, so the
@@ -230,15 +230,35 @@
 }
 
 // Follows the pointer while a piece is being dragged, clear of every piece it is
-// being carried over.
+// being carried over, raised off the board by a size of its own and a shadow under it.
 .ghost {
 	pointer-events: none;
+
 	position: fixed;
 	z-index: var(--layer-ghost);
+	scale: 1.15;
+
+	filter: drop-shadow(0 6px 6px rgb(0 0 0 / 40%));
+
+	transition:
+		translate 140ms ease-out,
+		scale 140ms ease-out,
+		filter 140ms ease-out;
+
+	// The frame it is lifted on: still the size it was standing at, and still over its own
+	// square. Dropping the class is what sends it travelling to the pointer.
+	&.settling {
+		scale: 1;
+		filter: drop-shadow(0 0 0 rgb(0 0 0 / 0%));
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.square.announced {
 		animation: none;
+	}
+
+	.ghost {
+		transition: none;
 	}
 }

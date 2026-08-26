@@ -91,6 +91,7 @@ export class BoardDemoComponent {
 		squareAt: (point) => this.squareAt(point),
 		pieceAt: (square) => this.store.position().board[ChessSquare.toIndex(square)],
 		squareSize: () => this.strip().nativeElement.getBoundingClientRect().width / BOARD_SIZE,
+		squareCenter: (square) => this.centerOf(square),
 		isClickEnabled: () => this.isClickEnabled(),
 		pick: (square) => {
 			if (square !== this.store.selected()) {
@@ -174,6 +175,17 @@ export class BoardDemoComponent {
 		if ('function' === typeof (element as { setPointerCapture?: unknown }).setPointerCapture) {
 			element.setPointerCapture(pointerId);
 		}
+	}
+
+	/** One rank, so a square is only ever as far along as its file. */
+	private centerOf(square: Square): Point {
+		const rect = this.strip().nativeElement.getBoundingClientRect();
+		const file = ChessSquare.fileOf(ChessSquare.toIndex(square));
+
+		return {
+			x: rect.left + ((0.5 + file) * rect.width) / BOARD_SIZE,
+			y: rect.top + rect.height / 2,
+		};
 	}
 
 	/** One rank, so only the file matters; anything outside it drops the gesture. */

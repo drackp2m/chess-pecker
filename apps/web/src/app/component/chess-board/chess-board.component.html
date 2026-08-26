@@ -53,6 +53,8 @@
 	@if (ghost(); as dragged) {
 		<app-chess-piece
 			class="ghost"
+			[class.settling]="!dragged.isSettled"
+			[style.translate]="dragged.offset"
 			[type]="dragged.piece.type"
 			[color]="dragged.piece.color"
 			[style.left.px]="dragged.x"

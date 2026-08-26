@@ -14,6 +14,7 @@ import {
 	Point,
 	buildPromotionChoices,
 	indexAtOrder,
+	pointAtSquare,
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
@@ -97,6 +98,7 @@ export class ChessBoardComponent {
 		squareAt: (point) => this.squareAt(point),
 		pieceAt: (square) => this.store.position().board[ChessSquare.toIndex(square)],
 		squareSize: () => this.board().nativeElement.getBoundingClientRect().width / BOARD_SIZE,
+		squareCenter: (square) => this.centerOf(square),
 		isClickEnabled: () => this.isClickEnabled(),
 		// Read off what is drawn picked up rather than off the store, or a drag begun on a
 		// piece the board is already holding would take the same one up twice.
@@ -315,6 +317,14 @@ export class ChessBoardComponent {
 		if ('function' === typeof (element as { setPointerCapture?: unknown }).setPointerCapture) {
 			element.setPointerCapture(pointerId);
 		}
+	}
+
+	private centerOf(square: Square): Point {
+		return pointAtSquare(
+			this.board().nativeElement.getBoundingClientRect(),
+			square,
+			this.store.orientation(),
+		);
 	}
 
 	private squareAt(point: Point): Square | undefined {

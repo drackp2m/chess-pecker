@@ -31,6 +31,16 @@ export function squareAtPoint(
 	return ChessSquare.fromIndex(indexAtOrder(row * BOARD_SIZE + column, orientation));
 }
 
+/** Middle of a square, in page coordinates, honouring the flip. */
+export function pointAtSquare(rect: DOMRect, square: Square, orientation: PieceColor): Point {
+	const order = indexAtOrder(ChessSquare.toIndex(square), orientation);
+
+	return {
+		x: rect.left + ((0.5 + (order % BOARD_SIZE)) * rect.width) / BOARD_SIZE,
+		y: rect.top + ((0.5 + Math.floor(order / BOARD_SIZE)) * rect.height) / BOARD_SIZE,
+	};
+}
+
 /**
  * How far a piece has to travel to reach its destination, as a percentage of one
  * square, expressed as the offset it should animate *from*.
