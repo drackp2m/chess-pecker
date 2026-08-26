@@ -13,9 +13,9 @@ $transition: (
  * its own stacking context, so nothing inside a screen can climb over what frames it.
  */
 $elevation: (
-	navbar: 10,
-	modal: 20,
-	notification: 30,
+	notification: 10,
+	navbar: 20,
+	modal: 30,
 ) !default;
 
 $breakpoint: (
