@@ -116,7 +116,7 @@ export class PuzzleStore
 
 		// The sandbox stays open, so the restart is written inside the free-play run.
 		this.append({ kind: 'restart' });
-		patchState(this, restartPatch(this.closure()));
+		patchState(this, restartPatch(this.closure(), undefined !== this.freePlayScratch()));
 		this.run(RESTART_PROGRAM, this.playbackHooks());
 	}
 
@@ -211,10 +211,14 @@ export class PuzzleStore
 			return;
 		}
 
-		// Letting go of the index restores the main line, standing where the free-play run began.
+		// Letting go of the run restores the main line, standing where the free-play run began.
 		patchState(
 			this,
-			restoreFreePlayPatch({ cursor: this.cursor(), transition: this.transition() }, anchor),
+			restoreFreePlayPatch(
+				{ cursor: this.cursor(), transition: this.transition() },
+				anchor,
+				undefined !== this.freePlayScratch(),
+			),
 		);
 	}
 
@@ -310,10 +314,17 @@ export class PuzzleStore
 	/**
 	 * The two hooks the player cannot reach itself, since they live on the store. The seek is
 	 * always the held one: everything real is written before the programme is handed over.
+	 * Inside the sandbox of a closed exercise the hold is the sandbox itself, which takes it.
 	 */
 	private playbackHooks(): PlaybackHooks {
 		return {
 			seek: (to: number): void => {
+				if (undefined !== this.freePlayScratch()) {
+					this.seek(to);
+
+					return;
+				}
+
 				patchState(this, { rewound: Math.max(0, this.rewound() + this.cursor() - to) });
 			},
 
@@ -365,7 +376,7 @@ export class PuzzleStore
 
 	/**
 	 * The user did something new: it goes on the end of the log and the cursor follows.
-	 * `append` holds the guard, so a closed exercise takes none of this.
+	 * `append` holds the guard, so a closed exercise takes none of it outside its sandbox.
 	 */
 	private append(action: PuzzleAction, patch?: Partial<PuzzleStoreProps>): void {
 		patchState(this, (state) => append(state, action), patch ?? {});
@@ -373,12 +384,13 @@ export class PuzzleStore
 
 	/**
 	 * Moves the head over what already exists, writing only the step so the log can replay
-	 * back to this board. A sealed record takes no steps, so the cursor travels beside it.
+	 * back to this board. A sealed record takes no steps, so the cursor travels beside it —
+	 * unless its sandbox is open, which takes them like any other free-play run.
 	 */
 	private seek(cursor: number, patch?: Partial<PuzzleStoreProps>): void {
 		const clamped = Math.max(0, Math.min(this.line().length, cursor));
 
-		if ('open' !== this.closure()) {
+		if ('open' !== this.closure() && undefined === this.freePlayScratch()) {
 			patchState(this, { rewound: this.rewound() + this.cursor() - clamped }, patch ?? {});
 
 			return;
@@ -401,27 +413,32 @@ export class PuzzleStore
 			record: this.record(),
 			freePlayRuns: this.freePlayRuns(),
 			freePlayIndex: this.freePlayIndex(),
+			freePlayScratch: this.freePlayScratch(),
 			closure: this.closure(),
 		};
 	}
 
 	/**
 	 * Opens a sandbox on the end of the log. The entry event records where the main line
-	 * stood and the fold works the rest out, so only the open index is held.
+	 * stood and the fold works the rest out, so only the open index is held. A closed
+	 * exercise records none of it: its sandbox is the scratch the entry opened instead.
 	 */
 	private enterFreePlay(): void {
 		const opened = this.freePlayRuns().length;
 
 		this.append({ kind: 'entry' });
 
-		// An index pointing at an entry a closed record refused would fold to nothing.
-		if (opened < this.freePlayRuns().length) {
-			patchState(this, {
-				freePlayIndex: opened,
-				selected: undefined,
-				pendingPromotion: undefined,
-			});
+		const isRecorded = opened < this.freePlayRuns().length;
+
+		if (!isRecorded && undefined === this.freePlayScratch()) {
+			return;
 		}
+
+		patchState(this, {
+			...(isRecorded ? { freePlayIndex: opened } : {}),
+			selected: undefined,
+			pendingPromotion: undefined,
+		});
 	}
 
 	/**

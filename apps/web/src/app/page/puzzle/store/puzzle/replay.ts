@@ -131,6 +131,18 @@ function anchorFloor(anchor: FreePlayAnchor): LineState {
 	};
 }
 
+export function foldScratch(
+	base: LineState,
+	events: readonly PuzzleEvent[],
+	anchor: FreePlayAnchor,
+): LineState {
+	try {
+		return foldEvents(base, events, base.positions[0]?.turn ?? 'white', anchorFloor(anchor));
+	} catch {
+		return base;
+	}
+}
+
 export function foldFreePlayRun(
 	fen: string,
 	state: PuzzleRecord,

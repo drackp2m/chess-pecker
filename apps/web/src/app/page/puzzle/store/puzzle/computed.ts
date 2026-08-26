@@ -10,11 +10,17 @@ import {
 } from '@app/definition/chess.type';
 import { Puzzle, PuzzleMove, PuzzleRecord } from '@app/definition/puzzle.type';
 import { Timeline } from '@app/definition/timeline.type';
-import { foldFreePlayRun, foldRevealed, foldSession } from '@app/page/puzzle/store/puzzle/replay';
+import {
+	foldFreePlayRun,
+	foldRevealed,
+	foldScratch,
+	foldSession,
+} from '@app/page/puzzle/store/puzzle/replay';
 import {
 	FreePlayAnchor,
 	LineState,
 	PuzzleStoreProps,
+	anchorFreePlay,
 	describeProgress,
 	findDeviation,
 	isPastDeviation,
@@ -42,6 +48,7 @@ function timelineDerived(
 			fen: store.fen(),
 			record: record(),
 			freePlayIndex: store.freePlayIndex(),
+			freePlayScratch: store.freePlayScratch(),
 			revealed: store.revealed(),
 			rewound: store.rewound(),
 			puzzle: puzzle(),
@@ -75,18 +82,16 @@ function freePlayDerived(
 	});
 }
 
-/** The log folded out: the line on the board, and the anchor a free-play run hangs off. */
-function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzle | undefined>) {
-	const record = computed<PuzzleRecord>(() => ({
-		record: store.record(),
-		freePlayRuns: store.freePlayRuns(),
-	}));
-
-	/**
-	 * The log folded out, stood back by whatever the head holds. `rewound` is the one thing
-	 * that moves the board without moving the log, clamped so it cannot walk off the front.
-	 */
-	const fold = computed<LineState>(() => {
+/**
+ * The log folded out, stood back by whatever the head holds. `rewound` is the one thing
+ * that moves the board without moving the log, clamped so it cannot walk off the front.
+ */
+function loggedDerived(
+	store: StateSignals<PuzzleStoreProps>,
+	record: Signal<PuzzleRecord>,
+	puzzle: Signal<Puzzle | undefined>,
+): Signal<LineState> {
+	return computed(() => {
 		const logged = foldSession(store.fen(), record(), store.freePlayIndex(), puzzle());
 		// The answer goes on before the offset comes off: anchored to the ply it was played
 		// from, so the offset walks the whole line instead of dragging the answer behind it.
@@ -95,6 +100,47 @@ function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzl
 
 		return 0 === rewound ? grown : { ...grown, cursor: Math.max(0, grown.cursor - rewound) };
 	});
+}
+
+/**
+ * The sandbox a closed exercise plays in, folded onto the board the log left standing. Nothing
+ * of it is written down, so it hangs off that board rather than off a stretch of record.
+ */
+function scratchDerived(
+	store: StateSignals<PuzzleStoreProps>,
+	logged: Signal<LineState>,
+	puzzle: Signal<Puzzle | undefined>,
+) {
+	const anchor = computed<FreePlayAnchor | undefined>(() =>
+		undefined === store.freePlayScratch()
+			? undefined
+			: anchorFreePlay(logged(), findDeviation(logged(), puzzle())),
+	);
+
+	return {
+		anchor,
+
+		fold: computed<LineState>(() => {
+			const events = store.freePlayScratch();
+			const entered = anchor();
+
+			return undefined === events || undefined === entered
+				? logged()
+				: foldScratch(logged(), events, entered);
+		}),
+	};
+}
+
+/** The log folded out: the line on the board, and the anchor a free-play run hangs off. */
+function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzle | undefined>) {
+	const record = computed<PuzzleRecord>(() => ({
+		record: store.record(),
+		freePlayRuns: store.freePlayRuns(),
+	}));
+
+	const scratch = scratchDerived(store, loggedDerived(store, record, puzzle), puzzle);
+	const fold = scratch.fold;
+	const recorded = freePlayDerived(store, record, puzzle);
 
 	return {
 		positions: computed(() => fold().positions),
@@ -102,7 +148,7 @@ function lineDerived(store: StateSignals<PuzzleStoreProps>, puzzle: Signal<Puzzl
 		cursor: computed(() => fold().cursor),
 
 		timeline: timelineDerived(store, record, puzzle),
-		freePlay: freePlayDerived(store, record, puzzle),
+		freePlay: computed(() => scratch.anchor() ?? recorded()),
 	};
 }
 

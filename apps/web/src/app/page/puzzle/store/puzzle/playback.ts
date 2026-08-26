@@ -63,9 +63,13 @@ function outcomeAt(store: PlaybackStore, cursor: number): PuzzleOutcome {
  * itself is written before it is played, and a programme moves nothing but the head.
  */
 function commit(store: PlaybackStore, move: ChessMove): void {
-	// The board moving on for real spends whatever was holding it behind the line.
-	patchState(store, commitPatch(store.position(), move), { rewound: 0 }, (state) =>
-		append(state, { kind: 'move', move }),
+	// The board moving on for real spends whatever was holding it behind the line, though a
+	// sandbox on a closed exercise holds the line itself there and keeps it.
+	patchState(
+		store,
+		commitPatch(store.position(), move),
+		undefined === store.freePlayScratch() ? { rewound: 0 } : {},
+		(state) => append(state, { kind: 'move', move }),
 	);
 }
 
