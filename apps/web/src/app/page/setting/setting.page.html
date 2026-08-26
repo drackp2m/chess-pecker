@@ -118,6 +118,21 @@
 		</div>
 
 		<div class="flex-col gap-2">
+			<h5>{{ I18n.setting.MOVE_LIFT | i18n }}</h5>
+
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_LIFT_INTRO | i18n }}</p>
+
+			<form [formGroup]="form" class="flex-col gap-1">
+				<input
+					appThemed
+					type="checkbox"
+					[label]="I18n.setting.MOVE_LIFT_TOGGLE | i18n"
+					formControlName="moveLift"
+				/>
+			</form>
+		</div>
+
+		<div class="flex-col gap-2">
 			<h5>{{ I18n.setting.SOUND | i18n }}</h5>
 
 			<p class="fs-sm color-contrast-mid">{{ I18n.setting.SOUND_INTRO | i18n }}</p>

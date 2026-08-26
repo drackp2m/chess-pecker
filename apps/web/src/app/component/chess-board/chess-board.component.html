@@ -4,6 +4,7 @@
 	[class.waiting]="store.isBusy()"
 	[class.locked]="store.isLocked()"
 	[class.dragging]="undefined !== draggingFrom()"
+	[class.lifting]="isLiftEnabled()"
 	(pointermove)="dragSquare($event)"
 	(pointerup)="dropSquare($event)"
 	(pointercancel)="cancelDrag()"
@@ -54,6 +55,7 @@
 		<app-chess-piece
 			class="ghost"
 			[class.settling]="!dragged.isSettled"
+			[class.raised]="dragged.isRaised"
 			[style.translate]="dragged.offset"
 			[type]="dragged.piece.type"
 			[color]="dragged.piece.color"

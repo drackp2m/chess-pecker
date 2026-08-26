@@ -17,6 +17,7 @@ export interface DragGhost {
 	readonly offset: string;
 	/** Whether the piece has already caught up with the pointer. */
 	readonly isSettled: boolean;
+	readonly isRaised: boolean;
 }
 
 export interface BoardDragOptions {
@@ -29,7 +30,7 @@ export interface BoardDragOptions {
 	readonly squareCenter: (square: Square) => Point;
 	readonly isClickEnabled: () => boolean;
 	/** Picks the piece up, so the board shows where it may go while it travels. */
-	readonly pick: (square: Square) => void;
+	readonly pick: (square: Square) => boolean;
 }
 
 /**
@@ -43,6 +44,7 @@ export class BoardDragGesture {
 	private readonly dragging = signal<Square | undefined>(undefined);
 	private readonly pointer = signal<Point | undefined>(undefined);
 	private readonly catchUp = signal<Point | undefined>(undefined);
+	private readonly raised = signal(false);
 
 	private from: Square | undefined;
 	private origin: Point | undefined;
@@ -79,7 +81,7 @@ export class BoardDragGesture {
 			this.hasDragged = true;
 			this.dragging.set(from);
 			this.lift(from, point);
-			this.options.pick(from);
+			this.raised.set(this.options.pick(from));
 		}
 
 		this.pointer.set(point);
@@ -108,6 +110,7 @@ export class BoardDragGesture {
 		this.dragging.set(undefined);
 		this.pointer.set(undefined);
 		this.catchUp.set(undefined);
+		this.raised.set(false);
 	}
 
 	/**
@@ -145,6 +148,7 @@ export class BoardDragGesture {
 			size,
 			offset: undefined === catchUp ? '0 0' : `${catchUp.x.toString()}px ${catchUp.y.toString()}px`,
 			isSettled: undefined === catchUp,
+			isRaised: this.raised(),
 		};
 	}
 }

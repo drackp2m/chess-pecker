@@ -4,6 +4,10 @@
 
 	// Clear of every level a piece can be given, the way the full board keeps it.
 	--layer-ghost: 90;
+	--piece-lift-scale: 1.15;
+	--piece-lift-shadow: drop-shadow(0 6px 6px rgb(0 0 0 / 40%));
+	--piece-lift-flat: drop-shadow(0 0 0 rgb(0 0 0 / 0%));
+	--piece-lift-duration: 140ms;
 
 	display: flex;
 	flex-direction: column;
@@ -27,6 +31,11 @@
 
 	&.waiting {
 		cursor: progress;
+	}
+
+	&:not(.lifting) {
+		--piece-lift-scale: 1;
+		--piece-lift-shadow: none;
 	}
 
 	&.dragging .square {
@@ -56,6 +65,11 @@
 	// Picked up: the piece rides with the pointer, so its home square shows empty.
 	&.lifted app-chess-piece {
 		opacity: 0;
+	}
+
+	&.selected app-chess-piece:not(.taken) {
+		scale: var(--piece-lift-scale);
+		filter: var(--piece-lift-shadow);
 	}
 
 	// A translucent wash over the square's own background and not its contents, so the
@@ -110,6 +124,9 @@
 	// that does not while they share a square.
 	app-chess-piece {
 		position: relative;
+		transition:
+			scale var(--piece-lift-duration) ease-out,
+			filter var(--piece-lift-duration) ease-out;
 	}
 
 	// The piece being taken, left standing under the one coming for it until it lands.
@@ -163,20 +180,25 @@
 
 	position: fixed;
 	z-index: var(--layer-ghost);
-	scale: 1.15;
+	scale: var(--piece-lift-scale);
 
-	filter: drop-shadow(0 6px 6px rgb(0 0 0 / 40%));
+	filter: var(--piece-lift-shadow);
 
 	transition:
-		translate 140ms ease-out,
-		scale 140ms ease-out,
-		filter 140ms ease-out;
+		translate var(--piece-lift-duration) ease-out,
+		scale var(--piece-lift-duration) ease-out,
+		filter var(--piece-lift-duration) ease-out;
 
 	// The frame it is lifted on: still the size it was standing at, and still over its own
 	// square. Dropping the class is what sends it travelling to the pointer.
 	&.settling {
 		scale: 1;
-		filter: drop-shadow(0 0 0 rgb(0 0 0 / 0%));
+		filter: var(--piece-lift-flat);
+	}
+
+	&.settling.raised {
+		scale: var(--piece-lift-scale);
+		filter: var(--piece-lift-shadow);
 	}
 }
 
@@ -185,6 +207,7 @@
 		animation: none;
 	}
 
+	.square app-chess-piece,
 	.ghost {
 		transition: none;
 	}

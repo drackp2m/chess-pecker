@@ -22,6 +22,7 @@ import {
 	Square,
 } from '@app/definition/chess.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed } from '@app/definition/move-speed.type';
+import { DEFAULT_MOVE_LIFT } from '@app/definition/piece-lift.constant';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
 import { provideTestingI18n } from '@app/testing/i18n.harness';
@@ -390,6 +391,7 @@ function providersFor(presenter: FakeBoardPresenter, animation: MoveAnimation, s
 				moveSpeed: signal(speed),
 				moveAnimation: signal(animation),
 				moveInputMethods: signal(MOVE_INPUT_METHODS_ALL),
+				moveLift: signal(DEFAULT_MOVE_LIFT),
 			},
 		},
 		{ provide: SoundService, useValue: { play: (): void => undefined } },

@@ -57,6 +57,10 @@ export function slideOffset(from: Square, to: Square, orientation: PieceColor): 
 	};
 }
 
+export function dropOffset(center: Point, point: Point, size: number): Point {
+	return { x: ((point.x - center.x) / size) * 100, y: ((point.y - center.y) / size) * 100 };
+}
+
 export function hasPassedThreshold(origin: Point, point: Point): boolean {
 	return DRAG_THRESHOLD <= Math.hypot(point.x - origin.x, point.y - origin.y);
 }

@@ -7,6 +7,7 @@ import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
+import { DEFAULT_MOVE_LIFT } from '@app/definition/piece-lift.constant';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { I18n } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
@@ -69,6 +70,7 @@ function createHost() {
 					moveSpeed: signal(DEFAULT_MOVE_SPEED),
 					moveAnimation: signal(DEFAULT_MOVE_ANIMATION),
 					moveInputMethods: signal(MOVE_INPUT_METHODS_ALL),
+					moveLift: signal(DEFAULT_MOVE_LIFT),
 				},
 			},
 			{ provide: SoundService, useValue: { play: (): void => undefined } },

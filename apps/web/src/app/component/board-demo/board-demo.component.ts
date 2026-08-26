@@ -1,7 +1,8 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 
 import { BoardDragGesture } from '@app/component/chess-board/board-drag';
-import { Point } from '@app/component/chess-board/board-geometry';
+import { Point, dropOffset } from '@app/component/chess-board/board-geometry';
+import { PieceLaunch, describeLaunch, liftSlides } from '@app/component/chess-board/board-launch';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
 import { pieceElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
@@ -86,6 +87,7 @@ export class BoardDemoComponent {
 
 	readonly isClickEnabled = computed(() => this.preference.moveInputMethods().includes('click'));
 	readonly isDragEnabled = computed(() => this.preference.moveInputMethods().includes('drag'));
+	readonly isLiftEnabled = computed(() => this.preference.moveLift());
 
 	private readonly gesture = new BoardDragGesture({
 		squareAt: (point) => this.squareAt(point),
@@ -94,9 +96,13 @@ export class BoardDemoComponent {
 		squareCenter: (square) => this.centerOf(square),
 		isClickEnabled: () => this.isClickEnabled(),
 		pick: (square) => {
-			if (square !== this.store.selected()) {
-				this.store.selectSquare(square);
+			const isRaised = square === this.store.selected();
+
+			if (!isRaised) {
+				this.commit(square, undefined);
 			}
+
+			return isRaised;
 		},
 	});
 
@@ -108,6 +114,14 @@ export class BoardDemoComponent {
 	);
 
 	readonly hint = computed(() => this.describe());
+
+	private readonly launch = signal<PieceLaunch | undefined>(undefined);
+
+	private readonly slides = computed(() =>
+		this.isLiftEnabled()
+			? liftSlides(this.playback.slides(), this.launch(), this.store.transition())
+			: this.playback.slides(),
+	);
 
 	private readonly strip = viewChild.required<ElementRef<HTMLElement>>('strip');
 
@@ -122,7 +136,7 @@ export class BoardDemoComponent {
 
 	activate(square: DemoSquare, event: MouseEvent): void {
 		if (0 === event.detail && this.isClickEnabled()) {
-			this.store.selectSquare(square.square);
+			this.commit(square.square, undefined);
 		}
 	}
 
@@ -141,10 +155,12 @@ export class BoardDemoComponent {
 	}
 
 	dropSquare(event: PointerEvent): void {
-		const target = this.gesture.release({ x: event.clientX, y: event.clientY });
+		const point = { x: event.clientX, y: event.clientY };
+		const wasCarried = undefined !== this.draggingFrom();
+		const target = this.gesture.release(point);
 
 		if (undefined !== target) {
-			this.store.selectSquare(target);
+			this.commit(target, wasCarried ? this.dropOffset(target, point) : undefined);
 		}
 	}
 
@@ -166,6 +182,21 @@ export class BoardDemoComponent {
 			square.isTarget ? I18n.common.SQUARE_CAPTURE : I18n.common.SQUARE_PIECE,
 			{ piece, square: square.square },
 		);
+	}
+
+	private commit(square: Square, drop: Point | undefined): void {
+		const move = { from: this.store.selected(), to: square };
+		const before = this.store.transition();
+
+		this.store.selectSquare(square);
+
+		this.launch.set(describeLaunch(move, drop, before, this.store.transition()));
+	}
+
+	private dropOffset(square: Square, point: Point): Point {
+		const size = this.strip().nativeElement.getBoundingClientRect().width / BOARD_SIZE;
+
+		return dropOffset(this.centerOf(square), point, size);
 	}
 
 	/** Feature-detected: not every test environment implements pointer capture. */
@@ -203,7 +234,7 @@ export class BoardDemoComponent {
 		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
 		const piece = this.position().board[index];
-		const travelling = this.playback.slides().find((pending) => square === pending.to);
+		const travelling = this.slides().find((pending) => square === pending.to);
 
 		return {
 			square,

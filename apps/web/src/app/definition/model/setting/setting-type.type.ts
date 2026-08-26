@@ -13,6 +13,7 @@ export interface SettingType {
 	LAST_SEEN_VERSION: 'LAST_SEEN_VERSION';
 	MOVE_ANIMATION: 'MOVE_ANIMATION';
 	MOVE_INPUT: 'MOVE_INPUT';
+	MOVE_LIFT: 'MOVE_LIFT';
 	MOVE_SPEED: 'MOVE_SPEED';
 	SOUND: 'SOUND';
 	INTRO: 'INTRO';
@@ -26,6 +27,7 @@ export interface SettingPayload {
 	LAST_SEEN_VERSION: string;
 	MOVE_ANIMATION: MoveAnimation;
 	MOVE_INPUT: readonly MoveInputMethod[];
+	MOVE_LIFT: boolean;
 	MOVE_SPEED: MoveSpeed;
 	SOUND: boolean;
 	INTRO: IntroProgress;

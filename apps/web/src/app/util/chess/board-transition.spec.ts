@@ -57,39 +57,43 @@ describe('nextTransition', () => {
 		]);
 	});
 
-	it('castles in two beats, the rook going round first and the king following', () => {
+	/**
+	 * The king is the piece the player moves to ask for a castling, so it is the piece that
+	 * sets off: whether the move was clicked or dragged, the beats read the same way.
+	 */
+	it('castles in two beats, the king going first and the rook following it round', () => {
 		expect(slidesOf(build(CASTLING, 'e1g1').transition)).toEqual([
-			[{ from: 'h1', to: 'f1' }],
 			[{ from: 'e1', to: 'g1' }],
+			[{ from: 'h1', to: 'f1' }],
 		]);
 
 		expect(slidesOf(build(CASTLING, 'e1c1').transition)).toEqual([
-			[{ from: 'a1', to: 'd1' }],
 			[{ from: 'e1', to: 'c1' }],
+			[{ from: 'a1', to: 'd1' }],
 		]);
 	});
 
-	it('runs the king over a board with the rook already round it', () => {
+	it('runs the rook over a board with the king already round it', () => {
 		const { position, transition } = build(CASTLING, 'e1g1');
-		const [rook, king] = transition.stages;
+		const [king, rook] = transition.stages;
 
-		if (undefined === rook?.board) {
-			throw new Error('the rook carries no board to run over');
+		if (undefined === king?.board) {
+			throw new Error('the king carries no board to run over');
 		}
 
-		expect(ChessBoard.pieceAt(rook.board, 'f1')).toEqual({ type: 'rook', color: 'white' });
-		expect(ChessBoard.pieceAt(rook.board, 'h1')).toBeUndefined();
-		// The king has not set out yet, and the position the move was played from stands.
-		expect(ChessBoard.pieceAt(rook.board, 'e1')).toEqual({ type: 'king', color: 'white' });
-		expect(ChessBoard.pieceAt(position, 'h1')).toEqual({ type: 'rook', color: 'white' });
-		expect(king?.board).toBeUndefined();
+		expect(ChessBoard.pieceAt(king.board, 'g1')).toEqual({ type: 'king', color: 'white' });
+		expect(ChessBoard.pieceAt(king.board, 'e1')).toBeUndefined();
+		// The rook has not set out yet, and the position the move was played from stands.
+		expect(ChessBoard.pieceAt(king.board, 'h1')).toEqual({ type: 'rook', color: 'white' });
+		expect(ChessBoard.pieceAt(position, 'e1')).toEqual({ type: 'king', color: 'white' });
+		expect(rook?.board).toBeUndefined();
 	});
 
 	it('walks both castling pieces home again when it is taken back', () => {
 		const backward = build(CASTLING, 'e1g1', 'backward').transition;
 
-		expect(slidesOf(backward)).toEqual([[{ from: 'g1', to: 'e1' }], [{ from: 'f1', to: 'h1' }]]);
-		// The king goes home first, over the board the rook's own beat landed on.
+		expect(slidesOf(backward)).toEqual([[{ from: 'f1', to: 'h1' }], [{ from: 'g1', to: 'e1' }]]);
+		// The rook goes home first, over the board the king's own beat landed on.
 		expect(backward.stages[0]?.board).toEqual(build(CASTLING, 'e1g1').transition.stages[0]?.board);
 		expect(backward.stages[1]?.board).toBeUndefined();
 	});

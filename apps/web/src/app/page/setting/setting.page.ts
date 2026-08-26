@@ -74,6 +74,7 @@ export class SettingPage {
 			click: new FormControl<boolean>(this.isMethodEnabled('click'), { nonNullable: true }),
 			drag: new FormControl<boolean>(this.isMethodEnabled('drag'), { nonNullable: true }),
 		}),
+		moveLift: new FormControl<boolean>(this.boardPreference.moveLift(), { nonNullable: true }),
 		sound: new FormControl<boolean>(this.sound.isEnabled(), { nonNullable: true }),
 	});
 
@@ -107,6 +108,10 @@ export class SettingPage {
 
 		bindSetting(this.form.controls.moveInput, this.moveInput, ({ click, drag }) => {
 			this.boardPreference.updateMoveInputMethods(buildMoveInputMethods(click, drag));
+		});
+
+		bindSetting(this.form.controls.moveLift, this.boardPreference.moveLift, (isEnabled) => {
+			this.boardPreference.updateMoveLift(isEnabled);
 		});
 
 		bindSetting(this.form.controls.sound, this.sound.isEnabled, (isEnabled) => {
