@@ -35,7 +35,7 @@
 
 	&:not(.lifting) {
 		--piece-lift-scale: 1;
-		--piece-lift-shadow: none;
+		--piece-lift-shadow: var(--piece-lift-flat);
 	}
 
 	&.dragging .square {
@@ -123,7 +123,13 @@
 	// The level itself is bound per piece, so the one that matters rides over the one
 	// that does not while they share a square.
 	app-chess-piece {
+		will-change: scale, filter;
+
 		position: relative;
+		scale: 1;
+
+		filter: var(--piece-lift-flat);
+
 		transition:
 			scale var(--piece-lift-duration) ease-out,
 			filter var(--piece-lift-duration) ease-out;

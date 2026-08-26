@@ -23,6 +23,7 @@
 	overflow: hidden;
 	display: grid;
 	grid-template-columns: repeat(8, 1fr);
+	grid-template-rows: repeat(8, 1fr);
 
 	aspect-ratio: 1;
 	width: 100%;
@@ -35,7 +36,7 @@
 
 	&:not(.lifting) {
 		--piece-lift-scale: 1;
-		--piece-lift-shadow: none;
+		--piece-lift-shadow: var(--piece-lift-flat);
 	}
 
 	// The ghost must not steal the pointer, or the drop lands on itself.
@@ -134,7 +135,13 @@
 	// The level itself is bound per piece, so the one that matters rides over the one
 	// that does not while they share a square.
 	app-chess-piece {
+		will-change: scale, filter;
+
 		position: relative;
+		scale: 1;
+
+		filter: var(--piece-lift-flat);
+
 		transition:
 			scale var(--piece-lift-duration) ease-out,
 			filter var(--piece-lift-duration) ease-out;
@@ -199,6 +206,7 @@
 	overflow: hidden;
 	display: grid;
 	grid-template-columns: repeat(2, 1fr);
+	grid-template-rows: repeat(2, 1fr);
 
 	aspect-ratio: 1;
 	width: min(46%, 12rem);
