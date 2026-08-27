@@ -21,7 +21,6 @@
 			type="checkbox"
 			[label]="I18n.common.BOOKMARK_SKIP_PROMPT | i18n"
 			[checked]="skipPrompt()"
-			[disabled]="!canSkipPrompt()"
 			(change)="toggleSkipPrompt($event)"
 		/>
 

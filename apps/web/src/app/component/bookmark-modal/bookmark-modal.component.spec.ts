@@ -71,7 +71,7 @@ describe('BookmarkModalComponent', () => {
 		expect(checkbox?.checked).toBe(false);
 	});
 
-	it('carries the ticked box out with the list it was ticked for', async () => {
+	it('carries the ticked box out with the exercise', async () => {
 		const { fixture, modal, checkbox } = createModal(true);
 
 		checkbox?.click();
@@ -84,7 +84,7 @@ describe('BookmarkModalComponent', () => {
 		expect(answer).toEqual({ type: 'favorite', skipPrompt: true });
 	});
 
-	it('takes the box down when another list is chosen, and says so', async () => {
+	it('leaves the box alone when another list is chosen', async () => {
 		const { fixture, modal, checkbox, radios } = createModal(false);
 
 		radios[1]?.click();
@@ -94,8 +94,23 @@ describe('BookmarkModalComponent', () => {
 			modal.confirm();
 		});
 
+		expect(checkbox?.checked).toBe(true);
+		expect(checkbox?.disabled).toBe(false);
+		expect(answer).toEqual({ type: 'hard', skipPrompt: true });
+	});
+
+	it('takes the box down only when it is unticked', async () => {
+		const { fixture, modal, checkbox, radios } = createModal(false);
+
+		radios[1]?.click();
+		checkbox?.click();
+		fixture.detectChanges();
+
+		const answer = await answerOf(modal, () => {
+			modal.confirm();
+		});
+
 		expect(checkbox?.checked).toBe(false);
-		expect(checkbox?.disabled).toBe(true);
 		expect(answer).toEqual({ type: 'hard', skipPrompt: false });
 	});
 

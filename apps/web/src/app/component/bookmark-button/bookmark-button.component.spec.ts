@@ -165,17 +165,17 @@ describe('BookmarkButtonComponent', () => {
 		expect(prompt()).toBe(true);
 	});
 
-	it('turns the question back on when another list is chosen', async () => {
+	it('leaves the question turned off when another list is chosen', async () => {
 		const { button, filed, prompt } = createButton({
 			isPromptEnabled: false,
-			answer: { type: 'hard', skipPrompt: false },
+			answer: { type: 'hard', skipPrompt: true },
 		});
 
 		press(button, true);
 		await settle();
 
 		expect(filed()).toBe('hard');
-		expect(prompt()).toBe(true);
+		expect(prompt()).toBe(false);
 	});
 
 	it('turns the question back on when the exercise is taken out of its list', async () => {

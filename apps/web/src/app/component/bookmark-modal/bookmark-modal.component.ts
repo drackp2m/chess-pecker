@@ -18,7 +18,7 @@ import { I18nService } from '@app/service/i18n.service';
 export interface BookmarkChoice {
 	/** The list to file the exercise under, or nothing to take it out of the one it is in. */
 	readonly type: PuzzleBookmarkType | null;
-	/** The question is not to be asked again: only favorites can travel without it. */
+	/** Whether a press files a favorite outright from now on, without asking. */
 	readonly skipPrompt: boolean;
 }
 
@@ -52,21 +52,13 @@ export class BookmarkModalComponent extends Modal<BookmarkChoice | null> {
 		() => this.chosen() ?? this.current() ?? DEFAULT_PUZZLE_BOOKMARK_TYPE,
 	);
 
-	/** Skipping the question is only offered for favorites, which is where a press lands. */
-	readonly canSkipPrompt = computed(() => DEFAULT_PUZZLE_BOOKMARK_TYPE === this.selected());
-
-	readonly skipPrompt = computed(() => this.canSkipPrompt() && this.remember());
+	/** What a press does from now on, which is a matter apart from where this one goes. */
+	readonly skipPrompt = this.remember.asReadonly();
 
 	readonly isFiled = computed(() => null !== this.current());
 
 	select(type: PuzzleBookmarkType): void {
 		this.chosen.set(type);
-
-		// Choosing another list takes the offer off the table, and it does not come back on
-		// its own: the box has to be ticked again once favorites is back.
-		if (DEFAULT_PUZZLE_BOOKMARK_TYPE !== type) {
-			this.remember.set(false);
-		}
 	}
 
 	toggleSkipPrompt(event: Event): void {
