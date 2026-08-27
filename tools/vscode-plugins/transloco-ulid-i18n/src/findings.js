@@ -10,6 +10,11 @@ const SEVERITIES = {
 	info: vscode.DiagnosticSeverity.Information,
 };
 
+const PENDING_TYPES = new Set(['missing-translation', 'empty-translation']);
+
+const severityFor = (severityOf, type) =>
+	PENDING_TYPES.has(type) ? SEVERITIES.warning : SEVERITIES[severityOf(type)];
+
 function lengthOf(lines, line) {
 	return lines[line]?.replace(/\r$/, '').length ?? 0;
 }
@@ -37,7 +42,7 @@ function toDiagnostic(cache, severityOf, item) {
 	const diagnostic = new vscode.Diagnostic(
 		rangeOf(readLines(cache, item.file), item),
 		null === item.lang ? item.message : `${item.message} [${item.lang}]`,
-		SEVERITIES[severityOf(item.type)],
+		severityFor(severityOf, item.type),
 	);
 
 	diagnostic.code = item.type;

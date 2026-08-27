@@ -1,0 +1,19 @@
+version: '0.2'
+ignorePaths:
+  - apps/web/src/app/i18n/**
+dictionaryDefinitions: []
+dictionaries: []
+words:
+  - chesspecker
+  - IDBP
+  - lichess
+  - Mikro
+  - ngrx
+  - pipefail
+  - projectable
+  - sonarjs
+  - titlecase
+  - transloco
+  - Vitest
+ignoreWords: []
+import: []

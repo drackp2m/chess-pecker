@@ -52,8 +52,7 @@ function usageDisplay(document, usage) {
 	const text = document.getText();
 	const after = text.slice(usage.end);
 	const [pipe] = TRANSLOCO_PIPE.exec(after) ?? [];
-	const end = usage.end + (pipe?.length ?? 0);
-	const range = new vscode.Range(document.positionAt(usage.start), document.positionAt(end));
+	const range = usageRange(document, usage);
 
 	if (undefined !== pipe || 'html' !== document.languageId) {
 		return { range, mode: 'collapse' };

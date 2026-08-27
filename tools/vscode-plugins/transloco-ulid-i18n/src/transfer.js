@@ -3,29 +3,21 @@ const path = require('node:path');
 
 const vscode = require('vscode');
 
-const CONFIG = 'translocoUlidI18n';
-const XLIFF_FILTERS = { XLIFF: ['xlf', 'xliff'] };
+const { reveal } = require('./output');
+const settings = require('./settings');
 
-let channel = null;
+const XLIFF_FILTERS = { XLIFF: ['xlf', 'xliff'] };
 
 const count = (value, word) => `${value} ${word}${1 === value ? '' : 's'}`;
 
 function transferDir(root) {
-	const configured = vscode.workspace.getConfiguration(CONFIG).get('transferDir', 'translations');
+	const configured = settings.transferDir();
 
 	return path.isAbsolute(configured) ? configured : path.join(root, configured);
 }
 
 function showProblems(problems) {
-	channel = channel ?? vscode.window.createOutputChannel('Transloco ULID i18n');
-
-	channel.clear();
-
-	for (const { file, message } of problems) {
-		channel.appendLine(`${file}  ${message}`);
-	}
-
-	channel.show(true);
+	reveal(problems.map(({ file, message }) => `${file}  ${message}`));
 }
 
 async function pickLangs(index) {
