@@ -135,3 +135,7 @@ No existe ninguna cuenta con ese nombre de usuario.
 ## BOOKMARK_*
 
 El marcador: la lista en la que el jugador guarda un ejercicio ya terminado. Sólo una a la vez, así que guardarlo otra vez lo mueve de lista, no lo duplica. Los nombres de las cuatro listas van en plural, porque son las listas que después se podrán abrir. `BOOKMARK_ADD` y `BOOKMARK_EDIT` son etiquetas accesibles del icono, no se ven en pantalla. `BOOKMARK_SKIP_PROMPT` no habla del ejercicio que se está guardando, sino de lo que hará la pulsación corta a partir de ahora, así que elegir otra lista no la contradice. En `BOOKMARK_SKIP_PROMPT_HINT`, «mantén pulsado» es el gesto de dejar el dedo sobre el icono, nunca el de pulsar repetidas veces.
+
+## SHARE_*
+
+Compartir un ejercicio ya terminado con un amigo, que aquí es un reto: quien lo recibe lo resuelve y después se comparan los resultados de todos los que hayan participado. `SHARE` es la etiqueta accesible del icono, no se ve en pantalla. `SHARE_FRIEND` es la etiqueta de un selector, una palabra. `SHARE_MESSAGE` es opcional y `SHARE_MESSAGE_PLACEHOLDER` lo dice sin ordenar nada. En `SHARE_SENT`, `{{ username }}` puede ser más de un nombre separado por comas. `SHARE_CHALLENGE_RECEIVED` y `SHARE_CHALLENGE_SOLVED` son avisos que llegan solos: `{{ username }}` es siempre otra persona, nunca quien lee.

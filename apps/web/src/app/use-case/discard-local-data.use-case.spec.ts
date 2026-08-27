@@ -13,6 +13,7 @@ import {
 import { ActivityStore } from '@app/store/activity.store';
 import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
+import { NotificationStore } from '@app/store/notification.store';
 import { ProfileStore } from '@app/store/profile.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
@@ -67,6 +68,7 @@ function configure(options: Options = {}) {
 	const stores = {
 		activity: store('activity'),
 		bookmark: store('bookmark'),
+		notification: store('notification'),
 		profile: store('profile'),
 		sync: store('sync'),
 		training: store('training'),
@@ -79,6 +81,7 @@ function configure(options: Options = {}) {
 			{ provide: ModalStore, useValue: modalStore },
 			{ provide: ActivityStore, useValue: stores.activity },
 			{ provide: BookmarkStore, useValue: stores.bookmark },
+			{ provide: NotificationStore, useValue: stores.notification },
 			{ provide: ProfileStore, useValue: stores.profile },
 			{ provide: SyncStore, useValue: stores.sync },
 			{ provide: TrainingStore, useValue: stores.training },
@@ -162,6 +165,7 @@ describe('DiscardLocalDataUseCase.execute', () => {
 		expect(order).toEqual([
 			'activity',
 			'bookmark',
+			'notification',
 			'profile',
 			'sync',
 			'training',
@@ -177,6 +181,7 @@ describe('DiscardLocalDataUseCase.execute', () => {
 
 		expect(stores.activity.reset).toHaveBeenCalledTimes(1);
 		expect(stores.bookmark.reset).toHaveBeenCalledTimes(1);
+		expect(stores.notification.reset).toHaveBeenCalledTimes(1);
 		expect(stores.profile.reset).toHaveBeenCalledTimes(1);
 		expect(stores.sync.reset).toHaveBeenCalledTimes(1);
 		expect(stores.training.reset).toHaveBeenCalledTimes(1);

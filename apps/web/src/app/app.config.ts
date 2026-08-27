@@ -11,6 +11,7 @@ import { SettingRepository } from '@app/repository/setting.repository';
 import { LanguageService } from '@app/service/language.service';
 import { ThemeService } from '@app/service/theme.service';
 import { UpdateService } from '@app/service/update.service';
+import { NotificationStore } from '@app/store/notification.store';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
 import { SingleEntryLocationStrategy } from '@app/strategy/single-entry-location.strategy';
@@ -26,6 +27,9 @@ export const appConfig: ApplicationConfig = {
 			const _languageService = inject(LanguageService);
 			const _updateService = inject(UpdateService);
 			const _localOwnerUseCase = inject(LocalOwnerUseCase);
+			// Polls the account for as long as a session is open, and nothing while there is
+			// none: it starts itself off the session, so injecting it is all it needs.
+			const _notificationStore = inject(NotificationStore);
 
 			// The session restore is a background refresh and not a boot gate, so it is fired
 			// without awaiting; the sync cycle behind it is the gate.

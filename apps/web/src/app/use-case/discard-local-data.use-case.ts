@@ -7,6 +7,7 @@ import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
 import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
+import { NotificationStore } from '@app/store/notification.store';
 import { ProfileStore } from '@app/store/profile.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
@@ -27,6 +28,7 @@ export class DiscardLocalDataUseCase {
 	private readonly stores: readonly Resettable[] = [
 		inject(ActivityStore),
 		inject(BookmarkStore),
+		inject(NotificationStore),
 		inject(ProfileStore),
 		inject(SyncStore),
 		inject(TrainingStore),

@@ -136,5 +136,18 @@
 	"01M10G3BA1RB324ZCT2X35XP3M": "Guardar el ejercicio",
 	"01M10G3BA147VENRRH02HHJF17": "Cambiar la lista del ejercicio",
 	"01M10G3BA1WC2QH0XJ0ZYP3SP8": "No se han podido cargar los marcadores",
-	"01M10G3BA1MBD5MY7286RS27TY": "No se ha podido guardar el marcador"
+	"01M10G3BA1MBD5MY7286RS27TY": "No se ha podido guardar el marcador",
+	"01M11DZXV8RQGKN98XBV4TV086": "Compartir el ejercicio",
+	"01M11DZXV8Y9V1575M1AD52ERF": "Retar a un amigo",
+	"01M11DZXV8SRXCPYTPPEH6NBGF": "Manda el ejercicio a quien quieras y compara vuestros resultados.",
+	"01M11DZXV8YSPX34SPQE8SQ1TX": "Amigo",
+	"01M11DZXV8BP065ANVF10G9RAW": "Todavía no tienes a nadie a quien retar.",
+	"01M11DZXV8Q3AJC3XJJK02Y667": "Mensaje",
+	"01M11DZXV8HZXBZAS2TWW2FTPF": "Escribe algo, si quieres",
+	"01M11DZXV888J4ZRWAVN3A569R": "Mandar el reto",
+	"01M11DZXV8W32XSWV2YB9RK531": "Reto mandado a {{ username }}",
+	"01M11DZXV8F2HN6ZK9WRJ9APFR": "No se ha podido mandar el reto",
+	"01M11DZXV8E5R9MYRTM9ADW87F": "No se ha podido cargar tu lista de amigos",
+	"01M11DZXV8PQ7263S0R7G8YTVW": "{{ username }} te ha retado con un ejercicio",
+	"01M11DZXV8SZ13Z3AZ0AQPYG7H": "{{ username }} ha resuelto el reto"
 }

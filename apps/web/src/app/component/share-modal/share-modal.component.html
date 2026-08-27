@@ -1,0 +1,46 @@
+<div class="flex-col gap-4 p-4">
+	<p class="fs-sm color-contrast-mid">{{ I18n.common.SHARE_INTRO | i18n }}</p>
+
+	@if (isLoading()) {
+		<p class="fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
+	} @else if (hasFailed()) {
+		<p class="error fs-sm" role="alert">{{ I18n.common.SHARE_FRIENDS_ERROR | i18n }}</p>
+	} @else if (0 === friends().length) {
+		<p class="fs-sm color-contrast-mid">{{ I18n.common.SHARE_NO_FRIENDS | i18n }}</p>
+	} @else {
+		<select appThemed searchable [label]="I18n.common.SHARE_FRIEND" (change)="selectFriend($event)">
+			@for (friend of friends(); track friend.uuid) {
+				<option [value]="friend.uuid">{{ friend.username }}</option>
+			}
+		</select>
+	}
+
+	<div class="flex-col gap-1">
+		<label class="fs-sm color-contrast-mid" for="share-message">
+			{{ I18n.common.SHARE_MESSAGE | i18n }}
+		</label>
+
+		<textarea
+			id="share-message"
+			class="fs-sm p-2 br-1 color-contrast"
+			rows="3"
+			[placeholder]="I18n.common.SHARE_MESSAGE_PLACEHOLDER | i18n"
+			[value]="message()"
+			(input)="updateMessage($event)"
+		></textarea>
+	</div>
+
+	<div class="flex-row gap-2">
+		<button
+			appThemed
+			class="flex-grow"
+			color="accent"
+			[disabled]="!canConfirm()"
+			(click)="confirm()"
+		>
+			{{ I18n.common.SHARE_CONFIRM | i18n }}
+		</button>
+
+		<button appThemed class="flex-grow" (click)="dismiss()">{{ I18n.common.CANCEL | i18n }}</button>
+	</div>
+</div>

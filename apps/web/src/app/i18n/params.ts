@@ -52,4 +52,13 @@ export interface CommonI18nParams {
 		done: number;
 		total: number;
 	};
+	'01M11DZXV8W32XSWV2YB9RK531': {
+		username: string;
+	};
+	'01M11DZXV8PQ7263S0R7G8YTVW': {
+		username: string;
+	};
+	'01M11DZXV8SZ13Z3AZ0AQPYG7H': {
+		username: string;
+	};
 }

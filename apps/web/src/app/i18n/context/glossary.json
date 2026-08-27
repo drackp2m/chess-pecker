@@ -513,6 +513,18 @@
 				"fr-FR": "session",
 				"ca-ES": "sessió"
 			}
+		},
+		{
+			"term": "reto",
+			"group": "social",
+			"note": "un ejercicio ya terminado que se manda a uno o varios amigos para que lo resuelvan y comparar después los resultados. Nunca «desafío» ni «duelo»",
+			"translations": {
+				"en-GB": "",
+				"ru-RU": "",
+				"hi-IN": "",
+				"fr-FR": "",
+				"ca-ES": ""
+			}
 		}
 	],
 	"keep": [

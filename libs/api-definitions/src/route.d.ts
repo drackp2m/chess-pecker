@@ -8,6 +8,11 @@ import {
 	UserBlock,
 } from './friendship';
 import {
+	ListNotificationsRequest,
+	ReadNotificationsRequest,
+	UserNotification,
+} from './notification';
+import {
 	ApiPuzzle,
 	GetPuzzleCatalogRequest,
 	ImportPuzzleRequest,
@@ -16,6 +21,7 @@ import {
 	SearchPuzzleRequest,
 } from './puzzle';
 import { PuzzleBookmark, UpsertPuzzleBookmarkRequest } from './puzzle-bookmark';
+import { CreatePuzzleShareRequest, PuzzleShare, PuzzleShareResultRequest } from './puzzle-share';
 import {
 	GetSyncTrainingTreeRequest,
 	PushTrainingRequest,
@@ -56,8 +62,10 @@ export type ApiVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 export type ApiModule =
 	| 'auth'
 	| 'friendship'
+	| 'notification'
 	| 'puzzle'
 	| 'puzzleBookmark'
+	| 'puzzleShare'
 	| 'sync'
 	| 'training'
 	| 'user'
@@ -94,6 +102,15 @@ export interface FriendshipDeleteRoutes {
 	'/user/:uuid': { path: { uuid: string }; response: undefined };
 }
 
+export interface NotificationGetRoutes {
+	/** Newest first, read ones included: the screen decides what a read row looks like. */
+	'': { query: ListNotificationsRequest; response: readonly UserNotification[] };
+}
+
+export interface NotificationPostRoutes {
+	'/read': { params: ReadNotificationsRequest; response: undefined };
+}
+
 export interface PuzzleGetRoutes {
 	'': { query: SearchPuzzleRequest; response: readonly ApiPuzzle[] };
 	'/catalog': { query: GetPuzzleCatalogRequest; response: PuzzleCatalogPage };
@@ -118,6 +135,22 @@ export interface PuzzleBookmarkPutRoutes {
 
 export interface PuzzleBookmarkDeleteRoutes {
 	'/:lichessId': { path: { lichessId: string }; response: undefined };
+}
+
+export interface PuzzleShareGetRoutes {
+	'/received': { response: readonly PuzzleShare[] };
+	'/sent': { response: readonly PuzzleShare[] };
+	'/:uuid': { path: { uuid: string }; response: PuzzleShare };
+}
+
+export interface PuzzleSharePostRoutes {
+	'': { params: CreatePuzzleShareRequest; response: PuzzleShare };
+	/** Answering a challenge. It counts once, so a second call is refused rather than kept. */
+	'/:uuid/attempt': {
+		path: { uuid: string };
+		params: PuzzleShareResultRequest;
+		response: PuzzleShare;
+	};
 }
 
 export interface SyncGetRoutes {
