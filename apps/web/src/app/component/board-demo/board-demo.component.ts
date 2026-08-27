@@ -2,7 +2,7 @@ import { Component, ElementRef, computed, inject, signal, viewChild } from '@ang
 
 import { BoardDragGesture } from '@app/component/chess-board/board-drag';
 import { Point, dropOffset } from '@app/component/chess-board/board-geometry';
-import { PieceLaunch, describeLaunch, liftSlides } from '@app/component/chess-board/board-launch';
+import { PieceLaunch, describeLaunch, launchSlides } from '@app/component/chess-board/board-launch';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
 import { pieceElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
@@ -118,9 +118,12 @@ export class BoardDemoComponent {
 	private readonly launch = signal<PieceLaunch | undefined>(undefined);
 
 	private readonly slides = computed(() =>
-		this.isLiftEnabled()
-			? liftSlides(this.playback.slides(), this.launch(), this.store.transition())
-			: this.playback.slides(),
+		launchSlides(
+			this.playback.slides(),
+			this.launch(),
+			this.store.transition(),
+			this.isLiftEnabled(),
+		),
 	);
 
 	private readonly strip = viewChild.required<ElementRef<HTMLElement>>('strip');

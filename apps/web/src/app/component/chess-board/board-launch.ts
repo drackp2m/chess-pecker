@@ -1,5 +1,6 @@
 import { Point } from '@app/component/chess-board/board-geometry';
 import { BoardSlide } from '@app/component/chess-board/board-playback';
+import { PieceFlight } from '@app/component/chess-piece/chess-piece.component';
 import { BoardTransition } from '@app/definition/board-animation.type';
 import { Square } from '@app/definition/chess.type';
 
@@ -23,38 +24,51 @@ export function describeLaunch(
 }
 
 /**
- * Every piece a beat sends travelling rises off the board and lands on its square. Only the
- * one this gesture launched knows any better: it is already up, or it is already there.
+ * Every piece a beat sends travelling rises off the board and lands on its square, unless the
+ * setting says otherwise. Only the one this gesture launched knows any better: it is already
+ * up, or it sets off from where the pointer let go of it.
  */
-export function liftSlides(
+export function launchSlides(
 	slides: readonly BoardSlide[],
 	launch: PieceLaunch | undefined,
 	transition: BoardTransition | undefined,
+	isLifted: boolean,
 ): readonly BoardSlide[] {
 	const launched = undefined !== launch && launch.transition === transition ? launch : undefined;
 
-	return slides.map((pending) => liftSlide(pending, launched));
+	return slides.map((pending) => launchSlide(pending, launched, isLifted));
 }
 
 function isLaunched(pending: BoardSlide, launch: PieceLaunch): boolean {
 	return pending.from === launch.from && pending.to === launch.to;
 }
 
-function liftSlide(pending: BoardSlide, launch: PieceLaunch | undefined): BoardSlide {
-	if (undefined === launch || !isLaunched(pending, launch)) {
-		return { ...pending, slide: { ...pending.slide, flight: 'flown' } };
+function launchSlide(
+	pending: BoardSlide,
+	launch: PieceLaunch | undefined,
+	isLifted: boolean,
+): BoardSlide {
+	const launched = undefined !== launch && isLaunched(pending, launch) ? launch : undefined;
+	const drop = launched?.drop;
+
+	if (undefined !== drop) {
+		return droppedSlide(pending, drop, isLifted ? 'drop' : 'placed');
 	}
 
-	return undefined === launch.drop
-		? { ...pending, slide: { ...pending.slide, flight: 'lifted' } }
-		: droppedSlide(pending, launch.drop);
+	if (!isLifted) {
+		return pending;
+	}
+
+	return undefined === launched
+		? { ...pending, slide: { ...pending.slide, flight: 'flown' } }
+		: { ...pending, slide: { ...pending.slide, flight: 'lifted' } };
 }
 
-/** Let go of over its own square: nothing is left to travel, and nothing to wait for. */
-function droppedSlide(pending: BoardSlide, drop: Point): BoardSlide {
+/** Let go of over its own square: only the last of the way is left, and nothing to wait for. */
+function droppedSlide(pending: BoardSlide, drop: Point, flight: PieceFlight): BoardSlide {
 	return {
 		...pending,
 		taken: undefined,
-		slide: { ...pending.slide, x: drop.x, y: drop.y, flight: 'drop' },
+		slide: { ...pending.slide, x: drop.x, y: drop.y, flight },
 	};
 }

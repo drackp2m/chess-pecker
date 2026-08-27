@@ -18,7 +18,7 @@ import {
 	pointAtSquare,
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
-import { PieceLaunch, describeLaunch, liftSlides } from '@app/component/chess-board/board-launch';
+import { PieceLaunch, describeLaunch, launchSlides } from '@app/component/chess-board/board-launch';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
 import { pieceElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
@@ -163,9 +163,12 @@ export class ChessBoardComponent {
 	private promotionDrop: Point | undefined;
 
 	private readonly slides = computed(() =>
-		this.isLiftEnabled()
-			? liftSlides(this.playback.slides(), this.launch(), this.store.transition())
-			: this.playback.slides(),
+		launchSlides(
+			this.playback.slides(),
+			this.launch(),
+			this.store.transition(),
+			this.isLiftEnabled(),
+		),
 	);
 
 	/**

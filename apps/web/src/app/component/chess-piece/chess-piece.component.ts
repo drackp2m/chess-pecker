@@ -12,7 +12,7 @@ import {
 } from '@app/definition/piece-lift.constant';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 
-export type PieceFlight = 'flown' | 'lifted' | 'drop';
+export type PieceFlight = 'flown' | 'lifted' | 'drop' | 'placed';
 
 /** Where a piece came from, as a percentage of one square, plus the ply it belongs to. */
 export interface PieceSlide {
@@ -108,7 +108,7 @@ const FLAT = '1';
 function keyframesFor(slide: PieceSlide, travel: number): Keyframe[] {
 	const from = travelOf(slide);
 
-	if (undefined === slide.flight) {
+	if (undefined === slide.flight || 'placed' === slide.flight) {
 		return [{ transform: from }, { transform: 'none' }];
 	}
 
@@ -151,6 +151,10 @@ function flownFrames(from: string): Keyframe[] {
 function timingFor(slide: PieceSlide, travel: number): KeyframeAnimationOptions {
 	if (undefined === slide.flight) {
 		return { duration: travel, easing: 'ease-out' };
+	}
+
+	if ('placed' === slide.flight) {
+		return { duration: LIFT_DURATION, easing: 'ease-out' };
 	}
 
 	if ('drop' === slide.flight) {
