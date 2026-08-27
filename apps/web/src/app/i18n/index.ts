@@ -1,7 +1,8 @@
-import type { Provider } from '@angular/core';
-import { provideTranslocoScope } from '@jsverse/transloco';
+import { EnvironmentProviders, Provider, isDevMode } from '@angular/core';
+import { provideTransloco, provideTranslocoScope } from '@jsverse/transloco';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
+import { DEFAULT_LANGUAGE, LANGUAGES } from '@app/definition/language.type';
 import { AuthI18n } from '@app/i18n/auth/keys';
 import type { AuthI18nParams } from '@app/i18n/auth/params';
 import { DashboardI18n } from '@app/i18n/dashboard/keys';
@@ -20,6 +21,7 @@ import { SettingI18n } from '@app/i18n/setting/keys';
 import type { SettingI18nParams } from '@app/i18n/setting/params';
 import { TrainingI18n } from '@app/i18n/training/keys';
 import type { TrainingI18nParams } from '@app/i18n/training/params';
+import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 
 export const I18n = {
 	auth: AuthI18n,
@@ -54,6 +56,19 @@ export type I18nParamsArg<Key> = string extends Key
 	: Key extends keyof I18nParams
 		? [params: I18nParams[Key]]
 		: [];
+
+export const provideI18n = (): EnvironmentProviders[] =>
+	provideTransloco({
+		config: {
+			availableLangs: [...LANGUAGES],
+			defaultLang: DEFAULT_LANGUAGE,
+			fallbackLang: DEFAULT_LANGUAGE,
+			missingHandler: { useFallbackTranslation: true },
+			reRenderOnLangChange: true,
+			prodMode: !isDevMode(),
+		},
+		loader: TranslocoLoaderService,
+	});
 
 export const provideI18nScope = (...scopes: I18nScope[]): Provider[] =>
 	provideTranslocoScope(...scopes);

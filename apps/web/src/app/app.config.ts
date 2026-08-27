@@ -3,15 +3,13 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
 import { TitleStrategy, provideRouter, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
-import { provideTransloco } from '@jsverse/transloco';
 
 import { APP_ROUTES } from '@app/app.routes';
-import { DEFAULT_LANGUAGE, LANGUAGES } from '@app/definition/language.type';
+import { provideI18n } from '@app/i18n';
 import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SettingRepository } from '@app/repository/setting.repository';
 import { LanguageService } from '@app/service/language.service';
 import { ThemeService } from '@app/service/theme.service';
-import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
@@ -46,17 +44,7 @@ export const appConfig: ApplicationConfig = {
 				onSameUrlNavigation: 'reload',
 			}),
 		),
-		provideTransloco({
-			config: {
-				availableLangs: [...LANGUAGES],
-				defaultLang: DEFAULT_LANGUAGE,
-				fallbackLang: DEFAULT_LANGUAGE,
-				missingHandler: { useFallbackTranslation: true },
-				reRenderOnLangChange: true,
-				prodMode: !isDevMode(),
-			},
-			loader: TranslocoLoaderService,
-		}),
+		provideI18n(),
 		{ provide: LocationStrategy, useClass: SingleEntryLocationStrategy },
 		{ provide: TitleStrategy, useClass: TemplatePageTitleStrategy },
 		provideServiceWorker('ngsw-worker.js', {

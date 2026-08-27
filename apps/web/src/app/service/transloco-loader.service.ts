@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Translation, TranslocoLoader } from '@jsverse/transloco';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, ReplaySubject, share } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class TranslocoLoaderService implements TranslocoLoader {
@@ -16,9 +16,14 @@ export class TranslocoLoaderService implements TranslocoLoader {
 			return pending;
 		}
 
-		const request = this.http
-			.get<Translation>(`i18n/${path}.json`)
-			.pipe(shareReplay({ bufferSize: 1, refCount: false }));
+		const request = this.http.get<Translation>(`i18n/${path}.json`).pipe(
+			share({
+				connector: () => new ReplaySubject<Translation>(1),
+				resetOnError: true,
+				resetOnComplete: false,
+				resetOnRefCountZero: false,
+			}),
+		);
 
 		this.requests.set(path, request);
 
