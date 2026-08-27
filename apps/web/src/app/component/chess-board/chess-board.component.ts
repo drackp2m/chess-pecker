@@ -277,9 +277,17 @@ export class ChessBoardComponent {
 		const wasCarried = undefined !== this.draggingFrom();
 		const target = this.gesture.release(point);
 
-		if (undefined !== target) {
-			this.pickSquare(target, wasCarried ? this.dropOffset(target, point) : undefined);
+		if (undefined === target) {
+			return;
 		}
+
+		if (wasCarried && !this.targets().some((move) => target === move.to)) {
+			this.putDown();
+
+			return;
+		}
+
+		this.pickSquare(target, wasCarried ? this.dropOffset(target, point) : undefined);
 	}
 
 	cancelDrag(): void {
@@ -301,6 +309,14 @@ export class ChessBoardComponent {
 			square.isTarget ? I18n.common.SQUARE_CAPTURE : I18n.common.SQUARE_PIECE,
 			{ piece, square: square.square },
 		);
+	}
+
+	private putDown(): void {
+		const picked = this.pickedUp();
+
+		if (undefined !== picked) {
+			this.pickSquare(picked);
+		}
 	}
 
 	/**
