@@ -122,5 +122,19 @@
 	"01M08S2E7YX29H2P0CGSW32QMH": "Sin conexión: se sigue con lo que hay en este dispositivo",
 	"01M08S2E7YMKHXMG6TBMMFGPP0": "{{ pending }} filas por subir",
 	"01M08S2E7Y945FNNZAKHAVR927": "{{ rows }} filas recibidas",
-	"01M08S2E7YFS94VPQJW770AFBX": "Ejercicios: {{ done }} de {{ total }}"
+	"01M08S2E7YFS94VPQJW770AFBX": "Ejercicios: {{ done }} de {{ total }}",
+	"01M10G3BA1RCDG1R68CWTRRSMN": "Guardar el ejercicio",
+	"01M10G3BA19C5S1C5Y08QPGAQQ": "Elige la lista en la que quieres guardarlo.",
+	"01M10G3BA1GM5BNJ7MTAXTGCM4": "Favoritos",
+	"01M10G3BA19PTCJF2D8ZE3WYDR": "Difíciles",
+	"01M10G3BA19RZTM76RX9AA01H0": "Fáciles",
+	"01M10G3BA14688Z1CDH7R00D70": "No los entiendo",
+	"01M10G3BA1FCHGFRFP1WT025NE": "Guardar siempre en favoritos",
+	"01M10G3BA1N1EYJFAFH82YMMW9": "Sólo con Favoritos. Después, para elegir otra lista, mantén pulsado el marcador.",
+	"01M10G3BA1YMAHF9XE0P5VVXB1": "Guardar",
+	"01M10G3BA17722E5XSMNFESX96": "Quitar de la lista",
+	"01M10G3BA1RB324ZCT2X35XP3M": "Guardar el ejercicio",
+	"01M10G3BA147VENRRH02HHJF17": "Cambiar la lista del ejercicio",
+	"01M10G3BA1WC2QH0XJ0ZYP3SP8": "No se han podido cargar los marcadores",
+	"01M10G3BA1MBD5MY7286RS27TY": "No se ha podido guardar el marcador"
 }

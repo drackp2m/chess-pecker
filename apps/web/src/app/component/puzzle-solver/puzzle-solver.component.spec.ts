@@ -14,6 +14,7 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
+import { provideTestingBookmarks } from '@app/testing/bookmark.harness';
 import { provideTestingI18n } from '@app/testing/i18n.harness';
 import {
 	HINT_TOTAL,
@@ -64,6 +65,7 @@ function createHost() {
 	TestBed.configureTestingModule({
 		providers: [
 			provideTestingI18n(),
+			provideTestingBookmarks(),
 			{
 				provide: BoardPreferenceService,
 				useValue: {

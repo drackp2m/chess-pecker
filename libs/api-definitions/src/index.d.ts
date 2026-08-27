@@ -1,6 +1,7 @@
 export * from './auth';
 export * from './friendship';
 export * from './puzzle';
+export * from './puzzle-bookmark';
 export * from './route';
 export * from './sync';
 export * from './training';

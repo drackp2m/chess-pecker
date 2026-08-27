@@ -12,6 +12,7 @@ import { I18n } from '@app/i18n';
 import { PuzzlePage } from '@app/page/puzzle/puzzle.page';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
+import { provideTestingBookmarks } from '@app/testing/bookmark.harness';
 import { provideTestingI18n } from '@app/testing/i18n.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
@@ -24,6 +25,7 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 		imports: [PuzzlePage],
 		providers: [
 			provideTestingI18n(),
+			provideTestingBookmarks(),
 			{ provide: ActivatedRoute, useValue: { snapshot: { data } } },
 			{
 				provide: BoardPreferenceService,

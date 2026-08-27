@@ -212,6 +212,7 @@ const userStores: StoreNames<AppSchema>[] = [
 	// the device ask only for what follows a cursor that is not theirs.
 	'attemptCursor',
 	'attemptDraft',
+	'bookmark',
 	'calibrationPuzzle',
 	'calibrationRound',
 	'cycle',

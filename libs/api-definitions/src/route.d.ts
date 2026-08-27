@@ -15,6 +15,7 @@ import {
 	PuzzleCatalogPage,
 	SearchPuzzleRequest,
 } from './puzzle';
+import { PuzzleBookmark, UpsertPuzzleBookmarkRequest } from './puzzle-bookmark';
 import {
 	GetSyncTrainingTreeRequest,
 	PushTrainingRequest,
@@ -53,7 +54,15 @@ export type ApiEndpointMap<M> = Record<keyof M, ApiEndpoint>;
 export type ApiVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type ApiModule =
-	'auth' | 'friendship' | 'puzzle' | 'sync' | 'training' | 'user' | 'userBlock' | 'userSetting';
+	| 'auth'
+	| 'friendship'
+	| 'puzzle'
+	| 'puzzleBookmark'
+	| 'sync'
+	| 'training'
+	| 'user'
+	| 'userBlock'
+	| 'userSetting';
 
 export interface AuthGetRoutes {
 	'/logout': { response: undefined };
@@ -93,6 +102,22 @@ export interface PuzzleGetRoutes {
 
 export interface PuzzlePostRoutes {
 	'/import': { params: ImportPuzzleRequest; response: ImportPuzzleResult };
+}
+
+export interface PuzzleBookmarkGetRoutes {
+	'': { response: readonly PuzzleBookmark[] };
+}
+
+export interface PuzzleBookmarkPutRoutes {
+	'/:lichessId': {
+		path: { lichessId: string };
+		params: UpsertPuzzleBookmarkRequest;
+		response: PuzzleBookmark;
+	};
+}
+
+export interface PuzzleBookmarkDeleteRoutes {
+	'/:lichessId': { path: { lichessId: string }; response: undefined };
 }
 
 export interface SyncGetRoutes {

@@ -77,6 +77,8 @@
 						[disabled]="!store.canUseHint()"
 						(click)="store.useHint()"
 					></button>
+
+					<app-bookmark-button [lichessId]="puzzle.id" [isDisabled]="store.isOpen()" />
 				</div>
 
 				<button

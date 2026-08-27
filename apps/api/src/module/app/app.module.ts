@@ -10,6 +10,7 @@ import { jwtConfig } from '../../shared/module/config/register/jwt-config';
 import { AuthModule } from '../auth/auth.module';
 import { FriendshipModule } from '../friendship/friendship.module';
 import { PuzzleModule } from '../puzzle/puzzle.module';
+import { PuzzleBookmarkModule } from '../puzzle-bookmark/puzzle-bookmark.module';
 import { SyncModule } from '../sync/sync.module';
 import { TrainingModule } from '../training/training.module';
 import { UserModule } from '../user/user.module';
@@ -32,6 +33,7 @@ import { AppController } from './app.controller';
 		UserSettingModule,
 		FriendshipModule,
 		PuzzleModule,
+		PuzzleBookmarkModule,
 		TrainingModule,
 		SyncModule,
 	],

@@ -41,10 +41,16 @@
 				}
 
 				@media (hover: hover) {
-					&:hover {
+					&:not(:disabled):hover {
 						border-color: var(--color-accent);
 					}
 				}
+			}
+
+			// A choice that is off the table still has to read, so it dims rather than
+			// disappearing: the label explains why it cannot be taken.
+			&:has(input:disabled) {
+				opacity: 0.5;
 			}
 		}
 

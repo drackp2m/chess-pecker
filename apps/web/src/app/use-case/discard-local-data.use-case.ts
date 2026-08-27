@@ -5,6 +5,7 @@ import { DiscardLocalDataModalComponent } from '@app/component/discard-local-dat
 import { Resettable } from '@app/definition/resettable.interface';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
+import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
 import { ProfileStore } from '@app/store/profile.store';
 import { SyncStore } from '@app/store/sync.store';
@@ -25,6 +26,7 @@ export class DiscardLocalDataUseCase {
 	 */
 	private readonly stores: readonly Resettable[] = [
 		inject(ActivityStore),
+		inject(BookmarkStore),
 		inject(ProfileStore),
 		inject(SyncStore),
 		inject(TrainingStore),

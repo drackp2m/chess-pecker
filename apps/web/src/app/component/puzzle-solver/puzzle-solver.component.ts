@@ -1,5 +1,6 @@
 import { Component, inject, input, output } from '@angular/core';
 
+import { BookmarkButtonComponent } from '@app/component/bookmark-button/bookmark-button.component';
 import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
 import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
 import { ButtonDirective } from '@app/directive/button.directive';
@@ -15,7 +16,13 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 	selector: 'app-puzzle-solver',
 	templateUrl: './puzzle-solver.component.html',
 	styleUrl: './puzzle-solver.component.scss',
-	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective, I18nPipe],
+	imports: [
+		ChessBoardComponent,
+		MoveHistoryComponent,
+		BookmarkButtonComponent,
+		ButtonDirective,
+		I18nPipe,
+	],
 })
 export class PuzzleSolverComponent {
 	protected readonly I18n = I18n;

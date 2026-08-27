@@ -1,0 +1,46 @@
+<div class="flex-col gap-4 p-4">
+	<p class="fs-sm color-contrast-mid">{{ I18n.common.BOOKMARK_INTRO | i18n }}</p>
+
+	<div class="flex-col gap-1">
+		@for (type of types; track type) {
+			<input
+				appThemed
+				type="radio"
+				name="bookmark-type"
+				[label]="typeLabel[type] | i18n"
+				[value]="type"
+				[checked]="type === selected()"
+				(change)="select(type)"
+			/>
+		}
+	</div>
+
+	<div class="flex-col gap-1">
+		<input
+			appThemed
+			type="checkbox"
+			[label]="I18n.common.BOOKMARK_SKIP_PROMPT | i18n"
+			[checked]="skipPrompt()"
+			[disabled]="!canSkipPrompt()"
+			(change)="toggleSkipPrompt($event)"
+		/>
+
+		<p class="fs-sm color-contrast-mid">{{ I18n.common.BOOKMARK_SKIP_PROMPT_HINT | i18n }}</p>
+	</div>
+
+	<div class="flex-col gap-2">
+		<div class="flex-row gap-2">
+			<button appThemed class="flex-grow" color="accent" (click)="confirm()">
+				{{ I18n.common.BOOKMARK_CONFIRM | i18n }}
+			</button>
+
+			<button appThemed class="flex-grow" (click)="dismiss()">
+				{{ I18n.common.CANCEL | i18n }}
+			</button>
+		</div>
+
+		@if (isFiled()) {
+			<button appThemed (click)="remove()">{{ I18n.common.BOOKMARK_REMOVE | i18n }}</button>
+		}
+	</div>
+</div>

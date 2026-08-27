@@ -148,6 +148,21 @@
 		</div>
 	</div>
 
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.setting.BOOKMARK | i18n }}</h4>
+
+		<p class="fs-sm color-contrast-mid">{{ I18n.setting.BOOKMARK_INTRO | i18n }}</p>
+
+		<form [formGroup]="form" class="flex-col gap-1">
+			<input
+				appThemed
+				type="checkbox"
+				[label]="I18n.setting.BOOKMARK_PROMPT_TOGGLE | i18n"
+				formControlName="bookmarkAlwaysFavorite"
+			/>
+		</form>
+	</div>
+
 	<app-sync-status />
 
 	<p class="flex-row flex-grow justify-center align-end mono fs-sm">

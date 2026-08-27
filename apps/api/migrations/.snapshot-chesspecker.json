@@ -156,7 +156,7 @@
       "checks": [
         {
           "name": "friendship_check",
-          "columnName": "requester_uuid",
+          "columnName": "addressee_uuid",
           "definition": "CHECK (((requester_uuid)::text <> (addressee_uuid)::text))",
           "expression": "requester_uuid <> addressee_uuid"
         }
@@ -724,7 +724,7 @@
       "checks": [
         {
           "name": "puzzle_attempt_kind_parent_check",
-          "columnName": "calibration_round_uuid",
+          "columnName": "cycle_item_uuid",
           "definition": "CHECK ((((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))))",
           "expression": "((kind = 'calibration'::text) AND (calibration_round_uuid IS NOT NULL) AND (cycle_item_uuid IS NULL)) OR ((kind = 'cycle'::text) AND (cycle_item_uuid IS NOT NULL) AND (calibration_round_uuid IS NULL))"
         }
@@ -776,6 +776,167 @@
           "constraintName": "puzzle_attempt_training_uuid_foreign",
           "localTableName": "public.puzzle_attempt",
           "referencedTableName": "public.training",
+          "referencedColumnNames": [
+            "uuid"
+          ],
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        }
+      },
+      "nativeEnums": {},
+      "comment": null
+    },
+    {
+      "columns": {
+        "uuid": {
+          "name": "uuid",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": true,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz(6)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 6,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "datetime"
+        },
+        "user_uuid": {
+          "name": "user_uuid",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": true,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "puzzle_uuid": {
+          "name": "puzzle_uuid",
+          "type": "varchar(255)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": 255,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": false,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "enumItems": [
+            "favorite",
+            "hard",
+            "easy",
+            "unclear"
+          ],
+          "mappedType": "enum"
+        }
+      },
+      "name": "puzzle_bookmark",
+      "schema": "public",
+      "indexes": [
+        {
+          "columnNames": [
+            "uuid"
+          ],
+          "composite": false,
+          "constraint": false,
+          "keyName": "puzzle_bookmark_pkey",
+          "unique": true,
+          "primary": true
+        },
+        {
+          "columnNames": [
+            "user_uuid",
+            "puzzle_uuid"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "puzzle_bookmark_user_uuid_puzzle_uuid_unique",
+          "unique": true,
+          "primary": false
+        }
+      ],
+      "checks": [],
+      "foreignKeys": {
+        "puzzle_bookmark_puzzle_uuid_foreign": {
+          "columnNames": [
+            "puzzle_uuid"
+          ],
+          "constraintName": "puzzle_bookmark_puzzle_uuid_foreign",
+          "localTableName": "public.puzzle_bookmark",
+          "referencedTableName": "public.puzzle",
+          "referencedColumnNames": [
+            "uuid"
+          ],
+          "updateRule": "cascade",
+          "deleteRule": "cascade"
+        },
+        "puzzle_bookmark_user_uuid_foreign": {
+          "columnNames": [
+            "user_uuid"
+          ],
+          "constraintName": "puzzle_bookmark_user_uuid_foreign",
+          "localTableName": "public.puzzle_bookmark",
+          "referencedTableName": "public.user",
           "referencedColumnNames": [
             "uuid"
           ],
@@ -2515,7 +2676,7 @@
       "checks": [
         {
           "name": "user_block_check",
-          "columnName": "blocked_uuid",
+          "columnName": "blocker_uuid",
           "definition": "CHECK (((blocker_uuid)::text <> (blocked_uuid)::text))",
           "expression": "blocker_uuid <> blocked_uuid"
         }

@@ -9,6 +9,7 @@ export enum SettingType {
 	MOVE_SPEED = 'move-speed',
 	SOUND = 'sound',
 	INTRO = 'intro',
+	BOOKMARK_PROMPT = 'bookmark-prompt',
 	OWNER = 'owner',
 }
 

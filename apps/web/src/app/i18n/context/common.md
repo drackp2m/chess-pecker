@@ -131,3 +131,7 @@ Credenciales incorrectas. No se dice nunca cuál de las dos falló, si el usuari
 ## NO_SUCH_ACCOUNT
 
 No existe ninguna cuenta con ese nombre de usuario.
+
+## BOOKMARK_*
+
+El marcador: la lista en la que el jugador guarda un ejercicio ya terminado. Sólo una a la vez, así que guardarlo otra vez lo mueve de lista, no lo duplica. Los nombres de las cuatro listas van en plural, porque son las listas que después se podrán abrir. `BOOKMARK_ADD` y `BOOKMARK_EDIT` son etiquetas accesibles del icono, no se ven en pantalla. En `BOOKMARK_SKIP_PROMPT_HINT`, «mantén pulsado» es el gesto de dejar el dedo sobre el icono, nunca el de pulsar repetidas veces.

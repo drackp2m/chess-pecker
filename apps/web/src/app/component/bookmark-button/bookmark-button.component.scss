@@ -1,0 +1,32 @@
+:host {
+	display: contents;
+}
+
+button {
+	touch-action: manipulation;
+	user-select: none;
+
+	&:disabled {
+		pointer-events: none;
+	}
+}
+
+// The wait is drawn rather than counted: the icon closes in on the accent over exactly the
+// hold, so letting go early reads as having let go early. The colour reaches the icon on
+// its own, which paints itself with `currentcolor`.
+button.holding {
+	animation: bookmark-hold var(--long-press-duration) linear forwards;
+}
+
+@keyframes bookmark-hold {
+	to {
+		transform: scale(0.9);
+		color: var(--color-accent);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	button.holding {
+		animation: none;
+	}
+}

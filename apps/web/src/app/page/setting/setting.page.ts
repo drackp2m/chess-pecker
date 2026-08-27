@@ -17,6 +17,7 @@ import { I18n, provideI18nScope } from '@app/i18n';
 import { version } from '@app/package';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { BookmarkPreferenceService } from '@app/service/bookmark-preference.service';
 import { LanguageService } from '@app/service/language.service';
 import { SoundService } from '@app/service/sound.service';
 import { ThemeService } from '@app/service/theme.service';
@@ -50,8 +51,13 @@ export class SettingPage {
 
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
+	private readonly bookmarkPreference = inject(BookmarkPreferenceService);
 	private readonly sound = inject(SoundService);
 	private readonly languageService = inject(LanguageService);
+
+	private readonly isBookmarkAlwaysFavorite = computed(
+		() => !this.bookmarkPreference.isPromptEnabled(),
+	);
 
 	readonly form = new FormGroup({
 		language: new FormControl<Language>(this.languageService.selectedLanguage(), {
@@ -76,6 +82,9 @@ export class SettingPage {
 		}),
 		moveLift: new FormControl<boolean>(this.boardPreference.moveLift(), { nonNullable: true }),
 		sound: new FormControl<boolean>(this.sound.isEnabled(), { nonNullable: true }),
+		bookmarkAlwaysFavorite: new FormControl<boolean>(this.isBookmarkAlwaysFavorite(), {
+			nonNullable: true,
+		}),
 	});
 
 	// Mirrors both the stored value and the correction made when a selection would
@@ -86,6 +95,11 @@ export class SettingPage {
 	}));
 
 	constructor() {
+		this.bindApp();
+		this.bindBoard();
+	}
+
+	private bindApp(): void {
 		bindSetting(this.form.controls.language, this.languageService.selectedLanguage, (language) => {
 			void this.languageService.updateSelectedLanguage(language);
 		});
@@ -94,6 +108,20 @@ export class SettingPage {
 			this.themeService.updateSelectedTheme(theme);
 		});
 
+		bindSetting(this.form.controls.sound, this.sound.isEnabled, (isEnabled) => {
+			this.sound.update(isEnabled);
+		});
+
+		bindSetting(
+			this.form.controls.bookmarkAlwaysFavorite,
+			this.isBookmarkAlwaysFavorite,
+			(isAlways) => {
+				this.bookmarkPreference.updatePrompt(!isAlways);
+			},
+		);
+	}
+
+	private bindBoard(): void {
 		bindSetting(this.form.controls.moveSpeed, this.boardPreference.moveSpeed, (speed) => {
 			this.boardPreference.updateMoveSpeed(speed);
 		});
@@ -112,10 +140,6 @@ export class SettingPage {
 
 		bindSetting(this.form.controls.moveLift, this.boardPreference.moveLift, (isEnabled) => {
 			this.boardPreference.updateMoveLift(isEnabled);
-		});
-
-		bindSetting(this.form.controls.sound, this.sound.isEnabled, (isEnabled) => {
-			this.sound.update(isEnabled);
 		});
 	}
 

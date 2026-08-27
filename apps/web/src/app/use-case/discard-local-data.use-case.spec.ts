@@ -11,6 +11,7 @@ import {
 	UnsavedCount,
 } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
+import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
 import { ProfileStore } from '@app/store/profile.store';
 import { SyncStore } from '@app/store/sync.store';
@@ -65,6 +66,7 @@ function configure(options: Options = {}) {
 	});
 	const stores = {
 		activity: store('activity'),
+		bookmark: store('bookmark'),
 		profile: store('profile'),
 		sync: store('sync'),
 		training: store('training'),
@@ -76,6 +78,7 @@ function configure(options: Options = {}) {
 			{ provide: LocalOwnerUseCase, useValue: localOwner },
 			{ provide: ModalStore, useValue: modalStore },
 			{ provide: ActivityStore, useValue: stores.activity },
+			{ provide: BookmarkStore, useValue: stores.bookmark },
 			{ provide: ProfileStore, useValue: stores.profile },
 			{ provide: SyncStore, useValue: stores.sync },
 			{ provide: TrainingStore, useValue: stores.training },
@@ -156,7 +159,15 @@ describe('DiscardLocalDataUseCase.execute', () => {
 
 		await discard.execute();
 
-		expect(order).toEqual(['activity', 'profile', 'sync', 'training', 'clear', 'release']);
+		expect(order).toEqual([
+			'activity',
+			'bookmark',
+			'profile',
+			'sync',
+			'training',
+			'clear',
+			'release',
+		]);
 	});
 
 	it('resets every store holding user data', async () => {
@@ -165,6 +176,7 @@ describe('DiscardLocalDataUseCase.execute', () => {
 		await discard.execute();
 
 		expect(stores.activity.reset).toHaveBeenCalledTimes(1);
+		expect(stores.bookmark.reset).toHaveBeenCalledTimes(1);
 		expect(stores.profile.reset).toHaveBeenCalledTimes(1);
 		expect(stores.sync.reset).toHaveBeenCalledTimes(1);
 		expect(stores.training.reset).toHaveBeenCalledTimes(1);

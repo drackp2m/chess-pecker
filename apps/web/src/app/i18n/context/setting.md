@@ -67,3 +67,7 @@ Los nombres de las tablas que se sincronizan, tal como se listan en un recuento.
 ## VERSION
 
 `{{ version }}` es el número de versión de la aplicación. La palabra va en minúscula porque se pinta al pie de la página.
+
+## BOOKMARK*
+
+La preferencia que decide si guardar un ejercicio pregunta en qué lista va. El interruptor la enuncia al revés: encendido, una pulsación lo guarda en Favoritos sin preguntar, y la pregunta vuelve manteniendo pulsado el marcador.

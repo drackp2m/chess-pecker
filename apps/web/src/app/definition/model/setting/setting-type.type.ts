@@ -17,6 +17,7 @@ export interface SettingType {
 	MOVE_SPEED: 'MOVE_SPEED';
 	SOUND: 'SOUND';
 	INTRO: 'INTRO';
+	BOOKMARK_PROMPT: 'BOOKMARK_PROMPT';
 	OWNER: 'OWNER';
 }
 
@@ -31,5 +32,6 @@ export interface SettingPayload {
 	MOVE_SPEED: MoveSpeed;
 	SOUND: boolean;
 	INTRO: IntroProgress;
+	BOOKMARK_PROMPT: boolean;
 	OWNER: LocalOwner;
 }
