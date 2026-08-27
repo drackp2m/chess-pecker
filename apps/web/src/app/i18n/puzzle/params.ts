@@ -1,4 +1,7 @@
 export interface PuzzleI18nParams {
+	'puzzle.01KZJ895MCKFDW61M35EMFY15W': {
+		cucu: string;
+	};
 	'puzzle.01KZJ895MC41534M6SMAPZ8D0G': {
 		name: string;
 	};
