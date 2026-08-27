@@ -361,6 +361,7 @@ describe('RepairCycleUseCase.repairAll', () => {
 
 	it('swallows a cycle it cannot repair instead of dropping the pass', async () => {
 		const entries = set({ 1100: 6 });
+		const reported = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 		const { repair } = configure({
 			cycles: [cycle({ expectedItems: 6 })],
 			set: entries,
@@ -370,5 +371,11 @@ describe('RepairCycleUseCase.repairAll', () => {
 		});
 
 		await expect(repair.repairAll()).resolves.toEqual([]);
+		expect(reported).toHaveBeenCalledWith(
+			'Could not repair the cycle `cycle-2`',
+			expect.objectContaining({ message: 'Another cycle is in progress' }),
+		);
+
+		reported.mockRestore();
 	});
 });
