@@ -2,37 +2,30 @@ import { Component, computed, input } from '@angular/core';
 
 import { Check } from '@app/util/check';
 
-/** Intrinsic viewBox of each icon, keyed by its Font Awesome name. */
-const ASPECT_RATIOS: Record<string, [number, number]> = {
-	'backward-step': [320, 512],
-	'chevron-left': [320, 512],
-	'chevron-right': [320, 512],
-	'forward-step': [320, 512],
-	pause: [320, 512],
-
-	ghost: [384, 512],
-	play: [384, 512],
-	stop: [384, 512],
-	xmark: [384, 512],
-
-	'chess-board': [448, 512],
-	flag: [448, 512],
-	'flag-hollow': [448, 512],
-	rabbit: [448, 512],
-	trash: [448, 512],
-
-	flashlight: [512, 255],
-	turtle: [512, 398],
-
-	'delete-left': [576, 512],
-
-	cloud: [640, 512],
-	'cloud-hollow': [640, 512],
-	'cloud-arrow-down': [640, 512],
-	'cloud-arrow-up': [640, 512],
-	dice: [640, 512],
-	'user-plus': [640, 512],
-};
+const ASPECT_RATIOS: [[number, number], string[]][] = [
+	[
+		[320, 512],
+		['backward-step', 'chevron-left', 'chevron-right', 'forward-step', 'pause'],
+	],
+	[
+		[384, 512],
+		['bookmark', 'ghost', 'play', 'stop', 'xmark'],
+	],
+	[
+		[448, 512],
+		['chess-board', 'flag', 'flag-hollow', 'rabbit', 'share-nodes', 'trash'],
+	],
+	[[512, 255], ['flashlight']],
+	[[512, 398], ['turtle']],
+	[
+		[576, 512],
+		['delete-left', 'map-location-dot.svg'],
+	],
+	[
+		[640, 512],
+		['cloud', 'cloud-hollow', 'cloud-arrow-down', 'cloud-arrow-up', 'dice', 'user-plus'],
+	],
+];
 
 @Component({
 	selector: 'app-svg',
@@ -73,6 +66,10 @@ export class SvgComponent {
 		const match = iconNameRegex.exec(icon);
 		const iconName = match?.[1];
 
-		return (undefined === iconName ? undefined : ASPECT_RATIOS[iconName]) ?? [1, 1];
+		if (undefined === iconName) {
+			return [1, 1];
+		}
+
+		return ASPECT_RATIOS.find(([, icons]) => icons.includes(iconName))?.[0] ?? [1, 1];
 	}
 }

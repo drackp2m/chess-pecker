@@ -20,7 +20,7 @@ import {
 } from '@app/component/chess-board/board-geometry';
 import { PieceLaunch, describeLaunch, launchSlides } from '@app/component/chess-board/board-launch';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
-import { pieceElevation } from '@app/component/chess-board/board-stacking';
+import { squareElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import {
@@ -412,12 +412,13 @@ export class ChessBoardComponent {
 		const announced = this.store.announcedMove();
 		const piece = this.position().board[index];
 		const travelling = this.slides().find((pending) => square === pending.to);
+		const isSelected = square === this.pickedUp();
 
 		return {
 			square,
 			piece,
 			isLight: ChessSquare.isLight(index),
-			isSelected: square === this.pickedUp(),
+			isSelected,
 			isTarget: undefined !== target,
 			isCapture: undefined !== target?.captured,
 			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),
@@ -426,7 +427,7 @@ export class ChessBoardComponent {
 			isAnnounced: square === announced?.from,
 			slide: travelling?.slide,
 			taken: this.playback.isSliding() ? travelling?.taken : undefined,
-			elevation: undefined === piece ? undefined : pieceElevation(piece),
+			elevation: squareElevation(piece, isSelected || undefined !== travelling?.slide),
 			fileLabel: 56 <= order ? FILES[ChessSquare.fileOf(index)] : undefined,
 			rankLabel: 0 === order % 8 ? RANKS[ChessSquare.rowOf(index)] : undefined,
 		};
