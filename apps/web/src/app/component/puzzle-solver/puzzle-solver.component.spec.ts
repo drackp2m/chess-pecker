@@ -21,6 +21,7 @@ import {
 	NAV_LABELS,
 	NAV_ORDER,
 	NavControl,
+	REPLAY_TOTAL,
 	navControls,
 } from '@app/testing/puzzle-store.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
@@ -114,6 +115,13 @@ function createHost() {
 			fixture.detectChanges();
 		},
 
+		/** A control as it stands in the row, to read the state the view paints on it. */
+		control(label: string): HTMLButtonElement | null {
+			fixture.detectChanges();
+
+			return element.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`);
+		},
+
 		themes(): string[] {
 			return [...element.querySelectorAll('.theme')].map((item) => item.textContent);
 		},
@@ -196,6 +204,23 @@ describe('PuzzleSolverComponent', () => {
 		host.click(I18n.common.BOARD_GIVE_UP);
 
 		expect(host.store.closure()).toBe('revealed');
+	});
+
+	it('marks the flag and puts it out of reach for good once it has been pressed', () => {
+		const host = createHost();
+
+		host.open();
+		host.store.selectSquare('b2');
+		host.store.selectSquare('c2');
+		host.click(I18n.common.BOARD_GIVE_UP);
+		host.advance(REPLAY_TOTAL * 5);
+
+		// The answer is out and watched to the end: all that is left is walking it.
+		const flag = host.control(I18n.common.BOARD_GIVE_UP);
+
+		expect(flag?.disabled).toBe(true);
+		expect(flag?.classList.contains('active')).toBe(true);
+		expect(host.enabledNav()).toEqual(['restart', 'back']);
 	});
 
 	it('hands the arrows on the ends of the row back to the host, under its own labels', () => {

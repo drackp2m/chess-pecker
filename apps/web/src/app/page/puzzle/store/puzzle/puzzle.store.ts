@@ -140,7 +140,7 @@ export class PuzzleStore
 
 	/**
 	 * Gives up and plays out the rest of the solution. It ends the exercise but not the
-	 * verdict, settled on the first try; asked for again it replays the whole line.
+	 * verdict, settled on the first try; once out, the line is only walked with the arrows.
 	 */
 	revealSolution(): void {
 		if (!this.canRevealSolution()) {
@@ -149,15 +149,12 @@ export class PuzzleStore
 
 		this.stop();
 
-		const wasOpen = this.isOpen();
-		const cursor = revealCursor(this.lineState(), wasOpen ? this.deviation() : 0);
+		const cursor = revealCursor(this.lineState(), this.deviation());
 		// Judged against the cursor as it stands, which is what it describes: the rewind moves it.
 		const rewind = { cursor: this.cursor(), transition: this.transition() };
 
 		// Written before the record closes, or the log would end on a board the line has left.
-		if (wasOpen) {
-			this.seek(cursor);
-		}
+		this.seek(cursor);
 
 		patchState(this, revealPatch({ ...rewind, closure: this.closure() }, cursor));
 

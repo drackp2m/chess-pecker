@@ -298,8 +298,6 @@ export function revealPatch(
 		pendingPromotion: undefined,
 		transition: keptTransition(state, cursor),
 		closure: settleClosure(state.closure, 'revealed'),
-		// Asked for again, the answer replays afresh instead of onto the end of the last one.
-		revealed: undefined,
 		rewound: 0,
 		playback: undefined,
 	};
