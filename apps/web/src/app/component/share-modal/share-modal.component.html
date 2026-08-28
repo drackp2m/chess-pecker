@@ -8,7 +8,14 @@
 	} @else if (0 === friends().length) {
 		<p class="fs-sm color-contrast-mid">{{ I18n.common.SHARE_NO_FRIENDS | i18n }}</p>
 	} @else {
-		<select appThemed searchable [label]="I18n.common.SHARE_FRIEND" (change)="selectFriend($event)">
+		<select
+			appThemed
+			searchable
+			[label]="I18n.common.SHARE_FRIEND"
+			(change)="selectFriend($event)"
+			multiple
+			chips
+		>
 			@for (friend of friends(); track friend.uuid) {
 				<option [value]="friend.uuid">{{ friend.username }}</option>
 			}

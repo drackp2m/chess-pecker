@@ -21,6 +21,7 @@
 			position: relative;
 			padding: field.$vertical-padding field.$horizontal-padding;
 			padding-right: calc(#{field.$horizontal-padding} + 24px);
+			line-height: calc(1lh + var(--spacing-1));
 		}
 
 		.search-input {
@@ -51,13 +52,16 @@
 		}
 
 		.chip {
+			--chip-padding-block: var(--spacing-1);
+
 			margin-right: var(--spacing-1);
-			padding: 0 var(--spacing-2);
+			padding: var(--chip-padding-block) var(--spacing-2);
 			border-radius: 14px;
-
-			line-height: calc(1lh + var(--spacing-1));
-
 			background-color: var(--color-primary-mid);
+
+			@supports (-webkit-hyphens: none) {
+				--chip-padding-block: 1px;
+			}
 		}
 
 		.chip-tail {
