@@ -3,6 +3,7 @@ import type { FriendUser } from '@chesspecker/api-definitions';
 
 import { ButtonDirective } from '@app/directive/button.directive';
 import { SelectDirective } from '@app/directive/select/select.directive';
+import { TextareaDirective } from '@app/directive/textarea.directive';
 import { I18n } from '@app/i18n';
 import { Modal } from '@app/model/modal.model';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
@@ -29,7 +30,7 @@ export interface ShareChoice {
 	selector: 'app-share-modal',
 	templateUrl: './share-modal.component.html',
 	styleUrl: './share-modal.component.scss',
-	imports: [ButtonDirective, SelectDirective, I18nPipe],
+	imports: [ButtonDirective, SelectDirective, TextareaDirective, I18nPipe],
 })
 export class ShareModalComponent extends Modal<ShareChoice | null> implements OnInit {
 	protected readonly I18n = I18n;

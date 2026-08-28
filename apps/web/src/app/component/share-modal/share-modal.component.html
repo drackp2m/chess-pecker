@@ -15,20 +15,17 @@
 		</select>
 	}
 
-	<div class="flex-col gap-1">
-		<label class="fs-sm color-contrast-mid" for="share-message">
-			{{ I18n.common.SHARE_MESSAGE | i18n }}
-		</label>
-
-		<textarea
-			id="share-message"
-			class="fs-sm p-2 br-1 color-contrast"
-			rows="3"
-			[placeholder]="I18n.common.SHARE_MESSAGE_PLACEHOLDER | i18n"
-			[value]="message()"
-			(input)="updateMessage($event)"
-		></textarea>
-	</div>
+	<textarea
+		appThemed
+		autoGrow
+		resize="both"
+		rows="1"
+		maxRows="8"
+		[label]="I18n.common.SHARE_MESSAGE | i18n"
+		[placeholder]="I18n.common.SHARE_MESSAGE_PLACEHOLDER | i18n"
+		[value]="message()"
+		(input)="updateMessage($event)"
+	></textarea>
 
 	<div class="flex-row gap-2">
 		<button

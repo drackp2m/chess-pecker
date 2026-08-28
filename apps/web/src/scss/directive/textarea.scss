@@ -1,0 +1,42 @@
+@use '../abstract/field';
+
+$mask-fade: 4px;
+
+@layer component {
+	.app-textarea {
+		--block-padding: calc(2 * #{field.$vertical-padding});
+
+		@include field.shell(textarea, $slide: calc(#{field.$vertical-padding} + 0.5lh));
+
+		textarea {
+			resize: none;
+
+			overflow-y: auto;
+			display: block;
+
+			width: 100%;
+
+			mask-image: linear-gradient(
+				to bottom,
+				transparent #{field.$vertical-padding},
+				rgb(0 0 0) calc(#{field.$vertical-padding} + #{$mask-fade})
+			);
+		}
+
+		&.resize-x textarea {
+			min-width: min(150px, 100%);
+		}
+
+		// A box that has been dragged sideways writes its own width, so the shell has to hug it
+		// instead of holding the whole row it was handed — otherwise the border and the notch
+		// stay where the textarea no longer is.
+		&.resized-x {
+			width: fit-content;
+			max-width: 100%;
+
+			textarea {
+				max-width: 100%;
+			}
+		}
+	}
+}
