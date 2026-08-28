@@ -24,14 +24,6 @@ app-chess-board {
 	}
 }
 
-// Seven icons plus the two arrows do not fit a narrow phone at the row's own gap, and a
-// wrapped control row would push the board up.
-.actions {
-	@include mix.media($until: sm) {
-		gap: var(--spacing-1);
-	}
-}
-
 // Three columns rather than `space-between`, so the middle does not drift when one arrow
 // is wider than the other.
 .controls {

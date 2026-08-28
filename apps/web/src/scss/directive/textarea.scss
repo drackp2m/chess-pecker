@@ -1,12 +1,17 @@
 @use '../abstract/field';
 
-$mask-fade: 4px;
-
 @layer component {
 	.app-textarea {
-		--block-padding: calc(2 * #{field.$vertical-padding});
+		// The control carries no vertical padding of its own: it lives inside the box that
+		// draws the border, which holds it instead. The textarea then clips its own scroll
+		// at its edges, so a line that is only half in view never survives above or below it.
+		--block-padding: 0px;
 
 		@include field.shell(textarea, $slide: calc(#{field.$vertical-padding} + 0.5lh));
+
+		> label {
+			padding-block: field.$vertical-padding;
+		}
 
 		textarea {
 			resize: none;
@@ -15,12 +20,7 @@ $mask-fade: 4px;
 			display: block;
 
 			width: 100%;
-
-			mask-image: linear-gradient(
-				to bottom,
-				transparent #{field.$vertical-padding},
-				rgb(0 0 0) calc(#{field.$vertical-padding} + #{$mask-fade})
-			);
+			padding-block: 0;
 		}
 
 		&.resize-x textarea {
