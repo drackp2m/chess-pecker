@@ -21,7 +21,7 @@ export class SelectNativeAdapter {
 			childList: true,
 			characterData: true,
 			attributes: true,
-			attributeFilter: ['value', 'disabled', 'selected', 'label'],
+			attributeFilter: ['value', 'disabled', 'selected', 'label', 'multiple'],
 		});
 	}
 
@@ -44,7 +44,7 @@ export class SelectNativeAdapter {
 	ensurePlaceholder(text: string): void {
 		const options = Array.from(this.selectElement.options);
 
-		if (options.some((option) => '' === option.value)) {
+		if (this.selectElement.multiple || options.some((option) => '' === option.value)) {
 			return;
 		}
 
@@ -80,18 +80,14 @@ export class SelectNativeAdapter {
 		});
 	}
 
-	getValue(): string {
-		return this.selectElement.value;
+	getSelectedValues(): string[] {
+		return Array.from(this.selectElement.selectedOptions)
+			.map((option) => option.value)
+			.filter((value) => '' !== value);
 	}
 
-	getSelectedText(): string {
-		const selectedOption = this.selectElement.options[this.selectElement.selectedIndex];
-
-		return selectedOption?.text ?? '';
-	}
-
-	isFilled(): boolean {
-		return '' !== this.selectElement.value;
+	isMultiple(): boolean {
+		return this.selectElement.multiple;
 	}
 
 	isDisabled(): boolean {
@@ -103,6 +99,14 @@ export class SelectNativeAdapter {
 		this.selectElement.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 
+	toggleOption(value: string): void {
+		this.applyOptionSelection(value, (option) => !option.selected);
+	}
+
+	deselectOption(value: string): void {
+		this.applyOptionSelection(value, () => false);
+	}
+
 	/**
 	 * The select still carries the form value but owns no interaction, so it has to be
 	 * unreachable for both Tab and assistive technology.
@@ -110,5 +114,19 @@ export class SelectNativeAdapter {
 	hide(): void {
 		this.selectElement.tabIndex = -1;
 		this.selectElement.setAttribute('aria-hidden', 'true');
+	}
+
+	private applyOptionSelection(
+		value: string,
+		resolve: (option: HTMLOptionElement) => boolean,
+	): void {
+		const option = Array.from(this.selectElement.options).find((item) => item.value === value);
+
+		if (undefined === option) {
+			return;
+		}
+
+		option.selected = resolve(option);
+		this.selectElement.dispatchEvent(new Event('change', { bubbles: true }));
 	}
 }

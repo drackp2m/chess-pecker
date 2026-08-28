@@ -35,6 +35,8 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 	readonly label = input.required<string>();
 	readonly placeholder = input<string>(I18n.common.SELECT_PLACEHOLDER);
 	readonly searchable = input<boolean | null, unknown>(null, { transform: booleanAttribute });
+	readonly chips = input(false, { transform: booleanAttribute });
+	readonly multiline = input(false, { transform: booleanAttribute });
 	readonly maxVisibleOptions = input(9);
 	readonly optionTemplate = input<TemplateRef<{ $implicit: SelectOptionViewModel }>>();
 
@@ -68,23 +70,20 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 
 	constructor() {
 		effect(() => {
-			const label = this.label();
-			const placeholder = this.placeholder();
-			const maxVisibleOptions = this.maxVisibleOptions();
-			const optionTemplate = this.optionTemplate();
+			const inputs = this.readShellInputs();
 
-			this.shellRef?.setInput('label', label);
-			this.shellRef?.setInput('placeholder', placeholder);
-			this.shellRef?.setInput('maxVisibleOptions', maxVisibleOptions);
-			this.shellRef?.setInput('optionTemplate', optionTemplate);
 			this.store.setSearchableOverride(this.searchable());
+
+			if (null !== this.shellRef) {
+				this.applyShellInputs(this.shellRef, inputs);
+			}
 		});
 	}
 
 	@HostListener('input')
 	@HostListener('change')
 	onNativeValueChange() {
-		this.store.updateSelection(this.nativeAdapter.getValue(), this.nativeAdapter.getSelectedText());
+		this.store.updateSelection(this.nativeAdapter.getSelectedValues());
 	}
 
 	ngAfterViewInit(): void {
@@ -107,6 +106,7 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 	private syncFromNativeSelect(): void {
 		const disabled = this.nativeAdapter.isDisabled();
 
+		this.store.setMultiple(this.nativeAdapter.isMultiple());
 		this.nativeAdapter.ensurePlaceholder(this.placeholder());
 		this.store.setOptionsFromSelect(this.elementRef.nativeElement);
 		this.store.setDisabled(disabled);
@@ -124,31 +124,57 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 			projectableNodes: [[this.elementRef.nativeElement]],
 		});
 
-		componentRef.setInput('label', this.label());
 		componentRef.setInput('selectId', selectId);
-		componentRef.setInput('placeholder', this.placeholder());
-		componentRef.setInput('maxVisibleOptions', this.maxVisibleOptions());
-		componentRef.setInput('optionTemplate', this.optionTemplate());
 
-		componentRef.instance.optionSelected.subscribe((value) => {
-			this.selectOption(value);
-		});
-		componentRef.instance.toggleRequested.subscribe(() => {
-			this.toggleDropdown();
-		});
-		componentRef.instance.searchKeydown.subscribe((event) => {
-			this.interaction.handleKeydown(event);
-		});
-		componentRef.instance.closeRequested.subscribe(() => {
-			if (this.store.isOpen()) {
-				this.closeDropdown();
-			}
-		});
+		this.applyShellInputs(componentRef, this.readShellInputs());
+		this.bindShellOutputs(componentRef);
 
 		componentRef.changeDetectorRef.detectChanges();
 
 		this.shellRef = componentRef;
 		this.shellElement = componentRef.location.nativeElement as HTMLElement;
+	}
+
+	private readShellInputs(): Record<string, unknown> {
+		return {
+			label: this.label(),
+			placeholder: this.placeholder(),
+			maxVisibleOptions: this.maxVisibleOptions(),
+			optionTemplate: this.optionTemplate(),
+			chips: this.chips(),
+			multiline: this.multiline(),
+		};
+	}
+
+	private applyShellInputs(
+		componentRef: ComponentRef<SelectShellComponent>,
+		inputs: Record<string, unknown>,
+	): void {
+		for (const [name, value] of Object.entries(inputs)) {
+			componentRef.setInput(name, value);
+		}
+	}
+
+	private bindShellOutputs(componentRef: ComponentRef<SelectShellComponent>): void {
+		const shell = componentRef.instance;
+
+		shell.optionSelected.subscribe((value) => {
+			this.selectOption(value);
+		});
+		shell.optionRemoved.subscribe((value) => {
+			this.nativeAdapter.deselectOption(value);
+		});
+		shell.toggleRequested.subscribe(() => {
+			this.toggleDropdown();
+		});
+		shell.searchKeydown.subscribe((event) => {
+			this.interaction.handleKeydown(event);
+		});
+		shell.closeRequested.subscribe(() => {
+			if (this.store.isOpen()) {
+				this.closeDropdown();
+			}
+		});
 	}
 
 	private toggleDropdown(): void {
@@ -178,6 +204,12 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 	}
 
 	private selectOption(value: string): void {
+		if (this.store.multiple()) {
+			this.nativeAdapter.toggleOption(value);
+
+			return;
+		}
+
 		this.nativeAdapter.applyValue(value);
 		this.closeDropdown();
 	}

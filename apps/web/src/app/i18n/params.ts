@@ -19,6 +19,9 @@ export interface CommonI18nParams {
 		piece: string;
 		square: string;
 	};
+	'01M14E2HJ20Y181YF9YA5Y1AA3': {
+		option: string;
+	};
 	'01KZJ895M58SS3E3TQM1AS22WS': {
 		version: string;
 	};

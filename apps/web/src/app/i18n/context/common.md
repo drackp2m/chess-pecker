@@ -90,7 +90,7 @@ Confirmación de que la actualización ya está puesta. La «v» pegada al `{{ v
 
 ## SELECT_*
 
-Textos de un desplegable genérico: el marcador de posición cuando no hay nada elegido, el aviso de que la búsqueda no encuentra nada y la posición leída en voz alta.
+Textos de un desplegable genérico: el marcador de posición cuando no hay nada elegido, el aviso de que la búsqueda no encuentra nada, la posición leída en voz alta y el botón que quita una opción ya elegida de un desplegable de selección múltiple, donde `{{ option }}` es el nombre de esa opción.
 
 ## PROMOTION_DIALOG
 

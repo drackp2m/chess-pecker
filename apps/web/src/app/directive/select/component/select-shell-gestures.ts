@@ -26,6 +26,14 @@ export class SelectShellGestures {
 		this.receivedPointerDown = true;
 		this.togglesOnClick = false;
 
+		if (this.isInsideChipRemove(event.target)) {
+			if ('touch' !== event.pointerType && 'pen' !== event.pointerType) {
+				event.preventDefault();
+			}
+
+			return;
+		}
+
 		// Inside the real search input everything stays native — focus, caret, selection — and
 		// whether the dropdown opens is decided on click.
 		if (this.isInsideOptions(event.target) || this.isInsideSearchInput(event.target)) {
@@ -59,7 +67,7 @@ export class SelectShellGestures {
 		this.receivedPointerDown = false;
 		this.togglesOnClick = false;
 
-		if (this.isInsideOptions(event.target)) {
+		if (this.isInsideOptions(event.target) || this.isInsideChipRemove(event.target)) {
 			return;
 		}
 
@@ -84,5 +92,9 @@ export class SelectShellGestures {
 
 	private isInsideSearchInput(target: EventTarget | null): boolean {
 		return null !== (target as HTMLElement).closest('.search-input');
+	}
+
+	private isInsideChipRemove(target: EventTarget | null): boolean {
+		return null !== (target as HTMLElement).closest('.chip-remove');
 	}
 }
