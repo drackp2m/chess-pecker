@@ -32,6 +32,7 @@
 							icon="rotate"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_FLIP | i18n"
+							[class.active]="store.isBoardFlipped()"
 							(click)="store.flipBoard()"
 						></button>
 

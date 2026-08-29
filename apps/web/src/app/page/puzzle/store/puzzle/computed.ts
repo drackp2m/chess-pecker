@@ -314,6 +314,8 @@ function puzzleComputed(store: StateSignals<PuzzleStoreProps>) {
 			() => 'solving' === store.outcome() && position().turn === store.playerColor(),
 		),
 
+		isBoardFlipped: computed(() => store.orientation() !== store.playerColor()),
+
 		freePlayStatus: freePlayComputed(position, positions, cursor, script.isFreePlay),
 
 		...playback,
