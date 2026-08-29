@@ -1,10 +1,11 @@
 import type { PuzzleShare as PuzzleShareResponse } from '@chesspecker/api-definitions';
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
 import { CreatePuzzleShareRequestDto } from './dto/request/create-puzzle-share-request.dto';
+import { GetSentPuzzleSharesRequestDto } from './dto/request/get-sent-puzzle-shares-request.dto';
 import { PuzzleShareResultRequestDto } from './dto/request/puzzle-share-result-request.dto';
 import { CreatePuzzleShareUseCase } from './use-case/create-puzzle-share.use-case';
 import { GetPuzzleShareUseCase } from './use-case/get-puzzle-share.use-case';
@@ -28,9 +29,13 @@ export class PuzzleShareController {
 		return this.listPuzzleSharesUseCase.listReceived(user);
 	}
 
+	/** The mirror's feed: what the caller sent, oldest first, from the stamp it stopped at. */
 	@Get('sent')
-	async listSent(@CurrentUser() user: User): Promise<PuzzleShareResponse[]> {
-		return this.listPuzzleSharesUseCase.listSent(user);
+	async listSent(
+		@CurrentUser() user: User,
+		@Query() query: GetSentPuzzleSharesRequestDto,
+	): Promise<PuzzleShareResponse[]> {
+		return this.listPuzzleSharesUseCase.listSent(user, query.since, query.limit);
 	}
 
 	@Get(':uuid')

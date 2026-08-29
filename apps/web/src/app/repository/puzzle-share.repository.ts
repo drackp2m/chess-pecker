@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import type {
 	CreatePuzzleShareRequest,
+	GetSentPuzzleSharesRequest,
 	PuzzleShare,
 	PuzzleShareResultRequest,
 } from '@chesspecker/api-definitions';
@@ -25,8 +26,13 @@ export class PuzzleShareRepository {
 		return this.apiSdk.GET.puzzleShare('/received');
 	}
 
-	async listSent(): Promise<readonly PuzzleShare[]> {
-		return this.apiSdk.GET.puzzleShare('/sent');
+	/**
+	 * The replication feed of what this account sent, oldest first from the stamp given.
+	 * Uncancellable: it is walked while a sync pass runs, and the router's navigation would
+	 * cut a page out of the middle of it.
+	 */
+	async listSent(query: GetSentPuzzleSharesRequest = {}): Promise<readonly PuzzleShare[]> {
+		return this.apiSdk.GET.puzzleShare('/sent', { query, cancellable: false });
 	}
 
 	async getOne(uuid: string): Promise<PuzzleShare> {

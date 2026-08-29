@@ -27,8 +27,17 @@ export class ListPuzzleSharesUseCase {
 		return this.presentPuzzleSharesUseCase.execute(rows.map((row) => row.share));
 	}
 
-	async listSent(user: User): Promise<PuzzleShareResponse[]> {
-		const shares = await this.puzzleShareRepository.getManyBySender(user.uuid, DEFAULT_LIMIT);
+	/**
+	 * The replication feed of what the caller sent: a page whose clock has moved since the
+	 * stamp given, oldest first. Read whole it is the device's copy; read from a stamp it is
+	 * only what changed, which is what a mirror asks for on every pass.
+	 */
+	async listSent(user: User, since?: Date, limit?: number): Promise<PuzzleShareResponse[]> {
+		const shares = await this.puzzleShareRepository.getManySentSince(
+			user.uuid,
+			since,
+			limit ?? DEFAULT_LIMIT,
+		);
 
 		return this.presentPuzzleSharesUseCase.execute(shares);
 	}

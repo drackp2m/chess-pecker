@@ -21,7 +21,12 @@ import {
 	SearchPuzzleRequest,
 } from './puzzle';
 import { PuzzleBookmark, UpsertPuzzleBookmarkRequest } from './puzzle-bookmark';
-import { CreatePuzzleShareRequest, PuzzleShare, PuzzleShareResultRequest } from './puzzle-share';
+import {
+	CreatePuzzleShareRequest,
+	GetSentPuzzleSharesRequest,
+	PuzzleShare,
+	PuzzleShareResultRequest,
+} from './puzzle-share';
 import {
 	GetSyncTrainingTreeRequest,
 	PushTrainingRequest,
@@ -139,7 +144,8 @@ export interface PuzzleBookmarkDeleteRoutes {
 
 export interface PuzzleShareGetRoutes {
 	'/received': { response: readonly PuzzleShare[] };
-	'/sent': { response: readonly PuzzleShare[] };
+	/** The replication feed: a page moved since `since`, oldest first. */
+	'/sent': { query: GetSentPuzzleSharesRequest; response: readonly PuzzleShare[] };
 	'/:uuid': { path: { uuid: string }; response: PuzzleShare };
 }
 

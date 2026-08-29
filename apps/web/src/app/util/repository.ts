@@ -24,6 +24,7 @@ import { renameFreePlayRunsMigration } from '@app/repository/migration/v19_renam
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { indexRejectedRowsMigration } from '@app/repository/migration/v20_index-rejected-rows.migration';
 import { createBookmarkStoreMigration } from '@app/repository/migration/v21_create-bookmark-store.migration';
+import { createShareStoreMigration } from '@app/repository/migration/v22_create-share-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
 import { rekeyAttemptStoreMigration } from '@app/repository/migration/v4_rekey-attempt-store.migration';
@@ -65,6 +66,7 @@ export abstract class Repository {
 		renameFreePlayRunsMigration,
 		indexRejectedRowsMigration,
 		createBookmarkStoreMigration,
+		createShareStoreMigration,
 	];
 
 	static getLatestVersion(): number {

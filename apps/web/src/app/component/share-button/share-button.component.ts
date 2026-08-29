@@ -10,6 +10,7 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { PuzzleShareRepository } from '@app/repository/puzzle-share.repository';
 import { NotificationService } from '@app/service/notification.service';
 import { ModalStore } from '@app/store/modal.store';
+import { ShareStore } from '@app/store/share.store';
 
 /**
  * Sends a finished exercise to a friend as a challenge, with the sender's own numbers
@@ -29,9 +30,22 @@ export class ShareButtonComponent {
 	private readonly repository = inject(PuzzleShareRepository);
 	private readonly notificationService = inject(NotificationService);
 	private readonly modalStore = inject(ModalStore);
+	private readonly shareStore = inject(ShareStore);
 
 	/** Only a finished exercise is worth sending: there is nothing to compare until it is. */
 	readonly isDisabled = computed(() => undefined === this.store.puzzle() || this.store.isOpen());
+
+	private readonly isShared = computed(() => {
+		const puzzle = this.store.puzzle();
+
+		return undefined !== puzzle && this.shareStore.hasShared(puzzle.id);
+	});
+
+	/**
+	 * Whether it has already gone to somebody, and only once it may be pressed: saying so on
+	 * an exercise still open would give away that it is one worth sending.
+	 */
+	readonly isHighlighted = computed(() => this.isShared() && !this.isDisabled());
 
 	async onClick(): Promise<void> {
 		if (this.isDisabled()) {
@@ -58,12 +72,14 @@ export class ShareButtonComponent {
 		// `TrainingSolveSession` and never reaches this row. The API already takes it, and
 		// filling it is what points a challenge back at the attempt it came out of.
 		try {
-			await this.repository.create({
+			const sent = await this.repository.create({
 				lichessId: puzzle.id,
 				recipientUuids: choice.recipients.map((friend) => friend.uuid),
 				...('' === choice.message ? {} : { message: choice.message }),
 				result,
 			});
+
+			await this.shareStore.record(sent);
 
 			this.notificationService.notify(
 				i18nRef(I18n.common.SHARE_SENT, {

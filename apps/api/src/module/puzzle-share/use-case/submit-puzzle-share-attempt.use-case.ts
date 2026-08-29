@@ -2,6 +2,7 @@ import type { PuzzleShare as PuzzleShareResponse } from '@chesspecker/api-defini
 import { Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
+import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { UserNotificationType } from '../../notification/definition/user-notification-type.enum';
 import { CreateNotificationsUseCase } from '../../notification/use-case/create-notifications.use-case';
 import { User } from '../../user/user.entity';
@@ -9,6 +10,7 @@ import { PuzzleShareResultRequestDto } from '../dto/request/puzzle-share-result-
 import { PuzzleShareAttemptRepository } from '../puzzle-share-attempt.repository';
 import { PuzzleShareRecipientRepository } from '../puzzle-share-recipient.repository';
 import { PuzzleShare } from '../puzzle-share.entity';
+import { PuzzleShareRepository } from '../puzzle-share.repository';
 import { buildAttempt } from '../util/puzzle-share.util';
 
 import { GetPuzzleShareUseCase } from './get-puzzle-share.use-case';
@@ -19,6 +21,7 @@ export class SubmitPuzzleShareAttemptUseCase {
 	constructor(
 		private readonly puzzleShareAttemptRepository: PuzzleShareAttemptRepository,
 		private readonly puzzleShareRecipientRepository: PuzzleShareRecipientRepository,
+		private readonly puzzleShareRepository: PuzzleShareRepository,
 		private readonly getPuzzleShareUseCase: GetPuzzleShareUseCase,
 		private readonly createNotificationsUseCase: CreateNotificationsUseCase,
 		private readonly presentPuzzleSharesUseCase: PresentPuzzleSharesUseCase,
@@ -44,6 +47,13 @@ export class SubmitPuzzleShareAttemptUseCase {
 		}
 
 		await this.puzzleShareAttemptRepository.insert(buildAttempt(share, user, request));
+		// The answer is a row of its own, so the challenge would look untouched to whoever
+		// mirrors it: moving its clock is what carries the verdict to the sender's copy. The
+		// loaded entity is moved with it, or the answer would go back out under the old stamp.
+		const now = new GenerateNowDateUseCase().execute();
+
+		await this.puzzleShareRepository.touch(share.uuid, now);
+		share.updatedAt = now;
 
 		await this.notify(share, user);
 

@@ -13,6 +13,7 @@ import {
 import { SessionStore } from '@app/store/session.store';
 import { PuzzleCatalogReplicaUseCase } from '@app/use-case/puzzle-catalog-replica.use-case';
 import { RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
+import { ShareMirrorUseCase } from '@app/use-case/share-mirror.use-case';
 import { SyncPullUseCase } from '@app/use-case/sync/sync-pull.use-case';
 import { SyncPushUseCase } from '@app/use-case/sync/sync-push.use-case';
 import { SyncStatus, SyncSummaryUseCase } from '@app/use-case/sync/sync-summary.use-case';
@@ -65,6 +66,7 @@ export class SyncCycleUseCase {
 	private readonly puller = inject(SyncPullUseCase);
 	private readonly catalog = inject(PuzzleCatalogReplicaUseCase);
 	private readonly repair = inject(RepairCycleUseCase);
+	private readonly shares = inject(ShareMirrorUseCase);
 	private readonly localData = inject(LocalDataRepository);
 
 	async execute(report: SyncReport): Promise<SyncPhase> {
@@ -140,6 +142,8 @@ export class SyncCycleUseCase {
 			cut = (await this.push(report)) || cut;
 		}
 
+		await this.mirrorShares(status);
+
 		// The catalogue goes last on purpose: ~22,000 exercises against the tree's dozens, and
 		// whoever watches the splash would rather have their own first.
 		await this.sweepCatalog(status.summary.catalog, report);
@@ -149,6 +153,18 @@ export class SyncCycleUseCase {
 		report({ isReplicaComplete: !pulled.interrupted && swept });
 
 		return cut || pulled.interrupted ? 'offline' : 'ready';
+	}
+
+	/**
+	 * The challenges this account sent, of which the device only ever keeps a copy: there is
+	 * nothing to push, so a trip that fails takes nothing with it and the pass carries on.
+	 */
+	private async mirrorShares(status: SyncStatus): Promise<void> {
+		try {
+			await this.shares.pull(status.summary.shares);
+		} catch (error) {
+			console.error('Could not mirror the challenges this account sent', error);
+		}
 	}
 
 	/**

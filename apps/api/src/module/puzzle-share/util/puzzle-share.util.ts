@@ -52,6 +52,7 @@ export function presentShare(
 		sender: presentParticipant(share.sender, byUser),
 		recipients: recipients.map((row) => presentParticipant(row.recipient, byUser)),
 		createdAt: share.createdAt.toISOString(),
+		updatedAt: share.updatedAt.toISOString(),
 	};
 }
 

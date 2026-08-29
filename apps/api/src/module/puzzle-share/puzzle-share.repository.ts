@@ -27,15 +27,32 @@ export class PuzzleShareRepository extends CustomRepository<PuzzleShare> {
 		return share;
 	}
 
-	/** Everything the caller sent, newest first, with what it takes to name the exercise. */
-	async getManyBySender(senderUuid: string, limit: number): Promise<PuzzleShare[]> {
+	/**
+	 * The replication feed: what the caller sent whose clock has moved since the stamp given,
+	 * oldest first, so a device walks it page by page and stops when a page comes back short.
+	 * `>=` rather than `>` on purpose — two challenges may share a millisecond, and a row put
+	 * twice is a row put once.
+	 */
+	async getManySentSince(
+		senderUuid: string,
+		since: Date | undefined,
+		limit: number,
+	): Promise<PuzzleShare[]> {
 		return this.getMany(
-			{ sender: senderUuid },
+			{ sender: senderUuid, ...(undefined === since ? {} : { updatedAt: { $gte: since } }) },
 			{
 				populate: ['puzzle', 'sender'],
-				orderBy: { createdAt: 'desc', uuid: 'desc' },
+				orderBy: { updatedAt: 'asc', uuid: 'asc' },
 				limit,
 			},
 		);
+	}
+
+	/**
+	 * The challenge's clock, moved by hand: an answer is a row of its own, and without this
+	 * the aggregate would look untouched to whoever mirrors it by `updatedAt`.
+	 */
+	async touch(uuid: string, updatedAt: Date): Promise<void> {
+		await this.entityManager.fork().nativeUpdate(PuzzleShare, { uuid }, { updatedAt });
 	}
 }

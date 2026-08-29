@@ -37,6 +37,20 @@ export interface PuzzleShare {
 	readonly sender: PuzzleShareParticipant;
 	readonly recipients: readonly PuzzleShareParticipant[];
 	readonly createdAt: string;
+	/**
+	 * The challenge's clock, answers included: submitting one moves it, so a mirror that
+	 * follows this stamp sees a recipient's verdict as a change like any other.
+	 */
+	readonly updatedAt: string;
+}
+
+/**
+ * The replication feed of what the caller sent: a page of challenges whose clock has moved
+ * since the stamp given, oldest first, so a device asks only for what it does not hold.
+ */
+export interface GetSentPuzzleSharesRequest<TDate = string> {
+	since?: TDate;
+	limit?: number;
 }
 
 /**

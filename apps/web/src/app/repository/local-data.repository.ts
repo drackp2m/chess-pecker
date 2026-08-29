@@ -203,7 +203,7 @@ async function requeueStore(store: PendingStore<'readwrite'>, pendingSince: Date
 
 const syncStores: StoreNames<AppSchema>[] = [...SYNC_ENTITIES];
 
-const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'activity'];
+const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'activity', 'share'];
 
 const userStores: StoreNames<AppSchema>[] = [
 	'activityDay',
@@ -218,6 +218,7 @@ const userStores: StoreNames<AppSchema>[] = [
 	'cycle',
 	'cycleItem',
 	'puzzleSet',
+	'share',
 	'training',
 	'trainingGoal',
 	'trainingPuzzle',

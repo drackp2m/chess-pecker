@@ -195,6 +195,12 @@ export interface SyncSummary {
 	readonly entities: Record<SyncEntity, SyncEntitySummary>;
 	/** `puzzle` belongs to nobody: it is a global catalogue and has its own shape. */
 	readonly catalog: SyncCatalogSummary;
+	/**
+	 * The challenges the caller sent. They are not a tree table and never travel upwards —
+	 * the API owns them — but the device keeps a copy to answer what it has already shared
+	 * without asking, and this is what tells it whether that copy has fallen behind.
+	 */
+	readonly shares: SyncEntitySummary;
 	/** Empty in the ordinary case: a truncated upload is what puts anything in here. */
 	readonly partialCycles: readonly SyncPartialCycle[];
 }
