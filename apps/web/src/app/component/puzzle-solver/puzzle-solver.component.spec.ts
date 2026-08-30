@@ -24,6 +24,7 @@ import {
 	REPLAY_TOTAL,
 	navControls,
 } from '@app/testing/puzzle-store.harness';
+import { provideTestingShares } from '@app/testing/share.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 const PUZZLE: Puzzle = {
@@ -67,6 +68,7 @@ function createHost() {
 		providers: [
 			provideTestingI18n(),
 			provideTestingBookmarks(),
+			provideTestingShares(),
 			{
 				provide: BoardPreferenceService,
 				useValue: {
