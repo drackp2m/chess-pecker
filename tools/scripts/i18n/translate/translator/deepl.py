@@ -220,8 +220,10 @@ def write_batch(batch: list, texts: list[str], reporter, lang: str, done: int, p
     return done
 
 
-def translate_file(client: Client, path: Path, args, reporter, budget: int | None) -> int:
-    output = output_for(path, args.output, "deepl")
+def translate_file(
+    client: Client, path: Path, args, reporter, budget: int | None, output: Path | None = None
+) -> int:
+    output = output or output_for(path, args.output, "deepl")
 
     ensure_parent(output)
 
@@ -255,17 +257,17 @@ def translate_file(client: Client, path: Path, args, reporter, budget: int | Non
 
 # A reference run is worth nothing if it silently stops halfway, so the summary
 # says what it cost in characters: that is the number the quota is spent in.
-def run_deepl(args, reporter) -> int:
+def run_deepl(args, reporter, jobs=None) -> int:
     client = Client(api_key())
     started = time.perf_counter()
     budget = args.limit
     done = 0
 
-    for path in args.inputs:
+    for path, output in jobs or [(path, None) for path in args.inputs]:
         if budget is not None and budget <= 0:
             break
 
-        translated = translate_file(client, path, args, reporter, budget)
+        translated = translate_file(client, path, args, reporter, budget, output)
         done += translated
         budget = None if budget is None else budget - translated
 

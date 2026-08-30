@@ -118,32 +118,45 @@ Dos diferencias con lo que emitirá el paso 9, y las dos a favor de poder medir 
 
 ## Cómo se usa
 
-Es el paso 1 del guion de T5.3: el banco sustituye ahí al `pnpm i18n:export --blank`, que es de donde
-salía el fichero antes de que hubiera con qué compararlo.
-
-Lo que se le da al modelo es **siempre el `.blank.xlf`**, nunca el otro: una unidad sólo está
-pendiente cuando su `<target>` está vacío, así que el banco con la traducción buena dentro no
-tiene nada que traducir, y su memoria de traducción se sembraría además con las respuestas.
+Con `--bench`, que es el arnés del paso 4.2: coge estos ficheros, los pasa por cada modelo de la
+lista, puntúa cada pasada contra la traducción buena de al lado y deja un markdown con las tablas
+una debajo de otra. El guion entero está en el README del traductor, en «Generating a model
+comparison».
 
 ```sh
 cd tools/scripts/i18n/translate
 
-# La referencia de DeepL, para contrastar con la traducción buena
-uv run translate ../bench/ru-RU.blank.xlf --deepl -o ru-RU.deepl.xlf
+# Los dos idiomas del banco por tres modelos y DeepL
+uv run translate --bench --model gemma-12b,qwen35-9b,translate-12b,deepl
 
-# Una pasada por candidato. --no-tm para que traduzca de verdad cada unidad
-uv run translate ../bench/ru-RU.blank.xlf --model gemma3-12b --no-tm -o ru-RU.gemma3-12b.xlf
-
-# La tabla, contra la traducción buena de este directorio
-uv run translate ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf --worst 20
-
-# Sólo las ramas de ICU
-uv run translate ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf --scope bench-icu
+# Sólo el ruso, con las pasadas y el informe en otro sitio
+uv run translate --bench --model gemma-12b,deepl ../bench/ru-RU.blank.xlf -o ../../../../bench-ru
 ```
 
-`--compare` cruza por identificador de unidad, así que la referencia y las pasadas tienen que
+Sin fichero de entrada coge todos los `*.blank.xlf` de este directorio, y de cada uno saca su
+referencia quitándole el `.blank`. Lo que se le da al modelo es **siempre el `.blank.xlf`**, nunca
+el otro: una unidad sólo está pendiente cuando su `<target>` está vacío, así que el banco con la
+traducción buena dentro no tiene nada que traducir, y su memoria de traducción se sembraría además
+con las respuestas.
+
+Cada pasada queda como un XLIFF normal en `bench-runs/`, así que se puede volver sobre ella a mano
+para un corte que el informe no traiga:
+
+```sh
+# La tabla, contra la traducción buena de este directorio
+uv run translate bench-runs/ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf --worst 20
+
+# Sólo las ramas de ICU
+uv run translate bench-runs/ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf --scope bench-icu
+```
+
+La puntuación cruza por identificador de unidad, así que la referencia y las pasadas tienen que
 salir de la misma generación del banco: si se regenera entre una pasada y la comparación, las
-unidades que hayan cambiado de origen se quedan fuera y la cabecera lo dice.
+unidades que hayan cambiado de origen se quedan fuera y la columna `missing` las cuenta.
+
+Una pasada cuyo fichero ya está completo no se vuelve a traducir, de modo que añadir un modelo más
+tarde es el mismo comando con un alias más: sólo corre lo que falta. Para repetir una pasada, se
+borra su fichero.
 
 ## Cuando el español cambie
 

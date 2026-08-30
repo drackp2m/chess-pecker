@@ -302,6 +302,9 @@ What each number is for:
 - `--compare` scores the given translated files against each other instead of translating, and
   `--reference <file>` makes one of them the yardstick. `--worst N` sets how many disagreeing units
   are printed in full (default 10). `--scope` narrows all of it.
+- `--bench` runs the whole comparison: every model in `--model` over every bench file, each pass
+  scored against the hand-written translation beside it, into one markdown. See _Generating a model
+  comparison_.
 - `--json` prints NDJSON progress on stdout instead of the human log; `--report <file>` writes a
   markdown summary with the speed, the batch share and the units left for review.
 - `--temperature` defaults to 0 — deterministic, which is what makes two models comparable.
@@ -406,6 +409,52 @@ Three things make the comparison fair rather than decorative:
 Units are sent 50 at a time, progress is saved after every request, and the summary ends with the
 characters the run spent, which is the number the quota is counted in.
 
+## Generating a model comparison
+
+The recipe from nothing to a table, so it can be repeated in six months without reading any code.
+It runs on the host, from this directory, and `--bench` is the whole of it:
+
+```sh
+uv run translate --bench --model gemma-12b,qwen35-9b,translate-12b,deepl
+```
+
+1. **What goes in.** With no input file it takes every `*.blank.xlf` of
+   `tools/scripts/i18n/bench` — today `en-GB.blank.xlf` and `ru-RU.blank.xlf`, the forty-odd
+   hand-picked units of the bench with their `<target>` emptied. That directory's README says what
+   is in them and why. To bench something else, name the files: `pnpm i18n:export --blank --scope
+<name>` writes the same kind of file, and then `--reference` has to name the yardstick by hand.
+2. **The yardstick.** For each input, the file beside it with the `.blank` dropped —
+   `ru-RU.blank.xlf` → `ru-RU.xlf`, the translation written by hand. Nothing is scored against
+   another model, which is the difference between this and a bare `--compare`.
+3. **One pass per model and file.** `--model` is a comma-separated list here, and `deepl` counts as
+   one more candidate — it goes through the DeepL API and needs `DEEPL_API_KEY`, as above. The
+   translation memory is off for every pass, so every unit is really translated. `--profile` and
+   `--inject` apply to the whole run, so measuring `translate-12b` on `--inject full` as well is a
+   second command with its own `--output`.
+4. **What it leaves.** One XLIFF per pass in `bench-runs/`, named `<lang>.<alias>.xlf`
+   (`--output <dir>` moves them), and `bench-runs/comparison.md` (`--report <file>` moves that).
+   The passes are ordinary translated files, so `--compare` can be re-run over them by hand for a
+   cut the report does not have.
+5. **What the markdown says**, per bench file: the quality table — chrF against the reference, its
+   worst unit, how many fell `under 50`, the prompt shape the pass ran with and the checks that
+   failed — then the cost table, then chrF by scope, then the worst N units printed in full with
+   the reference and every pass underneath. `--worst N` sets how many (default 10). The quality
+   table is printed to the terminal as the run goes, so nothing has to be opened to see it.
+6. **Reading it.** `under 50` first, then the `bench-icu` column of the by-scope table, which is
+   the fan-out of step 9 and the reason the bench has synthetic units at all. Then read the worst
+   list: the score says which units to read, not whether the translation is good. The bench README
+   lists the units that always trip a check for reasons that are not the model's fault.
+
+A pass whose output file is already complete is not translated again, so a bench survives Ctrl-C
+and adding a model later is the same command with one more alias — only the new pass runs. Delete
+the file to force a pass again. A model that cannot be loaded loses its row and the bench goes on;
+the row says `failed`.
+
+**Write the answer down where it will be found**: the fiche of the model in _Choosing a model_ says
+which `--profile` and which `--inject` it entered the comparison with, because that is half the
+result and the first thing to be forgotten. The report repeats both in its own table for the same
+reason.
+
 ## Model weights
 
 Hugging Face caches weights in `~/.cache/huggingface` (or `$HF_HOME`), outside the repo and shared
@@ -465,6 +514,7 @@ translate/
 		models.py        the known models, their aliases and prompt shapes
 		downloads.py     what the Hugging Face cache holds, and deleting from it
 		compare.py       chrF agreement between several translated files
+		bench.py         the bench harness: every model, timed, scored, tabulated
 		deepl.py         the reference translation, and the glossary it is held to
 		dotenv.py        the root .env, read the way the API reads it
 		tables.py        the aligned columns every listing is printed with

@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from .bench import DEFAULT_OUT as DEFAULT_BENCH_OUT
+from .bench import REPORT_NAME as BENCH_REPORT
 from .deepl import KEY_VAR
 from .models import ALIASES, DEFAULT_ALIAS, PROFILES
 from .ollama_client import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
@@ -33,6 +35,9 @@ examples:
 
   # The same file through DeepL, to use as the yardstick of that comparison
   uv run translate translations/fr-FR.xlf --deepl
+
+  # The whole bench through three models and DeepL, scored and tabulated
+  uv run translate --bench --model gemma-12b,qwen35-9b,translate-12b,deepl
 """
 
 
@@ -59,7 +64,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=Path,
         help=(
             "Output file, only with a single input. Defaults to "
-            "<input>.translated.xlf"
+            "<input>.translated.xlf. Under --bench, the directory every pass "
+            f"is written into. (default under --bench: {DEFAULT_BENCH_OUT}/)"
         ),
     )
 
@@ -78,8 +84,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Model to translate with: one of the aliases from --list-models "
-            f"({', '.join(ALIASES)}) or any Hugging Face repository id. "
-            f"(default: {DEFAULT_ALIAS} for mlx, {DEFAULT_OLLAMA_MODEL} for ollama)"
+            f"({', '.join(ALIASES)}) or any Hugging Face repository id. Under "
+            "--bench, a comma-separated list of them, where 'deepl' counts as "
+            f"one more candidate. (default: {DEFAULT_ALIAS} for mlx, "
+            f"{DEFAULT_OLLAMA_MODEL} for ollama)"
         ),
     )
 
@@ -141,7 +149,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Translated XLIFF to treat as the yardstick under --compare, such "
             "as one written by a professional or another engine. Every other "
-            "file is scored against it instead of against the others."
+            "file is scored against it instead of against the others. Under "
+            "--bench it defaults to the file next to each input with the "
+            "'.blank' dropped, which is the translation written by hand."
         ),
     )
 
@@ -150,6 +160,19 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=int,
         default=10,
         help="How many disagreeing units --compare prints in full. (default: 10)",
+    )
+
+    parser.add_argument(
+        "--bench",
+        action="store_true",
+        help=(
+            "Translate the given blank bench files with every model in "
+            "--model, score each pass against its reference and write one "
+            "markdown with the tables side by side. With no input file it "
+            "takes every *.blank.xlf of tools/scripts/i18n/bench. Each pass is "
+            "kept as its own XLIFF, so --compare can be re-run on it by hand; "
+            "a pass whose file is already complete is not translated again."
+        ),
     )
 
     parser.add_argument(
@@ -239,7 +262,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--report",
         type=Path,
         default=None,
-        help="Write a markdown summary of the run to this file.",
+        help=(
+            "Write a markdown summary of the run to this file. Under --bench, "
+            f"the side-by-side comparison. (default under --bench: "
+            f"<output>/{BENCH_REPORT})"
+        ),
     )
 
     parser.add_argument(

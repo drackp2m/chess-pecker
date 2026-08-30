@@ -142,6 +142,7 @@ class Reporter:
     started: float = field(default_factory=time.perf_counter)
     records: list[Record] = field(default_factory=list)
     files: list[dict] = field(default_factory=list)
+    finished: dict = field(default_factory=dict)
 
     def reset(self) -> None:
         self.started = time.perf_counter()
@@ -252,6 +253,7 @@ class Reporter:
 
     def finish(self, engine, memory, tally: Tally) -> dict:
         summary = self.summary(engine, memory, tally)
+        self.finished = summary
 
         self.emit(summary)
         self.say()
