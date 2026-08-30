@@ -1,5 +1,6 @@
 import { EnvironmentProviders, Provider, isDevMode } from '@angular/core';
 import { provideTransloco, provideTranslocoScope } from '@jsverse/transloco';
+import { provideTranslocoMessageformat } from '@jsverse/transloco-messageformat';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
 import { DEFAULT_LANGUAGE, LANGUAGES } from '@app/definition/language.type';
@@ -57,8 +58,8 @@ export type I18nParamsArg<Key> = string extends Key
 		? [params: I18nParams[Key]]
 		: [];
 
-export const provideI18n = (): EnvironmentProviders[] =>
-	provideTransloco({
+export const provideI18n = (): EnvironmentProviders[] => [
+	...provideTransloco({
 		config: {
 			availableLangs: [...LANGUAGES],
 			defaultLang: DEFAULT_LANGUAGE,
@@ -68,7 +69,9 @@ export const provideI18n = (): EnvironmentProviders[] =>
 			prodMode: !isDevMode(),
 		},
 		loader: TranslocoLoaderService,
-	});
+	}),
+	provideTranslocoMessageformat({ locales: DEFAULT_LANGUAGE }),
+];
 
 export const provideI18nScope = (...scopes: I18nScope[]): Provider[] =>
 	provideTranslocoScope(...scopes);

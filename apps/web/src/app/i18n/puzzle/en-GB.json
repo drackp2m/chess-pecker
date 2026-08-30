@@ -12,9 +12,9 @@
 	"01KZJ895MCRGR95VZW39T59ZJ8": "Load CSV",
 	"01KZJ895MCK2WJ1KSY96JWJEWJ": "Use sample row",
 	"01KZJ895MCKFDW61M35EMFY15W": "Choose a .csv file",
-	"01KZJ895MC41534M6SMAPZ8D0G": "Could not read {{ name }}.",
+	"01KZJ895MC41534M6SMAPZ8D0G": "Could not read {name}.",
 	"01KZJ895MCRTD753DF6A89EP8G": "No readable exercises in that CSV.",
 	"01KZJ895MCCANY5YTHG3QR0PXQ": "Imported, but the set could not be saved for next time.",
-	"01KZJ895MCZXZPE04RY1KW34N5": "Loaded {{ loaded }} exercises.",
-	"01KZJ895MCRBV83D30RKZ29XGT": "Loaded {{ loaded }} exercises, skipped {{ skipped }} unreadable rows."
+	"01KZJ895MCZXZPE04RY1KW34N5": "Loaded {loaded} exercises.",
+	"01KZJ895MCRBV83D30RKZ29XGT": "Loaded {loaded} exercises, skipped {skipped} unreadable rows."
 }

@@ -222,12 +222,12 @@ what lets the prompt cache process it once instead of once per unit.
 the call:
 
 - **The glossary.** Only the entries whose Spanish term appears in one of these strings, with their
-  full gloss. `Cancelar` gets no glossary at all; `Ciclo {{ index }}` gets the two lines about
+  full gloss. `Cancelar` gets no glossary at all; `Ciclo {index}` gets the two lines about
   `ciclo` and `ajuste`. The `No traducir nunca:` names are filtered the same way. The section sits
   last, right above the texts, because the closer an obligation is to what it applies to the more
   often it is honoured.
 - **The global rules.** The bullet list under _«Reglas que valen para todos los idiomas»_ in
-  `app.md` is pulled out of the prose and filtered per call: a rule that talks about `{{ param }}`
+  `app.md` is pulled out of the prose and filtered per call: a rule that talks about `{param}`
   is only sent when the text has a placeholder, one that talks about `·` only when the text has a
   separator, one about `…` only when the text has an ellipsis. The rest always go. Adding a probe is
   one tuple in `context.py`.
@@ -424,7 +424,7 @@ uv run translate fr-FR.*.xlf --compare --reference fr-FR.deepl.xlf --worst 20
 The score is **chrF**, the character n-gram F-score: no tokenizer, and no penalty for a language
 that glues its morphemes together, which is what makes it survive Russian and Catalan where a
 word-level score would not. Placeholders are collapsed to one character each before scoring, so a
-long `{{ param }}` name cannot inflate the agreement between two otherwise different sentences.
+long `{param}` name cannot inflate the agreement between two otherwise different sentences.
 Only the n-gram orders a string is long enough to have are averaged, so a four-character label and
 a lone placeholder still score 100 when they match — the catalogue is full of one-word labels, and
 without that they would be scored on their length instead.

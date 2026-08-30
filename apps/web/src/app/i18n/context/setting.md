@@ -50,15 +50,15 @@ Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y
 
 ## SYNC_ROWS
 
-`{{ count }}` es un número de filas guardadas en este dispositivo, y puede ser 0.
+`{count}` es un número de filas guardadas en este dispositivo, y puede ser 0.
 
 ## SYNC_CURSOR
 
-Hasta dónde se ha bajado. `{{ at }}` es una fecha ya formateada por la aplicación.
+Hasta dónde se ha bajado. `{at}` es una fecha ya formateada por la aplicación.
 
 ## SYNC_STALE
 
-Algo lleva demasiados días sin subir. `{{ days }}` es un número de días.
+Algo lleva demasiados días sin subir. `{days}` es un número de días.
 
 ## SYNC_ENTITY_*
 
@@ -66,7 +66,7 @@ Los nombres de las tablas que se sincronizan, tal como se listan en un recuento.
 
 ## VERSION
 
-`{{ version }}` es el número de versión de la aplicación. La palabra va en minúscula porque se pinta al pie de la página.
+`{version}` es el número de versión de la aplicación. La palabra va en minúscula porque se pinta al pie de la página.
 
 ## BOOKMARK*
 

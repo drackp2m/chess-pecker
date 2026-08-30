@@ -16,7 +16,7 @@ El nombre de usuario, que es lo que identifica a una persona en la aplicación. 
 
 ## PASSWORD_MIN_LENGTH
 
-La contraseña y el mínimo de caracteres que se pide. `{{ length }}` es un número.
+La contraseña y el mínimo de caracteres que se pide. `{length}` es un número.
 
 ## LOGGING_IN
 

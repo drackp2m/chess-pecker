@@ -89,7 +89,7 @@ describe('i18n fallback', () => {
 	it('fills the params of the value it fell back to', async () => {
 		const harness = setUp('fr-FR');
 
-		await loadFrench(harness, { [CYCLE]: '' }, { [CYCLE]: 'Ciclo {{ index }}' });
+		await loadFrench(harness, { [CYCLE]: '' }, { [CYCLE]: 'Ciclo {index}' });
 
 		expect(harness.transloco.translate(CYCLE, { index: 3 })).toBe('Ciclo 3');
 	});

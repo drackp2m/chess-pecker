@@ -7,7 +7,7 @@
 	"01KZJ895M8CK5V08TPNEZQ38XV": "Crea una",
 	"01KZJ895M82WP0GNSCB8ZJBE3W": "Con un nombre de usuario y una contraseña basta. El correo es opcional y sólo sirve para recuperar la cuenta si pierdes la contraseña.",
 	"01KZJ895M8N7Y5VZRMW04ANY11": "Correo (opcional)",
-	"01KZJ895M8N6WQ02RVEABREFTF": "Al menos {{ length }} caracteres.",
+	"01KZJ895M8N6WQ02RVEABREFTF": "Al menos {length} caracteres.",
 	"01KZJ895M8P2H1QBJ9V0Q3DCBF": "Creando la cuenta…",
 	"01KZJ895M8NR4HJM9V1N3RNNY9": "¿Ya tienes cuenta?"
 }
