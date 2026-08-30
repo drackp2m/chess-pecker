@@ -37,6 +37,15 @@ CATALOGUE = (
         note="Cleanest run of the bench, and the best Russian. The one to translate with.",
     ),
     Model(
+        "gemma-12b-qat-6bit",
+        "mlx-community/gemma-3-12b-it-qat-6bit",
+        "Gemma 3",
+        "12B",
+        "11.2 GB",
+        added="2025-04-15",
+        note="The winner with half the quantisation damage. Nothing else changes.",
+    ),
+    Model(
         "gemma-12b",
         "mlx-community/gemma-3-12b-it-4bit",
         "Gemma 3",
@@ -108,6 +117,15 @@ CATALOGUE = (
         "8.2 GB",
         added="2026-03-05",
         note="Per-layer bit allocation over qwen35-9b, and the download people reach for.",
+    ),
+    Model(
+        "mistral-24b",
+        "mlx-community/Mistral-Small-3.2-24B-Instruct-2506-4bit",
+        "Mistral Small 3.2",
+        "24B",
+        "13.3 GB",
+        added="2025-06-21",
+        note="Twice the parameters in the same budget, and a family nobody here has measured. Past a 16 GB Mac's default wired limit: see the README.",
     ),
 )
 

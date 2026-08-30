@@ -95,10 +95,21 @@ def stats_of(output: Path) -> Path:
     return output.with_suffix(".json")
 
 
-def save_stats(current: "Pass") -> None:
+def shape_note(args, current: "Pass") -> dict:
+    return {
+        "profile": current.profile,
+        "inject": current.inject,
+        "batch": args.batch,
+        "temperature": args.temperature,
+    }
+
+
+def save_stats(args, current: "Pass") -> None:
+    payload = {**current.summary, "shape": shape_note(args, current)}
+
     try:
         stats_of(current.output).write_text(
-            json.dumps(current.summary, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
         )
     except OSError:
         pass
@@ -257,7 +268,30 @@ def run_pass(current: Pass, args, reporter, translate, deepl) -> None:
 
     current.summary = summary_of(inner, time.perf_counter() - started)
 
-    save_stats(current)
+    save_stats(args, current)
+
+
+# A finished pass is kept whatever was asked for this time, so the row has to
+# describe the file on disk and not the flags of this command — otherwise a
+# second experiment in the same directory silently reports the first one's
+# answers under its own prompt shape.
+def adopt_shape(current: Pass, args, reporter) -> None:
+    kept = current.summary.get("shape")
+
+    if not kept:
+        return
+
+    asked = shape_note(args, current)
+    current.profile = kept.get("profile", current.profile)
+    current.inject = kept.get("inject", current.inject)
+
+    if kept == asked:
+        return
+
+    reporter.warn(
+        f"  {current.alias} · {current.lang} was translated with {kept}, not "
+        f"{asked}. Kept as it is; --output a different directory to run it again."
+    )
 
 
 def translate_all(plan: list[Pass], args, reporter, translate, deepl) -> None:
@@ -269,6 +303,7 @@ def translate_all(plan: list[Pass], args, reporter, translate, deepl) -> None:
             current.summary = load_stats(current)
             kept = "with what it cost" if current.summary else "cost unknown"
             reporter.say(f"\n===== {head}: kept {current.output}, {kept}")
+            adopt_shape(current, args, reporter)
             continue
 
         reporter.say(f"\n===== {head}  →  {current.output}")

@@ -70,39 +70,60 @@ a file exported today translates the same way tomorrow.
 `--model` takes an alias from the table below or any Hugging Face repository id. The default is
 `gemma-12b-qat`, which is what the bench of 30/08/2026 settled on.
 
-| Alias              | Repository                                    | On disk | Published  |
-| ------------------ | --------------------------------------------- | ------- | ---------- |
-| `gemma-12b-qat`    | `mlx-community/gemma-3-12b-it-qat-4bit`       | 8.0 GB  | 2025-04-15 |
-| `gemma-12b`        | `mlx-community/gemma-3-12b-it-4bit`           | 8.0 GB  | 2025-03-12 |
-| `gemma4-e4b`       | `mlx-community/gemma-4-e4b-it-4bit`           | 5.1 GB  | 2026-04-02 |
-| `gemma4-e4b-qat`   | `mlx-community/gemma-4-E4B-it-qat-4bit`       | 6.8 GB  | 2026-06-05 |
-| `gemma4-e4b-optiq` | `mlx-community/gemma-4-e4b-it-qat-OptiQ-4bit` | 7.5 GB  | 2026-06-13 |
-| `gemma4-e4b-8bit`  | `mlx-community/gemma-4-e4b-it-8bit`           | 8.9 GB  | 2026-04-02 |
-| `qwen-14b`         | `mlx-community/Qwen3-14B-4bit`                | 8.3 GB  | 2025-04-28 |
-| `qwen35-9b`        | `mlx-community/Qwen3.5-9B-4bit`               | 6.0 GB  | 2026-03-02 |
-| `qwen35-9b-optiq`  | `mlx-community/Qwen3.5-9B-OptiQ-4bit`         | 8.2 GB  | 2026-03-05 |
+| Alias                | Repository                                               | On disk | Published  |
+| -------------------- | -------------------------------------------------------- | ------- | ---------- |
+| `gemma-12b-qat`      | `mlx-community/gemma-3-12b-it-qat-4bit`                  | 8.0 GB  | 2025-04-15 |
+| `gemma-12b-qat-6bit` | `mlx-community/gemma-3-12b-it-qat-6bit`                  | 11.2 GB | 2025-04-15 |
+| `gemma-12b`          | `mlx-community/gemma-3-12b-it-4bit`                      | 8.0 GB  | 2025-03-12 |
+| `gemma4-e4b`         | `mlx-community/gemma-4-e4b-it-4bit`                      | 5.1 GB  | 2026-04-02 |
+| `gemma4-e4b-qat`     | `mlx-community/gemma-4-E4B-it-qat-4bit`                  | 6.8 GB  | 2026-06-05 |
+| `gemma4-e4b-optiq`   | `mlx-community/gemma-4-e4b-it-qat-OptiQ-4bit`            | 7.5 GB  | 2026-06-13 |
+| `gemma4-e4b-8bit`    | `mlx-community/gemma-4-e4b-it-8bit`                      | 8.9 GB  | 2026-04-02 |
+| `qwen-14b`           | `mlx-community/Qwen3-14B-4bit`                           | 8.3 GB  | 2025-04-28 |
+| `qwen35-9b`          | `mlx-community/Qwen3.5-9B-4bit`                          | 6.0 GB  | 2026-03-02 |
+| `qwen35-9b-optiq`    | `mlx-community/Qwen3.5-9B-OptiQ-4bit`                    | 8.2 GB  | 2026-03-05 |
+| `mistral-24b`        | `mlx-community/Mistral-Small-3.2-24B-Instruct-2506-4bit` | 13.3 GB | 2025-06-21 |
 
 `--list-models` prints the same table with what each one is for and how much of it is already on
 disk. _Published_ is when the MLX conversion was uploaded, not when the model was announced; the
 weights behind a `gemma-3` conversion of 2025 are the model Google released that spring.
 
-**Everything here fits a 16 GB Mac.** That is the whole selection rule: a model needs roughly its
-size on disk in unified memory, plus the context, plus whatever the Mac is already doing, so the
-practical ceiling is about 9 GB and the list stops there. The 27B and 31B conversions, the
-mixture-of-experts ones (`26B-A4B`, `35B-A3B`) and the whole Qwen 3.6 / 3.8 line are 15–20 GB and
-were dropped for that reason alone, not for being bad — on a 32 GB machine they are worth adding
-back. The 2B and 4B ones were dropped for the opposite reason.
+**The list is what a 16 GB Mac can run.** A model needs roughly its size on disk in unified
+memory, plus the context, plus whatever the Mac is already doing, so anything up to about 9 GB is
+comfortable and the three above that are deliberate stretches, flagged below. The 27B and 31B
+conversions, the mixture-of-experts ones (`26B-A4B`, `35B-A3B`) and the whole Qwen 3.6 / 3.8 line
+are 15–20 GB and were dropped for that reason alone, not for being bad — on a 32 GB machine they
+are worth adding back. The 2B and 4B ones were dropped for the opposite reason.
+
+### The three big ones, and the wired limit
+
+macOS caps what the GPU may hold at about 75% of RAM, which on a 16 GB Mac is roughly 12 GB. Under
+that cap the weights are simply resident and everything is fine; over it, macOS starts paging and
+the run does not fail, it just crawls — which is worth knowing before reading a `units/min` column
+and blaming the model.
+
+- `gemma4-e4b-8bit` (8.9 GB) and `gemma-12b-qat-6bit` (11.2 GB) sit under the cap. The 6-bit one
+  leaves little room for a long prompt, so watch `units/min` on the first pass.
+- `mistral-24b` (13.3 GB) does **not**, and needs the cap raised before it is worth measuring:
+
+  ```sh
+  sudo sysctl iogpu.wired_limit_mb=14336   # until the next reboot
+  ```
+
+  It is there because it is the only way to put twice the parameters into this budget, and because
+  no Mistral has ever been measured against this catalogue. Treat its first run as an experiment,
+  not as a candidate.
 
 ### Reading the names
 
-| Piece             | What it means                                                                                                                                                                                                                    |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `-it`             | Instruction-tuned: the model follows instructions and holds a conversation. The base model, without it, only continues text and is no use here.                                                                                  |
-| `-4bit` / `-8bit` | How hard the weights were squeezed. 4-bit is half the size and slightly worse at everything; 8-bit is the same model with no quantisation damage left to blame.                                                                  |
-| `-qat`            | Quantisation-aware training: Google trained the model _knowing_ it would be squeezed to 4 bits, so it survives it better. Same size on disk, less damage. Prefer it when both exist.                                             |
-| `OptiQ`           | Per-layer bit allocation: a sensitivity pass decides which layers hurt most when squeezed and leaves those at 8 bits while the rest stay at 4. Bigger than a flat 4-bit, smaller than 8-bit. Loads with plain `mlx_lm` for text. |
-| `E2B` / `E4B`     | Gemma 4's selective activation: the whole model sits in memory but only that many billion parameters run per token. That is where `gemma4-e4b`'s speed comes from.                                                               |
-| `A3B` / `A4B`     | Mixture of experts, with that many billion active. Same trade in a much bigger package.                                                                                                                                          |
+| Piece             | What it means                                                                                                                                                                                                                            |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-it`             | Instruction-tuned: the model follows instructions and holds a conversation. The base model, without it, only continues text and is no use here.                                                                                          |
+| `-4bit` / `-8bit` | How hard the weights were squeezed. 4-bit is half the size and slightly worse at everything; 8-bit is the same model with no quantisation damage left to blame.                                                                          |
+| `-qat`            | Quantisation-aware training: Google trained the model _knowing_ it would be squeezed to 4 bits, so it survives it better. Same size on disk, less damage. Prefer it when both exist.                                                     |
+| `OptiQ`           | Per-layer bit allocation: a sensitivity pass decides which layers hurt most when squeezed and leaves those at 8 bits while the rest stay at 4. Bigger than a flat 4-bit, smaller than 8-bit, and it needs nothing installed — see below. |
+| `E2B` / `E4B`     | Gemma 4's selective activation: the whole model sits in memory but only that many billion parameters run per token. That is where `gemma4-e4b`'s speed comes from.                                                                       |
+| `A3B` / `A4B`     | Mixture of experts, with that many billion active. Same trade in a much bigger package.                                                                                                                                                  |
 
 Two more things separate them:
 
@@ -118,6 +139,17 @@ Two more things separate them:
 
 If a candidate has no MLX conversion published, `mlx_lm.convert --hf-path <repo> -q` makes one
 locally.
+
+### OptiQ needs nothing installed
+
+The model cards show `import optiq` next to the loading snippet, which reads as a dependency and is
+not one for this tool. OptiQ writes its per-layer choice into the standard MLX `quantization` block
+of `config.json` — 345 per-layer overrides on the E4B, 250 on the Qwen — and `mlx_lm.load` has
+understood that block for a long time. **Plain text generation loads with no extra package.** The
+`mlx-optiq` package is for serving these models with images, which this tool never does.
+
+The one OptiQ conversion that genuinely does not load is the Gemma 4 12B, and the reason is the
+architecture rather than the quantisation:
 
 ### Gemma 4 12B, and why it is not here
 
@@ -470,6 +502,27 @@ the XLIFF only remembers the answers: **re-running a finished bench rebuilds the
 speed table included, without loading a single model**, which is also how to get the comparison
 back after deleting the markdown. Delete a pass's two files to force it to run again. A model that
 cannot be loaded loses its row and the bench goes on; the row says `failed`.
+
+### One directory per experiment, or one for all of them
+
+A pass is named after its model, so **adding models to a bench is meant to be done in place**: the
+same `--output` directory, the same command with one more alias, and only the new passes run. That
+is the common case and mixing them is right — the report then compares everything that has ever run
+there, which is what you want.
+
+What the name cannot hold is anything else you changed. Two runs of the same model with a different
+`--profile`, `--inject`, `--batch` or `--temperature` want the same file, and the second one would
+find it finished and not run at all. So **change the prompt shape, change the `--output`**:
+
+```sh
+uv run translate --bench --model gemma4-e4b-optiq -o bench-runs
+uv run translate --bench --model gemma4-e4b-optiq -o bench-runs/batch-1 --batch 1
+```
+
+Each directory gets its own `comparison.md`, and both stay readable side by side. If it slips
+anyway, nothing is silently wrong: the shape each pass ran with is recorded in its `.json`, a kept
+pass reports the shape it was **actually** translated with rather than the one you just asked for,
+and the run warns on stderr when the two disagree.
 
 **Write the answer down where it will be found**: the fiche of the model in _Choosing a model_ says
 which `--profile` and which `--inject` it entered the comparison with, because that is half the
