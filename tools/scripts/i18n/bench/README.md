@@ -47,7 +47,7 @@ Treinta y dos unidades reales del catálogo, repartidas en seis ejes. La columna
 | tipografía          | 1        | Comillas por idioma alrededor de un hueco que no se traduce                                       |
 
 El eje que más discrimina es el de **género entre claves**, y conviene entender por qué. La
-aplicación compone frases con piezas sueltas: `SQUARE_PIECE` es `«{{ piece }} en {{ square }}»` y
+aplicación compone frases con piezas sueltas: `SQUARE_PIECE` es `«{piece} en {square}»` y
 el hueco lo rellena un `PIECE_*` ya traducido. Traducidas por separado, cada pieza sale bien y la
 frase compuesta sale mal:
 
@@ -93,7 +93,7 @@ variación donde el idioma no la tiene también está fallando.
 
 Dos diferencias con lo que emitirá el paso 9, y las dos a favor de poder medir hoy:
 
-- El hueco del número viaja como `{{ loaded }}` y no como el `#` de ICU. Así lo cuenta el control
+- El hueco del número viaja como `{loaded}` y no como el `#` de ICU. Así lo cuenta el control
   de marcadores de `validate.py`; con un `#` pelado, perderlo no dispararía ningún aviso.
 - El identificador es `puzzle.IMPORTED#plural:few` y no `puzzle.01KZ…#plural:few`. La forma
   `clave#ruta` es la del plan; el ULID se pone cuando el fan-out sea real.

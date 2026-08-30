@@ -10,7 +10,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -134,13 +134,13 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="01KZJ895M4PTW4NRACCX8S8A3B">
 			<notes>
 				<note category="key">CommonI18n.DIFFICULTY</note>
-				<note category="param">{{ level }}: string</note>
+				<note category="param">{level}: string</note>
 				<note category="usage">apps/web/src/app/component/puzzle-difficulty/puzzle-difficulty.component.ts</note>
-				<note category="context">`DIFFICULTY` lleva dentro `{{ level }}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
-				<note category="srcHash">7f8b73556fed</note>
+				<note category="context">`DIFFICULTY` lleva dentro `{level}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
+				<note category="srcHash">f945ba23b76e</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ level }}</data>
+				<data id="d1">{level}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Dificultad: <ph id="s1" dataRef="d1"/></source>
@@ -151,7 +151,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 			<notes>
 				<note category="key">CommonI18n.DIFFICULTY_MEDIUM</note>
 				<note category="usage">apps/web/src/app/component/puzzle-difficulty/puzzle-difficulty.component.ts</note>
-				<note category="context">`DIFFICULTY` lleva dentro `{{ level }}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
+				<note category="context">`DIFFICULTY` lleva dentro `{level}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
 				<note category="srcHash">721c9525ade2</note>
 			</notes>
 			<segment state="initial">
@@ -163,7 +163,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 			<notes>
 				<note category="key">CommonI18n.DIFFICULTY_HARD</note>
 				<note category="usage">apps/web/src/app/component/puzzle-difficulty/puzzle-difficulty.component.ts</note>
-				<note category="context">`DIFFICULTY` lleva dentro `{{ level }}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
+				<note category="context">`DIFFICULTY` lleva dentro `{level}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
 				<note category="srcHash">b0cfeb97ad3b</note>
 			</notes>
 			<segment state="initial">
@@ -174,14 +174,14 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="01KZJ895M4JJZ9TJTTTG9ZW1VT">
 			<notes>
 				<note category="key">CommonI18n.SQUARE_CAPTURE</note>
-				<note category="param">{{ piece }}: string, {{ square }}: string</note>
+				<note category="param">{piece}: string, {square}: string</note>
 				<note category="usage">apps/web/src/app/component/board-demo/board-demo.component.ts, apps/web/src/app/component/chess-board/chess-board.component.ts</note>
-				<note category="context">Textos accesibles de una casilla. `{{ square }}` es la coordenada algebraica (e4, d5) y no se traduce; `{{ piece }}` llega ya traducido desde `PIECE_*`, así que la frase tiene que sonar bien con ese nombre metido dentro y con su género y su número.</note>
-				<note category="srcHash">a178d0d9a1a2</note>
+				<note category="context">Textos accesibles de una casilla. `{square}` es la coordenada algebraica (e4, d5) y no se traduce; `{piece}` llega ya traducido desde `PIECE_*`, así que la frase tiene que sonar bien con ese nombre metido dentro y con su género y su número.</note>
+				<note category="srcHash">0841e0dd4603</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ piece }}</data>
-				<data id="d2">{{ square }}</data>
+				<data id="d1">{piece}</data>
+				<data id="d2">{square}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Capturar <ph id="s1" dataRef="d1"/> en <ph id="s2" dataRef="d2"/></source>
@@ -230,13 +230,13 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="01KZJ895M549ZZSRNK6BDVXHE7">
 			<notes>
 				<note category="key">CommonI18n.APP_UPDATED</note>
-				<note category="param">{{ version }}: string</note>
+				<note category="param">{version}: string</note>
 				<note category="usage">apps/web/src/app/service/update.service.ts</note>
-				<note category="context">Confirmación de que la actualización ya está puesta. La «v» pegada al `{{ version }}` es parte del formato y se conserva.</note>
-				<note category="srcHash">71faf0c5d917</note>
+				<note category="context">Confirmación de que la actualización ya está puesta. La «v» pegada al `{version}` es parte del formato y se conserva.</note>
+				<note category="srcHash">470cdef8f9a9</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ version }}</data>
+				<data id="d1">{version}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Aplicación actualizada a la v<ph id="s1" dataRef="d1"/></source>
@@ -246,13 +246,13 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="01KZJ895M5XWG0GF2STZHSBH7X">
 			<notes>
 				<note category="key">CommonI18n.SERVER_DETAIL</note>
-				<note category="param">{{ detail }}: string</note>
+				<note category="param">{detail}: string</note>
 				<note category="usage">apps/web/src/app/store/session.store.spec.ts, apps/web/src/app/util/http-error.ts</note>
-				<note category="context">`SERVER_DETAIL` es un contenedor: `{{ detail }}` llega en inglés desde el servidor y no se traduce.</note>
-				<note category="srcHash">e1b146e70fca</note>
+				<note category="context">`SERVER_DETAIL` es un contenedor: `{detail}` llega en inglés desde el servidor y no se traduce.</note>
+				<note category="srcHash">caf3c2c2d54b</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ detail }}</data>
+				<data id="d1">{detail}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/></source>
@@ -274,15 +274,15 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="01KZJ8YH9E11WV4CQKQHWQSK5B">
 			<notes>
 				<note category="key">CommonI18n.SELECT_OPTION_POSITION</note>
-				<note category="param">{{ option }}: string, {{ position }}: number, {{ total }}: number</note>
+				<note category="param">{option}: string, {position}: number, {total}: number</note>
 				<note category="usage">apps/web/src/app/directive/select/component/select-shell.component.ts</note>
-				<note category="context">Textos de un desplegable genérico: el marcador de posición cuando no hay nada elegido, el aviso de que la búsqueda no encuentra nada, la posición leída en voz alta y el botón que quita una opción ya elegida de un desplegable de selección múltiple, donde `{{ option }}` es el nombre de esa opción.</note>
-				<note category="srcHash">b42c8095ef60</note>
+				<note category="context">Textos de un desplegable genérico: el marcador de posición cuando no hay nada elegido, el aviso de que la búsqueda no encuentra nada, la posición leída en voz alta y el botón que quita una opción ya elegida de un desplegable de selección múltiple, donde `{option}` es el nombre de esa opción.</note>
+				<note category="srcHash">c92a4d2bfc0c</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ option }}</data>
-				<data id="d2">{{ position }}</data>
-				<data id="d3">{{ total }}</data>
+				<data id="d1">{option}</data>
+				<data id="d2">{position}</data>
+				<data id="d3">{total}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/>, <ph id="s2" dataRef="d2"/> de <ph id="s3" dataRef="d3"/></source>
@@ -292,14 +292,14 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="01KZJA7B2XY37MYRC4SMK9RXEA">
 			<notes>
 				<note category="key">CommonI18n.PROMOTE_TO_PIECE</note>
-				<note category="param">{{ piece }}: string</note>
+				<note category="param">{piece}: string</note>
 				<note category="usage">apps/web/src/app/component/chess-board/chess-board.component.ts</note>
-				<note category="context">La coronación en sí. `PROMOTE_TO` encabeza la lista y `PROMOTE_TO_PIECE` es cada botón, con `{{ piece }}` ya traducido desde `PIECE_*`: la frase tiene que sonar bien con ese nombre dentro.</note>
+				<note category="context">La coronación en sí. `PROMOTE_TO` encabeza la lista y `PROMOTE_TO_PIECE` es cada botón, con `{piece}` ya traducido desde `PIECE_*`: la frase tiene que sonar bien con ese nombre dentro.</note>
 				<note category="term">coronar → превратить</note>
-				<note category="srcHash">87f414c4c0f1</note>
+				<note category="srcHash">b519237f0205</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ piece }}</data>
+				<data id="d1">{piece}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Coronar a <ph id="s1" dataRef="d1"/></source>
@@ -309,14 +309,14 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="01KZS8AGRW2GFXT6E5GZ6HHZPQ">
 			<notes>
 				<note category="key">CommonI18n.PENDING_SYNC_MESSAGE</note>
-				<note category="param">{{ pending }}: number</note>
+				<note category="param">{pending}: number</note>
 				<note category="usage">apps/web/src/app/component/pending-sync-modal/pending-sync-modal.component.html</note>
-				<note category="context">Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{{ pending }}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{{ rejected }}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.</note>
+				<note category="context">Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.</note>
 				<note category="term">ejercicio → упражнение, sesión → сессия</note>
-				<note category="srcHash">9fdd8739439f</note>
+				<note category="srcHash">adf879d458db</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ pending }}</data>
+				<data id="d1">{pending}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>
@@ -334,7 +334,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -351,13 +351,13 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="auth.01KZJ895M8N6WQ02RVEABREFTF">
 			<notes>
 				<note category="key">AuthI18n.PASSWORD_MIN_LENGTH</note>
-				<note category="param">{{ length }}: number</note>
+				<note category="param">{length}: number</note>
 				<note category="usage">apps/web/src/app/page/auth/register.page.html</note>
-				<note category="context">La contraseña y el mínimo de caracteres que se pide. `{{ length }}` es un número.</note>
-				<note category="srcHash">cf9c43ed908d</note>
+				<note category="context">La contraseña y el mínimo de caracteres que se pide. `{length}` es un número.</note>
+				<note category="srcHash">96c8110520a5</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ length }}</data>
+				<data id="d1">{length}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Al menos <ph id="s1" dataRef="d1"/> caracteres.</source>
@@ -375,7 +375,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -421,7 +421,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -443,14 +443,14 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="match.01KZJ93GA1JB7TQ9Z498HP9W55">
 			<notes>
 				<note category="key">MatchI18n.ILLEGAL_MOVE</note>
-				<note category="param">{{ notation }}: string</note>
+				<note category="param">{notation}: string</note>
 				<note category="usage">apps/web/src/app/page/match/store/match.store.spec.ts, apps/web/src/app/page/match/store/match.store.ts</note>
-				<note category="context">`{{ notation }}` es la jugada en notación algebraica, tal como se escribe en el tablero: se copia sin traducir ni transliterar. Las comillas del original son parte del texto y se sustituyen por las que use el idioma de destino.</note>
+				<note category="context">`{notation}` es la jugada en notación algebraica, tal como se escribe en el tablero: se copia sin traducir ni transliterar. Las comillas del original son parte del texto y se sustituyen por las que use el idioma de destino.</note>
 				<note category="term">jugada → ход</note>
-				<note category="srcHash">a12995b97100</note>
+				<note category="srcHash">a1f7fba56505</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ notation }}</data>
+				<data id="d1">{notation}</data>
 			</originalData>
 			<segment state="initial">
 				<source>«<ph id="s1" dataRef="d1"/>» no es una jugada legal aquí.</source>
@@ -468,7 +468,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -512,7 +512,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -532,15 +532,15 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="puzzle.01KZJ895MCRBV83D30RKZ29XGT">
 			<notes>
 				<note category="key">PuzzleI18n.IMPORTED_WITH_SKIPPED</note>
-				<note category="param">{{ loaded }}: number, {{ skipped }}: number</note>
+				<note category="param">{loaded}: number, {skipped}: number</note>
 				<note category="usage">apps/web/src/app/page/puzzle/store/puzzle-library/puzzle-library.store.ts</note>
-				<note category="context">Resultado de la importación. `{{ loaded }}` son los ejercicios que entraron y `{{ skipped }}` las filas del CSV que no se pudieron leer y se descartaron.</note>
+				<note category="context">Resultado de la importación. `{loaded}` son los ejercicios que entraron y `{skipped}` las filas del CSV que no se pudieron leer y se descartaron.</note>
 				<note category="term">ejercicio → упражнение</note>
-				<note category="srcHash">b54c9c1e16d5</note>
+				<note category="srcHash">78059b137eb8</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ loaded }}</data>
-				<data id="d2">{{ skipped }}</data>
+				<data id="d1">{loaded}</data>
+				<data id="d2">{skipped}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios, descartadas <ph id="s2" dataRef="d2"/> filas ilegibles.</source>
@@ -558,7 +558,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -604,14 +604,14 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="setting.01M08VDKASAE26PQB2099HSB2X">
 			<notes>
 				<note category="key">SettingI18n.SYNC_CURSOR</note>
-				<note category="param">{{ at }}: string</note>
+				<note category="param">{at}: string</note>
 				<note category="usage">apps/web/src/app/component/sync-status/sync-status.component.html</note>
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido.</note>
-				<note category="context">Hasta dónde se ha bajado. `{{ at }}` es una fecha ya formateada por la aplicación.</note>
-				<note category="srcHash">ab552e9e8592</note>
+				<note category="context">Hasta dónde se ha bajado. `{at}` es una fecha ya formateada por la aplicación.</note>
+				<note category="srcHash">71b0b65c5195</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ at }}</data>
+				<data id="d1">{at}</data>
 			</originalData>
 			<segment state="initial">
 				<source>bajado hasta <ph id="s1" dataRef="d1"/></source>
@@ -633,13 +633,13 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="setting.01M08VDKASYW2DA154RCQEXEQN">
 			<notes>
 				<note category="key">SettingI18n.SYNC_MORE_REJECTED</note>
-				<note category="param">{{ count }}: number</note>
+				<note category="param">{count}: number</note>
 				<note category="usage">apps/web/src/app/component/sync-status/sync-status.component.html</note>
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido.</note>
-				<note category="srcHash">ad76c5d32902</note>
+				<note category="srcHash">b02e713dddbf</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ count }}</data>
+				<data id="d1">{count}</data>
 			</originalData>
 			<segment state="initial">
 				<source>y <ph id="s1" dataRef="d1"/> más</source>
@@ -657,7 +657,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -708,17 +708,17 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="training.01KZJ895MC0TCT6MDA60JZDWGQ">
 			<notes>
 				<note category="key">TrainingI18n.CALIBRATION_LABEL_PROGRESS</note>
-				<note category="param">{{ round }}: number, {{ position }}: number, {{ total }}: number, {{ rating }}: number</note>
+				<note category="param">{round}: number, {position}: number, {total}: number, {rating}: number</note>
 				<note category="usage">apps/web/src/app/page/training/training-solve.page.ts</note>
 				<note category="context">La fase de calibración. Una **exploración** es una ronda de un solo ejercicio que salta de nivel para acotar la zona; un **afinado**, una ronda de diez que afina alrededor del nivel encontrado. «Sube el nivel» o «baja el nivel» es que la ronda siguiente reparte ejercicios más difíciles o más fáciles: es una decisión sobre la dificultad, no sobre una posición del tablero ni sobre la profundidad de un cálculo.</note>
 				<note category="term">calibración → калибровка, ronda → раунд</note>
-				<note category="srcHash">2a8fb0ec18c8</note>
+				<note category="srcHash">2a84a788907a</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ round }}</data>
-				<data id="d2">{{ position }}</data>
-				<data id="d3">{{ total }}</data>
-				<data id="d4">{{ rating }}</data>
+				<data id="d1">{round}</data>
+				<data id="d2">{position}</data>
+				<data id="d3">{total}</data>
+				<data id="d4">{rating}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Calibración · ronda <ph id="s1" dataRef="d1"/> (<ph id="s2" dataRef="d2"/> / <ph id="s3" dataRef="d3"/>) · ELO <ph id="s4" dataRef="d4"/></source>
@@ -741,20 +741,20 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<unit id="training.01M2K7B4X0NTWEBKKW6K0ZAZ0R">
 			<notes>
 				<note category="key">TrainingI18n.DAILY_DAY_DETAIL</note>
-				<note category="param">{{ date }}: string, {{ firstTry }}: number, {{ afterMiss }}: number, {{ shown }}: number, {{ mistakes }}: number, {{ hints }}: number, {{ minutes }}: number</note>
+				<note category="param">{date}: string, {firstTry}: number, {afterMiss}: number, {shown}: number, {mistakes}: number, {hints}: number, {minutes}: number</note>
 				<note category="usage">apps/web/src/app/page/training/training.page.ts</note>
 				<note category="context">El gráfico de actividad diaria. Las tres primeras series parten en tres los ejercicios hechos, sin solaparse: **a la primera** (acertados al primer intento), **tras fallar** (encontrados, pero después de al menos un error) y **solución vista** (los que se abandonaron para ver la línea). Las otras dos cuentan otra cosa: **errores** son jugadas equivocadas dentro de un ejercicio, y **pistas** las ayudas pedidas. Cada etiqueta tiene que caber en una leyenda estrecha.</note>
 				<note category="term">a la primera → с первой попытки, tras fallar → после ошибки, solución vista → решение показано, error → ошибка, pista → подсказка</note>
-				<note category="srcHash">6a83e3d7cf8b</note>
+				<note category="srcHash">e8f5a7dc8ab5</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ date }}</data>
-				<data id="d2">{{ firstTry }}</data>
-				<data id="d3">{{ afterMiss }}</data>
-				<data id="d4">{{ shown }}</data>
-				<data id="d5">{{ mistakes }}</data>
-				<data id="d6">{{ hints }}</data>
-				<data id="d7">{{ minutes }}</data>
+				<data id="d1">{date}</data>
+				<data id="d2">{firstTry}</data>
+				<data id="d3">{afterMiss}</data>
+				<data id="d4">{shown}</data>
+				<data id="d5">{mistakes}</data>
+				<data id="d6">{hints}</data>
+				<data id="d7">{minutes}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/> · <ph id="s2" dataRef="d2"/> a la primera, <ph id="s3" dataRef="d3"/> tras fallar, <ph id="s4" dataRef="d4"/> con la solución vista · <ph id="s5" dataRef="d5"/> errores, <ph id="s6" dataRef="d6"/> pistas · <ph id="s7" dataRef="d7"/> min</source>
@@ -772,7 +772,7 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{{ param }}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
+- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -780,7 +780,7 @@ Reglas que valen para todos los idiomas:
 - No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
 - Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
 			<note category="language">Ruso, tuteo (`ты`): la aplicación habla a una sola persona y no la trata de usted. Los botones, en infinitivo, que es lo habitual en una interfaz rusa. Comillas «ёлочки». El vocabulario de ajedrez es el ruso de toda la vida —ладья, конь, слон, ферзь, пат, вариант— y nunca la transcripción del inglés. Los nombres propios de la lista `keep` se dejan en alfabeto latino.</note>
-			<note category="scope">Unidades sintéticas: emulan lo que la exportación con fan-out (paso 9) va a emitir cuando el catálogo hable ICU. Cada una es UNA rama de un plural o de un select de género, no la frase entera. El origen que se enseña es siempre la rama «other» del español, y las hermanas van en la nota «siblings»: la nota «category» dice qué rama se pide y «examples» con qué números se dispara. Traduce sólo esa rama, con la concordancia que le toque, y no la conviertas en una frase genérica que sirva para todas. Hoy el hueco del número viaja como {{ param }}; tras el paso 9 será el «#» de ICU en el mismo sitio.</note>
+			<note category="scope">Unidades sintéticas: emulan lo que la exportación con fan-out (paso 9) va a emitir cuando el catálogo hable ICU. Cada una es UNA rama de un plural o de un select de género, no la frase entera. El origen que se enseña es siempre la rama «other» del español, y las hermanas van en la nota «siblings»: la nota «category» dice qué rama se pide y «examples» con qué números se dispara. Traduce sólo esa rama, con la concordancia que le toque, y no la conviertas en una frase genérica que sirva para todas. Hoy el hueco del número viaja como {param}; tras el paso 9 será el «#» de ICU en el mismo sitio.</note>
 			<note category="glossary">ejercicio → упражнение — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
 sesión → сессия — la sesión iniciada contra el API, guardada en una cookie
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
@@ -790,12 +790,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">puzzle.IMPORTED</note>
 				<note category="category">plural:one</note>
 				<note category="examples">se usa con 1, 21, 101 — todo lo acabado en 1 salvo el 11</note>
-				<note category="siblings">es-ES · one: «Cargado {{ loaded }} ejercicio.» · other: «Cargados {{ loaded }} ejercicios.»</note>
+				<note category="siblings">es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»</note>
 				<note category="context">Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.</note>
-				<note category="srcHash">0e66e0e25787</note>
+				<note category="srcHash">cbdf70319b8d</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ loaded }}</data>
+				<data id="d1">{loaded}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios.</source>
@@ -807,12 +807,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">puzzle.IMPORTED</note>
 				<note category="category">plural:few</note>
 				<note category="examples">se usa con 2, 3, 4, 22, 23, 24…</note>
-				<note category="siblings">es-ES · one: «Cargado {{ loaded }} ejercicio.» · other: «Cargados {{ loaded }} ejercicios.»</note>
+				<note category="siblings">es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»</note>
 				<note category="context">Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.</note>
-				<note category="srcHash">0e66e0e25787</note>
+				<note category="srcHash">cbdf70319b8d</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ loaded }}</data>
+				<data id="d1">{loaded}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios.</source>
@@ -824,12 +824,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">puzzle.IMPORTED</note>
 				<note category="category">plural:many</note>
 				<note category="examples">se usa con 0, 5, 11, 25, 100 — incluye el cero y del 5 al 20</note>
-				<note category="siblings">es-ES · one: «Cargado {{ loaded }} ejercicio.» · other: «Cargados {{ loaded }} ejercicios.»</note>
+				<note category="siblings">es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»</note>
 				<note category="context">Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.</note>
-				<note category="srcHash">0e66e0e25787</note>
+				<note category="srcHash">cbdf70319b8d</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ loaded }}</data>
+				<data id="d1">{loaded}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios.</source>
@@ -841,12 +841,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">puzzle.IMPORTED</note>
 				<note category="category">plural:other</note>
 				<note category="examples">sólo la alcanzan los decimales: 0,5 · 1,5 · 2,5. Es obligatoria aunque no se vea nunca</note>
-				<note category="siblings">es-ES · one: «Cargado {{ loaded }} ejercicio.» · other: «Cargados {{ loaded }} ejercicios.»</note>
+				<note category="siblings">es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»</note>
 				<note category="context">Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.</note>
-				<note category="srcHash">0e66e0e25787</note>
+				<note category="srcHash">cbdf70319b8d</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ loaded }}</data>
+				<data id="d1">{loaded}</data>
 			</originalData>
 			<segment state="initial">
 				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios.</source>
@@ -858,12 +858,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">common.PENDING_SYNC_MESSAGE</note>
 				<note category="category">plural:one</note>
 				<note category="examples">se usa con 1, 21, 101 — todo lo acabado en 1 salvo el 11</note>
-				<note category="siblings">es-ES · one: «{{ pending }} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
+				<note category="siblings">es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
 				<note category="context">Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.</note>
-				<note category="srcHash">9fdd8739439f</note>
+				<note category="srcHash">adf879d458db</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ pending }}</data>
+				<data id="d1">{pending}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>
@@ -875,12 +875,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">common.PENDING_SYNC_MESSAGE</note>
 				<note category="category">plural:few</note>
 				<note category="examples">se usa con 2, 3, 4, 22, 23, 24…</note>
-				<note category="siblings">es-ES · one: «{{ pending }} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
+				<note category="siblings">es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
 				<note category="context">Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.</note>
-				<note category="srcHash">9fdd8739439f</note>
+				<note category="srcHash">adf879d458db</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ pending }}</data>
+				<data id="d1">{pending}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>
@@ -892,12 +892,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">common.PENDING_SYNC_MESSAGE</note>
 				<note category="category">plural:many</note>
 				<note category="examples">se usa con 0, 5, 11, 25, 100 — incluye el cero y del 5 al 20</note>
-				<note category="siblings">es-ES · one: «{{ pending }} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
+				<note category="siblings">es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
 				<note category="context">Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.</note>
-				<note category="srcHash">9fdd8739439f</note>
+				<note category="srcHash">adf879d458db</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ pending }}</data>
+				<data id="d1">{pending}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>
@@ -909,12 +909,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">common.PENDING_SYNC_MESSAGE</note>
 				<note category="category">plural:other</note>
 				<note category="examples">sólo la alcanzan los decimales: 0,5 · 1,5 · 2,5. Es obligatoria aunque no se vea nunca</note>
-				<note category="siblings">es-ES · one: «{{ pending }} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
+				<note category="siblings">es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
 				<note category="context">Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.</note>
-				<note category="srcHash">9fdd8739439f</note>
+				<note category="srcHash">adf879d458db</note>
 			</notes>
 			<originalData>
-				<data id="d1">{{ pending }}</data>
+				<data id="d1">{pending}</data>
 			</originalData>
 			<segment state="initial">
 				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>

@@ -1,6 +1,6 @@
 {
 	"langs": ["en-GB", "ru-RU"],
-	"icuScope": "Unidades sintéticas: emulan lo que la exportación con fan-out (paso 9) va a emitir cuando el catálogo hable ICU. Cada una es UNA rama de un plural o de un select de género, no la frase entera. El origen que se enseña es siempre la rama «other» del español, y las hermanas van en la nota «siblings»: la nota «category» dice qué rama se pide y «examples» con qué números se dispara. Traduce sólo esa rama, con la concordancia que le toque, y no la conviertas en una frase genérica que sirva para todas. Hoy el hueco del número viaja como {{ param }}; tras el paso 9 será el «#» de ICU en el mismo sitio.",
+	"icuScope": "Unidades sintéticas: emulan lo que la exportación con fan-out (paso 9) va a emitir cuando el catálogo hable ICU. Cada una es UNA rama de un plural o de un select de género, no la frase entera. El origen que se enseña es siempre la rama «other» del español, y las hermanas van en la nota «siblings»: la nota «category» dice qué rama se pide y «examples» con qué números se dispara. Traduce sólo esa rama, con la concordancia que le toque, y no la conviertas en una frase genérica que sirva para todas. Hoy el hueco del número viaja como {param}; tras el paso 9 será el «#» de ICU en el mismo sitio.",
 	"real": [
 		{
 			"key": "common.LINE",
@@ -40,7 +40,7 @@
 		{
 			"key": "common.DIFFICULTY",
 			"axis": "género entre claves",
-			"why": "Portadora de {{ level }}, que se rellena con una de las tres siguientes. Fija el sustantivo con el que los tres adjetivos tienen que concordar"
+			"why": "Portadora de {level}, que se rellena con una de las tres siguientes. Fija el sustantivo con el que los tres adjetivos tienen que concordar"
 		},
 		{
 			"key": "common.DIFFICULTY_MEDIUM",
@@ -167,8 +167,8 @@
 		{
 			"key": "puzzle.IMPORTED",
 			"kind": "plural",
-			"source": "Cargados {{ loaded }} ejercicios.",
-			"siblings": "es-ES · one: «Cargado {{ loaded }} ejercicio.» · other: «Cargados {{ loaded }} ejercicios.»",
+			"source": "Cargados {loaded} ejercicios.",
+			"siblings": "es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»",
 			"context": "Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.",
 			"why": "El plural más simple del catálogo: en ruso el sustantivo cambia de caso en cada rama y el participio impersonal no se mueve",
 			"categories": {
@@ -187,8 +187,8 @@
 		{
 			"key": "common.PENDING_SYNC_MESSAGE",
 			"kind": "plural",
-			"source": "{{ pending }} ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.",
-			"siblings": "es-ES · one: «{{ pending }} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba",
+			"source": "{pending} ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.",
+			"siblings": "es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba",
 			"context": "Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.",
 			"why": "Un plural que arrastra la concordancia por dos frases: el verbo, el pronombre y el sustantivo cambian juntos",
 			"categories": {
