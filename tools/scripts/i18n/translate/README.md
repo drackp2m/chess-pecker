@@ -104,15 +104,13 @@ and blaming the model.
 
 - `gemma4-e4b-8bit` (8.9 GB) and `gemma-12b-qat-6bit` (11.2 GB) sit under the cap. The 6-bit one
   leaves little room for a long prompt, so watch `units/min` on the first pass.
-- `mistral-24b` (13.3 GB) does **not**, and needs the cap raised before it is worth measuring:
+- `mistral-24b` (13.3 GB) does **not**, and raising the cap does not save it — see below. It stays
+  in the table as a measured dead end, and would need a 32 GB machine to be worth another look.
 
-  ```sh
-  sudo sysctl iogpu.wired_limit_mb=14336   # until the next reboot
-  ```
-
-  It is there because it is the only way to put twice the parameters into this budget, and because
-  no Mistral has ever been measured against this catalogue. Treat its first run as an experiment,
-  not as a candidate.
+**The number that says a model is paging is `tokens/s`, not `units/min`.** A batch of one-word
+labels generates so few tokens that a crawling model still posts a respectable units/min; only
+tokens/s falls through the floor. Compare against 6.3 (`gemma4-e4b-optiq`) and 2.1
+(`gemma-12b-qat`) on Russian.
 
 ### Reading the names
 
@@ -203,6 +201,14 @@ Four things came out of it, and only one of them is a chrF column:
 
 **DeepL scored below every local generalist** against the hand-written reference. It stays useful
 as a second opinion; it is not the yardstick.
+
+**`mistral-24b` was tried and rejected on a five-unit probe**, which is why it has no row above.
+Twice the parameters produced word-for-word the same Russian as both winners on the five short
+labels that discriminate most — and lower-cased all five, which the prompt forbids and no check
+catches. It ran at **0.3 tokens/s against the OptiQ's 6.3**: 13.3 GB does not fit under a 16 GB
+Mac's wired limit, and raising the limit only moves where the paging happens. Even winning it would
+be unusable, because the real catalogue is ~700 units in each of fourteen languages. Worth
+revisiting on a 32 GB machine and not before.
 
 ## What actually gets sent
 

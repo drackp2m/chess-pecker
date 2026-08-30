@@ -125,7 +125,7 @@ CATALOGUE = (
         "24B",
         "13.3 GB",
         added="2025-06-21",
-        note="Twice the parameters in the same budget, and a family nobody here has measured. Past a 16 GB Mac's default wired limit: see the README.",
+        note="Measured and rejected: 0.3 tokens/s on a 16 GB Mac, and it lower-cases every label.",
     ),
 )
 
