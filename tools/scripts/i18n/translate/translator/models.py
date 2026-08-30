@@ -34,7 +34,7 @@ CATALOGUE = (
         "12B",
         "8.0 GB",
         added="2025-04-15",
-        note="Cleanest run of the bench, and the best Russian. The one to translate with.",
+        note="The safety net: same Russian as the default, three times slower, nothing left for review.",
     ),
     Model(
         "gemma-12b-qat-6bit",
@@ -43,7 +43,7 @@ CATALOGUE = (
         "12B",
         "11.2 GB",
         added="2025-04-15",
-        note="The winner with half the quantisation damage. Nothing else changes.",
+        note="Six bits instead of four: measured, and worth neither the 3.2 GB nor the fifth of speed.",
     ),
     Model(
         "gemma-12b",
@@ -61,7 +61,7 @@ CATALOGUE = (
         "E4B",
         "5.1 GB",
         added="2026-04-02",
-        note="Selective activation: 3x faster than anything else here, weakest Russian.",
+        note="Selective activation, flat 4-bit: drops placeholders and its Russian is the weakest. Use the OptiQ one.",
     ),
     Model(
         "gemma4-e4b-qat",
@@ -70,7 +70,7 @@ CATALOGUE = (
         "E4B",
         "6.8 GB",
         added="2026-06-05",
-        note="Quantisation-aware twin of gemma4-e4b. Unmeasured; the obvious next run.",
+        note="Quantisation-aware twin of gemma4-e4b, still unmeasured. The OptiQ one beat both.",
     ),
     Model(
         "gemma4-e4b-optiq",
@@ -79,7 +79,7 @@ CATALOGUE = (
         "E4B",
         "7.5 GB",
         added="2026-06-13",
-        note="QAT plus per-layer bit allocation: sensitive layers at 8 bits, the rest at 4.",
+        note="QAT plus per-layer bit allocation. Won the bench: best speed, Russian level with the best.",
     ),
     Model(
         "gemma4-e4b-8bit",
@@ -129,7 +129,7 @@ CATALOGUE = (
     ),
 )
 
-DEFAULT_ALIAS = "gemma-12b-qat"
+DEFAULT_ALIAS = "gemma4-e4b-optiq"
 ALIASES = tuple(model.alias for model in CATALOGUE)
 
 

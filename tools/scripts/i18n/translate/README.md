@@ -160,25 +160,49 @@ tower landed after the 0.31.3 release this project pins, and **the main branch s
 E4B and 26B conversions declare plain `gemma4` and load fine, which is why they are in the table and
 the 12B is not. Worth re-checking after an `update:deps`.
 
-### What was dropped, and what it cost
+### What the bench measured
 
-The bench of 30/08/2026 measured `gemma-12b-qat`, `gemma4-e4b`, `qwen-14b`, `qwen35-9b`,
-`translategemma-12b` and DeepL over the 39 English and 43 Russian units of
-`tools/scripts/i18n/bench`. The short version:
+Two rounds on 30/08/2026, over the 39 English and 43 Russian units of `tools/scripts/i18n/bench`.
+**Every pass ran with the same prompt shape** — `--profile instruct`, no `--inject` (nothing in the
+list needs it), `--batch 10`, `--temperature 0` — so the only variable is the model. The passes and
+their cost are in `bench-runs/`, and `ideas/i18n/Decisión del modelo.md` is the decision they led
+to.
 
-- **`gemma-12b-qat` won**, on the strength of the columns that are not chrF: the best Russian score,
-  no unit left for review in either language and no Latin leaking into Russian output.
-- **`gemma4-e4b` is the fast lane** — 19.3 units/min against 5.5, level on English — but the weakest
-  Russian of the generalists. Its QAT, OptiQ and 8-bit siblings are in the table precisely because
-  that trade looks worth chasing and none of them has been measured yet.
+| Model                | chrF en  | chrF ru  | units/min en / ru | Left for review |
+| -------------------- | -------- | -------- | ----------------- | --------------- |
+| `gemma4-e4b-optiq`   | 81.7     | 69.1     | **24.2 / 15.9**   | 1 / 1           |
+| `gemma-12b-qat`      | 80.5     | **69.6** | 7.4 / 5.5         | 0 / 0           |
+| `gemma-12b-qat-6bit` | **82.3** | 68.7     | 6.5 / 4.3         | 0 / 0           |
+| `gemma4-e4b`         | 81.4     | 64.0     | 12.6 / 19.3       | 1 / 0           |
+| `qwen-14b`           | 81.4     | 69.3     | 4.5 / 2.5         | 0 / 1           |
+| `qwen35-9b`          | 81.7     | 68.0     | 4.7 / 5.2         | 0 / 0           |
+| DeepL                | 56.9     | 65.0     | —                 | 7 / 1           |
+| TranslateGemma 12B   | 58.3     | 60.8     | 5.6 / 4.5         | 15 / 16         |
+
+Four things came out of it, and only one of them is a chrF column:
+
+- **`gemma4-e4b-optiq` is the one to use.** Its Russian is level with the best (69.1 against 69.6,
+  which is noise) and it is **three times faster**. Reading the units it loses on, almost all are
+  legitimate paraphrase — `Минимум` where the reference wrote `Не менее` — while the units it wins
+  are real mistakes by the other: `gemma-12b-qat` translated `al día` as `ежедневно`, _daily_,
+  and wrote `и N больше` for `y N más`, which is English grammar in Russian words. Its two
+  `[review]` units are both the glossary false positive the bench README documents, not broken text.
+- **Six bits buy nothing.** `gemma-12b-qat-6bit` gains 1.8 points of English and loses 0.9 of
+  Russian for 3.2 GB more and a fifth of the speed. The QAT conversion at 4 bits was not costing
+  anything, which is the whole reason that experiment existed.
+- **OptiQ fixed the E4B's real problem.** Plain `gemma4-e4b` dropped placeholders ten times and
+  scored 64.0 on Russian; the OptiQ conversion of the same model dropped one and scored 69.1, and
+  it needed 13 model calls where the plain one needed 23 — which is where the extra speed comes
+  from, despite being the larger file.
 - **TranslateGemma lost, and lost badly**: 42 placeholder failures on Russian, 16 units left for
   review, and prose like `Please provide the Spanish text you would like me to translate` written
   into a `<target>`. That answers the question the whole comparison existed to ask — a translation
   specialist working blind against a generalist that gets the catalogue context — and the answer is
-  the generalist. Its aliases are gone; `--profile translate` still works, and a TranslateGemma
-  repository id still selects it, so re-running the experiment costs a full repository name.
-- **DeepL scored below every local generalist** against the hand-written reference. It stays useful
-  as a second opinion; it is not the yardstick.
+  the generalist. Its aliases are gone; `--profile translate` still works and a TranslateGemma
+  repository id still selects it, so re-running that experiment costs a full repository name.
+
+**DeepL scored below every local generalist** against the hand-written reference. It stays useful
+as a second opinion; it is not the yardstick.
 
 ## What actually gets sent
 
