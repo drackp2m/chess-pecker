@@ -6,15 +6,15 @@
  * + es-ES => Español
  * + fr-FR => Français
  * - de-DE => Deutsch
- * - po-BR => Português
+ * - pt-BR => Português
  * - tr-TR => Türkçe
- * - in-ID => Bahasa Indonesia
+ * - id-ID => Bahasa Indonesia
  * - pl-PL => Polski
  * - uk-UA => Українська
  * - it-IT => Italiano
- * - vn-VN => Tiếng Việt
+ * - vi-VN => Tiếng Việt
  * - nl-NL => Nederlands
- * - ch-CN => 中文
+ * - zh-CN => 中文
  * + ca-ES => Català
  */
 
