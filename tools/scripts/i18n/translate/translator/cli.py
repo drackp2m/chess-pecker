@@ -94,7 +94,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--list-models",
         action="store_true",
-        help="Print the known models with their size, disk footprint and prompt shape, then exit.",
+        help=(
+            "Print the known models with their size, expected and actual disk "
+            "footprint and prompt shape, then exit."
+        ),
     )
 
     parser.add_argument(

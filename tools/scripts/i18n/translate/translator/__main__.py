@@ -8,14 +8,14 @@ from pathlib import Path
 
 from .bench import run_bench
 from .cli import build_arg_parser
-from .downloads import prune_cache, show_cache
+from .downloads import prune_cache, show_cache, sizes_by_repo
 from .compare import compare
 from .deepl import DeeplError, run_deepl
 from .dotenv import load_env
 from .engine import build_engine
 from .environment import HostUnsupportedError
 from .memory import TranslationMemory
-from .models import TRANSLATE, profile_for, table
+from .models import TRANSLATE, profile_for, summary, table
 from .prompting import (
     REVIEW_SUB_STATE,
     Batch,
@@ -479,7 +479,9 @@ def main() -> None:
     load_env()
 
     if args.list_models:
-        print(table())
+        downloaded = sizes_by_repo()
+        print(table(downloaded))
+        print(summary(downloaded))
         sys.exit(0)
 
     if args.compare:

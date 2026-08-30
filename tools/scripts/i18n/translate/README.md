@@ -93,8 +93,12 @@ a file exported today translates the same way tomorrow.
 | `translate-12b`               | `mlx-community/translategemma-12b-it-4bit`       | 6.6 GB  |
 | `translate-27b`               | `mlx-community/translategemma-27b-it-4bit`       | 15.2 GB |
 
-`--list-models` prints the same table with a line on what each one is for. Every entry is a real MLX
-conversion published by `mlx-community`; nothing here needs converting by hand.
+`--list-models` prints the same table with a line on what each one is for, plus a `downloaded`
+column with what each one really takes in the Hugging Face cache of this machine — a `—` there means
+it is not pulled yet, and the closing line counts how many of them are. The `on disk` column of the
+table above is the expected footprint; `downloaded` is the measured one, so they can differ by the
+extra files a repository carries. Every entry is a real MLX conversion published by
+`mlx-community`; nothing here needs converting by hand.
 
 Three things separate them:
 
@@ -292,7 +296,7 @@ What each number is for:
 
 - `--dry-run` prints the prompts and writes nothing. With `--limit 20` it is the fastest way to see
   what is really being sent.
-- `--list-models` prints the table above and exits.
+- `--list-models` prints the table above, marking which ones are downloaded, and exits.
 - `--batch N` units per call (default 10). `--batch 1` disables batching.
 - `--no-tm` turns off the run translation memory, which reuses a translation already resolved in
   this run (and is seeded with the targets the file already carries). Turn it off when comparing

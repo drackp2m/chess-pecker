@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from .tables import ruled
@@ -7,6 +8,9 @@ from .tables import ruled
 INSTRUCT = "instruct"
 TRANSLATE = "translate"
 PROFILES = (INSTRUCT, TRANSLATE)
+GIGABYTE = 1e9
+MEGABYTE = 1e6
+MISSING = "—"
 
 
 @dataclass(frozen=True)
@@ -252,12 +256,42 @@ def thinks(repo: str) -> bool:
     return found is not None and found.thinking
 
 
-def columns(model: Model) -> tuple[str, ...]:
-    return (model.alias, model.repo, model.size, model.disk, model.profile, model.note)
+def size_text(size: int) -> str:
+    return f"{size / GIGABYTE:.1f} GB" if size >= GIGABYTE else f"{size / MEGABYTE:.0f} MB"
 
 
-HEADINGS = ("alias", "repository", "size", "on disk", "prompt", "what it is for")
+def local_text(model: Model, downloaded: Mapping[str, int]) -> str:
+    size = downloaded.get(model.repo.lower())
+
+    return size_text(size) if size is not None else MISSING
 
 
-def table() -> str:
-    return ruled([HEADINGS, *(columns(model) for model in CATALOGUE)])
+def columns(model: Model, downloaded: Mapping[str, int]) -> tuple[str, ...]:
+    return (
+        model.alias,
+        model.repo,
+        model.size,
+        model.disk,
+        local_text(model, downloaded),
+        model.profile,
+        model.note,
+    )
+
+
+HEADINGS = ("alias", "repository", "size", "expected", "downloaded", "prompt", "what it is for")
+
+
+def table(downloaded: Mapping[str, int] | None = None) -> str:
+    sizes = downloaded or {}
+
+    return ruled([HEADINGS, *(columns(model, sizes) for model in CATALOGUE)])
+
+
+def summary(downloaded: Mapping[str, int] | None = None) -> str:
+    sizes = downloaded or {}
+    here = [sizes[model.repo.lower()] for model in CATALOGUE if model.repo.lower() in sizes]
+
+    if not here:
+        return "\nNone of them downloaded yet. The first run of one pulls it in."
+
+    return f"\n{len(here)} of {len(CATALOGUE)} downloaded, {size_text(sum(here))} on disk."
