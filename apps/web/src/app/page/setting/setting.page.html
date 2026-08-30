@@ -26,6 +26,24 @@
 	</div>
 
 	<div class="flex-col gap-2">
+		<h4>{{ I18n.setting.GENDER | i18n }}</h4>
+
+		<p class="fs-sm color-contrast-mid">{{ I18n.setting.GENDER_INTRO | i18n }}</p>
+
+		<form [formGroup]="form" class="flex-col gap-1">
+			@for (gender of genders; track gender) {
+				<input
+					appThemed
+					type="radio"
+					[label]="genderLabel[gender] | i18n"
+					[value]="gender"
+					formControlName="gender"
+				/>
+			}
+		</form>
+	</div>
+
+	<div class="flex-col gap-2">
 		<h4>{{ I18n.setting.APPEARANCE | i18n }}</h4>
 
 		<p class="fs-sm color-contrast-mid">{{ I18n.setting.APPEARANCE_INTRO | i18n }}</p>

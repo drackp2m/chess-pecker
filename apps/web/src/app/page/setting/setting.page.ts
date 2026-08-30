@@ -15,6 +15,7 @@ import {
 	Language,
 	SELECTABLE_LANGUAGES,
 } from '@app/definition/language.type';
+import { GENDERS, GENDER_LABEL, Gender } from '@app/definition/model/setting/gender.type';
 import { MOVE_SPEEDS, MOVE_SPEED_LABEL, MoveSpeed } from '@app/definition/move-speed.type';
 import { Theme } from '@app/definition/service/theme.type';
 import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
@@ -23,6 +24,7 @@ import { version } from '@app/package';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { BookmarkPreferenceService } from '@app/service/bookmark-preference.service';
+import { GenderService } from '@app/service/gender.service';
 import { LanguageService } from '@app/service/language.service';
 import { SoundService } from '@app/service/sound.service';
 import { ThemeService } from '@app/service/theme.service';
@@ -53,12 +55,15 @@ export class SettingPage {
 	readonly languages = SELECTABLE_LANGUAGES;
 	readonly languageName = LANGUAGE_NAME;
 	readonly languageFlag = LANGUAGE_FLAG;
+	readonly genders = GENDERS;
+	readonly genderLabel = GENDER_LABEL;
 
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
 	private readonly bookmarkPreference = inject(BookmarkPreferenceService);
 	private readonly sound = inject(SoundService);
 	private readonly languageService = inject(LanguageService);
+	private readonly genderService = inject(GenderService);
 
 	private readonly isBookmarkAlwaysFavorite = computed(
 		() => !this.bookmarkPreference.isPromptEnabled(),
@@ -66,6 +71,10 @@ export class SettingPage {
 
 	readonly form = new FormGroup({
 		language: new FormControl<Language>(this.languageService.selectedLanguage(), {
+			nonNullable: true,
+			validators: [Validators.required],
+		}),
+		gender: new FormControl<Gender>(this.genderService.selectedGender(), {
 			nonNullable: true,
 			validators: [Validators.required],
 		}),
@@ -107,6 +116,10 @@ export class SettingPage {
 	private bindApp(): void {
 		bindSetting(this.form.controls.language, this.languageService.selectedLanguage, (language) => {
 			void this.languageService.updateSelectedLanguage(language);
+		});
+
+		bindSetting(this.form.controls.gender, this.genderService.selectedGender, (gender) => {
+			this.genderService.updateSelectedGender(gender);
 		});
 
 		bindSetting(this.form.controls.appearance, this.themeService.selectedTheme, (theme) => {

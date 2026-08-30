@@ -1,8 +1,10 @@
-import { Injectable, Provider } from '@angular/core';
+import { Injectable, Provider, signal } from '@angular/core';
 import { Translation, TranslocoLoader, provideTransloco } from '@jsverse/transloco';
 import { Observable, of } from 'rxjs';
 
 import { DEFAULT_LANGUAGE, LANGUAGES } from '@app/definition/language.type';
+import { DEFAULT_GENDER } from '@app/definition/model/setting/gender.type';
+import { GenderService } from '@app/service/gender.service';
 
 @Injectable()
 class EmptyTranslationLoader implements TranslocoLoader {
@@ -24,4 +26,8 @@ export const provideTestingI18n = (): Provider[] => [
 		},
 		loader: EmptyTranslationLoader,
 	}),
+	{
+		provide: GenderService,
+		useValue: { selectedGender: signal(DEFAULT_GENDER).asReadonly() },
+	},
 ];

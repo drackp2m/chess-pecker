@@ -12,6 +12,10 @@ El aspecto de la aplicación entera. Las tres opciones son el tema: seguir al si
 
 El idioma de la interfaz. La advertencia importa: la notación de ajedrez no cambia de idioma.
 
+## GENDER_*
+
+El género con el que la aplicación se dirige a quien la usa. Las tres opciones son etiquetas de una fila de botones, así que van cortas. `GENDER_OTHER` es la opción con la que la aplicación habla en género neutro, y el párrafo lo dice tal cual.
+
 ## BOARD_INTRO
 
 Explica que la tira de abajo es un ejercicio de verdad y que se puede fallar a propósito para ver cómo se comporta cada ajuste. «Cómete la torre negra» es la consigna de ese ejercicio y tiene que decir lo mismo que `common.DEMO_TASK`.
