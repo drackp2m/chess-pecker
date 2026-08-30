@@ -54,9 +54,12 @@ async function loadFrench(harness: Harness, french: Catalogue, source: Catalogue
 
 describe('i18n fallback', () => {
 	afterEach(() => {
-		TestBed.inject(HttpTestingController).verify();
-		TestBed.resetTestingModule();
-		vi.restoreAllMocks();
+		try {
+			TestBed.inject(HttpTestingController).verify();
+		} finally {
+			TestBed.resetTestingModule();
+			vi.restoreAllMocks();
+		}
 	});
 
 	it('reads the source language when the active one leaves the key empty', async () => {
