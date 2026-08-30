@@ -9,7 +9,12 @@ import {
 	MoveAnimation,
 } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_LABEL, buildMoveInputMethods } from '@app/definition/board-input.type';
-import { LANGUAGES, LANGUAGE_FLAG, LANGUAGE_NAME, Language } from '@app/definition/language.type';
+import {
+	LANGUAGE_FLAG,
+	LANGUAGE_NAME,
+	Language,
+	SELECTABLE_LANGUAGES,
+} from '@app/definition/language.type';
 import { MOVE_SPEEDS, MOVE_SPEED_LABEL, MoveSpeed } from '@app/definition/move-speed.type';
 import { Theme } from '@app/definition/service/theme.type';
 import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
@@ -45,7 +50,7 @@ export class SettingPage {
 	readonly moveAnimations = MOVE_ANIMATIONS;
 	readonly animationLabel = MOVE_ANIMATION_LABEL;
 	readonly inputLabel = MOVE_INPUT_LABEL;
-	readonly languages = LANGUAGES;
+	readonly languages = SELECTABLE_LANGUAGES;
 	readonly languageName = LANGUAGE_NAME;
 	readonly languageFlag = LANGUAGE_FLAG;
 

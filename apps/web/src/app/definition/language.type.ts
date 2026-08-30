@@ -29,6 +29,15 @@ export const LANGUAGES: readonly Language[] = [
 	'ca-ES',
 ];
 
+export const SELECTABLE_LANGUAGES: readonly Language[] = [
+	'en-GB',
+	// 'ru-RU',
+	// 'hi-IN',
+	'es-ES',
+	// 'fr-FR',
+	// 'ca-ES',
+];
+
 export const DEFAULT_LANGUAGE: Language = 'es-ES';
 
 export const LANGUAGE_NAME = {
@@ -50,13 +59,15 @@ export const LANGUAGE_FLAG = {
 } as const satisfies Record<Language, string>;
 
 export function normalizeLanguage(value: unknown): Language {
-	if (LANGUAGES.includes(value as Language)) {
+	if (SELECTABLE_LANGUAGES.includes(value as Language)) {
 		return value as Language;
 	}
 
 	if ('string' === typeof value) {
 		const base = value.split('-')[0]?.toLowerCase();
-		const match = LANGUAGES.find((language) => language.split('-')[0]?.toLowerCase() === base);
+		const match = SELECTABLE_LANGUAGES.find(
+			(language) => language.split('-')[0]?.toLowerCase() === base,
+		);
 
 		if (undefined !== match) {
 			return match;
