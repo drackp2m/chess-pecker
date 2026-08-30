@@ -41,7 +41,7 @@ uv run translate --list-models
 uv run translate ../../../../translations/fr-FR.xlf --limit 20 --dry-run
 
 # Translate, with a model chosen by alias
-uv run translate ../../../../translations/fr-FR.xlf --model qwen-8b
+uv run translate ../../../../translations/fr-FR.xlf --model qwen35-9b
 ```
 
 Several inputs load the model once and go through them in series, which is the whole point of the
@@ -68,82 +68,85 @@ a file exported today translates the same way tomorrow.
 ## Choosing a model
 
 `--model` takes an alias from the table below or any Hugging Face repository id. The default is
-`gemma-12b`.
+`gemma-12b-qat`, which is what the bench of 30/08/2026 settled on.
 
-| Alias                         | Repository                                       | On disk |
-| ----------------------------- | ------------------------------------------------ | ------- |
-| `gemma-4b` / `gemma-4b-qat`   | `mlx-community/gemma-3-4b-it[-qat]-4bit`         | ~3 GB   |
-| `gemma-12b` / `gemma-12b-qat` | `mlx-community/gemma-3-12b-it[-qat]-4bit`        | 8 GB    |
-| `gemma-27b` / `gemma-27b-qat` | `mlx-community/gemma-3-27b-it[-qat]-4bit`        | 16.8 GB |
-| `gemma4-e2b`                  | `mlx-community/gemma-4-e2b-it-4bit`              | 3.6 GB  |
-| `gemma4-e4b`                  | `mlx-community/gemma-4-e4b-it-4bit`              | 5.1 GB  |
-| `gemma4-26b`                  | `mlx-community/gemma-4-26b-a4b-it-4bit`          | 15.3 GB |
-| `gemma4-31b`                  | `mlx-community/gemma-4-31b-it-4bit`              | 18.4 GB |
-| `qwen-4b`                     | `mlx-community/Qwen3-4B-Instruct-2507-4bit`      | 2.3 GB  |
-| `qwen-8b`                     | `mlx-community/Qwen3-8B-4bit`                    | 4.6 GB  |
-| `qwen-14b`                    | `mlx-community/Qwen3-14B-4bit`                   | 8.3 GB  |
-| `qwen-30b`                    | `mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit` | 17.2 GB |
-| `qwen35-2b`                   | `mlx-community/Qwen3.5-2B-4bit`                  | 1.7 GB  |
-| `qwen35-4b`                   | `mlx-community/Qwen3.5-4B-4bit`                  | 3.0 GB  |
-| `qwen35-9b`                   | `mlx-community/Qwen3.5-9B-4bit`                  | 6.0 GB  |
-| `qwen36-35b`                  | `mlx-community/Qwen3.6-35B-A3B-4bit`             | 20.4 GB |
-| `qwen38-27b`                  | `mlx-community/Qwen3.8-27B-4bit`                 | 16.1 GB |
-| `translate-4b`                | `mlx-community/translategemma-4b-it-4bit`        | 2.2 GB  |
-| `translate-4b-8bit`           | `mlx-community/translategemma-4b-it-8bit`        | 4.1 GB  |
-| `translate-12b`               | `mlx-community/translategemma-12b-it-4bit`       | 6.6 GB  |
-| `translate-27b`               | `mlx-community/translategemma-27b-it-4bit`       | 15.2 GB |
+| Alias              | Repository                                    | On disk | Published  |
+| ------------------ | --------------------------------------------- | ------- | ---------- |
+| `gemma-12b-qat`    | `mlx-community/gemma-3-12b-it-qat-4bit`       | 8.0 GB  | 2025-04-15 |
+| `gemma-12b`        | `mlx-community/gemma-3-12b-it-4bit`           | 8.0 GB  | 2025-03-12 |
+| `gemma4-e4b`       | `mlx-community/gemma-4-e4b-it-4bit`           | 5.1 GB  | 2026-04-02 |
+| `gemma4-e4b-qat`   | `mlx-community/gemma-4-E4B-it-qat-4bit`       | 6.8 GB  | 2026-06-05 |
+| `gemma4-e4b-optiq` | `mlx-community/gemma-4-e4b-it-qat-OptiQ-4bit` | 7.5 GB  | 2026-06-13 |
+| `gemma4-e4b-8bit`  | `mlx-community/gemma-4-e4b-it-8bit`           | 8.9 GB  | 2026-04-02 |
+| `qwen-14b`         | `mlx-community/Qwen3-14B-4bit`                | 8.3 GB  | 2025-04-28 |
+| `qwen35-9b`        | `mlx-community/Qwen3.5-9B-4bit`               | 6.0 GB  | 2026-03-02 |
+| `qwen35-9b-optiq`  | `mlx-community/Qwen3.5-9B-OptiQ-4bit`         | 8.2 GB  | 2026-03-05 |
 
-`--list-models` prints the same table with a line on what each one is for, plus a `downloaded`
-column with what each one really takes in the Hugging Face cache of this machine — a `—` there means
-it is not pulled yet, and the closing line counts how many of them are. The `on disk` column of the
-table above is the expected footprint; `downloaded` is the measured one, so they can differ by the
-extra files a repository carries. Every entry is a real MLX conversion published by
-`mlx-community`; nothing here needs converting by hand.
+`--list-models` prints the same table with what each one is for and how much of it is already on
+disk. _Published_ is when the MLX conversion was uploaded, not when the model was announced; the
+weights behind a `gemma-3` conversion of 2025 are the model Google released that spring.
 
-Three things separate them:
+**Everything here fits a 16 GB Mac.** That is the whole selection rule: a model needs roughly its
+size on disk in unified memory, plus the context, plus whatever the Mac is already doing, so the
+practical ceiling is about 9 GB and the list stops there. The 27B and 31B conversions, the
+mixture-of-experts ones (`26B-A4B`, `35B-A3B`) and the whole Qwen 3.6 / 3.8 line are 15–20 GB and
+were dropped for that reason alone, not for being bad — on a 32 GB machine they are worth adding
+back. The 2B and 4B ones were dropped for the opposite reason.
 
-- **QAT or not.** The `-qat-` conversions are quantisation-aware: same size on disk, less damage
-  from the 4-bit squeeze. Prefer them when both exist. They are a different download, so switching
-  costs a fresh pull.
-- **Thinking.** Qwen3 `8B` and `14B` are hybrid reasoning models. Left alone they would spend the
-  whole token budget thinking and return nothing, so the engine turns it off twice over: through the
-  chat template (`enable_thinking=False`) and with the `/no_think` switch appended to the user turn.
-  The `2507` lines (`qwen-4b`, `qwen-30b`) never reason and need neither.
-- **Specialist or generalist.** See below.
-- **Whether the prompt cache survives.** The `qwen35-*` / `qwen36-*` / `qwen38-*` families are
-  `Qwen3_5ForConditionalGeneration`: part attention, part linear-attention layers whose state is a
-  recurrent `ArraysCache`. `mlx_lm` cannot trim that, so the cache is rebuilt on every call and the
-  shared head is re-read every time instead of once per scope. The run says so on stderr the first
-  time it happens, and `prompt tokens/call` in the summary shows the cost. They are still worth
-  measuring — just read that number before comparing them to a Gemma or a Qwen 3.
-  These repositories are multimodal upstream; `mlx_lm` drops the vision tower and loads the text
-  half, so nothing extra needs installing.
+### Reading the names
 
-Budget roughly the same amount of unified memory as the file takes on disk, plus the context. If a
-candidate has no MLX conversion published, `mlx_lm.convert --hf-path <repo> -q` makes one locally.
+| Piece             | What it means                                                                                                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-it`             | Instruction-tuned: the model follows instructions and holds a conversation. The base model, without it, only continues text and is no use here.                                                                                  |
+| `-4bit` / `-8bit` | How hard the weights were squeezed. 4-bit is half the size and slightly worse at everything; 8-bit is the same model with no quantisation damage left to blame.                                                                  |
+| `-qat`            | Quantisation-aware training: Google trained the model _knowing_ it would be squeezed to 4 bits, so it survives it better. Same size on disk, less damage. Prefer it when both exist.                                             |
+| `OptiQ`           | Per-layer bit allocation: a sensitivity pass decides which layers hurt most when squeezed and leaves those at 8 bits while the rest stay at 4. Bigger than a flat 4-bit, smaller than 8-bit. Loads with plain `mlx_lm` for text. |
+| `E2B` / `E4B`     | Gemma 4's selective activation: the whole model sits in memory but only that many billion parameters run per token. That is where `gemma4-e4b`'s speed comes from.                                                               |
+| `A3B` / `A4B`     | Mixture of experts, with that many billion active. Same trade in a much bigger package.                                                                                                                                          |
 
-Two Gemma 4 conversions are deliberately **not** in the table: `gemma-4-12b-it-4bit` and its QAT
-twin declare `model_type: gemma4_unified`, and `mlx_lm` resolves an architecture by importing
-`mlx_lm.models.<model_type>`. There is no `gemma4_unified.py` in mlx-lm 0.31.3, which is the newest
-release, so they cannot be loaded at all yet. Worth re-checking after an `update:deps`.
+Two more things separate them:
 
-### The specialist: TranslateGemma
+- **Thinking.** Qwen3 `14B` is a hybrid reasoning model. Left alone it would spend the whole token
+  budget thinking and return nothing, so the engine turns it off twice over: through the chat
+  template (`enable_thinking=False`) and with the `/no_think` switch appended to the user turn.
+- **Whether the prompt cache survives.** The `qwen35-*` family is `Qwen3_5ForConditionalGeneration`:
+  part attention, part linear-attention layers whose state is a recurrent `ArraysCache`. `mlx_lm`
+  cannot trim that, so the cache is rebuilt on every call and the shared head is re-read every time
+  instead of once per scope. The run says so on stderr the first time it happens, and
+  `prompt tokens/call` in the summary shows the cost — 1322 against gemma-12b-qat's 1469 for a
+  prompt a third the size. They are still worth measuring, just read that number first.
 
-TranslateGemma is a translation-only model, and `--profile translate` is what it needs — `auto`
-picks it from the model name. Its chat template reads exactly three fields (`source_lang_code`,
-`target_lang_code`, `text`) wrapped in a fixed English instruction. **There is no system message, no
-context slot and no lexical-constraint mechanism**, so none of the catalogue context reaches it, and
-it cannot be batched.
+If a candidate has no MLX conversion published, `mlx_lm.convert --hf-path <repo> -q` makes one
+locally.
 
-`--inject` is the workaround Google itself recommends: terminology goes inside `text` or nowhere.
-`terms` puts the glossary pairs this string actually touches on their own lines, already bilingual
-(`ciclo = cycle`), and fences the string to translate in `⟦ ⟧`. `full` adds the key's context note.
-`none` sends the bare source.
+### Gemma 4 12B, and why it is not here
 
-The catch is that a translate-only model translates whatever it is given, notes included, so the
-answer comes back with the injected lines translated too. The fence is read back out of the reply,
-and the last line is taken when there is no fence; whatever slips through still has to pass the same
-validation as everything else.
+`gemma-4-12B-it-4bit`, its QAT twin and both OptiQ conversions declare `model_type: gemma4_unified`,
+and `mlx_lm` resolves an architecture by importing `mlx_lm.models.<model_type>`. The unified text
+tower landed after the 0.31.3 release this project pins, and **the main branch still reports version
+0.31.3**, so a version check cannot tell them apart — it needs `mlx-lm` installed from git. The
+E4B and 26B conversions declare plain `gemma4` and load fine, which is why they are in the table and
+the 12B is not. Worth re-checking after an `update:deps`.
+
+### What was dropped, and what it cost
+
+The bench of 30/08/2026 measured `gemma-12b-qat`, `gemma4-e4b`, `qwen-14b`, `qwen35-9b`,
+`translategemma-12b` and DeepL over the 39 English and 43 Russian units of
+`tools/scripts/i18n/bench`. The short version:
+
+- **`gemma-12b-qat` won**, on the strength of the columns that are not chrF: the best Russian score,
+  no unit left for review in either language and no Latin leaking into Russian output.
+- **`gemma4-e4b` is the fast lane** — 19.3 units/min against 5.5, level on English — but the weakest
+  Russian of the generalists. Its QAT, OptiQ and 8-bit siblings are in the table precisely because
+  that trade looks worth chasing and none of them has been measured yet.
+- **TranslateGemma lost, and lost badly**: 42 placeholder failures on Russian, 16 units left for
+  review, and prose like `Please provide the Spanish text you would like me to translate` written
+  into a `<target>`. That answers the question the whole comparison existed to ask — a translation
+  specialist working blind against a generalist that gets the catalogue context — and the answer is
+  the generalist. Its aliases are gone; `--profile translate` still works, and a TranslateGemma
+  repository id still selects it, so re-running the experiment costs a full repository name.
+- **DeepL scored below every local generalist** against the hand-written reference. It stays useful
+  as a second opinion; it is not the yardstick.
 
 ## What actually gets sent
 
@@ -303,6 +306,9 @@ What each number is for:
   models, so every unit is really translated.
 - `--deepl` translates with the DeepL API instead of a local model, writing `<input>.deepl.xlf`
   for use as a `--reference`. `--no-glossary` sends the catalogue vocabulary along with it or not.
+- `--inject` only does anything under `--profile translate`, whose template has room for no context
+  of its own: `terms` smuggles the glossary pairs that string touches into the text itself, `full`
+  adds the context note, `none` sends the bare source. No catalogue model needs it any more.
 - `--compare` scores the given translated files against each other instead of translating, and
   `--reference <file>` makes one of them the yardstick. `--worst N` sets how many disagreeing units
   are printed in full (default 10). `--scope` narrows all of it.
@@ -333,14 +339,14 @@ trimmed — otherwise it is rebuilt, which costs speed and never correctness.
 
 ## When it misbehaves
 
-| What you see                                        | What it is                                                                                                                               |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| A long silence after `Loading mlx model …`          | The weights coming down. The first run of a model downloads it with no progress line of its own.                                         |
-| `<end_of_turn>` repeated thirty times               | A model that kept talking past its own stop token. Generation now stops at the first one and the tail is cut; nothing reaches the XLIFF. |
-| Empty answers from `qwen-8b` / `qwen-14b`           | Thinking was not switched off — an old chat template in the conversion. Try a `2507` alias, which never reasons.                         |
-| Most units say `(model, …)` instead of `(batch, …)` | The model is not honouring the numbered format. Use `--batch 1`, or a bigger model.                                                      |
-| `… rejected the prompt`                             | A translation-only model got the layered prompt. Add `--profile translate` (or use a `translate-*` alias, where `auto` does it for you). |
-| Lots of `[review]`                                  | Read the list at the end of the run: it names the check that failed for each one. `--report` writes the same thing as a table.           |
+| What you see                                        | What it is                                                                                                                                     |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| A long silence after `Loading mlx model …`          | The weights coming down. The first run of a model downloads it with no progress line of its own.                                               |
+| `<end_of_turn>` repeated thirty times               | A model that kept talking past its own stop token. Generation now stops at the first one and the tail is cut; nothing reaches the XLIFF.       |
+| Empty answers from `qwen-14b`                       | Thinking was not switched off — an old chat template in the conversion. Use a model that never reasons, such as `gemma-12b-qat`.               |
+| Most units say `(model, …)` instead of `(batch, …)` | The model is not honouring the numbered format. Use `--batch 1`, or a bigger model.                                                            |
+| `… rejected the prompt`                             | A translation-only model got the layered prompt. Add `--profile translate`, which `auto` picks on its own from a TranslateGemma repository id. |
+| Lots of `[review]`                                  | Read the list at the end of the run: it names the check that failed for each one. `--report` writes the same thing as a table.                 |
 
 ## Comparing two runs
 
@@ -349,7 +355,7 @@ length. Whether the French reads like French is not in there. `--compare` scores
 files of the same language against each other and points at the units worth reading by hand:
 
 ```sh
-uv run translate fr-FR.qwen35-9b.xlf fr-FR.qwen35-4b.xlf fr-FR.gemma4-e4b.xlf --compare
+uv run translate fr-FR.qwen35-9b.xlf fr-FR.qwen-14b.xlf fr-FR.gemma4-e4b.xlf --compare
 uv run translate fr-FR.*.xlf --compare --reference fr-FR.deepl.xlf --worst 20
 ```
 
@@ -357,6 +363,13 @@ The score is **chrF**, the character n-gram F-score: no tokenizer, and no penalt
 that glues its morphemes together, which is what makes it survive Russian and Catalan where a
 word-level score would not. Placeholders are collapsed to one character each before scoring, so a
 long `{{ param }}` name cannot inflate the agreement between two otherwise different sentences.
+Only the n-gram orders a string is long enough to have are averaged, so a four-character label and
+a lone placeholder still score 100 when they match — the catalogue is full of one-word labels, and
+without that they would be scored on their length instead.
+
+What chrF cannot see is a paraphrase. Two correct translations that chose different words score
+low against each other, so a gap of a few points between two files is noise: the number says which
+units to go and read, not which file is right.
 
 With no `--reference`, each file is scored against **all the others**: the number is agreement, not
 correctness. That is still the useful half, because the unit where every file disagrees is almost
@@ -372,7 +385,7 @@ fr-FR · 4 file(s) · 85 unit(s) in common
 file            units  chrF  worst  under 50
 --------------  -----  ----  -----  --------
 qwen35-9b.xlf   85     73.3  59.5   0
-gemma4-e2b.xlf  85     40.6  2.5    4
+gemma4-e4b.xlf  85     40.6  2.5    4
 ```
 
 `under 50` is the column to read first: it counts the units where that file went its own way, and
@@ -419,7 +432,7 @@ The recipe from nothing to a table, so it can be repeated in six months without 
 It runs on the host, from this directory, and `--bench` is the whole of it:
 
 ```sh
-uv run translate --bench --model gemma-12b,qwen35-9b,translate-12b,deepl
+uv run translate --bench --model gemma-12b-qat,gemma4-e4b,gemma4-e4b-qat,deepl
 ```
 
 1. **What goes in.** With no input file it takes every `*.blank.xlf` of
@@ -433,7 +446,7 @@ uv run translate --bench --model gemma-12b,qwen35-9b,translate-12b,deepl
 3. **One pass per model and file.** `--model` is a comma-separated list here, and `deepl` counts as
    one more candidate — it goes through the DeepL API and needs `DEEPL_API_KEY`, as above. The
    translation memory is off for every pass, so every unit is really translated. `--profile` and
-   `--inject` apply to the whole run, so measuring `translate-12b` on `--inject full` as well is a
+   `--inject` apply to the whole run, so measuring a model on a second prompt shape as well is a
    second command with its own `--output`.
 4. **What it leaves.** One XLIFF per pass in `bench-runs/`, named `<lang>.<alias>.xlf`
    (`--output <dir>` moves them), and `bench-runs/comparison.md` (`--report <file>` moves that).
@@ -441,18 +454,22 @@ uv run translate --bench --model gemma-12b,qwen35-9b,translate-12b,deepl
    cut the report does not have.
 5. **What the markdown says**, per bench file: the quality table — chrF against the reference, its
    worst unit, how many fell `under 50`, the prompt shape the pass ran with and the checks that
-   failed — then the cost table, then chrF by scope, then the worst N units printed in full with
-   the reference and every pass underneath. `--worst N` sets how many (default 10). The quality
-   table is printed to the terminal as the run goes, so nothing has to be opened to see it.
+   failed — then the cost table with units/min, seconds per unit and tokens/s, then chrF by scope,
+   then the worst N units printed in full with the reference and every pass underneath. `--worst N`
+   sets how many (default 10). The quality and cost tables are printed to the terminal as well, so
+   nothing has to be opened to see them.
 6. **Reading it.** `under 50` first, then the `bench-icu` column of the by-scope table, which is
    the fan-out of step 9 and the reason the bench has synthetic units at all. Then read the worst
    list: the score says which units to read, not whether the translation is good. The bench README
    lists the units that always trip a check for reasons that are not the model's fault.
 
 A pass whose output file is already complete is not translated again, so a bench survives Ctrl-C
-and adding a model later is the same command with one more alias — only the new pass runs. Delete
-the file to force a pass again. A model that cannot be loaded loses its row and the bench goes on;
-the row says `failed`.
+and adding a model later is the same command with one more alias — only the new pass runs. What
+each pass cost goes into a `.json` beside its XLIFF, because the clock stops with the process and
+the XLIFF only remembers the answers: **re-running a finished bench rebuilds the whole report,
+speed table included, without loading a single model**, which is also how to get the comparison
+back after deleting the markdown. Delete a pass's two files to force it to run again. A model that
+cannot be loaded loses its row and the bench goes on; the row says `failed`.
 
 **Write the answer down where it will be found**: the fiche of the model in _Choosing a model_ says
 which `--profile` and which `--inject` it entered the comparison with, because that is half the

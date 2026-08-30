@@ -22,25 +22,19 @@ class Model:
     disk: str
     profile: str = INSTRUCT
     thinking: bool = False
+    added: str = ""
     note: str = ""
 
 
 CATALOGUE = (
     Model(
-        "gemma-4b",
-        "mlx-community/gemma-3-4b-it-4bit",
+        "gemma-12b-qat",
+        "mlx-community/gemma-3-12b-it-qat-4bit",
         "Gemma 3",
-        "4B",
-        "3.4 GB",
-        note="Smallest one that still reads the whole prompt. Fast, loses nuance.",
-    ),
-    Model(
-        "gemma-4b-qat",
-        "mlx-community/gemma-3-4b-it-qat-4bit",
-        "Gemma 3",
-        "4B",
-        "3.0 GB",
-        note="Quantisation-aware conversion: same size, less damage than plain 4-bit.",
+        "12B",
+        "8.0 GB",
+        added="2025-04-15",
+        note="Cleanest run of the bench, and the best Russian. The one to translate with.",
     ),
     Model(
         "gemma-12b",
@@ -48,39 +42,8 @@ CATALOGUE = (
         "Gemma 3",
         "12B",
         "8.0 GB",
-        note="The generalist the plan takes as its reference point.",
-    ),
-    Model(
-        "gemma-12b-qat",
-        "mlx-community/gemma-3-12b-it-qat-4bit",
-        "Gemma 3",
-        "12B",
-        "8.0 GB",
-        note="Same weights as gemma-12b, quantisation-aware. Start here on a 16 GB Mac.",
-    ),
-    Model(
-        "gemma-27b",
-        "mlx-community/gemma-3-27b-it-4bit",
-        "Gemma 3",
-        "27B",
-        "16.8 GB",
-        note="Needs 32 GB of unified memory to stay comfortable.",
-    ),
-    Model(
-        "gemma-27b-qat",
-        "mlx-community/gemma-3-27b-it-qat-4bit",
-        "Gemma 3",
-        "27B",
-        "16.8 GB",
-        note="The best Gemma that fits on a 32 GB Mac.",
-    ),
-    Model(
-        "gemma4-e2b",
-        "mlx-community/gemma-4-e2b-it-4bit",
-        "Gemma 4",
-        "E2B",
-        "3.6 GB",
-        note="Selective activation: 2B of it runs at a time, all of it sits in memory.",
+        added="2025-03-12",
+        note="Same weights without the QAT conversion: what quantisation alone costs.",
     ),
     Model(
         "gemma4-e4b",
@@ -88,40 +51,35 @@ CATALOGUE = (
         "Gemma 4",
         "E4B",
         "5.1 GB",
-        note="The bigger of the two selective ones. The Gemma 4 to try first.",
+        added="2026-04-02",
+        note="Selective activation: 3x faster than anything else here, weakest Russian.",
     ),
     Model(
-        "gemma4-26b",
-        "mlx-community/gemma-4-26b-a4b-it-4bit",
+        "gemma4-e4b-qat",
+        "mlx-community/gemma-4-E4B-it-qat-4bit",
         "Gemma 4",
-        "26B-A4B",
-        "15.3 GB",
-        note="Mixture of experts, 4B active. Wants a 32 GB Mac.",
+        "E4B",
+        "6.8 GB",
+        added="2026-06-05",
+        note="Quantisation-aware twin of gemma4-e4b. Unmeasured; the obvious next run.",
     ),
     Model(
-        "gemma4-31b",
-        "mlx-community/gemma-4-31b-it-4bit",
+        "gemma4-e4b-optiq",
+        "mlx-community/gemma-4-e4b-it-qat-OptiQ-4bit",
         "Gemma 4",
-        "31B",
-        "18.4 GB",
-        note="The dense flagship. Slow, and the most Gemma 4 there is.",
+        "E4B",
+        "7.5 GB",
+        added="2026-06-13",
+        note="QAT plus per-layer bit allocation: sensitive layers at 8 bits, the rest at 4.",
     ),
     Model(
-        "qwen-4b",
-        "mlx-community/Qwen3-4B-Instruct-2507-4bit",
-        "Qwen 3",
-        "4B",
-        "2.3 GB",
-        note="The 2507 instruct line never reasons, so nothing has to be turned off.",
-    ),
-    Model(
-        "qwen-8b",
-        "mlx-community/Qwen3-8B-4bit",
-        "Qwen 3",
-        "8B",
-        "4.6 GB",
-        thinking=True,
-        note="Hybrid model: thinking is switched off through the chat template.",
+        "gemma4-e4b-8bit",
+        "mlx-community/gemma-4-e4b-it-8bit",
+        "Gemma 4",
+        "E4B",
+        "8.9 GB",
+        added="2026-04-02",
+        note="The same model with no quantisation damage left to blame. The family ceiling.",
     ),
     Model(
         "qwen-14b",
@@ -130,31 +88,8 @@ CATALOGUE = (
         "14B",
         "8.3 GB",
         thinking=True,
-        note="Same family as qwen-8b, one size up.",
-    ),
-    Model(
-        "qwen-30b",
-        "mlx-community/Qwen3-30B-A3B-Instruct-2507-4bit",
-        "Qwen 3",
-        "30B-A3B",
-        "17.2 GB",
-        note="Mixture of experts: 3B active, so it runs near a small model on a big machine.",
-    ),
-    Model(
-        "qwen35-2b",
-        "mlx-community/Qwen3.5-2B-4bit",
-        "Qwen 3.5",
-        "2B",
-        "1.7 GB",
-        note="The smallest thing here. Worth a run when speed is the whole point.",
-    ),
-    Model(
-        "qwen35-4b",
-        "mlx-community/Qwen3.5-4B-4bit",
-        "Qwen 3.5",
-        "4B",
-        "3.0 GB",
-        note="Successor to qwen-4b. Linear-attention layers: no prompt cache, see the README.",
+        added="2025-04-28",
+        note="Ties the best Russian score, but the slowest of the lot and it leaks Latin.",
     ),
     Model(
         "qwen35-9b",
@@ -162,63 +97,21 @@ CATALOGUE = (
         "Qwen 3.5",
         "9B",
         "6.0 GB",
-        note="Successor to qwen-8b, same caveat about the prompt cache.",
+        added="2026-03-02",
+        note="Best English of the bench. Linear attention: no prompt cache, see the README.",
     ),
     Model(
-        "qwen36-35b",
-        "mlx-community/Qwen3.6-35B-A3B-4bit",
-        "Qwen 3.6",
-        "35B-A3B",
-        "20.4 GB",
-        note="Mixture of experts, 3B active. Wants a 32 GB Mac.",
-    ),
-    Model(
-        "qwen38-27b",
-        "mlx-community/Qwen3.8-27B-4bit",
-        "Qwen 3.8",
-        "27B",
-        "16.1 GB",
-        note="The newest dense Qwen. Multimodal upstream; mlx-lm loads the text half.",
-    ),
-    Model(
-        "translate-4b",
-        "mlx-community/translategemma-4b-it-4bit",
-        "TranslateGemma",
-        "4B",
-        "2.2 GB",
-        profile=TRANSLATE,
-        note="Translation only: no system prompt, no context, no batching.",
-    ),
-    Model(
-        "translate-4b-8bit",
-        "mlx-community/translategemma-4b-it-8bit",
-        "TranslateGemma",
-        "4B",
-        "4.1 GB",
-        profile=TRANSLATE,
-        note="Same model, 8-bit: the cheapest way to tell quantisation damage apart from the model.",
-    ),
-    Model(
-        "translate-12b",
-        "mlx-community/translategemma-12b-it-4bit",
-        "TranslateGemma",
-        "12B",
-        "6.6 GB",
-        profile=TRANSLATE,
-        note="The middle size of the specialist.",
-    ),
-    Model(
-        "translate-27b",
-        "mlx-community/translategemma-27b-it-4bit",
-        "TranslateGemma",
-        "27B",
-        "15.2 GB",
-        profile=TRANSLATE,
-        note="The biggest specialist that fits on a 32 GB Mac.",
+        "qwen35-9b-optiq",
+        "mlx-community/Qwen3.5-9B-OptiQ-4bit",
+        "Qwen 3.5",
+        "9B",
+        "8.2 GB",
+        added="2026-03-05",
+        note="Per-layer bit allocation over qwen35-9b, and the download people reach for.",
     ),
 )
 
-DEFAULT_ALIAS = "gemma-12b"
+DEFAULT_ALIAS = "gemma-12b-qat"
 ALIASES = tuple(model.alias for model in CATALOGUE)
 
 
@@ -273,12 +166,12 @@ def columns(model: Model, downloaded: Mapping[str, int]) -> tuple[str, ...]:
         model.size,
         model.disk,
         local_text(model, downloaded),
-        model.profile,
+        model.added or MISSING,
         model.note,
     )
 
 
-HEADINGS = ("alias", "repository", "size", "expected", "downloaded", "prompt", "what it is for")
+HEADINGS = ("alias", "repository", "size", "expected", "downloaded", "added", "what it is for")
 
 
 def table(downloaded: Mapping[str, int] | None = None) -> str:

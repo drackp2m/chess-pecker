@@ -112,6 +112,11 @@ Dos diferencias con lo que emitirá el paso 9, y las dos a favor de poder medir 
   `EXPLORATION` («Scan» → «Exploration»). Medir contra el catálogo habría premiado el error.
 - **`ru-RU` está vacío en el catálogo**, así que su mitad del banco no sale de ninguna traducción
   previa. Es texto escrito para esto.
+- **Las notas del fan-out no llegan hoy al modelo.** El prompt sólo monta las notas `context`,
+  `term` y `param`; `category`, `examples` y `siblings` se quedan en el XLIFF sin leer. El modelo
+  ve cuatro veces la misma frase española sin que nada le diga qué rama es cada una, así que
+  devuelve la misma traducción cuatro veces. **La columna `bench-icu` no mide al modelo hasta que
+  el paso 12 monte esas notas en el prompt**, y el fan-out del paso 9 no se puede validar antes.
 - **`hi-IN` no está.** El paso 4.4 tiene que decidir también sobre el hindi y este banco no le da
   nada: hacen falta cuarenta traducciones al hindi escritas por alguien que lo hable. Hasta
   entonces, la decisión sobre `hi-IN` se toma sin patrón debajo.
@@ -127,10 +132,10 @@ comparison».
 cd tools/scripts/i18n/translate
 
 # Los dos idiomas del banco por tres modelos y DeepL
-uv run translate --bench --model gemma-12b,qwen35-9b,translate-12b,deepl
+uv run translate --bench --model gemma-12b-qat,gemma4-e4b,qwen35-9b,deepl
 
 # Sólo el ruso, con las pasadas y el informe en otro sitio
-uv run translate --bench --model gemma-12b,deepl ../bench/ru-RU.blank.xlf -o ../../../../bench-ru
+uv run translate --bench --model gemma-12b-qat,deepl ../bench/ru-RU.blank.xlf -o ../../../../bench-ru
 ```
 
 Sin fichero de entrada coge todos los `*.blank.xlf` de este directorio, y de cada uno saca su
@@ -155,8 +160,10 @@ salir de la misma generación del banco: si se regenera entre una pasada y la co
 unidades que hayan cambiado de origen se quedan fuera y la columna `missing` las cuenta.
 
 Una pasada cuyo fichero ya está completo no se vuelve a traducir, de modo que añadir un modelo más
-tarde es el mismo comando con un alias más: sólo corre lo que falta. Para repetir una pasada, se
-borra su fichero.
+tarde es el mismo comando con un alias más: sólo corre lo que falta. Lo que costó cada pasada queda
+en un `.json` al lado de su XLIFF, así que **volver a lanzar un banco terminado rehace el informe
+entero, tabla de velocidad incluida, sin cargar ningún modelo**. Para repetir una pasada se borran
+sus dos ficheros.
 
 ## Cuando el español cambie
 

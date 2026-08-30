@@ -5,6 +5,7 @@ compute; what lives here is the loop, the clock and the table."""
 
 from __future__ import annotations
 
+import json
 import time
 from argparse import Namespace
 from collections import Counter
@@ -81,8 +82,35 @@ def reference_for(path: Path, args) -> Path:
     return path.with_name(f"{bare_stem(path)}{path.suffix}")
 
 
+# An alias can also be a bare repository id, and its slashes would name
+# directories nobody created.
 def output_of(out: Path, path: Path, alias: str) -> Path:
-    return out / f"{bare_stem(path)}.{alias}{path.suffix}"
+    return out / f"{bare_stem(path)}.{alias.replace('/', '_')}{path.suffix}"
+
+
+# The XLIFF says what a pass answered, never what it cost: the clock stops with
+# the process. Saved beside it, the cost survives, so re-running a finished
+# bench rebuilds the whole report — speed included — without loading a model.
+def stats_of(output: Path) -> Path:
+    return output.with_suffix(".json")
+
+
+def save_stats(current: "Pass") -> None:
+    try:
+        stats_of(current.output).write_text(
+            json.dumps(current.summary, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+    except OSError:
+        pass
+
+
+def load_stats(current: "Pass") -> dict:
+    path = stats_of(current.output)
+
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
 
 
 def lang_of(path: Path) -> str:
@@ -125,8 +153,18 @@ def pass_args(args, alias: str) -> Namespace:
     return settings
 
 
+def codes_of(reporter: Reporter) -> dict[str, int]:
+    counts: Counter = Counter()
+
+    for record in reporter.records:
+        counts.update(issue.split(":")[0] for issue in record.issues)
+
+    return dict(counts)
+
+
 # DeepL keeps no token accounting of its own, so its row says what it can and
-# nothing more; every other number comes from the run summary as it is.
+# nothing more — but the checks did run on its answers, and counting them off
+# the records is what keeps that column comparable with the models'.
 def summary_of(reporter: Reporter, elapsed: float) -> dict:
     if reporter.finished:
         return reporter.finished
@@ -138,6 +176,7 @@ def summary_of(reporter: Reporter, elapsed: float) -> dict:
         "review": len(reporter.reviewed),
         "seconds": elapsed,
         "units_per_minute": reporter.translated / minutes if minutes else 0.0,
+        "tally": {"single_issues": codes_of(reporter)},
     }
 
 
@@ -218,6 +257,8 @@ def run_pass(current: Pass, args, reporter, translate, deepl) -> None:
 
     current.summary = summary_of(inner, time.perf_counter() - started)
 
+    save_stats(current)
+
 
 def translate_all(plan: list[Pass], args, reporter, translate, deepl) -> None:
     for index, current in enumerate(plan, start=1):
@@ -225,7 +266,9 @@ def translate_all(plan: list[Pass], args, reporter, translate, deepl) -> None:
 
         if current.output.exists() and not pending_of(current.output, args.scope):
             current.reused = True
-            reporter.say(f"\n===== {head}: kept {current.output}, nothing left pending")
+            current.summary = load_stats(current)
+            kept = "with what it cost" if current.summary else "cost unknown"
+            reporter.say(f"\n===== {head}: kept {current.output}, {kept}")
             continue
 
         reporter.say(f"\n===== {head}  →  {current.output}")
@@ -322,7 +365,9 @@ def cost_rows(group: list[Pass]) -> list[tuple]:
     rows = [COST]
 
     for current in group:
-        if current.reused:
+        if current.reused and current.summary:
+            rows.append(cost_row(current))
+        elif current.reused:
             rows.append(blank_row(current, COST, "kept"))
         elif current.error or not current.summary:
             rows.append(blank_row(current, COST, "failed"))
@@ -405,8 +450,12 @@ def section(group: list[Pass], args, reporter) -> list[str]:
     sheets = sheets_of(group, args.scope)
     quality = quality_rows(group, gold, sheets)
 
+    cost = cost_rows(group)
+
     reporter.say(f"\n{lang} · scored against {group[0].reference.name}\n")
     reporter.say(ruled(quality))
+    reporter.say("")
+    reporter.say(ruled(cost))
 
     return [
         "",
@@ -419,7 +468,7 @@ def section(group: list[Pass], args, reporter) -> list[str]:
         "",
         "Cost:",
         "",
-        *table(cost_rows(group)),
+        *table(cost),
         "",
         "chrF by scope:",
         "",
