@@ -435,7 +435,7 @@ Outside a terminal that can go raw the same question is asked by typing instead,
 
 ### The unauthenticated-requests warning
 
-> You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN…
+> You are sending unauthenticated requests to the HF Hub. Please set a HUGGINGFACE_TOKEN…
 
 A **free** account is enough to silence it and lifts the anonymous rate limit, which is what
 throttles a run that pulls several models in a row. Either log in once:
@@ -444,9 +444,9 @@ throttles a run that pulls several models in a row. Either log in once:
 uv run --project tools/scripts/i18n/translate hf auth login
 ```
 
-or put `HF_TOKEN` in the `.env` at the repo root, next to `DEEPL_API_KEY`. The translator reads that
+or put `HUGGINGFACE_TOKEN` in the `.env` at the repo root, next to `DEEPL_API_KEY`. The translator reads that
 file itself on startup — the same walk up to `pnpm-workspace.yaml` the API does — and only fills in
-what the shell has not already exported, so `HF_TOKEN=… uv run translate …` still wins over the
+what the shell has not already exported, so `HUGGINGFACE_TOKEN=… uv run translate …` still wins over the
 file for a single command. Exporting it from your shell profile works exactly as before;
 `huggingface_hub` picks the variable up on its own either way.
 
