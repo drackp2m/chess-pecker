@@ -8,13 +8,13 @@ Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de 
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
 - Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
 - No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
 - Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.
+- Cuando la ficha pida la forma para «sin especificar», reformula la frase para que no haya nada que concordar en género. No inventes una terminación que el idioma no tenga.
 
 ## en-GB
 

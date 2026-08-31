@@ -4,7 +4,7 @@ import { repoFiles } from '../lint/walk-files.mjs';
 
 export const DEFAULTS = {
 	lockFile: path.join('tools', 'test-lock.json'),
-	suffixes: ['.spec.ts', '.test.ts'],
+	suffixes: ['.spec.ts', '.test.ts', '.test.mjs'],
 };
 
 export const toPosix = (file) => file.split(path.sep).join('/');
