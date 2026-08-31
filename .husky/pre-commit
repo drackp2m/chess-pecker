@@ -1,5 +1,6 @@
 pnpm run pnpm:match
 pnpm exec lint-staged
+pnpm run test:tools
 pnpm run i18n:check --fix
 pnpm run test:lock
 pnpm run --filter @chesspecker/api typecheck
