@@ -14,7 +14,7 @@
 		"i18n:import": "node tools/scripts/i18n/import.mjs",
 		"i18n:clear": "node tools/scripts/i18n/clear.mjs",
 		"i18n:state": "node tools/scripts/i18n/state.mjs",
-		"test:tools": "node --test 'tools/scripts/**/*.test.mjs'",
+		"test:tools": "node tools/scripts/test/tools-test.mjs",
 		"test:lock": "node tools/scripts/test-lock/index.mjs",
 		"test:lock:select": "node tools/scripts/test-lock/index.mjs --select",
 		"update:deps": "sh tools/scripts/update-deps.sh",
