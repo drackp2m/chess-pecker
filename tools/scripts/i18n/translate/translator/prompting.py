@@ -6,8 +6,10 @@ from dataclasses import dataclass, field
 from .context import parse_glossary, split_rules, useful_keep, useful_rules, useful_terms
 from .models import INSTRUCT, TRANSLATE
 from .placeholders import marker_position
+from .validate import Form, validate_forms
 from .xliff_io import (
     expected_markers_for,
+    find_files,
     find_units,
     first_segment,
     note_text,
@@ -458,3 +460,31 @@ def blocks_of(
     units = [unit_of(element, scope) for element in find_units(file_element)]
 
     return block, [unit for unit in units if unit is not None]
+
+
+def group_id(unit: Unit) -> str:
+    return unit.id.split("#", 1)[0]
+
+
+def forms_of(units: list[Unit]) -> list[Form]:
+    return [Form(note_text(unit.notes, "category"), unit.previous) for unit in units]
+
+
+def groups_of(units: list[Unit]) -> list[list[Unit]]:
+    grouped: dict[str, list[Unit]] = {}
+
+    for unit in units:
+        if "#" in unit.id:
+            grouped.setdefault(group_id(unit), []).append(unit)
+
+    return list(grouped.values())
+
+
+def check_forms(root, langs: tuple[str, str], reporter) -> None:
+    for element in find_files(root):
+        block, units = blocks_of(element, *langs)
+
+        for group in groups_of(units):
+            reporter.forms_checked(
+                block.scope, group[0].key, validate_forms(forms_of(group), langs[1])
+            )

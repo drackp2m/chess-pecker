@@ -11,7 +11,7 @@ from pathlib import Path
 
 import requests
 
-from .prompting import REVIEW_SUB_STATE, blocks_of, is_pending
+from .prompting import REVIEW_SUB_STATE, blocks_of, check_forms, is_pending
 from .report import Record
 from .validate import validate
 from .xliff_io import (
@@ -248,6 +248,7 @@ def translate_file(
             save_tree(tree, output)
     finally:
         save_tree(tree, output)
+        check_forms(root, (source_lang, target_lang), reporter)
 
         if glossary:
             client.delete(f"/glossaries/{glossary}")

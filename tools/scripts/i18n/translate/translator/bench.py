@@ -185,6 +185,7 @@ def summary_of(reporter: Reporter, elapsed: float) -> dict:
     return {
         "translated": reporter.translated,
         "review": len(reporter.reviewed),
+        "forms_flagged": len(reporter.groups),
         "seconds": elapsed,
         "units_per_minute": reporter.translated / minutes if minutes else 0.0,
         "tally": {"single_issues": codes_of(reporter)},

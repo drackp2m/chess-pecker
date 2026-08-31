@@ -21,6 +21,7 @@ from .prompting import (
     Batch,
     blocks_of,
     build_messages,
+    check_forms,
     fenced,
     is_pending,
     parse_answers,
@@ -382,6 +383,7 @@ def run_file(path: Path, session: Session, budget: int | None, shape=None, outpu
     finally:
         if not args.dry_run:
             save_tree(tree, output)
+            check_forms(root, (source_lang, target_lang), session.reporter)
 
 
 # The bench names an output of its own for every pass, so the caller may hand
