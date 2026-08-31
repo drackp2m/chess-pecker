@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from .context import parse_glossary, split_rules, useful_keep, useful_rules, useful_terms
 from .models import INSTRUCT, TRANSLATE
 from .placeholders import marker_position
-from .validate import Form, validate_forms
+from .validate import FORM_SEPARATOR, Form, validate_forms
 from .xliff_io import (
     expected_markers_for,
     find_files,
@@ -46,12 +46,26 @@ MARKER_RULES = """\
 - No inventes marcadores que no estén en el origen.\
 """
 
+PLURAL_RULES = """\
+## Formas plurales
+- Esta frase se usa sólo con ciertos números, y su nota dice con cuáles.
+- Escríbela como se diría en el idioma de destino con esos números, no con «uno» ni «muchos».
+- El marcador del número va donde lo pida la gramática, y no se sustituye por una cifra.
+- Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con «o».\
+"""
+
 CONTEXT_PREFIX = "- Qué es: "
 DEMAND_PREFIX = "- Usa sí o sí estas palabras: "
 
 MIXED_MARKERS = (
     "- Sólo llevan marcadores los textos donde ya aparecen; a los demás no les añadas ninguno."
 )
+
+MIXED_PLURALS = (
+    "- Sólo son formas de plural los textos que lo dicen en su nota; los demás no lo son."
+)
+
+PLURAL_LABEL = "plural"
 
 EXAMPLE = """\
 Ejemplo:
@@ -65,6 +79,10 @@ SECTIONS = (
     ("language", "El idioma de destino"),
     ("scope", "Esta sección de la interfaz"),
 )
+
+
+def sentence(text: str) -> str:
+    return text if text.endswith("…") else f"{text}."
 
 
 def parse_terms(text: str) -> list[tuple[str, str]]:
@@ -149,6 +167,30 @@ class Unit:
     def terms(self) -> list[tuple[str, str]]:
         return parse_terms(note_text(self.notes, "term"))
 
+    @property
+    def category(self) -> str:
+        return note_text(self.notes, "category")
+
+    @property
+    def examples(self) -> str:
+        return " ".join(note_text(self.notes, "examples").split())
+
+    @property
+    def plural_key(self) -> str:
+        for part in self.category.split(FORM_SEPARATOR):
+            name, _, key = part.partition(":")
+
+            if name == PLURAL_LABEL:
+                return key
+
+        return ""
+
+    def plural_lines(self) -> list[str]:
+        if not self.examples:
+            return []
+
+        return [f"- Forma «{self.plural_key or self.category}»: {sentence(self.examples)}"]
+
     def markers_note(self) -> list[str]:
         lines = []
 
@@ -174,7 +216,7 @@ class Unit:
         return [DEMAND_PREFIX + ", ".join(pairs)] if pairs else []
 
     def detail_lines(self) -> list[str]:
-        lines = []
+        lines = self.plural_lines()
         params = note_text(self.notes, "param")
 
         if params and self.markers:
@@ -229,6 +271,19 @@ class Batch:
 
         return f"{MARKER_RULES}\n{MIXED_MARKERS}"
 
+    @property
+    def has_plurals(self) -> bool:
+        return any(unit.examples for unit in self.units)
+
+    def plural_section(self) -> str:
+        if not self.has_plurals:
+            return ""
+
+        if all(unit.examples for unit in self.units):
+            return PLURAL_RULES
+
+        return f"{PLURAL_RULES}\n{MIXED_PLURALS}"
+
     def named_terms(self) -> set[str]:
         return {source.casefold() for unit in self.units for source, _ in unit.terms}
 
@@ -277,6 +332,7 @@ class Batch:
         parts = (
             self.rules_section(),
             self.marker_section(),
+            self.plural_section(),
             self.glossary_section(),
             self.retry_section(),
             self.example_section(),
@@ -467,7 +523,7 @@ def group_id(unit: Unit) -> str:
 
 
 def forms_of(units: list[Unit]) -> list[Form]:
-    return [Form(note_text(unit.notes, "category"), unit.previous) for unit in units]
+    return [Form(unit.category, unit.previous) for unit in units]
 
 
 def groups_of(units: list[Unit]) -> list[list[Unit]]:

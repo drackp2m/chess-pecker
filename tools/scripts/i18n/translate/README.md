@@ -233,6 +233,14 @@ the call:
   one tuple in `context.py`.
 - **The placeholder rules.** The whole `## Marcadores` block is dropped when nothing in the call has
   a placeholder, which is most of the catalogue.
+- **The plural rules.** `## Formas plurales` is sent only when the call carries a form of a plural,
+  and it says the generic part — write this one as the target language would say it with those
+  numbers, keep the number as a marker, leave the sister forms alone. Which numbers select _this_
+  form is per text, so it travels as a note under it (`- Forma «few»: se usa con 2, 3, 4, 22…`),
+  the same split `## Marcadores` already has with its per-marker lines. When only some of the texts
+  in the call are forms, one more line says so, so the rest are not read as plurals. Without this
+  the fan-out is pointless: the model sees the same Spanish sentence four times with nothing to
+  tell the copies apart, and answers the same thing four times.
 - **The repeated context.** The export hangs a group's note on every key of that group, so ten keys
   of one group would carry the same paragraph ten times. It is written once and the rest point at
   it (`- Qué es: lo mismo que en el 8.`).
