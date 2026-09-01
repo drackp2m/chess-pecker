@@ -6,6 +6,9 @@
 	[class.open]="store.isOpen()"
 	[class.position-top]="positionTop()"
 	[class.disabled]="store.disabled()"
+	[class.multiple]="store.multiple()"
+	[class.chips]="showsChips()"
+	[class.wrap]="wraps()"
 >
 	<!-- Same structure as the input directive builds: the real label wraps
 	the control (a combobox search input owning focus, keyboard and text
@@ -14,26 +17,51 @@
 	only carries the form value. -->
 	<label [attr.for]="searchInputId()">
 		<span #labelText class="label-measure" aria-hidden="true">{{ label() | i18n }}</span>
-		<input
-			#searchInput
-			class="search-input"
-			type="text"
-			role="combobox"
-			autocomplete="off"
-			[attr.aria-autocomplete]="store.searchable() ? 'list' : null"
-			[readOnly]="!store.searchable()"
-			[id]="searchInputId()"
-			[attr.aria-controls]="listboxId()"
-			[attr.aria-expanded]="store.isOpen()"
-			[attr.aria-label]="label() | i18n"
-			[placeholder]="placeholder() | i18n"
-			[value]="displayText()"
-			[disabled]="store.disabled()"
-			(focus)="onSearchFocus()"
-			(blur)="onSearchBlur()"
-			(input)="onSearchInput($event)"
-			(keydown)="onSearchKeydown($event)"
-		/>
+		<div class="value-area" [class.has-values]="hasValues()">
+			@if (showsValues()) {
+				@if (showsChips()) {
+					@for (chip of chipList(); track chip.value) {
+						<span class="chip"
+							>{{ chip.head
+							}}<span class="chip-tail"
+								>{{ chip.tail
+								}}<button
+									type="button"
+									class="chip-remove"
+									[attr.aria-label]="
+										I18n.common.SELECT_REMOVE_OPTION | i18n: { option: chip.label }
+									"
+									(click)="removeChip(chip)"
+								>
+									<app-svg icon="xmark" [size]="12" /></button></span
+						></span>
+						<wbr />
+					}
+				} @else {
+					<span class="value-text">{{ store.selectedText() }}</span>
+				}
+			}
+			<input
+				#searchInput
+				class="search-input"
+				type="text"
+				role="combobox"
+				autocomplete="off"
+				[attr.aria-autocomplete]="store.searchable() ? 'list' : null"
+				[readOnly]="!store.searchable()"
+				[id]="searchInputId()"
+				[attr.aria-controls]="listboxId()"
+				[attr.aria-expanded]="store.isOpen()"
+				[attr.aria-label]="label() | i18n"
+				[placeholder]="placeholder() | i18n"
+				[value]="displayText()"
+				[disabled]="store.disabled()"
+				(focus)="onSearchFocus()"
+				(blur)="onSearchBlur()"
+				(input)="onSearchInput($event)"
+				(keydown)="onSearchKeydown($event)"
+			/>
+		</div>
 		<ng-content></ng-content>
 	</label>
 

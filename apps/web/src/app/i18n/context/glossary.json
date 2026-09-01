@@ -265,6 +265,12 @@
 			}
 		},
 		{
+			"term": "marcador",
+			"group": "contenido",
+			"note": "la lista en la que el jugador guarda un ejercicio ya terminado, y el icono que lo hace; sólo una lista por ejercicio. Nunca el marcador de una partida ni un rotulador",
+			"translations": {}
+		},
+		{
 			"term": "jugada",
 			"group": "ajedrez",
 			"note": "un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar",
@@ -506,6 +512,18 @@
 				"hi-IN": "सत्र",
 				"fr-FR": "session",
 				"ca-ES": "sessió"
+			}
+		},
+		{
+			"term": "reto",
+			"group": "social",
+			"note": "un ejercicio ya terminado que se manda a uno o varios amigos para que lo resuelvan y comparar después los resultados. Nunca «desafío» ni «duelo»",
+			"translations": {
+				"en-GB": "",
+				"ru-RU": "",
+				"hi-IN": "",
+				"fr-FR": "",
+				"ca-ES": ""
 			}
 		}
 	],

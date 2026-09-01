@@ -45,24 +45,24 @@ describe('the board as a move crosses it', () => {
 	});
 
 	/**
-	 * The two beats the plan gives it, as they are actually drawn: the rook is round
-	 * before the king sets off, and the king is still standing on e1 while it goes.
+	 * The two beats the plan gives it, as they are actually drawn: the king is round before
+	 * the rook sets off, and the rook is still standing on h1 while it goes.
 	 */
-	it('castles in two beats, the king waiting on e1 while the rook goes round', () => {
+	it('castles in two beats, the rook waiting on h1 while the king goes round', () => {
 		const board = mountBoard(CASTLING);
 
 		board.play('e1g1');
 
-		expect(board.pieceAt('f1')).toBe('white rook');
-		expect(board.pieceAt('e1')).toBe('white king');
-		expect(board.pieceAt('h1')).toBeUndefined();
-		expect(board.sliding()).toEqual([{ square: 'f1', transform: 'translate(200%, 0%)' }]);
+		expect(board.pieceAt('g1')).toBe('white king');
+		expect(board.pieceAt('h1')).toBe('white rook');
+		expect(board.pieceAt('e1')).toBeUndefined();
+		expect(board.sliding()).toEqual([{ square: 'g1', transform: 'translate(-200%, 0%)' }]);
 
 		board.advance(SLIDE_DURATION);
 
-		expect(board.pieceAt('g1')).toBe('white king');
-		expect(board.pieceAt('e1')).toBeUndefined();
-		expect(board.sliding()).toEqual([{ square: 'g1', transform: 'translate(-200%, 0%)' }]);
+		expect(board.pieceAt('f1')).toBe('white rook');
+		expect(board.pieceAt('h1')).toBeUndefined();
+		expect(board.sliding()).toEqual([{ square: 'f1', transform: 'translate(200%, 0%)' }]);
 	});
 
 	/**

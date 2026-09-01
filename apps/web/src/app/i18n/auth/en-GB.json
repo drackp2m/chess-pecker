@@ -7,7 +7,7 @@
 	"01KZJ895M8CK5V08TPNEZQ38XV": "Create one",
 	"01KZJ895M82WP0GNSCB8ZJBE3W": "A username and a password are enough. The email is optional and only used to get the account back if you lose the password.",
 	"01KZJ895M8N7Y5VZRMW04ANY11": "Email (optional)",
-	"01KZJ895M8N6WQ02RVEABREFTF": "At least {{ length }} characters.",
+	"01KZJ895M8N6WQ02RVEABREFTF": "At least {length} characters.",
 	"01KZJ895M8P2H1QBJ9V0Q3DCBF": "Creating the account…",
 	"01KZJ895M8NR4HJM9V1N3RNNY9": "Already registered?"
 }

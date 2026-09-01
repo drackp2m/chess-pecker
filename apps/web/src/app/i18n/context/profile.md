@@ -10,7 +10,7 @@ Los botones de fila son muy cortos porque van varios en la misma línea. Los men
 
 ## LOGGED_IN_AS
 
-El bloque de la cuenta. `{{ username }}` es el nombre que eligió el jugador: se copia tal cual, sin traducir ni cambiarle las mayúsculas.
+El bloque de la cuenta. `{username}` es el nombre que eligió el jugador: se copia tal cual, sin traducir ni cambiarle las mayúsculas.
 
 ## UNREACHABLE_EXPLANATION
 
@@ -26,7 +26,7 @@ El buscador de gente. Se busca por el principio del nombre de usuario, y no se e
 
 ## NO_MATCH_FOR
 
-La búsqueda no encontró a nadie. `{{ term }}` es lo que escribió el jugador y va entre comillas: se usan las comillas del idioma de destino.
+La búsqueda no encontró a nadie. `{term}` es lo que escribió el jugador y va entre comillas: se usan las comillas del idioma de destino.
 
 ## REQUESTS_*
 

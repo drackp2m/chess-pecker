@@ -358,7 +358,14 @@ export default typescriptEslint.config(
 	{
 		name: 'Complexity',
 		files: ['**/*.ts', '**/*.mts', '**/*.js', '**/*.mjs'],
-		ignores: ['**/*.spec.ts', '**/*.spec.js', '**/*.test.ts', '**/.angular/**'],
+		ignores: [
+			'**/*.spec.ts',
+			'**/*.spec.js',
+			'**/*.test.ts',
+			'**/*.test.js',
+			'**/*.test.mjs',
+			'**/.angular/**',
+		],
 		rules: {
 			'max-lines': ['warn', { max: 400, skipBlankLines: true, skipComments: true }],
 			'max-lines-per-function': [

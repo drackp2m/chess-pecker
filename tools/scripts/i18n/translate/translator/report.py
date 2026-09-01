@@ -141,7 +141,9 @@ class Reporter:
     as_json: bool = False
     started: float = field(default_factory=time.perf_counter)
     records: list[Record] = field(default_factory=list)
+    groups: list[dict] = field(default_factory=list)
     files: list[dict] = field(default_factory=list)
+    finished: dict = field(default_factory=dict)
 
     def reset(self) -> None:
         self.started = time.perf_counter()
@@ -222,6 +224,16 @@ class Reporter:
         for issue in record.issues:
             self.say(f"    ! {issue}")
 
+    def forms_checked(self, scope: str, key: str, issues: list) -> None:
+        if not issues:
+            return
+
+        detail = "; ".join(f"{issue.code} ({issue.detail})" for issue in issues)
+
+        self.groups.append({"scope": scope, "key": key, "issues": detail})
+        self.emit({"event": "forms", "scope": scope, "key": key, "issues": detail})
+        self.say(f"  ! {scope}/{key}: {detail}")
+
     def rates(self, usage) -> dict[str, float]:
         minutes = self.elapsed / 60
 
@@ -244,6 +256,7 @@ class Reporter:
             "from_memory": memory.hits,
             "from_batch": self.batched,
             "review": len(self.reviewed),
+            "forms_flagged": len(self.groups),
             "calls": engine.usage.calls,
             "prompt_tokens": engine.usage.prompt_tokens,
             "generation_tokens": engine.usage.generation_tokens,
@@ -252,6 +265,7 @@ class Reporter:
 
     def finish(self, engine, memory, tally: Tally) -> dict:
         summary = self.summary(engine, memory, tally)
+        self.finished = summary
 
         self.emit(summary)
         self.say()
@@ -276,6 +290,12 @@ class Reporter:
             for record in self.reviewed:
                 self.say(f"  {record.scope}/{record.key}: {'; '.join(record.issues)}")
 
+        if self.groups:
+            self.say(f"\n{len(self.groups)} key(s) whose forms need a look:")
+
+            for group in self.groups:
+                self.say(f"  {group['scope']}/{group['key']}: {group['issues']}")
+
         return summary
 
 
@@ -289,6 +309,7 @@ def write_report(path: Path, summary: dict, reporter: Reporter, tally: Tally) ->
         f"({summary['from_batch']} answered in a batch, "
         f"{summary['from_memory']} from the run memory)",
         f"- Marked for review: {summary['review']}",
+        f"- Keys whose forms need a look: {summary['forms_flagged']}",
         f"- Speed: {summary['units_per_minute']:.1f} units/min, "
         f"{summary['tokens_per_second']:.1f} tokens/s",
         f"- Model calls: {summary['calls']} "
@@ -317,5 +338,12 @@ def write_report(path: Path, summary: dict, reporter: Reporter, tally: Tally) ->
             lines.append(
                 f"| {record.scope} | {record.key} | {source} | {target} | {issues} |"
             )
+
+    if reporter.groups:
+        lines += ["", "## Forms that need a look", "", "| Scope | Key | Why |", "| --- | --- | --- |"]
+
+        for group in reporter.groups:
+            issues = group["issues"].replace("|", "\\|")
+            lines.append(f"| {group['scope']} | {group['key']} | {issues} |")
 
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")

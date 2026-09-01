@@ -203,7 +203,7 @@ async function requeueStore(store: PendingStore<'readwrite'>, pendingSince: Date
 
 const syncStores: StoreNames<AppSchema>[] = [...SYNC_ENTITIES];
 
-const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'activity'];
+const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'activity', 'share'];
 
 const userStores: StoreNames<AppSchema>[] = [
 	'activityDay',
@@ -212,11 +212,13 @@ const userStores: StoreNames<AppSchema>[] = [
 	// the device ask only for what follows a cursor that is not theirs.
 	'attemptCursor',
 	'attemptDraft',
+	'bookmark',
 	'calibrationPuzzle',
 	'calibrationRound',
 	'cycle',
 	'cycleItem',
 	'puzzleSet',
+	'share',
 	'training',
 	'trainingGoal',
 	'trainingPuzzle',

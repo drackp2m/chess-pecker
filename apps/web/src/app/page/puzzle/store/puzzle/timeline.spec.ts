@@ -31,6 +31,7 @@ function timelineInput(
 		fen: FEN,
 		record: { record, freePlayRuns },
 		freePlayIndex: undefined,
+		freePlayScratch: undefined,
 		revealed: undefined,
 		rewound: 0,
 		puzzle: PUZZLE,

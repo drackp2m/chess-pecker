@@ -1,0 +1,941 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:2.0" version="2.0" srcLang="es-ES" trgLang="en-GB">
+	<file id="common" original="apps/web/src/app/i18n/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">El scope raíz: todo lo que se usa desde más de una página. Aquí están la navegación, los controles del tablero, la accesibilidad de las casillas y las piezas, los estados de conexión y los errores que puede levantar cualquier pantalla.
+
+Casi todo son etiquetas muy cortas, y muchas se reutilizan en sitios distintos: una traducción que sólo encaja en un contexto rompe el otro. Ante la duda, la palabra más neutra.</note>
+			<note category="glossary">entrenamiento → training — el programa entero: calibración, conjunto fijado y ciclos. Sólo hay uno en curso a la vez. Es el único nombre: nunca «programa» ni «bloque»
+exploración → exploration — ronda de calibración de un solo ejercicio, que salta de nivel para acotar la zona donde está el jugador. Nunca el juego libre del tablero, que se llama juego libre
+afinado → refinement — ronda de calibración de diez ejercicios que afina el nivel que la exploración encontró; el verbo es afinar. Nunca los ajustes de la aplicación, que son una preferencia y otra palabra
+etapa → stage — cada fila del resumen del entrenamiento: una ronda de calibración o un ciclo. Un ciclo es una etapa; nunca el momento en el que está el entrenamiento
+ciclo → cycle — una vuelta entera al conjunto; se numeran desde 1. Es el único nombre, también al explicar el método Woodpecker: nunca «pasada» ni «vuelta»
+ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+a la primera → first try — el ejercicio acertado al primer intento, sin una sola jugada equivocada. Nunca se dice sólo «resuelto»: el que falla y luego encuentra la línea también la resuelve, y no cuenta aquí
+pista → hint — la ayuda que señala la pieza que hay que mover
+rendirse → give up — abandonar un ejercicio y ver la solución; no es abandonar una partida. El resultado que deja es «solución vista»
+catálogo → catalogue — el fondo de ejercicios del servidor, común a todos los usuarios
+juego libre → free play — mover las piezas de los dos bandos en el tablero, sin rival y sin solución que seguir; nunca «exploración», que en la calibración es una ronda
+marcador — la lista en la que el jugador guarda un ejercicio ya terminado, y el icono que lo hace; sólo una lista por ejercicio. Nunca el marcador de una partida ni un rotulador
+jugada → move — un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar
+línea → line — la secuencia de jugadas que resuelve el ejercicio; nunca una línea de texto ni una fila, ni la línea geométrica del tablero
+partida → match — una partida de ajedrez contra la máquina; nunca una coincidencia, un emparejamiento ni un resultado de búsqueda
+tablero → board
+casilla → square — una de las 64 del tablero; el término de ajedrez, no la celda de una tabla
+bando → side — el color con el que se juega, blancas o negras; nunca una banda, una franja ni un lado del tablero
+pieza → piece — cualquier trebejo del tablero, peón incluido
+dama → queen — la reina; en español la aplicación dice siempre dama, no reina
+torre → rook — la pieza de ajedrez; nunca una torre de edificio
+alfil → bishop
+caballo → knight
+peón → pawn
+coronar → promote — promocionar un peón que llega a la última fila
+jaque mate → checkmate
+rey ahogado → stalemate — el ahogado, que son tablas; nunca ahogarse ni asfixiarse
+tablas → draw
+sesión → session — la sesión iniciada contra el API, guardada en una cookie
+reto →  — un ejercicio ya terminado que se manda a uno o varios amigos para que lo resuelvan y comparar después los resultados. Nunca «desafío» ni «duelo»
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="01KZCNHDHA1Q924MN48RDPTB12">
+			<notes>
+				<note category="key">CommonI18n.REFINE</note>
+				<note category="usage">apps/web/src/app/page/dashboard/training-summary.ts</note>
+				<note category="context">El afinado de la calibración: la ronda de diez ejercicios que afina el nivel encontrado. También un sustantivo, y nunca un ajuste de la aplicación.</note>
+				<note category="term">afinado → refinement</note>
+				<note category="srcHash">e93b2bbde4ca</note>
+			</notes>
+			<segment state="translated">
+				<source>Afinado</source>
+				<target>Refinement</target>
+			</segment>
+		</unit>
+		<unit id="01KZCNHDHA5HH9S8H89X25RBHP">
+			<notes>
+				<note category="key">CommonI18n.EXPLORATION</note>
+				<note category="usage">apps/web/src/app/page/dashboard/training-summary.ts</note>
+				<note category="context">La exploración de la calibración: una ronda de un solo ejercicio, que salta de nivel para acotar la zona. Aquí es un sustantivo, la etiqueta de una etapa, y nunca el juego libre del tablero.</note>
+				<note category="term">exploración → exploration</note>
+				<note category="srcHash">f19e12e9f0c7</note>
+			</notes>
+			<segment state="translated">
+				<source>Exploración</source>
+				<target>Exploration</target>
+			</segment>
+		</unit>
+		<unit id="01KZCGYE0J17YBS1HH8DJTFVFT">
+			<notes>
+				<note category="key">CommonI18n.FIRST_TRY</note>
+				<note category="usage">apps/web/src/app/page/dashboard/dashboard.page.html</note>
+				<note category="context">Encabezado de la columna que cuenta los ejercicios acertados al primer intento sobre los repartidos. No es «resueltos»: el que falla y luego encuentra la línea no cuenta aquí. Tiene que caber en una columna estrecha.</note>
+				<note category="term">a la primera → first try</note>
+				<note category="srcHash">4ba85c174d1c</note>
+			</notes>
+			<segment state="translated">
+				<source>A la primera</source>
+				<target>First try</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M4MBCNAX6GFQ49KBC9">
+			<notes>
+				<note category="key">CommonI18n.MATCH</note>
+				<note category="usage">apps/web/src/app/page/match/match.page.html, apps/web/src/app/page/match/match.routes.ts</note>
+				<note category="context">La partida contra la máquina. Nunca una coincidencia ni un emparejamiento.</note>
+				<note category="term">partida → match</note>
+				<note category="srcHash">3b26cfb8d9cb</note>
+			</notes>
+			<segment state="translated">
+				<source>Partida</source>
+				<target>Match</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M4TSV5R8VQ5CSD3JES">
+			<notes>
+				<note category="key">CommonI18n.BOARD_STEP_BACKWARD</note>
+				<note category="usage">apps/web/src/app/component/board-demo/board-demo.component.html, apps/web/src/app/component/puzzle-solver/puzzle-solver.component.html, apps/web/src/app/component/puzzle-solver/puzzle-solver.component.spec.ts, apps/web/src/app/testing/puzzle-store.harness.ts</note>
+				<note category="context">Los botones de la barra del tablero, compartidos por todas las pantallas que lo pintan. Son etiquetas accesibles además de visibles, así que dicen la acción entera: retroceder una jugada, avanzar una jugada, girar el tablero. `BOARD_GIVE_UP` es rendirse en un ejercicio, que enseña la solución; no es abandonar una partida.</note>
+				<note category="term">jugada → move</note>
+				<note category="srcHash">9f70790e76af</note>
+			</notes>
+			<segment state="translated">
+				<source>Retroceder una jugada</source>
+				<target>Step back one move</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M4HJ7CDCCFX7AASJ2R">
+			<notes>
+				<note category="key">CommonI18n.LINE</note>
+				<note category="usage">apps/web/src/app/component/puzzle-solver/puzzle-solver.component.html</note>
+				<note category="context">Etiqueta de la lista de jugadas de la solución. Es la línea de ajedrez, no una línea de texto.</note>
+				<note category="term">línea → line</note>
+				<note category="srcHash">0ae1ea31051c</note>
+			</notes>
+			<segment state="translated">
+				<source>Línea</source>
+				<target>Line</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M4PTW4NRACCX8S8A3B">
+			<notes>
+				<note category="key">CommonI18n.DIFFICULTY</note>
+				<note category="param">{level}: string</note>
+				<note category="usage">apps/web/src/app/component/puzzle-difficulty/puzzle-difficulty.component.ts</note>
+				<note category="context">`DIFFICULTY` lleva dentro `{level}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
+				<note category="srcHash">f945ba23b76e</note>
+			</notes>
+			<originalData>
+				<data id="d1">{level}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Dificultad: <ph id="s1" dataRef="d1"/></source>
+				<target>Difficulty: <ph id="t1" dataRef="d1"/></target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M4ZTHGX1882A54MFVG">
+			<notes>
+				<note category="key">CommonI18n.DIFFICULTY_MEDIUM</note>
+				<note category="usage">apps/web/src/app/component/puzzle-difficulty/puzzle-difficulty.component.ts</note>
+				<note category="context">`DIFFICULTY` lleva dentro `{level}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
+				<note category="srcHash">721c9525ade2</note>
+			</notes>
+			<segment state="translated">
+				<source>media</source>
+				<target>medium</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M4C212SRRCPC7GNKEE">
+			<notes>
+				<note category="key">CommonI18n.DIFFICULTY_HARD</note>
+				<note category="usage">apps/web/src/app/component/puzzle-difficulty/puzzle-difficulty.component.ts</note>
+				<note category="context">`DIFFICULTY` lleva dentro `{level}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.</note>
+				<note category="srcHash">b0cfeb97ad3b</note>
+			</notes>
+			<segment state="translated">
+				<source>difícil</source>
+				<target>hard</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M4JJZ9TJTTTG9ZW1VT">
+			<notes>
+				<note category="key">CommonI18n.SQUARE_CAPTURE</note>
+				<note category="param">{piece}: string, {square}: string</note>
+				<note category="usage">apps/web/src/app/component/board-demo/board-demo.component.ts, apps/web/src/app/component/chess-board/chess-board.component.ts</note>
+				<note category="context">Textos accesibles de una casilla. `{square}` es la coordenada algebraica (e4, d5) y no se traduce; `{piece}` llega ya traducido desde `PIECE_*`, así que la frase tiene que sonar bien con ese nombre metido dentro y con su género y su número.</note>
+				<note category="srcHash">0841e0dd4603</note>
+			</notes>
+			<originalData>
+				<data id="d1">{piece}</data>
+				<data id="d2">{square}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Capturar <ph id="s1" dataRef="d1"/> en <ph id="s2" dataRef="d2"/></source>
+				<target>Capture <ph id="t1" dataRef="d1"/> on <ph id="t2" dataRef="d2"/></target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M5QEC2CZPYJN9HNW0T">
+			<notes>
+				<note category="key">CommonI18n.PIECE_WHITE_ROOK</note>
+				<note category="usage">apps/web/src/app/util/chess/piece-label.ts</note>
+				<note category="context">Los nombres de las piezas con su color, en minúscula, tal como se leen dentro de una frase de lector de pantalla. Se usa el nombre de la pieza en el ajedrez del idioma de destino, no una traducción literal del español.</note>
+				<note category="term">torre → rook</note>
+				<note category="srcHash">920e5be329f9</note>
+			</notes>
+			<segment state="translated">
+				<source>torre blanca</source>
+				<target>white rook</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M5D5R9K7HKYD8RRX47">
+			<notes>
+				<note category="key">CommonI18n.PIECE_BLACK_PAWN</note>
+				<note category="usage">apps/web/src/app/util/chess/piece-label.ts</note>
+				<note category="context">Los nombres de las piezas con su color, en minúscula, tal como se leen dentro de una frase de lector de pantalla. Se usa el nombre de la pieza en el ajedrez del idioma de destino, no una traducción literal del español.</note>
+				<note category="term">peón → pawn</note>
+				<note category="srcHash">c0ab0145854f</note>
+			</notes>
+			<segment state="translated">
+				<source>peón negro</source>
+				<target>black pawn</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M5E3W36MRF8XKMDHXM">
+			<notes>
+				<note category="key">CommonI18n.PIECE_BLACK_QUEEN</note>
+				<note category="usage">apps/web/src/app/util/chess/piece-label.ts</note>
+				<note category="context">Los nombres de las piezas con su color, en minúscula, tal como se leen dentro de una frase de lector de pantalla. Se usa el nombre de la pieza en el ajedrez del idioma de destino, no una traducción literal del español.</note>
+				<note category="term">dama → queen</note>
+				<note category="srcHash">02a39ccf5946</note>
+			</notes>
+			<segment state="translated">
+				<source>dama negra</source>
+				<target>black queen</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M549ZZSRNK6BDVXHE7">
+			<notes>
+				<note category="key">CommonI18n.APP_UPDATED</note>
+				<note category="param">{version}: string</note>
+				<note category="usage">apps/web/src/app/service/update.service.ts</note>
+				<note category="context">Confirmación de que la actualización ya está puesta. La «v» pegada al `{version}` es parte del formato y se conserva.</note>
+				<note category="srcHash">470cdef8f9a9</note>
+			</notes>
+			<originalData>
+				<data id="d1">{version}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Aplicación actualizada a la v<ph id="s1" dataRef="d1"/></source>
+				<target>App updated to v<ph id="t1" dataRef="d1"/></target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M5XWG0GF2STZHSBH7X">
+			<notes>
+				<note category="key">CommonI18n.SERVER_DETAIL</note>
+				<note category="param">{detail}: string</note>
+				<note category="usage">apps/web/src/app/store/session.store.spec.ts, apps/web/src/app/util/http-error.ts</note>
+				<note category="context">`SERVER_DETAIL` es un contenedor: `{detail}` llega en inglés desde el servidor y no se traduce.</note>
+				<note category="srcHash">caf3c2c2d54b</note>
+			</notes>
+			<originalData>
+				<data id="d1">{detail}</data>
+			</originalData>
+			<segment state="translated">
+				<source><ph id="s1" dataRef="d1"/></source>
+				<target><ph id="t1" dataRef="d1"/></target>
+			</segment>
+		</unit>
+		<unit id="01KZJ895M50KK3084TMWF8FPSS">
+			<notes>
+				<note category="key">CommonI18n.CATALOG_EMPTY</note>
+				<note category="usage">apps/web/src/app/use-case/empty-catalog-failure.spec.ts, apps/web/src/app/use-case/local-calibration.use-case.ts, apps/web/src/app/use-case/local-cycle.use-case.ts, apps/web/src/app/util/http-error.ts</note>
+				<note category="term">ejercicio → exercise, catálogo → catalogue</note>
+				<note category="srcHash">9db1fd5d6db5</note>
+			</notes>
+			<segment state="translated">
+				<source>Este dispositivo no tiene ejercicios en esa banda de nivel. Conéctate para descargar el catálogo, o importa tus propios ejercicios desde un CSV.</source>
+				<target>This device has no exercises in that rating band. Go online to download the catalogue, or import your own exercises from a CSV.</target>
+			</segment>
+		</unit>
+		<unit id="01KZJ8YH9E11WV4CQKQHWQSK5B">
+			<notes>
+				<note category="key">CommonI18n.SELECT_OPTION_POSITION</note>
+				<note category="param">{option}: string, {position}: number, {total}: number</note>
+				<note category="usage">apps/web/src/app/directive/select/component/select-shell.component.ts</note>
+				<note category="context">Textos de un desplegable genérico: el marcador de posición cuando no hay nada elegido, el aviso de que la búsqueda no encuentra nada, la posición leída en voz alta y el botón que quita una opción ya elegida de un desplegable de selección múltiple, donde `{option}` es el nombre de esa opción.</note>
+				<note category="srcHash">c92a4d2bfc0c</note>
+			</notes>
+			<originalData>
+				<data id="d1">{option}</data>
+				<data id="d2">{position}</data>
+				<data id="d3">{total}</data>
+			</originalData>
+			<segment state="translated">
+				<source><ph id="s1" dataRef="d1"/>, <ph id="s2" dataRef="d2"/> de <ph id="s3" dataRef="d3"/></source>
+				<target><ph id="t1" dataRef="d1"/>, <ph id="t2" dataRef="d2"/> of <ph id="t3" dataRef="d3"/></target>
+			</segment>
+		</unit>
+		<unit id="01KZJA7B2XY37MYRC4SMK9RXEA">
+			<notes>
+				<note category="key">CommonI18n.PROMOTE_TO_PIECE</note>
+				<note category="param">{piece}: string</note>
+				<note category="usage">apps/web/src/app/component/chess-board/chess-board.component.ts</note>
+				<note category="context">La coronación en sí. `PROMOTE_TO` encabeza la lista y `PROMOTE_TO_PIECE` es cada botón, con `{piece}` ya traducido desde `PIECE_*`: la frase tiene que sonar bien con ese nombre dentro.</note>
+				<note category="term">coronar → promote</note>
+				<note category="srcHash">b519237f0205</note>
+			</notes>
+			<originalData>
+				<data id="d1">{piece}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Coronar a <ph id="s1" dataRef="d1"/></source>
+				<target>Promote to <ph id="t1" dataRef="d1"/></target>
+			</segment>
+		</unit>
+		<unit id="01KZS8AGRW2GFXT6E5GZ6HHZPQ">
+			<notes>
+				<note category="key">CommonI18n.PENDING_SYNC_MESSAGE</note>
+				<note category="param">{pending}: number</note>
+				<note category="usage">apps/web/src/app/component/pending-sync-modal/pending-sync-modal.component.html</note>
+				<note category="context">Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.</note>
+				<note category="term">ejercicio → exercise, sesión → session</note>
+				<note category="srcHash">adf879d458db</note>
+			</notes>
+			<originalData>
+				<data id="d1">{pending}</data>
+			</originalData>
+			<segment state="translated">
+				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>
+				<target><ph id="t1" dataRef="d1"/> exercises from this device have not reached the server yet. Logging out deletes them, with no way to get them back.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="auth" original="apps/web/src/app/i18n/auth/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">Las dos pantallas de sesión: iniciar sesión y crear una cuenta. Son formularios cortos, con un párrafo de introducción arriba, las etiquetas de los campos y el enlace que lleva a la otra pantalla.
+
+Las etiquetas de campo son sustantivos escuetos, sin dos puntos ni punto final. Los párrafos explican qué se guarda y por qué, así que la traducción no puede recortar la explicación.</note>
+			<note category="glossary">sesión → session — la sesión iniciada contra el API, guardada en una cookie
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="auth.01KZJ895M8N6WQ02RVEABREFTF">
+			<notes>
+				<note category="key">AuthI18n.PASSWORD_MIN_LENGTH</note>
+				<note category="param">{length}: number</note>
+				<note category="usage">apps/web/src/app/page/auth/register.page.html</note>
+				<note category="context">La contraseña y el mínimo de caracteres que se pide. `{length}` es un número.</note>
+				<note category="srcHash">96c8110520a5</note>
+			</notes>
+			<originalData>
+				<data id="d1">{length}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Al menos <ph id="s1" dataRef="d1"/> caracteres.</source>
+				<target>At least <ph id="t1" dataRef="d1"/> characters.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="intro" original="apps/web/src/app/i18n/intro/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La presentación que se ve al abrir la aplicación por primera vez, y que después queda accesible desde el inicio como explicación del método. Son siete pasos que se leen en orden, uno por pantalla, con un indicador de puntos justo encima del título.
+
+Es prosa divulgativa, no documentación: frases que fluyen, tono de quien explica algo que ha probado y habla de tú a tú con quien acaba de llegar. Se dirige siempre al jugador en segunda persona, con el mismo tratamiento que el resto de la aplicación.</note>
+			<note category="glossary">entrenamiento → training — el programa entero: calibración, conjunto fijado y ciclos. Sólo hay uno en curso a la vez. Es el único nombre: nunca «programa» ni «bloque»
+conjunto → set — los ejercicios que se fijan una vez y se repiten en todos los ciclos; nunca «bloque» ni «lote»
+ciclo → cycle — una vuelta entera al conjunto; se numeran desde 1. Es el único nombre, también al explicar el método Woodpecker: nunca «pasada» ni «vuelta»
+ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+precisión → accuracy — los ejercicios resueltos a la primera divididos por los hechos, en porcentaje; nunca la precisión de una medida o de un instrumento
+error → mistake — una jugada equivocada dentro de un ejercicio, no el ejercicio entero fallado, y nunca un error de la aplicación
+jugada → move — un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="intro.01M0R9S83BXYQK0V1MSHYDSADY">
+			<notes>
+				<note category="key">IntroI18n.PURPOSE_BODY_2</note>
+				<note category="usage">apps/web/src/app/definition/intro-step.type.ts</note>
+				<note category="context">Los siete pasos, cada uno con su título y uno o dos párrafos. Los `_TITLE` son enunciados cortos, sin punto final, y encabezan la pantalla. Los `_BODY` son párrafos completos, con punto.
+
+`PURPOSE_*` es el paso de apertura y el único que habla de la aplicación en sí y no del método: «Chess Pecker» es el nombre del producto y se deja tal cual en cualquier idioma. «Woodpecker» tampoco se traduce nunca, ni se translitera. Un «ciclo» es una vuelta entera al conjunto de ejercicios, y es el concepto que no se puede perder por el camino: se repite el **mismo** conjunto, cada ciclo más rápido. `LEVEL_BODY_1` habla del ELO, que se deja tal cual.</note>
+				<note category="term">conjunto → set, ciclo → cycle, ejercicio → exercise, precisión → accuracy</note>
+				<note category="srcHash">7ed4e42771ce</note>
+			</notes>
+			<segment state="translated">
+				<source>La aplicación se encarga del recorrido entero: prepara tu conjunto de ejercicios, lleva la cuenta de cada ciclo y te muestra cuánto has ganado en velocidad y en precisión. Funciona también sin conexión y guarda tu progreso en el dispositivo, así que puedes entrenar donde y cuando quieras.</source>
+				<target>The app takes care of the whole run: it builds your set of exercises, keeps count of every cycle and shows you how much you have gained in speed and accuracy. It works offline too and keeps your progress on the device, so you can train wherever and whenever you like.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="match" original="apps/web/src/app/i18n/match/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">Una partida de ajedrez normal contra el motor de la máquina, sin ejercicios de por medio. Es lo que en la navegación se llama «Jugar». La palabra «partida» aquí es siempre la partida de ajedrez: nunca una coincidencia de búsqueda ni un emparejamiento entre jugadores.
+
+Los textos son etiquetas de controles junto al tablero y avisos de estado de una línea.</note>
+			<note category="glossary">ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+jugada → move — un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar
+partida → match — una partida de ajedrez contra la máquina; nunca una coincidencia, un emparejamiento ni un resultado de búsqueda
+tablero → board
+bando → side — el color con el que se juega, blancas o negras; nunca una banda, una franja ni un lado del tablero
+jaque mate → checkmate
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="match.01KZJ93GA1JB7TQ9Z498HP9W55">
+			<notes>
+				<note category="key">MatchI18n.ILLEGAL_MOVE</note>
+				<note category="param">{notation}: string</note>
+				<note category="usage">apps/web/src/app/page/match/store/match.store.spec.ts, apps/web/src/app/page/match/store/match.store.ts</note>
+				<note category="context">`{notation}` es la jugada en notación algebraica, tal como se escribe en el tablero: se copia sin traducir ni transliterar. Las comillas del original son parte del texto y se sustituyen por las que use el idioma de destino.</note>
+				<note category="term">jugada → move</note>
+				<note category="srcHash">a1f7fba56505</note>
+			</notes>
+			<originalData>
+				<data id="d1">{notation}</data>
+			</originalData>
+			<segment state="translated">
+				<source>«<ph id="s1" dataRef="d1"/>» no es una jugada legal aquí.</source>
+				<target>&quot;<ph id="t1" dataRef="d1"/>&quot; is not a legal move here.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="profile" original="apps/web/src/app/i18n/profile/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La página de perfil: la cuenta y los amigos. Tiene cuatro listas —solicitudes recibidas, solicitudes enviadas, amigos y bloqueados—, cada una con su encabezado, su texto de lista vacía y los botones de cada fila.
+
+Los botones de fila son muy cortos porque van varios en la misma línea. Los mensajes de confirmación son frases completas con punto, en pasado y sin celebración.</note>
+			<note category="glossary">entrenamiento → training — el programa entero: calibración, conjunto fijado y ciclos. Sólo hay uno en curso a la vez. Es el único nombre: nunca «programa» ni «bloque»
+conjunto → set — los ejercicios que se fijan una vez y se repiten en todos los ciclos; nunca «bloque» ni «lote»
+ciclo → cycle — una vuelta entera al conjunto; se numeran desde 1. Es el único nombre, también al explicar el método Woodpecker: nunca «pasada» ni «vuelta»
+ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+juego libre → free play — mover las piezas de los dos bandos en el tablero, sin rival y sin solución que seguir; nunca «exploración», que en la calibración es una ronda
+tablero → board
+sesión → session — la sesión iniciada contra el API, guardada en una cookie
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="profile.01KZJ895M9SXCH6EYP2JJYJK6B">
+			<notes>
+				<note category="key">ProfileI18n.UNREACHABLE_EXPLANATION</note>
+				<note category="usage">apps/web/src/app/page/profile/profile.page.html</note>
+				<note category="context">El servidor no responde y no hay forma de saber si la sesión sigue abierta. El párrafo tiene dos trabajos: explicar que puede estar despertando —tarda hasta un minuto en el plan gratuito— y tranquilizar diciendo qué sigue funcionando sin él. Los dos hay que conservarlos.</note>
+				<note category="term">conjunto → set, juego libre → free play, tablero → board, sesión → session</note>
+				<note category="srcHash">74c0391b468c</note>
+			</notes>
+			<segment state="translated">
+				<source>El servidor no responde, así que no hay forma de saber si tu sesión sigue abierta. Puede que esté despertando, lo que tarda hasta un minuto en el plan gratuito. Mientras tanto el tablero, el juego libre, un conjunto importado y tus ajustes funcionan igual: nunca salen de este dispositivo.</source>
+				<target>The server is not answering, so there is no way to tell whether your session is still open. It may be waking up, which takes up to a minute on the free plan. Meanwhile the board, free play, an imported set and your settings work just the same: they never leave this device.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="puzzle" original="apps/web/src/app/i18n/puzzle/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La página de práctica suelta: se resuelven ejercicios cargados a mano, fuera de un entrenamiento. Nada de lo que pasa aquí cuenta para la calibración ni para los ciclos.
+
+El ciclo de un ejercicio es siempre el mismo: se pide una jugada, si es la buena el tablero responde con la del rival, y si no lo es la deshace y deja intentarlo otra vez. Los mensajes son cortos y van en una tira de estado bajo el tablero, así que no pueden crecer mucho.</note>
+			<note category="glossary">conjunto → set — los ejercicios que se fijan una vez y se repiten en todos los ciclos; nunca «bloque» ni «lote»
+ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+jugada → move — un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar
+línea → line — la secuencia de jugadas que resuelve el ejercicio; nunca una línea de texto ni una fila, ni la línea geométrica del tablero
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="puzzle.01KZJ895MCRBV83D30RKZ29XGT">
+			<notes>
+				<note category="key">PuzzleI18n.IMPORTED_WITH_SKIPPED</note>
+				<note category="param">{loaded}: number, {skipped}: number</note>
+				<note category="usage">apps/web/src/app/page/puzzle/store/puzzle-library/puzzle-library.store.ts</note>
+				<note category="context">Resultado de la importación. `{loaded}` son los ejercicios que entraron y `{skipped}` las filas del CSV que no se pudieron leer y se descartaron.</note>
+				<note category="term">ejercicio → exercise</note>
+				<note category="srcHash">78059b137eb8</note>
+			</notes>
+			<originalData>
+				<data id="d1">{loaded}</data>
+				<data id="d2">{skipped}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios, descartadas <ph id="s2" dataRef="d2"/> filas ilegibles.</source>
+				<target>Loaded <ph id="t1" dataRef="d1"/> exercises, skipped <ph id="t2" dataRef="d2"/> unreadable rows.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="setting" original="apps/web/src/app/i18n/setting/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La página de ajustes. Aquí un «ajuste» es una preferencia de la aplicación. La ronda de calibración que antes se llamaba así ahora es un «afinado», así que ya no hay dos cosas con el mismo nombre.
+
+Cada bloque tiene un encabezado corto y un párrafo de introducción debajo. Los encabezados son sustantivos de una o dos palabras; las etiquetas de los controles y las opciones son cortas, sin punto final y sin repetir el nombre del bloque. Los párrafos sí son prosa con punto.</note>
+			<note category="glossary">entrenamiento → training — el programa entero: calibración, conjunto fijado y ciclos. Sólo hay uno en curso a la vez. Es el único nombre: nunca «programa» ni «bloque»
+calibración → calibration — la fase inicial que busca el nivel del jugador a base de rondas: primero exploraciones, después afinados
+ronda → round — cada tanda de la calibración, sea una exploración o un afinado; nunca una ronda de bebidas ni una vuelta del conjunto, que es un ciclo
+ciclo → cycle — una vuelta entera al conjunto; se numeran desde 1. Es el único nombre, también al explicar el método Woodpecker: nunca «pasada» ni «vuelta»
+ritmo → pace — los ejercicios al día a los que el jugador se compromete; nunca «meta» ni «objetivo»
+ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+intento → attempt — el registro de un ejercicio ya terminado: cómo acabó, cuánto tardó y qué ayuda se usó
+marcador — la lista en la que el jugador guarda un ejercicio ya terminado, y el icono que lo hace; sólo una lista por ejercicio. Nunca el marcador de una partida ni un rotulador
+jugada → move — un movimiento de un solo bando (ply), no una partida entera; nunca el verbo jugar
+línea → line — la secuencia de jugadas que resuelve el ejercicio; nunca una línea de texto ni una fila, ni la línea geométrica del tablero
+tablero → board
+casilla → square — una de las 64 del tablero; el término de ajedrez, no la celda de una tabla
+pieza → piece — cualquier trebejo del tablero, peón incluido
+torre → rook — la pieza de ajedrez; nunca una torre de edificio
+jaque → check
+sincronización → synchronisation — el intercambio con el servidor; subir es del dispositivo al servidor y bajar al revés
+sesión → session — la sesión iniciada contra el API, guardada en una cookie
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="setting.01KZJ895MAQEQH4B51X4ZKFA7A">
+			<notes>
+				<note category="key">SettingI18n.BOARD_INTRO</note>
+				<note category="usage">apps/web/src/app/page/setting/setting.page.html</note>
+				<note category="context">Explica que la tira de abajo es un ejercicio de verdad y que se puede fallar a propósito para ver cómo se comporta cada ajuste. «Cómete la torre negra» es la consigna de ese ejercicio y tiene que decir lo mismo que `common.DEMO_TASK`.</note>
+				<note category="term">ejercicio → exercise, jugada → move, tablero → board, torre → rook</note>
+				<note category="srcHash">32da481b4fac</note>
+			</notes>
+			<segment state="translated">
+				<source>Cómo se comporta el tablero. La tira de abajo es un ejercicio de verdad — cómete la torre negra — así que cada ajuste se puede probar donde se elige: falla a propósito y te deshace la jugada, falla lo suficiente y te enseña la respuesta.</source>
+				<target>How the board behaves. The strip below is a real exercise — take the black rook — so every setting can be tried where it is chosen: miss on purpose and it takes your move back, miss often enough and it plays you the answer.</target>
+			</segment>
+		</unit>
+		<unit id="setting.01M08VDKASAE26PQB2099HSB2X">
+			<notes>
+				<note category="key">SettingI18n.SYNC_CURSOR</note>
+				<note category="param">{at}: string</note>
+				<note category="usage">apps/web/src/app/component/sync-status/sync-status.component.html</note>
+				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido.</note>
+				<note category="context">Hasta dónde se ha bajado. `{at}` es una fecha ya formateada por la aplicación.</note>
+				<note category="srcHash">71b0b65c5195</note>
+			</notes>
+			<originalData>
+				<data id="d1">{at}</data>
+			</originalData>
+			<segment state="translated">
+				<source>bajado hasta <ph id="s1" dataRef="d1"/></source>
+				<target>downloaded up to <ph id="t1" dataRef="d1"/></target>
+			</segment>
+		</unit>
+		<unit id="setting.01M08VDKAS0W9NJCB6A91ZCDQZ">
+			<notes>
+				<note category="key">SettingI18n.SYNC_UP_TO_DATE</note>
+				<note category="usage">apps/web/src/app/component/sync-status/sync-status.component.html</note>
+				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido.</note>
+				<note category="srcHash">a026f16b8d68</note>
+			</notes>
+			<segment state="translated">
+				<source>al día</source>
+				<target>up to date</target>
+			</segment>
+		</unit>
+		<unit id="setting.01M08VDKASYW2DA154RCQEXEQN">
+			<notes>
+				<note category="key">SettingI18n.SYNC_MORE_REJECTED</note>
+				<note category="param">{count}: number</note>
+				<note category="usage">apps/web/src/app/component/sync-status/sync-status.component.html</note>
+				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido.</note>
+				<note category="srcHash">b02e713dddbf</note>
+			</notes>
+			<originalData>
+				<data id="d1">{count}</data>
+			</originalData>
+			<segment state="translated">
+				<source>y <ph id="s1" dataRef="d1"/> más</source>
+				<target>and <ph id="t1" dataRef="d1"/> more</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="training" original="apps/web/src/app/i18n/training/en-GB.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La página del entrenamiento, que es el corazón de la aplicación. Un entrenamiento pasa por tres fases en este orden: la **calibración** busca el nivel del jugador a base de rondas; la **planificación** fija el conjunto de ejercicios y el ritmo diario; y luego se recorren los **ciclos**, cada uno una vuelta entera al mismo conjunto. Sólo puede haber un entrenamiento en curso.
+
+Ojo a los tres niveles, que no son lo mismo: una **fase** es uno de esos tres momentos y su nombre nunca se escribe en la interfaz; una **etapa** es una fila del resumen, o sea una ronda de calibración o un ciclo; y un **ciclo** es una de las dos clases de etapa.
+
+Los textos largos de esta página explican el método a alguien que lo está haciendo por primera vez: se traducen como prosa, no como jerga técnica calcada. Las etiquetas de los botones son imperativas y cortas.</note>
+			<note category="glossary">entrenamiento → training — el programa entero: calibración, conjunto fijado y ciclos. Sólo hay uno en curso a la vez. Es el único nombre: nunca «programa» ni «bloque»
+calibración → calibration — la fase inicial que busca el nivel del jugador a base de rondas: primero exploraciones, después afinados
+ronda → round — cada tanda de la calibración, sea una exploración o un afinado; nunca una ronda de bebidas ni una vuelta del conjunto, que es un ciclo
+exploración → exploration — ronda de calibración de un solo ejercicio, que salta de nivel para acotar la zona donde está el jugador. Nunca el juego libre del tablero, que se llama juego libre
+afinado → refinement — ronda de calibración de diez ejercicios que afina el nivel que la exploración encontró; el verbo es afinar. Nunca los ajustes de la aplicación, que son una preferencia y otra palabra
+conjunto → set — los ejercicios que se fijan una vez y se repiten en todos los ciclos; nunca «bloque» ni «lote»
+ciclo → cycle — una vuelta entera al conjunto; se numeran desde 1. Es el único nombre, también al explicar el método Woodpecker: nunca «pasada» ni «vuelta»
+ritmo → pace — los ejercicios al día a los que el jugador se compromete; nunca «meta» ni «objetivo»
+ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+intento → attempt — el registro de un ejercicio ya terminado: cómo acabó, cuánto tardó y qué ayuda se usó
+hecho → done — un ejercicio que llegó a un final, sea cual sea: a la primera, tras fallar o con la solución vista. Es la suma de los tres, y lo que la precisión divide
+a la primera → first try — el ejercicio acertado al primer intento, sin una sola jugada equivocada. Nunca se dice sólo «resuelto»: el que falla y luego encuentra la línea también la resuelve, y no cuenta aquí
+tras fallar → after a miss — el ejercicio que se acabó encontrando, pero no al primer intento. No es rendirse: la línea salió del jugador
+solución vista → solution shown — el ejercicio que terminó enseñando la línea porque el jugador se rindió. Es el resultado; la acción que lleva a él es rendirse
+error → mistake — una jugada equivocada dentro de un ejercicio, no el ejercicio entero fallado, y nunca un error de la aplicación
+pista → hint — la ayuda que señala la pieza que hay que mover
+banda de rating → rating band — el tramo de dificultad del que se sacan los ejercicios
+catálogo → catalogue — el fondo de ejercicios del servidor, común a todos los usuarios
+línea → line — la secuencia de jugadas que resuelve el ejercicio; nunca una línea de texto ni una fila, ni la línea geométrica del tablero
+sincronización → synchronisation — el intercambio con el servidor; subir es del dispositivo al servidor y bajar al revés
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="training.01KZJ895MC6366DDQE2RMNRMK1">
+			<notes>
+				<note category="key">TrainingI18n.COMMIT_TO_A_PACE</note>
+				<note category="usage">apps/web/src/app/page/training/training.page.html</note>
+				<note category="context">Encabezado. El jugador se compromete a un ritmo, a cuántos ejercicios va a hacer al día. La palabra tiene que sonar a compromiso, que es lo que sostiene el método.</note>
+				<note category="term">ritmo → pace</note>
+				<note category="srcHash">c97aec4b116d</note>
+			</notes>
+			<segment state="translated">
+				<source>Comprométete a un ritmo</source>
+				<target>Commit to a pace</target>
+			</segment>
+		</unit>
+		<unit id="training.01KZJ895MC0TCT6MDA60JZDWGQ">
+			<notes>
+				<note category="key">TrainingI18n.CALIBRATION_LABEL_PROGRESS</note>
+				<note category="param">{round}: number, {position}: number, {total}: number, {rating}: number</note>
+				<note category="usage">apps/web/src/app/page/training/training-solve.page.ts</note>
+				<note category="context">La fase de calibración. Una **exploración** es una ronda de un solo ejercicio que salta de nivel para acotar la zona; un **afinado**, una ronda de diez que afina alrededor del nivel encontrado. «Sube el nivel» o «baja el nivel» es que la ronda siguiente reparte ejercicios más difíciles o más fáciles: es una decisión sobre la dificultad, no sobre una posición del tablero ni sobre la profundidad de un cálculo.</note>
+				<note category="term">calibración → calibration, ronda → round</note>
+				<note category="srcHash">2a84a788907a</note>
+			</notes>
+			<originalData>
+				<data id="d1">{round}</data>
+				<data id="d2">{position}</data>
+				<data id="d3">{total}</data>
+				<data id="d4">{rating}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Calibración · ronda <ph id="s1" dataRef="d1"/> (<ph id="s2" dataRef="d2"/> / <ph id="s3" dataRef="d3"/>) · ELO <ph id="s4" dataRef="d4"/></source>
+				<target>Calibration · round <ph id="t1" dataRef="d1"/> (<ph id="t2" dataRef="d2"/> / <ph id="t3" dataRef="d3"/>) · ELO <ph id="t4" dataRef="d4"/></target>
+			</segment>
+		</unit>
+		<unit id="training.01M2K7B4X00MZRZS3YJ612PS3H">
+			<notes>
+				<note category="key">TrainingI18n.DAILY_SERIES_SHOWN</note>
+				<note category="usage">apps/web/src/app/page/training/training.page.ts</note>
+				<note category="context">El gráfico de actividad diaria. Las tres primeras series parten en tres los ejercicios hechos, sin solaparse: **a la primera** (acertados al primer intento), **tras fallar** (encontrados, pero después de al menos un error) y **solución vista** (los que se abandonaron para ver la línea). Las otras dos cuentan otra cosa: **errores** son jugadas equivocadas dentro de un ejercicio, y **pistas** las ayudas pedidas. Cada etiqueta tiene que caber en una leyenda estrecha.</note>
+				<note category="term">solución vista → solution shown</note>
+				<note category="srcHash">60d4d0645722</note>
+			</notes>
+			<segment state="translated">
+				<source>Solución vista</source>
+				<target>Solution shown</target>
+			</segment>
+		</unit>
+		<unit id="training.01M2K7B4X0NTWEBKKW6K0ZAZ0R">
+			<notes>
+				<note category="key">TrainingI18n.DAILY_DAY_DETAIL</note>
+				<note category="param">{date}: string, {firstTry}: number, {afterMiss}: number, {shown}: number, {mistakes}: number, {hints}: number, {minutes}: number</note>
+				<note category="usage">apps/web/src/app/page/training/training.page.ts</note>
+				<note category="context">El gráfico de actividad diaria. Las tres primeras series parten en tres los ejercicios hechos, sin solaparse: **a la primera** (acertados al primer intento), **tras fallar** (encontrados, pero después de al menos un error) y **solución vista** (los que se abandonaron para ver la línea). Las otras dos cuentan otra cosa: **errores** son jugadas equivocadas dentro de un ejercicio, y **pistas** las ayudas pedidas. Cada etiqueta tiene que caber en una leyenda estrecha.</note>
+				<note category="term">a la primera → first try, tras fallar → after a miss, solución vista → solution shown, error → mistake, pista → hint</note>
+				<note category="srcHash">e8f5a7dc8ab5</note>
+			</notes>
+			<originalData>
+				<data id="d1">{date}</data>
+				<data id="d2">{firstTry}</data>
+				<data id="d3">{afterMiss}</data>
+				<data id="d4">{shown}</data>
+				<data id="d5">{mistakes}</data>
+				<data id="d6">{hints}</data>
+				<data id="d7">{minutes}</data>
+			</originalData>
+			<segment state="translated">
+				<source><ph id="s1" dataRef="d1"/> · <ph id="s2" dataRef="d2"/> a la primera, <ph id="s3" dataRef="d3"/> tras fallar, <ph id="s4" dataRef="d4"/> con la solución vista · <ph id="s5" dataRef="d5"/> errores, <ph id="s6" dataRef="d6"/> pistas · <ph id="s7" dataRef="d7"/> min</source>
+				<target><ph id="t1" dataRef="d1"/> · <ph id="t2" dataRef="d2"/> first try, <ph id="t3" dataRef="d3"/> after a miss, <ph id="t4" dataRef="d4"/> solution shown · <ph id="t5" dataRef="d5"/> mistakes, <ph id="t6" dataRef="d6"/> hints · <ph id="t7" dataRef="d7"/> min</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="bench-icu-puzzle" original="tools/scripts/i18n/bench/bench.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La página de práctica suelta: se resuelven ejercicios cargados a mano, fuera de un entrenamiento. Nada de lo que pasa aquí cuenta para la calibración ni para los ciclos.
+
+El ciclo de un ejercicio es siempre el mismo: se pide una jugada, si es la buena el tablero responde con la del rival, y si no lo es la deshace y deja intentarlo otra vez. Los mensajes son cortos y van en una tira de estado bajo el tablero, así que no pueden crecer mucho.</note>
+			<note category="glossary">ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="puzzle.IMPORTED#plural:one">
+			<notes>
+				<note category="key">puzzle.IMPORTED</note>
+				<note category="category">plural:one</note>
+				<note category="examples">se usa con 1</note>
+				<note category="siblings">es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»</note>
+				<note category="context">Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.</note>
+				<note category="srcHash">cbdf70319b8d</note>
+			</notes>
+			<originalData>
+				<data id="d1">{loaded}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios.</source>
+				<target>Loaded <ph id="t1" dataRef="d1"/> exercise.</target>
+			</segment>
+		</unit>
+		<unit id="puzzle.IMPORTED#plural:other">
+			<notes>
+				<note category="key">puzzle.IMPORTED</note>
+				<note category="category">plural:other</note>
+				<note category="examples">se usa con 0, 2, 3, 4, 5…</note>
+				<note category="siblings">es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»</note>
+				<note category="context">Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.</note>
+				<note category="srcHash">cbdf70319b8d</note>
+			</notes>
+			<originalData>
+				<data id="d1">{loaded}</data>
+			</originalData>
+			<segment state="translated">
+				<source>Cargados <ph id="s1" dataRef="d1"/> ejercicios.</source>
+				<target>Loaded <ph id="t1" dataRef="d1"/> exercises.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="bench-icu-common" original="tools/scripts/i18n/bench/bench.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">El scope raíz: todo lo que se usa desde más de una página. Aquí están la navegación, los controles del tablero, la accesibilidad de las casillas y las piezas, los estados de conexión y los errores que puede levantar cualquier pantalla.
+
+Casi todo son etiquetas muy cortas, y muchas se reutilizan en sitios distintos: una traducción que sólo encaja en un contexto rompe el otro. Ante la duda, la palabra más neutra.</note>
+			<note category="glossary">ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+sesión → session — la sesión iniciada contra el API, guardada en una cookie
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="common.PENDING_SYNC_MESSAGE#plural:one">
+			<notes>
+				<note category="key">common.PENDING_SYNC_MESSAGE</note>
+				<note category="category">plural:one</note>
+				<note category="examples">se usa con 1</note>
+				<note category="siblings">es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
+				<note category="context">Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.</note>
+				<note category="srcHash">adf879d458db</note>
+			</notes>
+			<originalData>
+				<data id="d1">{pending}</data>
+			</originalData>
+			<segment state="translated">
+				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>
+				<target><ph id="t1" dataRef="d1"/> exercise from this device has not reached the server yet. Logging out deletes it, with no way to get it back.</target>
+			</segment>
+		</unit>
+		<unit id="common.PENDING_SYNC_MESSAGE#plural:other">
+			<notes>
+				<note category="key">common.PENDING_SYNC_MESSAGE</note>
+				<note category="category">plural:other</note>
+				<note category="examples">se usa con 0, 2, 3, 4, 5…</note>
+				<note category="siblings">es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba</note>
+				<note category="context">Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.</note>
+				<note category="srcHash">adf879d458db</note>
+			</notes>
+			<originalData>
+				<data id="d1">{pending}</data>
+			</originalData>
+			<segment state="translated">
+				<source><ph id="s1" dataRef="d1"/> ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.</source>
+				<target><ph id="t1" dataRef="d1"/> exercises from this device have not reached the server yet. Logging out deletes them, with no way to get them back.</target>
+			</segment>
+		</unit>
+	</file>
+	<file id="bench-icu-training" original="tools/scripts/i18n/bench/bench.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La página del entrenamiento, que es el corazón de la aplicación. Un entrenamiento pasa por tres fases en este orden: la **calibración** busca el nivel del jugador a base de rondas; la **planificación** fija el conjunto de ejercicios y el ritmo diario; y luego se recorren los **ciclos**, cada uno una vuelta entera al mismo conjunto. Sólo puede haber un entrenamiento en curso.
+
+Ojo a los tres niveles, que no son lo mismo: una **fase** es uno de esos tres momentos y su nombre nunca se escribe en la interfaz; una **etapa** es una fila del resumen, o sea una ronda de calibración o un ciclo; y un **ciclo** es una de las dos clases de etapa.
+
+Los textos largos de esta página explican el método a alguien que lo está haciendo por primera vez: se traducen como prosa, no como jerga técnica calcada. Las etiquetas de los botones son imperativas y cortas.</note>
+			<note category="glossary">No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
+		<unit id="training.GAVE_UP_WATCHING#gender:male">
+			<notes>
+				<note category="key">training.GAVE_UP_WATCHING</note>
+				<note category="category">gender:male</note>
+				<note category="gender-note">quien usa la aplicación ha elegido «hombre»</note>
+				<note category="siblings">es-ES · las tres ramas del origen son idénticas: el español no marca género en «te has rendido». La variación, si la hay, la pone el idioma de destino</note>
+				<note category="context">Se ve al rendirse en un ejercicio, justo antes de que el tablero juegue la solución. El género es el de quien usa la aplicación, que lo elige en los ajustes.</note>
+				<note category="srcHash">89c10f7a2382</note>
+			</notes>
+			<segment state="translated">
+				<source>Te has rendido. Mira cómo iba.</source>
+				<target>You gave up. Watch how it went.</target>
+			</segment>
+		</unit>
+		<unit id="training.GAVE_UP_WATCHING#gender:female">
+			<notes>
+				<note category="key">training.GAVE_UP_WATCHING</note>
+				<note category="category">gender:female</note>
+				<note category="gender-note">quien usa la aplicación ha elegido «mujer»</note>
+				<note category="siblings">es-ES · las tres ramas del origen son idénticas: el español no marca género en «te has rendido». La variación, si la hay, la pone el idioma de destino</note>
+				<note category="context">Se ve al rendirse en un ejercicio, justo antes de que el tablero juegue la solución. El género es el de quien usa la aplicación, que lo elige en los ajustes.</note>
+				<note category="srcHash">89c10f7a2382</note>
+			</notes>
+			<segment state="translated">
+				<source>Te has rendido. Mira cómo iba.</source>
+				<target>You gave up. Watch how it went.</target>
+			</segment>
+		</unit>
+		<unit id="training.GAVE_UP_WATCHING#gender:other">
+			<notes>
+				<note category="key">training.GAVE_UP_WATCHING</note>
+				<note category="category">gender:other</note>
+				<note category="gender-note">quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar</note>
+				<note category="siblings">es-ES · las tres ramas del origen son idénticas: el español no marca género en «te has rendido». La variación, si la hay, la pone el idioma de destino</note>
+				<note category="context">Se ve al rendirse en un ejercicio, justo antes de que el tablero juegue la solución. El género es el de quien usa la aplicación, que lo elige en los ajustes.</note>
+				<note category="srcHash">89c10f7a2382</note>
+			</notes>
+			<segment state="translated">
+				<source>Te has rendido. Mira cómo iba.</source>
+				<target>You gave up. Watch how it went.</target>
+			</segment>
+		</unit>
+	</file>
+</xliff>

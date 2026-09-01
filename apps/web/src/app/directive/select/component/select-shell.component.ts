@@ -15,6 +15,7 @@ import {
 } from '@angular/core';
 
 import { SvgComponent } from '@app/component/svg/svg.component';
+import { SelectChipViewModel, toSelectChip } from '@app/directive/select/component/select-chips';
 import { SelectDropdownScroller } from '@app/directive/select/component/select-dropdown-scroller';
 import { SelectShellGestures } from '@app/directive/select/component/select-shell-gestures';
 import { SelectShellLayout } from '@app/directive/select/component/select-shell-layout';
@@ -41,9 +42,12 @@ export class SelectShellComponent {
 	readonly selectId = input.required<string>();
 	readonly placeholder = input.required<string>();
 	readonly maxVisibleOptions = input(9);
+	readonly chips = input(false);
+	readonly multiline = input(false);
 	readonly optionTemplate = input<TemplateRef<{ $implicit: SelectOptionViewModel }>>();
 
 	readonly optionSelected = output<string>();
+	readonly optionRemoved = output<string>();
 	readonly toggleRequested = output();
 	readonly closeRequested = output();
 	readonly searchKeydown = output<KeyboardEvent>();
@@ -54,13 +58,38 @@ export class SelectShellComponent {
 	protected readonly searchInputId = computed<string>(() => `${this.selectId()}-search`);
 	protected readonly listboxId = computed<string>(() => `${this.selectId()}-listbox`);
 
+	protected readonly showsSearch = computed<boolean>(
+		() => this.store.isOpen() && this.store.searchable(),
+	);
+
+	protected readonly showsValues = computed<boolean>(
+		() => this.store.multiple() && !this.showsSearch(),
+	);
+
+	protected readonly showsChips = computed<boolean>(() => this.store.multiple() && this.chips());
+
+	protected readonly hasValues = computed<boolean>(() => this.showsValues() && this.store.filled());
+
+	protected readonly wraps = computed<boolean>(
+		() => this.store.multiple() && (this.chips() || this.multiline()),
+	);
+
+	protected readonly chipList = computed<SelectChipViewModel[]>(() =>
+		this.store.selectedOptions().map(toSelectChip),
+	);
+
 	/**
 	 * The field's single visible text: the live search while open, the selected option once
-	 * closed, or nothing so the placeholder shows through.
+	 * closed, or nothing so the placeholder shows through. A multiple select paints its own
+	 * selection next to the input, so there the input only ever carries the search.
 	 */
 	protected readonly displayText = computed<string>(() => {
-		if (this.store.isOpen() && this.store.searchable()) {
+		if (this.showsSearch()) {
 			return this.store.searchText();
+		}
+
+		if (this.store.multiple()) {
+			return '';
 		}
 
 		return this.store.filled() ? this.store.selectedText() : '';
@@ -169,6 +198,10 @@ export class SelectShellComponent {
 		if (!option.disabled) {
 			this.optionSelected.emit(option.value);
 		}
+	}
+
+	removeChip(chip: SelectChipViewModel): void {
+		this.optionRemoved.emit(chip.value);
 	}
 
 	hoverOption(option: SelectOptionViewModel, index: number): void {

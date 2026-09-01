@@ -6,15 +6,15 @@
  * + es-ES => Español
  * + fr-FR => Français
  * - de-DE => Deutsch
- * - po-BR => Português
+ * - pt-BR => Português
  * - tr-TR => Türkçe
- * - in-ID => Bahasa Indonesia
+ * - id-ID => Bahasa Indonesia
  * - pl-PL => Polski
  * - uk-UA => Українська
  * - it-IT => Italiano
- * - vn-VN => Tiếng Việt
+ * - vi-VN => Tiếng Việt
  * - nl-NL => Nederlands
- * - ch-CN => 中文
+ * - zh-CN => 中文
  * + ca-ES => Català
  */
 
@@ -27,6 +27,15 @@ export const LANGUAGES: readonly Language[] = [
 	'es-ES',
 	'fr-FR',
 	'ca-ES',
+];
+
+export const SELECTABLE_LANGUAGES: readonly Language[] = [
+	'en-GB',
+	// 'ru-RU',
+	// 'hi-IN',
+	'es-ES',
+	// 'fr-FR',
+	// 'ca-ES',
 ];
 
 export const DEFAULT_LANGUAGE: Language = 'es-ES';
@@ -50,13 +59,15 @@ export const LANGUAGE_FLAG = {
 } as const satisfies Record<Language, string>;
 
 export function normalizeLanguage(value: unknown): Language {
-	if (LANGUAGES.includes(value as Language)) {
+	if (SELECTABLE_LANGUAGES.includes(value as Language)) {
 		return value as Language;
 	}
 
 	if ('string' === typeof value) {
 		const base = value.split('-')[0]?.toLowerCase();
-		const match = LANGUAGES.find((language) => language.split('-')[0]?.toLowerCase() === base);
+		const match = SELECTABLE_LANGUAGES.find(
+			(language) => language.split('-')[0]?.toLowerCase() === base,
+		);
 
 		if (undefined !== match) {
 			return match;

@@ -19,6 +19,9 @@ export interface CommonI18nParams {
 		piece: string;
 		square: string;
 	};
+	'01M14E2HJ20Y181YF9YA5Y1AA3': {
+		option: string;
+	};
 	'01KZJ895M58SS3E3TQM1AS22WS': {
 		version: string;
 	};
@@ -51,5 +54,14 @@ export interface CommonI18nParams {
 	'01M08S2E7YFS94VPQJW770AFBX': {
 		done: number;
 		total: number;
+	};
+	'01M11DZXV8W32XSWV2YB9RK531': {
+		username: string;
+	};
+	'01M11DZXV8PQ7263S0R7G8YTVW': {
+		username: string;
+	};
+	'01M11DZXV8SZ13Z3AZ0AQPYG7H': {
+		username: string;
 	};
 }

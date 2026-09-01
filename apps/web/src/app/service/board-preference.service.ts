@@ -13,6 +13,7 @@ import {
 import { SettingTypeKey } from '@app/definition/model/setting/setting-type.enum';
 import { SettingPayload } from '@app/definition/model/setting/setting-type.type';
 import { DEFAULT_MOVE_SPEED, MoveSpeed, normalizeMoveSpeed } from '@app/definition/move-speed.type';
+import { DEFAULT_MOVE_LIFT, normalizeMoveLift } from '@app/definition/piece-lift.constant';
 import { Setting } from '@app/model/setting.model';
 import { SettingStore } from '@app/store/setting.store';
 
@@ -30,10 +31,12 @@ export class BoardPreferenceService {
 	private readonly animation = signal<MoveAnimation>(DEFAULT_MOVE_ANIMATION);
 	private readonly inputMethods = signal<readonly MoveInputMethod[]>(this.defaultInputMethods);
 	private readonly speed = signal<MoveSpeed>(DEFAULT_MOVE_SPEED);
+	private readonly lift = signal<boolean>(DEFAULT_MOVE_LIFT);
 
 	readonly moveAnimation = this.animation.asReadonly();
 	readonly moveInputMethods = this.inputMethods.asReadonly();
 	readonly moveSpeed = this.speed.asReadonly();
+	readonly moveLift = this.lift.asReadonly();
 
 	constructor() {
 		const waitForSetting = effect(() => {
@@ -46,6 +49,7 @@ export class BoardPreferenceService {
 			this.animation.set(this.readAnimation(settings));
 			this.inputMethods.set(this.readInputMethods(settings));
 			this.speed.set(normalizeMoveSpeed(this.read('MOVE_SPEED', settings)));
+			this.lift.set(normalizeMoveLift(this.read('MOVE_LIFT', settings)));
 			waitForSetting.destroy();
 		});
 	}
@@ -58,6 +62,11 @@ export class BoardPreferenceService {
 	updateMoveSpeed(speed: MoveSpeed): void {
 		this.speed.set(speed);
 		this.store('MOVE_SPEED', speed);
+	}
+
+	updateMoveLift(isEnabled: boolean): void {
+		this.lift.set(isEnabled);
+		this.store('MOVE_LIFT', isEnabled);
 	}
 
 	updateMoveInputMethods(methods: readonly MoveInputMethod[]): void {

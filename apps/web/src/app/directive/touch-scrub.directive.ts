@@ -1,7 +1,6 @@
 import { DOCUMENT, Directive, ElementRef, OnDestroy, inject, input, output } from '@angular/core';
 
-const LONG_PRESS_MS = 400;
-const MOVE_TOLERANCE_PX = 10;
+import { LONG_PRESS_MS, LONG_PRESS_TOLERANCE_PX } from '@app/definition/long-press.constant';
 
 interface TouchOrigin {
 	readonly x: number;
@@ -125,8 +124,8 @@ export class TouchScrubDirective implements OnDestroy {
 		}
 
 		return (
-			MOVE_TOLERANCE_PX < Math.abs(touch.clientX - origin.x) ||
-			MOVE_TOLERANCE_PX < Math.abs(touch.clientY - origin.y)
+			LONG_PRESS_TOLERANCE_PX < Math.abs(touch.clientX - origin.x) ||
+			LONG_PRESS_TOLERANCE_PX < Math.abs(touch.clientY - origin.y)
 		);
 	}
 

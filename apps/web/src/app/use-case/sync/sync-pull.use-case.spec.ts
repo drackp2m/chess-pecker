@@ -30,6 +30,7 @@ function summary(partialCycles: readonly SyncPartialCycle[]): SyncSummary {
 			SYNC_ENTITIES.map((entity) => [entity, NOTHING]),
 		) as SyncSummary['entities'],
 		catalog: { version: '2026-08-01T09:00:00.000Z', total: 10 },
+		shares: NOTHING,
 		partialCycles,
 	};
 }

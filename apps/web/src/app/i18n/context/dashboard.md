@@ -10,11 +10,11 @@ Encabezado. Es el entrenamiento en curso del jugador, con todas sus rondas y sus
 
 ## TRAINING_CURRENT_*
 
-Recuentos de ejercicios resueltos a la primera sobre el total, en distintas etapas del entrenamiento: el entrenamiento entero, las exploraciones, el afinado o un ciclo concreto. `{{ firstTry }}` cuenta sólo los acertados al primer intento, no los que se acabaron encontrando. `{{ percentage }}` llega ya formateado con su símbolo y `{{ index }}` es el número del ciclo. La frase se lee de corrido y no lleva punto.
+Recuentos de ejercicios resueltos a la primera sobre el total, en distintas etapas del entrenamiento: el entrenamiento entero, las exploraciones, el afinado o un ciclo concreto. `{firstTry}` cuenta sólo los acertados al primer intento, no los que se acabaron encontrando. `{percentage}` llega ya formateado con su símbolo y `{index}` es el número del ciclo. La frase se lee de corrido y no lleva punto.
 
 ## TRAINING_LEVEL
 
-Fragmento que se pega detrás de otro con el separador « · ». `{{ rating }}` es un ELO.
+Fragmento que se pega detrás de otro con el separador « · ». `{rating}` es un ELO.
 
 ## TRAINING_REFINE
 
@@ -40,4 +40,4 @@ El bloque del método en el inicio, ya reducido a un gancho y un botón: la expl
 
 ## ACTIVITY_*
 
-El calendario de actividad, el cuadrito de días al estilo de las contribuciones de GitHub. `ACTIVITY_LEGEND_LESS` y `ACTIVITY_LEGEND_MORE` son los dos extremos de la leyenda de color: una palabra cada uno. `ACTIVITY_RANGE_MONTHS` es una etiqueta de botón muy apretada: `{{ months }}` seguido de la inicial de «mes» del idioma de destino, sin espacio.
+El calendario de actividad, el cuadrito de días al estilo de las contribuciones de GitHub. `ACTIVITY_LEGEND_LESS` y `ACTIVITY_LEGEND_MORE` son los dos extremos de la leyenda de color: una palabra cada uno. `ACTIVITY_RANGE_MONTHS` es una etiqueta de botón muy apretada: `{months}` seguido de la inicial de «mes» del idioma de destino, sin espacio.

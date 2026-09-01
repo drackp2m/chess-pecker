@@ -34,7 +34,9 @@ import { UserBlock } from './user-block.entity';
 		UnblockUserUseCase,
 		ListBlockedUsersUseCase,
 	],
-	exports: [MikroOrmModule],
+	// `ListFriendsUseCase` travels because sharing an exercise needs the same list, and
+	// "the other one in the row" is not a rule worth resolving twice.
+	exports: [MikroOrmModule, ListFriendsUseCase],
 	controllers: [FriendshipController, UserBlockController],
 })
 export class FriendshipModule {}

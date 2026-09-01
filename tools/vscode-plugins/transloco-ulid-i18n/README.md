@@ -9,23 +9,25 @@ It has no dependencies and no build step: the collectors are loaded straight fro
 
 ## Features
 
-- **Inline text** — the default language translation rendered _in place of_ the key usage: the whole
-  `I18n.scope.KEY | i18n` collapses to the text. Put the cursor inside and the real source comes
-  back, so it stays editable. The text only stands in for what would really be rendered, so what
-  gets swallowed depends on what follows the key:
+- **Inline text** — the `displayLang` translation rendered _in place of_ the key usage: the key
+  itself collapses to the text and nothing else does, so a trailing `| i18n` stays where it is and
+  a `.ts` and an `.html` usage line up the same way. Put the cursor inside and the real source
+  comes back, so it stays editable. The text only stands in for what would really be rendered, so
+  what gets swallowed depends on what follows the key:
 
-  | Usage                              | Shown as                           |
-  | ---------------------------------- | ---------------------------------- |
-  | `{{ I18n.a.B \| i18n }}`           | `{{ Log out }}`                    |
-  | `[label]="I18n.a.B"`, any `.ts`    | `[label]="Log out"`                |
-  | `{{ I18n.a.B }}`                   | `{{ I18n.a.B «Log out» }}`, warned |
-  | `{{ (x ? I18n.a.B : …) \| i18n }}` | `{{ (x ? I18n.a.B «Log out» … }}`  |
+  | Usage                              | Shown as                          |
+  | ---------------------------------- | --------------------------------- |
+  | `{{ I18n.a.B \| i18n }}`           | `{{ Log out \| i18n }}`           |
+  | `[label]="I18n.a.B"`, any `.ts`    | `[label]="Log out"`               |
+  | `{{ I18n.a.B }}`                   | `{{ I18n.a.B }}`, errored         |
+  | `{{ (x ? I18n.a.B : …) \| i18n }}` | `{{ (x ? I18n.a.B «Log out» … }}` |
 
   A key handed to a child input or held in TypeScript is a key, not a sentence, so it collapses
   the way it always did. A key sitting bare in an interpolation is the one case that _lies_: it
-  renders `a.01KZ…` at runtime, so it is annotated instead of hidden, and warned about. The last
-  row is the same annotation without the warning — the pipe applies further along the
-  interpolation, so nothing is broken and nothing lines up to be collapsed either.
+  renders `a.01KZ…` at runtime, so it is left exactly as written and reported as an error — the
+  error is the whole message there, and painting a translation next to it would only dress up a
+  usage that does not translate anything. The last row is annotated instead: the pipe applies
+  further along the interpolation, so nothing is broken and nothing lines up to be collapsed.
 
 - **Hover** — every language at once, the params the key takes with the types declared in the
   generated `<scope>/params.ts`, and the raw `scope.ULID` value.
@@ -48,17 +50,23 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   dozen places. The usage scan reads `apps/web/src` from disk and overlays the unsaved editors, so
   a key you just typed is already there.
 
-- **Diagnostics** — undeclared keys, missing/empty translations and keys interpolated without
-  `| i18n` underlined in `.ts` and `.html`.
+- **Diagnostics** — one per usage, the worst thing true of it first: an undeclared key is an error
+  in `.ts` and `.html`, a key interpolated without `| i18n` is an error too (the key is what
+  renders, so the page is wrong), and only then is a key still untranslated reported — a warning,
+  because it is work left to do rather than a mistake, raised whenever any language is missing the
+  string, the displayed one or not. The squiggle stays on the source characters the inline text
+  stands in for, so under a collapsed usage only its tail shows past the text — the mark is
+  deliberately quiet, and the message is in the Problems panel and on hover.
 - **Findings** — everything `pnpm i18n:check` reports, published as problems _on the i18n files
   themselves_ and refreshed whenever any of them changes. It is the same `buildFindings()` the CLI
-  calls, with the same `severityOf` and the finding type as the diagnostic code, so a stale
-  `params.ts`, a param added to one language and not the other, an orphan ULID, a scope missing from
-  the barrel or a key nobody uses is underlined where it lives, without waiting for the commit hook.
-  It runs over the whole workspace, so those problems show up in the panel even with no i18n file
-  open.
+  calls, with the finding type as the diagnostic code, so a stale `params.ts`, a param added to one
+  language and not the other, an orphan ULID, a scope missing from the barrel or a key nobody uses is
+  underlined where it lives, without waiting for the commit hook. It runs over the whole workspace,
+  so those problems show up in the panel even with no i18n file open. Severity is the CLI's
+  `severityOf`, except that a missing or empty translation is lowered to a warning: the commit hook
+  is the gate, the editor is where the work is still being done.
 - **Completion** — scopes after `I18n.`, keys after `I18n.dashboard.` and while the key is half
-  typed, each row showing its default language text on the right. A key that takes params completes
+  typed, each row showing its `displayLang` text on the right. A key that takes params completes
   with them: picking `PROGRAM_CURRENT_SCANS` inside `{{ I18n.dashboard.| | i18n }}` leaves
   `{{ I18n.dashboard.PROGRAM_CURRENT_SCANS | i18n: { solved: number, total: number, percentage: string } }}`
   with a tabstop on every type — <kbd>tab</kbd> through them replacing each with the real expression,
@@ -116,12 +124,25 @@ Opening the repo natively instead (no container) is the same command against `~/
 
 ## Settings
 
-| Setting                                 | Default        | Meaning                                                                     |
-| --------------------------------------- | -------------- | --------------------------------------------------------------------------- |
-| `translocoUlidI18n.langs`               | `[]`           | Languages to resolve; empty uses `tools/scripts/i18n/catalogue/config.mjs`. |
-| `translocoUlidI18n.inlineText`          | `true`         | Show the inline translation.                                                |
-| `translocoUlidI18n.inlineTextMaxLength` | `60`           | Where the inline text is ellipsised.                                        |
-| `translocoUlidI18n.transferDir`         | `translations` | Where the XLIFF export lands and the import dialog opens.                   |
+| Setting                                 | Default        | Meaning                                                                                                           |
+| --------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `translocoUlidI18n.languageFile`        | `''`           | Where `LANGUAGES` and `DEFAULT_LANGUAGE` are declared; empty uses `apps/web/src/app/definition/language.type.ts`. |
+| `translocoUlidI18n.langs`               | `[]`           | Languages to resolve; empty uses every language of `LANGUAGES`.                                                   |
+| `translocoUlidI18n.displayLang`         | `''`           | Language shown over the keys; empty uses `DEFAULT_LANGUAGE`.                                                      |
+| `translocoUlidI18n.inlineText`          | `true`         | Show the inline translation.                                                                                      |
+| `translocoUlidI18n.inlineTextMaxLength` | `60`           | Where the inline text is ellipsised.                                                                              |
+| `translocoUlidI18n.transferDir`         | `translations` | Where the XLIFF export lands and the import dialog opens.                                                         |
+
+The language file is the single source of both lists — the same one `pnpm i18n:check` reads through
+`tools/scripts/i18n/catalogue/config.mjs`. It is parsed on every reload and nothing is guessed: a
+file that is not there, a `LANGUAGES` that is empty or holds something that is not a language tag, a
+`DEFAULT_LANGUAGE` missing or absent from `LANGUAGES`, a `langs` naming a language the file does not
+declare or leaving the source language out, a `displayLang` outside the resolved set — each one stops
+the index and says so in the **Transloco ULID i18n** output channel.
+
+VSCode builds the label of each row in its settings UI from the setting id, so they read
+`Transloco Ulid I18n: Langs` there however the extension is titled. Only the section header uses
+the real name.
 
 It also ships a `configurationDefaults` block turning `editor.suggest.showWords` off for `html` and
 `typescript`, so VSCode's word-based guesses (the ones that offered `solved` or `percentage`, scraped

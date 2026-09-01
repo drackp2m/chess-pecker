@@ -23,6 +23,8 @@ import { renameActivityVerdictsMigration } from '@app/repository/migration/v18_r
 import { renameFreePlayRunsMigration } from '@app/repository/migration/v19_rename-free-play-runs.migration';
 import { createSettingStoreMigration } from '@app/repository/migration/v1_create-setting-store.migration';
 import { indexRejectedRowsMigration } from '@app/repository/migration/v20_index-rejected-rows.migration';
+import { createBookmarkStoreMigration } from '@app/repository/migration/v21_create-bookmark-store.migration';
+import { createShareStoreMigration } from '@app/repository/migration/v22_create-share-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
 import { rekeyAttemptStoreMigration } from '@app/repository/migration/v4_rekey-attempt-store.migration';
@@ -63,6 +65,8 @@ export abstract class Repository {
 		renameActivityVerdictsMigration,
 		renameFreePlayRunsMigration,
 		indexRejectedRowsMigration,
+		createBookmarkStoreMigration,
+		createShareStoreMigration,
 	];
 
 	static getLatestVersion(): number {

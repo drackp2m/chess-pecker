@@ -6,20 +6,22 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from .bench import run_bench
 from .cli import build_arg_parser
-from .downloads import prune_cache, show_cache
+from .downloads import prune_cache, show_cache, sizes_by_repo
 from .compare import compare
 from .deepl import DeeplError, run_deepl
 from .dotenv import load_env
 from .engine import build_engine
 from .environment import HostUnsupportedError
 from .memory import TranslationMemory
-from .models import TRANSLATE, profile_for, table
+from .models import TRANSLATE, profile_for, summary, table
 from .prompting import (
     REVIEW_SUB_STATE,
     Batch,
     blocks_of,
     build_messages,
+    check_forms,
     fenced,
     is_pending,
     parse_answers,
@@ -358,10 +360,10 @@ def run_jobs(jobs: list, session: Session, tree, output) -> int:
     return done
 
 
-def run_file(path: Path, session: Session, budget: int | None, shape=None) -> int:
+def run_file(path: Path, session: Session, budget: int | None, shape=None, output=None) -> int:
     args = session.args
     shape = shape or {}
-    output = output_for(path, args.output)
+    output = output or output_for(path, args.output)
 
     ensure_parent(output)
 
@@ -381,9 +383,12 @@ def run_file(path: Path, session: Session, budget: int | None, shape=None) -> in
     finally:
         if not args.dry_run:
             save_tree(tree, output)
+            check_forms(root, (source_lang, target_lang), session.reporter)
 
 
-def run(args, reporter) -> int:
+# The bench names an output of its own for every pass, so the caller may hand
+# in the (input, output) pairs instead of letting them be derived.
+def run(args, reporter, jobs=None) -> int:
     engine = build_engine(args.backend, args.model, args.temperature)
     session = Session(engine, args, TranslationMemory(enabled=args.memory), reporter, Tally())
     shape = shape_for(args, engine.model)
@@ -406,11 +411,11 @@ def run(args, reporter) -> int:
 
     budget = args.limit
 
-    for path in args.inputs:
+    for path, output in jobs or [(path, None) for path in args.inputs]:
         if budget is not None and budget <= 0:
             break
 
-        done = run_file(path, session, budget, shape)
+        done = run_file(path, session, budget, shape, output)
 
         if budget is not None:
             budget -= done
@@ -476,7 +481,9 @@ def main() -> None:
     load_env()
 
     if args.list_models:
-        print(table())
+        downloaded = sizes_by_repo()
+        print(table(downloaded))
+        print(summary(downloaded))
         sys.exit(0)
 
     if args.compare:
@@ -489,9 +496,13 @@ def main() -> None:
             reporter.warn("\nInterrupted. Nothing was deleted.")
             sys.exit(130)
 
-    check_inputs(args, reporter)
+    if not args.bench:
+        check_inputs(args, reporter)
 
     try:
+        if args.bench:
+            sys.exit(run_bench(args, reporter, run, run_deepl))
+
         sys.exit(run_deepl(args, reporter) if args.deepl else run(args, reporter))
     except DeeplError as exc:
         reporter.warn(f"ERROR: {exc}")

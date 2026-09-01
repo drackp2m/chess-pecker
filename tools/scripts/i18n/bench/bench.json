@@ -1,0 +1,227 @@
+{
+	"langs": ["en-GB", "ru-RU"],
+	"real": [
+		{
+			"key": "common.LINE",
+			"axis": "corta sin contexto",
+			"why": "«Línea» es la variante de ajedrez, no una línea de texto ni una fila. El ruso pide «вариант» y no «линия»; sin glosario un modelo falla siempre"
+		},
+		{
+			"key": "common.MATCH",
+			"axis": "corta sin contexto",
+			"why": "«Partida» contra la máquina. El falso amigo «match» → coincidencia/emparejamiento es el error clásico"
+		},
+		{
+			"key": "common.EXPLORATION",
+			"axis": "corta sin contexto",
+			"why": "Sustantivo, etiqueta de una etapa de la calibración. Nunca el juego libre del tablero"
+		},
+		{
+			"key": "common.REFINE",
+			"axis": "corta sin contexto",
+			"why": "«Afinado» es la ronda de diez ejercicios, no un ajuste de la aplicación. El en-GB del catálogo dice «Refine» y el glosario pide «refinement»"
+		},
+		{
+			"key": "common.FIRST_TRY",
+			"axis": "corta sin contexto",
+			"why": "Encabezado de columna estrecha. El en-GB del catálogo dice «Solved», que es justo lo que el glosario prohíbe: quien falla y luego acierta también resuelve"
+		},
+		{
+			"key": "training.DAILY_SERIES_SHOWN",
+			"axis": "corta sin contexto",
+			"why": "Serie de un gráfico. El en-GB del catálogo dice «Resigned», y el término fijado es «solución vista»"
+		},
+		{
+			"key": "setting.SYNC_UP_TO_DATE",
+			"axis": "corta sin contexto",
+			"why": "Fragmento en minúscula que se pega a otra línea: obliga a no empezar en mayúscula ni cerrar con punto"
+		},
+		{
+			"key": "common.DIFFICULTY",
+			"axis": "género entre claves",
+			"why": "Portadora de {level}, que se rellena con una de las tres siguientes. Fija el sustantivo con el que los tres adjetivos tienen que concordar"
+		},
+		{
+			"key": "common.DIFFICULTY_MEDIUM",
+			"axis": "género entre claves",
+			"why": "«media» concuerda con «dificultad» en femenino. Traducida suelta sale en masculino y rompe la frase de arriba"
+		},
+		{
+			"key": "common.DIFFICULTY_HARD",
+			"axis": "género entre claves",
+			"why": "La misma concordancia con un adjetivo que en ruso cambia de raíz según cómo se resuelva «Сложность»"
+		},
+		{
+			"key": "common.PIECE_WHITE_ROOK",
+			"axis": "género entre claves",
+			"why": "Femenino en español y femenino en ruso (ладья): el caso fácil, que sirve de control"
+		},
+		{
+			"key": "common.PIECE_BLACK_QUEEN",
+			"axis": "género entre claves",
+			"why": "«dama» es femenino en español y «ферзь» masculino en ruso: el adjetivo tiene que cambiar de género respecto al origen"
+		},
+		{
+			"key": "common.PIECE_BLACK_PAWN",
+			"axis": "género entre claves",
+			"why": "El espejo del anterior: «peón» masculino en español, «пешка» femenino en ruso"
+		},
+		{
+			"key": "common.SQUARE_CAPTURE",
+			"axis": "género entre claves",
+			"why": "Mete un PIECE_* dentro de una frase. El ruso pediría acusativo y el hueco llega en nominativo, así que la traducción buena esquiva el caso en vez de declinar lo que no puede"
+		},
+		{
+			"key": "common.PROMOTE_TO_PIECE",
+			"axis": "género entre claves",
+			"why": "El mismo choque de casos en un botón, donde además el ruso quiere infinitivo y el glosario exige la raíz de «превратить»"
+		},
+		{
+			"key": "common.SELECT_OPTION_POSITION",
+			"axis": "parámetros",
+			"why": "Tres huecos seguidos y casi nada de texto entre ellos"
+		},
+		{
+			"key": "training.CALIBRATION_LABEL_PROGRESS",
+			"axis": "parámetros",
+			"why": "Cuatro huecos, el separador « · » dos veces, paréntesis, una barra y «ELO», que es intraducible"
+		},
+		{
+			"key": "training.DAILY_DAY_DETAIL",
+			"axis": "parámetros",
+			"why": "Siete huecos y tres términos de glosario en la misma línea: la cadena más densa del catálogo"
+		},
+		{
+			"key": "common.APP_UPDATED",
+			"axis": "parámetros",
+			"why": "La «v» va pegada al hueco. Un modelo que la separe o la traduzca rompe el formato"
+		},
+		{
+			"key": "setting.SYNC_CURSOR",
+			"axis": "parámetros",
+			"why": "Fragmento en minúscula con hueco, que se concatena detrás de otro texto"
+		},
+		{
+			"key": "common.SERVER_DETAIL",
+			"axis": "parámetros",
+			"why": "La cadena es sólo el hueco. La única respuesta correcta es devolverla intacta, y es donde un modelo tiende a inventar prosa"
+		},
+		{
+			"key": "puzzle.IMPORTED_WITH_SKIPPED",
+			"axis": "número",
+			"why": "Dos recuentos y dos participios que concuerdan con sustantivos de género distinto: «cargados» con ejercicios, «descartadas» con filas"
+		},
+		{
+			"key": "common.PENDING_SYNC_MESSAGE",
+			"axis": "número",
+			"why": "Recuento dentro del aviso más serio de la aplicación: el tono no puede ablandarse ni endurecerse al traducir"
+		},
+		{
+			"key": "setting.SYNC_MORE_REJECTED",
+			"axis": "número",
+			"why": "Tres palabras y un hueco, sin verbo ni sustantivo: no hay de dónde deducir de qué se habla"
+		},
+		{
+			"key": "auth.PASSWORD_MIN_LENGTH",
+			"axis": "número",
+			"why": "Recuento corto y frase completa con punto, de las pocas que un modelo pequeño acierta: sirve de suelo de la tabla"
+		},
+		{
+			"key": "intro.PURPOSE_BODY_2",
+			"axis": "texto largo",
+			"why": "Dos frases largas con enumeración. En ruso obliga a esquivar el pasado, que concordaría en género con quien lee"
+		},
+		{
+			"key": "setting.BOARD_INTRO",
+			"axis": "texto largo",
+			"why": "Incisos con raya, dos puntos y dos imperativos encadenados. Además tiene que decir lo mismo que common.DEMO_TASK"
+		},
+		{
+			"key": "profile.UNREACHABLE_EXPLANATION",
+			"axis": "texto largo",
+			"why": "Explicación técnica de cuatro frases que tiene que tranquilizar sin prometer nada"
+		},
+		{
+			"key": "common.CATALOG_EMPTY",
+			"axis": "texto largo",
+			"why": "Error con dos salidas y un término de la lista «keep» (CSV) que no se traduce"
+		},
+		{
+			"key": "training.COMMIT_TO_A_PACE",
+			"axis": "imperativo",
+			"why": "Imperativo de segunda persona en español que el ruso tiene que volver infinitivo, y sin confundirse con «Guardar el ritmo», que está al lado"
+		},
+		{
+			"key": "common.BOARD_STEP_BACKWARD",
+			"axis": "imperativo",
+			"why": "Etiqueta accesible y visible a la vez: dice la acción entera y no puede acortarse a «Atrás»"
+		},
+		{
+			"key": "match.ILLEGAL_MOVE",
+			"axis": "tipografía",
+			"why": "Comillas alrededor de un hueco. Cada idioma lleva las suyas, y la notación de dentro no se traduce ni se translitera"
+		}
+	],
+	"icu": [
+		{
+			"key": "puzzle.IMPORTED",
+			"kind": "plural",
+			"source": "Cargados {loaded} ejercicios.",
+			"siblings": "es-ES · one: «Cargado {loaded} ejercicio.» · other: «Cargados {loaded} ejercicios.»",
+			"context": "Aviso al terminar de importar un CSV. El participio y el sustantivo concuerdan con el número.",
+			"why": "El plural más simple del catálogo: en ruso el sustantivo cambia de caso en cada rama y el participio impersonal no se mueve",
+			"categories": {
+				"en-GB": {
+					"one": "se usa con 1",
+					"other": "se usa con 0, 2, 3, 4, 5…"
+				},
+				"ru-RU": {
+					"one": "se usa con 1, 21, 101 — todo lo acabado en 1 salvo el 11",
+					"few": "se usa con 2, 3, 4, 22, 23, 24…",
+					"many": "se usa con 0, 5, 11, 25, 100 — incluye el cero y del 5 al 20",
+					"other": "se usa con los decimales: 0,5 · 1,5 · 2,5"
+				}
+			}
+		},
+		{
+			"key": "common.PENDING_SYNC_MESSAGE",
+			"kind": "plural",
+			"source": "{pending} ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.",
+			"siblings": "es-ES · one: «{pending} ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: la rama de arriba",
+			"context": "Diálogo de cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad.",
+			"why": "Un plural que arrastra la concordancia por dos frases: el verbo, el pronombre y el sustantivo cambian juntos",
+			"categories": {
+				"en-GB": {
+					"one": "se usa con 1",
+					"other": "se usa con 0, 2, 3, 4, 5…"
+				},
+				"ru-RU": {
+					"one": "se usa con 1, 21, 101 — todo lo acabado en 1 salvo el 11",
+					"few": "se usa con 2, 3, 4, 22, 23, 24…",
+					"many": "se usa con 0, 5, 11, 25, 100 — incluye el cero y del 5 al 20",
+					"other": "se usa con los decimales: 0,5 · 1,5 · 2,5"
+				}
+			}
+		},
+		{
+			"key": "training.GAVE_UP_WATCHING",
+			"kind": "gender",
+			"source": "Te has rendido. Mira cómo iba.",
+			"siblings": "es-ES · las tres ramas del origen son idénticas: el español no marca género en «te has rendido». La variación, si la hay, la pone el idioma de destino",
+			"context": "Se ve al rendirse en un ejercicio, justo antes de que el tablero juegue la solución. El género es el de quien usa la aplicación, que lo elige en los ajustes.",
+			"why": "El caso que sólo existe en el destino: el ruso concuerda el pasado en género y el español no, así que el modelo no puede copiar la variación del origen porque no la hay",
+			"categories": {
+				"en-GB": {
+					"male": "quien usa la aplicación ha elegido «hombre»",
+					"female": "quien usa la aplicación ha elegido «mujer»",
+					"other": "quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar"
+				},
+				"ru-RU": {
+					"male": "quien usa la aplicación ha elegido «hombre»",
+					"female": "quien usa la aplicación ha elegido «mujer»",
+					"other": "quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar"
+				}
+			}
+		}
+	]
+}

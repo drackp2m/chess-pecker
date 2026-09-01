@@ -19,7 +19,13 @@ function move(uci: string): ChessMove {
 }
 
 function state(overrides: Partial<RecordState> = {}): RecordState {
-	return { ...blankRecord(), freePlayIndex: undefined, closure: 'open', ...overrides };
+	return {
+		...blankRecord(),
+		freePlayIndex: undefined,
+		freePlayScratch: undefined,
+		closure: 'open',
+		...overrides,
+	};
 }
 
 describe('append', () => {

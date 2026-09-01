@@ -24,7 +24,7 @@ El resultado de una ronda de calibración, tal como se le cuenta al jugador nada
 
 ## SET_*
 
-El conjunto de ejercicios. Se elige una vez, se fija y ya no cambia: todos los ciclos recorren ese mismo conjunto. `{{ size }}` es el número de ejercicios que tiene.
+El conjunto de ejercicios. Se elige una vez, se fija y ya no cambia: todos los ciclos recorren ese mismo conjunto. `{size}` es el número de ejercicios que tiene.
 
 ## PICK_THE_SET
 
@@ -40,11 +40,11 @@ Etiqueta de un campo numérico: ejercicios al día.
 
 ## CYCLE_*
 
-Los ciclos del entrenamiento. `{{ index }}` es el número del ciclo empezando por 1. En `CYCLE_TIMES` y `CYCLE_TARGET` los tiempos son duraciones ya formateadas por la aplicación: llegan hechas dentro del parámetro y no se tocan. `CYCLE_INCOMPLETE` es el aviso de un ciclo al que le faltan ejercicios en este dispositivo: `{{ stored }}` son los que hay y `{{ expected }}` los que debería tener. No es culpa del jugador y tiene arreglo, así que el tono es de aviso, no de alarma.
+Los ciclos del entrenamiento. `{index}` es el número del ciclo empezando por 1. En `CYCLE_TIMES` y `CYCLE_TARGET` los tiempos son duraciones ya formateadas por la aplicación: llegan hechas dentro del parámetro y no se tocan. `CYCLE_INCOMPLETE` es el aviso de un ciclo al que le faltan ejercicios en este dispositivo: `{stored}` son los que hay y `{expected}` los que debería tener. No es culpa del jugador y tiene arreglo, así que el tono es de aviso, no de alarma.
 
 ## CYCLE_PACE_*
 
-El gráfico que compara lo hecho cada día con el ritmo pactado. `{{ delta }}` es el saldo de ese día y `{{ drift }}` el acumulado; los dos llegan ya con su signo. «Por delante» y «por detrás» son respecto al ritmo, no respecto a otro jugador.
+El gráfico que compara lo hecho cada día con el ritmo pactado. `{delta}` es el saldo de ese día y `{drift}` el acumulado; los dos llegan ya con su signo. «Por delante» y «por detrás» son respecto al ritmo, no respecto a otro jugador.
 
 ## REPAIR_CYCLE
 

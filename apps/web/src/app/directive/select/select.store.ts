@@ -13,11 +13,10 @@ interface SelectStoreProps {
 	options: SelectOptionViewModel[];
 	highlightedIndex: number | null;
 	searchText: string;
-	selectedText: string;
 	isOpen: boolean;
 	focused: boolean;
-	filled: boolean;
 	disabled: boolean;
+	multiple: boolean;
 	searchableOverride: boolean | null;
 	keyboardNavigating: boolean;
 	arrowNavigated: boolean;
@@ -27,11 +26,10 @@ const initialState: SelectStoreProps = {
 	options: [],
 	highlightedIndex: null,
 	searchText: '',
-	selectedText: '',
 	isOpen: false,
 	focused: false,
-	filled: false,
 	disabled: false,
+	multiple: false,
 	searchableOverride: null,
 	keyboardNavigating: false,
 	arrowNavigated: false,
@@ -53,6 +51,18 @@ export class SelectStore extends signalStore({ protectedState: false }, withStat
 			.map((option, index) => ({ ...option, highlighted: index === highlightedIndex }));
 	});
 
+	readonly selectedOptions = computed<SelectOptionViewModel[]>(() =>
+		this.options().filter((option) => option.selected),
+	);
+
+	readonly selectedText = computed<string>(() =>
+		this.selectedOptions()
+			.map((option) => option.label)
+			.join(', '),
+	);
+
+	readonly filled = computed<boolean>(() => 0 < this.selectedOptions().length);
+
 	readonly searchable = computed<boolean>(() => {
 		const override = this.searchableOverride();
 
@@ -65,6 +75,10 @@ export class SelectStore extends signalStore({ protectedState: false }, withStat
 		return searchableOptionsThreshold < realOptions.length;
 	});
 
+	setMultiple(multiple: boolean): void {
+		patchState(this, { multiple });
+	}
+
 	setSearchableOverride(searchableOverride: boolean | null): void {
 		patchState(this, { searchableOverride });
 	}
@@ -74,18 +88,19 @@ export class SelectStore extends signalStore({ protectedState: false }, withStat
 			value: option.value,
 			label: option.text,
 			disabled: option.disabled,
-			selected: option.value === selectElement.value,
+			selected: '' !== option.value && option.selected,
 			highlighted: false,
 		}));
 
 		patchState(this, { options });
 	}
 
-	updateSelection(value: string, selectedText: string): void {
+	updateSelection(values: string[]): void {
 		patchState(this, {
-			selectedText,
-			filled: '' !== value,
-			options: this.options().map((option) => ({ ...option, selected: option.value === value })),
+			options: this.options().map((option) => ({
+				...option,
+				selected: '' !== option.value && values.includes(option.value),
+			})),
 		});
 	}
 

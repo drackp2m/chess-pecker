@@ -1,18 +1,13 @@
 :host {
-	// The same tones the full board mixes from the palette, so the preview cannot
-	// drift away from what it is previewing.
-	--square-light: color-mix(in oklab, var(--color-primary) 88%, var(--color-accent));
-	--square-dark: color-mix(in oklab, var(--color-accent) 58%, var(--color-contrast));
-	--square-selected: color-mix(in oklab, var(--color-accent) 70%, rgb(255 255 255));
-	--square-last-move: color-mix(in oklab, var(--color-accent) 35%, transparent);
-	--square-mistake: rgb(196 48 38 / 45%);
-	--square-announced: color-mix(in oklab, var(--color-accent) 85%, rgb(255 255 255));
-
 	// Under every level a piece can be given, since it is the one being taken.
 	--layer-taken: 0;
 
 	// Clear of every level a piece can be given, the way the full board keeps it.
 	--layer-ghost: 90;
+	--piece-lift-scale: 1.15;
+	--piece-lift-shadow: drop-shadow(0 6px 6px rgb(0 0 0 / 40%));
+	--piece-lift-flat: drop-shadow(0 0 0 rgb(0 0 0 / 0%));
+	--piece-lift-duration: 140ms;
 
 	display: flex;
 	flex-direction: column;
@@ -38,6 +33,11 @@
 		cursor: progress;
 	}
 
+	&:not(.lifting) {
+		--piece-lift-scale: 1;
+		--piece-lift-shadow: var(--piece-lift-flat);
+	}
+
 	&.dragging .square {
 		cursor: grabbing;
 	}
@@ -55,37 +55,43 @@
 	transition: background-color 120ms ease-in-out;
 
 	&.light {
-		background-color: var(--square-light);
+		background-color: var(--board-square-light);
 	}
 
 	&.dark {
-		background-color: var(--square-dark);
+		background-color: var(--board-square-dark);
 	}
 
+	// Picked up: the piece rides with the pointer, so its home square shows empty.
 	&.lifted app-chess-piece {
-		opacity: 0.25;
+		opacity: 0;
+	}
+
+	&.selected app-chess-piece:not(.taken) {
+		scale: var(--piece-lift-scale);
+		filter: var(--piece-lift-shadow);
 	}
 
 	// A translucent wash over the square's own background and not its contents, so the
 	// piece standing there stays readable and is never tinted along with it.
 	&.last-move,
 	&.mistake {
-		background-image: linear-gradient(var(--square-last-move), var(--square-last-move));
+		background-image: linear-gradient(var(--board-square-last-move), var(--board-square-last-move));
 	}
 
 	&.selected {
-		background-color: var(--square-selected);
+		background-color: var(--board-square-selected);
 	}
 
 	&.announced {
-		background-color: var(--square-announced);
+		background-color: var(--board-square-announced);
 		animation: demo-announce 600ms ease-in-out infinite alternate;
 	}
 
 	// Declared after the shared rule above so a refuted move outranks the last-move
 	// tint on the very squares it also occupies.
 	&.mistake {
-		background-image: linear-gradient(var(--square-mistake), var(--square-mistake));
+		background-image: linear-gradient(var(--board-square-mistake), var(--board-square-mistake));
 	}
 
 	// A dot marks a quiet destination, a ring marks a capture.
@@ -98,13 +104,13 @@
 		height: 30%;
 		border-radius: 50%;
 
-		background-color: rgb(0 0 0 / 30%);
+		background-color: var(--board-square-target);
 	}
 
 	&.target.capture::before {
 		width: 84%;
 		height: 84%;
-		border: 6px solid rgb(0 0 0 / 30%);
+		border: 6px solid var(--board-square-target);
 		background-color: transparent;
 	}
 
@@ -117,7 +123,16 @@
 	// The level itself is bound per piece, so the one that matters rides over the one
 	// that does not while they share a square.
 	app-chess-piece {
+		will-change: scale, filter;
+
 		position: relative;
+		scale: 1;
+
+		filter: var(--piece-lift-flat);
+
+		transition:
+			scale var(--piece-lift-duration) ease-out,
+			filter var(--piece-lift-duration) ease-out;
 	}
 
 	// The piece being taken, left standing under the one coming for it until it lands.
@@ -131,11 +146,11 @@
 // Same treatment as the full board: each coordinate takes the tone of the opposite
 // square, so it always contrasts with the one it sits on.
 .light .coordinate {
-	color: var(--square-dark);
+	color: var(--board-square-dark);
 }
 
 .dark .coordinate {
-	color: var(--square-light);
+	color: var(--board-square-light);
 }
 
 .coordinate {
@@ -165,15 +180,41 @@
 }
 
 // Follows the pointer while a piece is being dragged, clear of every piece it is
-// being carried over.
+// being carried over, raised off the board by a size of its own and a shadow under it.
 .ghost {
 	pointer-events: none;
+
 	position: fixed;
 	z-index: var(--layer-ghost);
+	scale: var(--piece-lift-scale);
+
+	filter: var(--piece-lift-shadow);
+
+	transition:
+		translate var(--piece-lift-duration) ease-out,
+		scale var(--piece-lift-duration) ease-out,
+		filter var(--piece-lift-duration) ease-out;
+
+	// The frame it is lifted on: still the size it was standing at, and still over its own
+	// square. Dropping the class is what sends it travelling to the pointer.
+	&.settling {
+		scale: 1;
+		filter: var(--piece-lift-flat);
+	}
+
+	&.settling.raised {
+		scale: var(--piece-lift-scale);
+		filter: var(--piece-lift-shadow);
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.square.announced {
 		animation: none;
+	}
+
+	.square app-chess-piece,
+	.ghost {
+		transition: none;
 	}
 }

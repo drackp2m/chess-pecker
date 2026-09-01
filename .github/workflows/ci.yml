@@ -46,6 +46,12 @@ jobs:
       - name: Typecheck shared definitions
         run: pnpm --filter @chesspecker/api-definitions typecheck
 
+      - name: Check the test lock
+        run: pnpm run test:lock tools
+
+      - name: Run tooling tests
+        run: pnpm run test:tools
+
       - name: Run i18n check
         run: pnpm run i18n:check
 

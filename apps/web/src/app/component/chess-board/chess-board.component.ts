@@ -13,11 +13,14 @@ import { BoardDragGesture } from '@app/component/chess-board/board-drag';
 import {
 	Point,
 	buildPromotionChoices,
+	dropOffset,
 	indexAtOrder,
+	pointAtSquare,
 	squareAtPoint,
 } from '@app/component/chess-board/board-geometry';
+import { PieceLaunch, describeLaunch, launchSlides } from '@app/component/chess-board/board-launch';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
-import { pieceElevation } from '@app/component/chess-board/board-stacking';
+import { squareElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import {
@@ -36,6 +39,11 @@ import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessSquare } from '@app/util/chess/chess-square';
 import { PIECE_LABEL_KEY } from '@app/util/chess/piece-label';
+
+interface HeldPick {
+	readonly square: Square;
+	readonly drop: Point | undefined;
+}
 
 interface BoardSquare {
 	readonly square: Square;
@@ -92,18 +100,24 @@ export class ChessBoardComponent {
 	// on screen rather than only on the next one.
 	readonly isClickEnabled = computed(() => this.preference.moveInputMethods().includes('click'));
 	readonly isDragEnabled = computed(() => this.preference.moveInputMethods().includes('drag'));
+	readonly isLiftEnabled = computed(() => this.preference.moveLift());
 
 	private readonly gesture = new BoardDragGesture({
 		squareAt: (point) => this.squareAt(point),
 		pieceAt: (square) => this.store.position().board[ChessSquare.toIndex(square)],
-		squareSize: () => this.board().nativeElement.getBoundingClientRect().width / BOARD_SIZE,
+		squareSize: () => this.squareSize(),
+		squareCenter: (square) => this.centerOf(square),
 		isClickEnabled: () => this.isClickEnabled(),
 		// Read off what is drawn picked up rather than off the store, or a drag begun on a
 		// piece the board is already holding would take the same one up twice.
 		pick: (square) => {
-			if (square !== this.pickedUp()) {
+			const isRaised = square === this.pickedUp();
+
+			if (!isRaised) {
 				this.pickSquare(square);
 			}
+
+			return isRaised;
 		},
 	});
 
@@ -142,7 +156,20 @@ export class ChessBoardComponent {
 	 * refused any more: they are played the moment the board stops, so a move given over the
 	 * opponent's queues behind it instead of cutting the piece on screen short.
 	 */
-	private readonly held = signal<readonly Square[]>([]);
+	private readonly held = signal<readonly HeldPick[]>([]);
+
+	private readonly launch = signal<PieceLaunch | undefined>(undefined);
+
+	private promotionDrop: Point | undefined;
+
+	private readonly slides = computed(() =>
+		launchSlides(
+			this.playback.slides(),
+			this.launch(),
+			this.store.transition(),
+			this.isLiftEnabled(),
+		),
+	);
 
 	/**
 	 * The board a piece taken up now will move on: what the state holds, plus the move that is
@@ -220,7 +247,14 @@ export class ChessBoardComponent {
 	}
 
 	promote(piece: PromotionPieceType): void {
+		const pending = this.store.pendingPromotion();
+		const before = this.store.transition();
+
 		this.store.completePromotion(piece);
+
+		if (undefined !== pending) {
+			this.launch.set(describeLaunch(pending, this.promotionDrop, before, this.store.transition()));
+		}
 	}
 
 	pressSquare(square: BoardSquare, event: PointerEvent): void {
@@ -239,11 +273,21 @@ export class ChessBoardComponent {
 
 	/** Resolves both gestures: a drop lands the piece, a tap acts as a click. */
 	dropSquare(event: PointerEvent): void {
-		const target = this.gesture.release({ x: event.clientX, y: event.clientY });
+		const point = { x: event.clientX, y: event.clientY };
+		const wasCarried = undefined !== this.draggingFrom();
+		const target = this.gesture.release(point);
 
-		if (undefined !== target) {
-			this.pickSquare(target);
+		if (undefined === target) {
+			return;
 		}
+
+		if (wasCarried && !this.targets().some((move) => target === move.to)) {
+			this.putDown();
+
+			return;
+		}
+
+		this.pickSquare(target, wasCarried ? this.dropOffset(target, point) : undefined);
 	}
 
 	cancelDrag(): void {
@@ -267,18 +311,36 @@ export class ChessBoardComponent {
 		);
 	}
 
+	private putDown(): void {
+		const picked = this.pickedUp();
+
+		if (undefined !== picked) {
+			this.pickSquare(picked);
+		}
+	}
+
 	/**
 	 * The one way a square is acted on, so the board holds the lot at once. Over a board still
 	 * drawing nothing is lost and nothing is played: it waits for the piece on screen to arrive.
 	 */
-	private pickSquare(square: Square): void {
+	private pickSquare(square: Square, drop?: Point): void {
 		if (this.isDrawing()) {
-			this.held.update((held) => [...held, square]);
+			this.held.update((held) => [...held, { square, drop }]);
 
 			return;
 		}
 
+		this.commit(square, drop);
+	}
+
+	private commit(square: Square, drop: Point | undefined): void {
+		const move = { from: this.pickedUp(), to: square };
+		const before = this.store.transition();
+
 		this.store.selectSquare(square);
+
+		this.launch.set(describeLaunch(move, drop, before, this.store.transition()));
+		this.promotionDrop = undefined === this.store.pendingPromotion() ? undefined : drop;
 	}
 
 	/**
@@ -291,21 +353,22 @@ export class ChessBoardComponent {
 
 		this.held.set([]);
 
-		for (const square of held) {
+		for (const pick of held) {
 			if (this.isDrawing()) {
 				return;
 			}
 
-			this.store.selectSquare(square);
+			this.commit(pick.square, pick.drop);
 		}
 	}
 
 	/** The last square held that has a piece of the player's standing on the landing board. */
-	private lastOwnPiece(held: readonly Square[]): Square | undefined {
+	private lastOwnPiece(held: readonly HeldPick[]): Square | undefined {
 		const color = this.store.playerColor();
 		const board = this.landing().board;
 
-		return held.findLast((square) => color === board[ChessSquare.toIndex(square)]?.color);
+		return held.findLast(({ square }) => color === board[ChessSquare.toIndex(square)]?.color)
+			?.square;
 	}
 
 	/** Feature-detected: not every test environment implements pointer capture. */
@@ -315,6 +378,22 @@ export class ChessBoardComponent {
 		if ('function' === typeof (element as { setPointerCapture?: unknown }).setPointerCapture) {
 			element.setPointerCapture(pointerId);
 		}
+	}
+
+	private squareSize(): number {
+		return this.board().nativeElement.getBoundingClientRect().width / BOARD_SIZE;
+	}
+
+	private dropOffset(square: Square, point: Point): Point {
+		return dropOffset(this.centerOf(square), point, this.squareSize());
+	}
+
+	private centerOf(square: Square): Point {
+		return pointAtSquare(
+			this.board().nativeElement.getBoundingClientRect(),
+			square,
+			this.store.orientation(),
+		);
 	}
 
 	private squareAt(point: Point): Square | undefined {
@@ -332,13 +411,14 @@ export class ChessBoardComponent {
 		const mistake = this.store.mistake();
 		const announced = this.store.announcedMove();
 		const piece = this.position().board[index];
-		const travelling = this.playback.slides().find((pending) => square === pending.to);
+		const travelling = this.slides().find((pending) => square === pending.to);
+		const isSelected = square === this.pickedUp();
 
 		return {
 			square,
 			piece,
 			isLight: ChessSquare.isLight(index),
-			isSelected: square === this.pickedUp(),
+			isSelected,
 			isTarget: undefined !== target,
 			isCapture: undefined !== target?.captured,
 			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),
@@ -347,7 +427,7 @@ export class ChessBoardComponent {
 			isAnnounced: square === announced?.from,
 			slide: travelling?.slide,
 			taken: this.playback.isSliding() ? travelling?.taken : undefined,
-			elevation: undefined === piece ? undefined : pieceElevation(piece),
+			elevation: squareElevation(piece, isSelected || undefined !== travelling?.slide),
 			fileLabel: 56 <= order ? FILES[ChessSquare.fileOf(index)] : undefined,
 			rankLabel: 0 === order % 8 ? RANKS[ChessSquare.rowOf(index)] : undefined,
 		};

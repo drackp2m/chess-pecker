@@ -5,12 +5,10 @@ import sys
 import time
 from dataclasses import dataclass
 
-from .models import find
+from .models import find, size_text
 from .picker import choose, interactive
 from .tables import aligned, ruled
 
-GIGABYTE = 1e9
-MEGABYTE = 1e6
 HOUR = 3600.0
 DAY = 86400.0
 UNKNOWN = "—"
@@ -29,10 +27,7 @@ class Entry:
 
     @property
     def size_text(self) -> str:
-        if self.size >= GIGABYTE:
-            return f"{self.size / GIGABYTE:.1f} GB"
-
-        return f"{self.size / MEGABYTE:.0f} MB"
+        return size_text(self.size)
 
     @property
     def used_text(self) -> str:
@@ -45,10 +40,6 @@ class Entry:
             return f"{int(elapsed // HOUR)}h ago"
 
         return f"{int(elapsed // DAY)}d ago"
-
-
-def size_text(size: int) -> str:
-    return f"{size / GIGABYTE:.1f} GB" if size >= GIGABYTE else f"{size / MEGABYTE:.0f} MB"
 
 
 def entry_of(repo) -> Entry:
@@ -76,6 +67,15 @@ def load():
     entries = sorted((entry_of(repo) for repo in models), key=lambda e: -e.size)
 
     return info, entries
+
+
+def sizes_by_repo() -> dict[str, int]:
+    try:
+        _, entries = load()
+    except ImportError:
+        return {}
+
+    return {entry.repo.lower(): entry.size for entry in entries}
 
 
 def cells(entry: Entry) -> tuple[str, ...]:

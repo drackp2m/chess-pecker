@@ -6,10 +6,12 @@ import type {
 	TrainingCycleStatus,
 	TrainingFinishedReason,
 	TrainingStatus,
+	UserNotificationType,
 	UserRole,
 } from '@chesspecker/api-definitions';
 
 import type { FriendshipStatus as FriendshipStatusEnum } from '../../module/friendship/definition/friendship-status.enum';
+import type { UserNotificationType as UserNotificationTypeEnum } from '../../module/notification/definition/user-notification-type.enum';
 import type { CalibrationRoundKind as CalibrationRoundKindEnum } from '../../module/training/definition/calibration-round-kind.enum';
 import type { CalibrationRoundOutcome as CalibrationRoundOutcomeEnum } from '../../module/training/definition/calibration-round-outcome.enum';
 import type { PuzzleAttemptKind as PuzzleAttemptKindEnum } from '../../module/training/definition/puzzle-attempt-kind.enum';
@@ -40,5 +42,7 @@ type _TrainingFinishedReasonWire = Covers<`${TrainingFinishedReasonEnum}`, Train
 type _TrainingFinishedReasonEnum = Covers<TrainingFinishedReason, `${TrainingFinishedReasonEnum}`>;
 type _TrainingStatusWire = Covers<`${TrainingStatusEnum}`, TrainingStatus>;
 type _TrainingStatusEnum = Covers<TrainingStatus, `${TrainingStatusEnum}`>;
+type _UserNotificationTypeWire = Covers<`${UserNotificationTypeEnum}`, UserNotificationType>;
+type _UserNotificationTypeEnum = Covers<UserNotificationType, `${UserNotificationTypeEnum}`>;
 type _UserRoleWire = Covers<`${UserRoleEnum}`, UserRole>;
 type _UserRoleEnum = Covers<UserRole, `${UserRoleEnum}`>;

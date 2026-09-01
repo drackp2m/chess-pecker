@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { GENDER_ARG } from './genders.mjs';
+
 const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..', '..');
 const LANGUAGE_FILE = path.join(
 	ROOT,
@@ -15,9 +17,9 @@ const LANGUAGE_FILE = path.join(
 
 export function readLanguages(file) {
 	const source = readFileSync(file, 'utf8');
-	const list = /LANGUAGES[^=]*=\s*\[([^\]]*)\]/.exec(source)?.[1] ?? '';
+	const list = /const LANGUAGES[^=]*=\s*\[([^\]]*)\]/.exec(source)?.[1] ?? '';
 	const langs = [...list.matchAll(/'([^']+)'/g)].map(([, lang]) => lang);
-	const defaultLang = /DEFAULT_LANGUAGE[^=]*=\s*'([^']+)'/.exec(source)?.[1];
+	const defaultLang = /const DEFAULT_LANGUAGE[^=]*=\s*'([^']+)'/.exec(source)?.[1];
 
 	if (!langs.length || undefined === defaultLang) {
 		throw new Error(`Could not read LANGUAGES / DEFAULT_LANGUAGE from ${file}`);
@@ -33,6 +35,8 @@ export const DEFAULTS = {
 	...readLanguages(LANGUAGE_FILE),
 	rootScope: 'common',
 };
+
+export const AMBIENT_PARAMS = new Set([GENDER_ARG]);
 
 // Directories under i18n/ that are not scopes: the hand-written context that
 // feeds the translator, and the generated freshness state.
@@ -68,5 +72,6 @@ export function parseArgs(argv) {
 		...(languageFile ? { languageFile, ...readLanguages(languageFile) } : {}),
 		...(langs?.length ? { langs, defaultLang: langs[0] } : {}),
 		fix: argv.includes('--fix'),
+		verbose: argv.includes('--verbose') || argv.includes('-v'),
 	};
 }

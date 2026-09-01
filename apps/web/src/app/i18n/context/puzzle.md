@@ -26,7 +26,7 @@ Los ejercicios se importan pegando filas de un CSV o eligiendo un archivo. «Fil
 
 ## IMPORTED*
 
-Resultado de la importación. `{{ loaded }}` son los ejercicios que entraron y `{{ skipped }}` las filas del CSV que no se pudieron leer y se descartaron.
+Resultado de la importación. `{loaded}` son los ejercicios que entraron y `{skipped}` las filas del CSV que no se pudieron leer y se descartaron.
 
 ## IMPORT_NOT_SAVED
 
@@ -34,4 +34,4 @@ Los ejercicios se cargaron y se pueden resolver, pero no se guardaron en este di
 
 ## FILE_UNREADABLE
 
-`{{ name }}` es el nombre del archivo que eligió el jugador. Se copia tal cual, sin traducir ni recortar.
+`{name}` es el nombre del archivo que eligió el jugador. Se copia tal cual, sin traducir ni recortar.

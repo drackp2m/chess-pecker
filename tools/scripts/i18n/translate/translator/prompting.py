@@ -6,8 +6,10 @@ from dataclasses import dataclass, field
 from .context import parse_glossary, split_rules, useful_keep, useful_rules, useful_terms
 from .models import INSTRUCT, TRANSLATE
 from .placeholders import marker_position
+from .validate import FORM_SEPARATOR, Form, validate_forms
 from .xliff_io import (
     expected_markers_for,
+    find_files,
     find_units,
     first_segment,
     note_text,
@@ -44,12 +46,41 @@ MARKER_RULES = """\
 - No inventes marcadores que no estén en el origen.\
 """
 
+PLURAL_RULES = """\
+## Formas plurales
+- Esta frase se usa sólo con ciertos números, y su nota dice con cuáles.
+- Escríbela como se diría en el idioma de destino con esos números, no con «uno» ni «muchos».
+- El marcador del número va donde lo pida la gramática, y no se sustituye por una cifra.
+- Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con «o».\
+"""
+
+GENDER_RULES = """\
+## Género
+- Esta frase se escribe para una persona concreta, y su nota dice para quién.
+- Haz concordar con ella todo lo que el idioma de destino marque en género.
+- Si la nota dice que no se ha especificado, dale la vuelta a la frase para que no haya nada que \
+concordar: no inventes terminaciones que el idioma no tenga.
+- Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con barras.\
+"""
+
 CONTEXT_PREFIX = "- Qué es: "
 DEMAND_PREFIX = "- Usa sí o sí estas palabras: "
 
 MIXED_MARKERS = (
     "- Sólo llevan marcadores los textos donde ya aparecen; a los demás no les añadas ninguno."
 )
+
+MIXED_PLURALS = (
+    "- Sólo son formas de plural los textos que lo dicen en su nota; los demás no lo son."
+)
+
+MIXED_GENDERS = (
+    "- Sólo son formas de género los textos que lo dicen en su nota; los demás no lo son."
+)
+
+PLURAL_LABEL = "plural"
+FORM_LABELS = {PLURAL_LABEL: "forma", "gender": "género"}
+TAG_ARROW = " ← "
 
 EXAMPLE = """\
 Ejemplo:
@@ -63,6 +94,10 @@ SECTIONS = (
     ("language", "El idioma de destino"),
     ("scope", "Esta sección de la interfaz"),
 )
+
+
+def sentence(text: str) -> str:
+    return text if text.endswith("…") else f"{text}."
 
 
 def parse_terms(text: str) -> list[tuple[str, str]]:
@@ -147,6 +182,59 @@ class Unit:
     def terms(self) -> list[tuple[str, str]]:
         return parse_terms(note_text(self.notes, "term"))
 
+    @property
+    def category(self) -> str:
+        return note_text(self.notes, "category")
+
+    @property
+    def examples(self) -> str:
+        return " ".join(note_text(self.notes, "examples").split())
+
+    @property
+    def gender(self) -> str:
+        return " ".join(note_text(self.notes, "gender-note").split())
+
+    @property
+    def plural_key(self) -> str:
+        for part in self.category.split(FORM_SEPARATOR):
+            name, _, key = part.partition(":")
+
+            if name == PLURAL_LABEL:
+                return key
+
+        return ""
+
+    @property
+    def form_tag(self) -> str:
+        parts = []
+
+        for part in self.category.split(FORM_SEPARATOR):
+            name, _, key = part.partition(":")
+            label = FORM_LABELS.get(name)
+
+            if label and key:
+                parts.append(f"{label} «{key}»")
+
+        return FORM_SEPARATOR.join(parts)
+
+    def tagged_source(self) -> str:
+        wrapped = f"{OPEN}{self.source}{CLOSE}"
+        tag = self.form_tag
+
+        return f"{wrapped}{TAG_ARROW}{tag}" if tag else wrapped
+
+    def plural_lines(self) -> list[str]:
+        if not self.examples:
+            return []
+
+        return [f"- Forma «{self.plural_key or self.category}»: {sentence(self.examples)}"]
+
+    def gender_lines(self) -> list[str]:
+        if not self.gender:
+            return []
+
+        return [f"- Género: {sentence(self.gender)}"]
+
     def markers_note(self) -> list[str]:
         lines = []
 
@@ -172,7 +260,7 @@ class Unit:
         return [DEMAND_PREFIX + ", ".join(pairs)] if pairs else []
 
     def detail_lines(self) -> list[str]:
-        lines = []
+        lines = self.gender_lines() + self.plural_lines()
         params = note_text(self.notes, "param")
 
         if params and self.markers:
@@ -227,6 +315,32 @@ class Batch:
 
         return f"{MARKER_RULES}\n{MIXED_MARKERS}"
 
+    @property
+    def has_plurals(self) -> bool:
+        return any(unit.examples for unit in self.units)
+
+    def plural_section(self) -> str:
+        if not self.has_plurals:
+            return ""
+
+        if all(unit.examples for unit in self.units):
+            return PLURAL_RULES
+
+        return f"{PLURAL_RULES}\n{MIXED_PLURALS}"
+
+    @property
+    def has_genders(self) -> bool:
+        return any(unit.gender for unit in self.units)
+
+    def gender_section(self) -> str:
+        if not self.has_genders:
+            return ""
+
+        if all(unit.gender for unit in self.units):
+            return GENDER_RULES
+
+        return f"{GENDER_RULES}\n{MIXED_GENDERS}"
+
     def named_terms(self) -> set[str]:
         return {source.casefold() for unit in self.units for source, _ in unit.terms}
 
@@ -275,6 +389,8 @@ class Batch:
         parts = (
             self.rules_section(),
             self.marker_section(),
+            self.plural_section(),
+            self.gender_section(),
             self.glossary_section(),
             self.retry_section(),
             self.example_section(),
@@ -292,7 +408,7 @@ class Batch:
 
         parts.append(
             f"Traduce al {self.block.target_lang} el texto que va entre {OPEN} y {CLOSE}, "
-            f"y responde sólo con la traducción:\n{OPEN}{unit.source}{CLOSE}"
+            f"y responde sólo con la traducción:\n{unit.tagged_source()}"
         )
 
         return "\n\n".join(parts)
@@ -312,7 +428,7 @@ class Batch:
         seen: dict[str, int] = {}
 
         for index, unit in enumerate(self.units, 1):
-            lines.append(f"{index} {OPEN}{unit.source}{CLOSE}")
+            lines.append(f"{index} {unit.tagged_source()}")
             lines.extend(f"  {line}" for line in unit.demand_lines())
 
             if unit.context:
@@ -323,7 +439,8 @@ class Batch:
         return (
             f"Traduce al {self.block.target_lang} los {self.size} textos numerados. Responde "
             f"con {self.size} líneas, cada una con su número, un espacio y sólo la traducción: "
-            f"sin las marcas {OPEN} {CLOSE}, sin las notas y sin ninguna línea de más.\n\n"
+            f"sin las marcas {OPEN} {CLOSE}, sin lo que venga después de {CLOSE}, sin las "
+            f"notas y sin ninguna línea de más.\n\n"
             + "\n".join(lines)
         )
 
@@ -458,3 +575,31 @@ def blocks_of(
     units = [unit_of(element, scope) for element in find_units(file_element)]
 
     return block, [unit for unit in units if unit is not None]
+
+
+def group_id(unit: Unit) -> str:
+    return unit.id.split("#", 1)[0]
+
+
+def forms_of(units: list[Unit]) -> list[Form]:
+    return [Form(unit.category, unit.previous) for unit in units]
+
+
+def groups_of(units: list[Unit]) -> list[list[Unit]]:
+    grouped: dict[str, list[Unit]] = {}
+
+    for unit in units:
+        if "#" in unit.id:
+            grouped.setdefault(group_id(unit), []).append(unit)
+
+    return list(grouped.values())
+
+
+def check_forms(root, langs: tuple[str, str], reporter) -> None:
+    for element in find_files(root):
+        block, units = blocks_of(element, *langs)
+
+        for group in groups_of(units):
+            reporter.forms_checked(
+                block.scope, group[0].key, validate_forms(forms_of(group), langs[1])
+            )

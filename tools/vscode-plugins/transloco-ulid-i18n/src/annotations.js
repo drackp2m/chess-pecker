@@ -1,8 +1,10 @@
 const vscode = require('vscode');
 
+const { inlineText, inlineTextMaxLength } = require('./settings');
 const { shorten, usageDisplay, usageRange } = require('./util');
 
 const SUPPORTED = new Set(['typescript', 'html']);
+const MISSING = '⚠️ missing translation';
 
 const hiddenType = vscode.window.createTextEditorDecorationType({
 	textDecoration: 'none; display: none;',
@@ -20,14 +22,6 @@ const ghostType = vscode.window.createTextEditorDecorationType({
 	},
 });
 
-const bareType = vscode.window.createTextEditorDecorationType({
-	after: {
-		color: new vscode.ThemeColor('editorWarning.foreground'),
-	},
-});
-
-const settings = () => vscode.workspace.getConfiguration('translocoUlidI18n');
-
 function inlineLabel(index, usage) {
 	const entry = index.entry(usage.scope, usage.key);
 
@@ -35,9 +29,9 @@ function inlineLabel(index, usage) {
 		return null;
 	}
 
-	const { text, missing } = index.translation(usage.scope, entry.ulid, index.defaultLang);
+	const { text, missing } = index.translation(usage.scope, entry.ulid, index.displayLang);
 
-	return missing ? '⚠️ missing' : shorten(text, settings().get('inlineTextMaxLength', 60));
+	return missing ? MISSING : shorten(text, inlineTextMaxLength());
 }
 
 function revealed(range, selections) {
@@ -52,19 +46,17 @@ function collapseInto(groups, range, label) {
 	});
 }
 
-function appendInto(groups, mode, range, label) {
-	const target = 'bare' === mode ? groups.bare : groups.ghost;
-
-	target.push({
+function appendInto(groups, range, label) {
+	groups.ghost.push({
 		range: new vscode.Range(range.end, range.end),
 		renderOptions: { after: { contentText: ` «${label}»` } },
 	});
 }
 
 function decorationsFor(index, editor, usages) {
-	const groups = { hidden: [], inline: [], ghost: [], bare: [] };
+	const groups = { hidden: [], inline: [], ghost: [] };
 
-	if (true !== settings().get('inlineText', true)) {
+	if (!inlineText()) {
 		return groups;
 	}
 
@@ -72,12 +64,12 @@ function decorationsFor(index, editor, usages) {
 		const label = inlineLabel(index, usage);
 		const { range, mode } = usageDisplay(editor.document, usage);
 
-		if (null === label) {
+		if (null === label || 'bare' === mode) {
 			continue;
 		}
 
-		if ('collapse' !== mode) {
-			appendInto(groups, mode, range, label);
+		if ('ghost' === mode) {
+			appendInto(groups, range, label);
 		} else if (!revealed(range, editor.selections)) {
 			collapseInto(groups, range, label);
 		}
@@ -86,33 +78,19 @@ function decorationsFor(index, editor, usages) {
 	return groups;
 }
 
-function diagnosticFor(index, document, usage) {
-	const range = usageRange(document, usage);
-	const entry = index.entry(usage.scope, usage.key);
-
-	if (null === entry) {
-		const scope = index.scopes.get(usage.scope);
-		const where = undefined === scope ? `scope "${usage.scope}"` : scope.keysFile;
-		const message = `"${usage.key}" is not declared in ${where}`;
-
-		return new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
-	}
-
-	const missing = index.langs.filter(
-		(lang) => index.translation(usage.scope, entry.ulid, lang).missing,
+function unknownKeyDiagnostic(index, document, usage) {
+	const scope = index.scopes.get(usage.scope);
+	const where = undefined === scope ? `scope "${usage.scope}"` : scope.keysFile;
+	const message = `"${usage.key}" is not declared in ${where}`;
+	const diagnostic = new vscode.Diagnostic(
+		usageRange(document, usage),
+		message,
+		vscode.DiagnosticSeverity.Error,
 	);
 
-	if (!missing.length) {
-		return null;
-	}
+	diagnostic.code = 'unknown-key';
 
-	const message = `No ${missing.join(', ')} translation for ${usage.scope}.${usage.key}`;
-	const severity =
-		missing.includes(index.defaultLang) || missing.length === index.langs.length
-			? vscode.DiagnosticSeverity.Error
-			: vscode.DiagnosticSeverity.Warning;
-
-	return new vscode.Diagnostic(range, message, severity);
+	return diagnostic;
 }
 
 function pipeDiagnostic(document, usage) {
@@ -125,12 +103,42 @@ function pipeDiagnostic(document, usage) {
 	const diagnostic = new vscode.Diagnostic(
 		usageRange(document, usage),
 		message,
-		vscode.DiagnosticSeverity.Warning,
+		vscode.DiagnosticSeverity.Error,
 	);
 
 	diagnostic.code = 'missing-pipe';
 
 	return diagnostic;
+}
+
+function missingDiagnostic(index, document, usage) {
+	const entry = index.entry(usage.scope, usage.key);
+	const missing = index.langs.filter(
+		(lang) => index.translation(usage.scope, entry.ulid, lang).missing,
+	);
+
+	if (!missing.length) {
+		return null;
+	}
+
+	const message = `No ${missing.join(', ')} translation for ${usage.scope}.${usage.key}`;
+	const diagnostic = new vscode.Diagnostic(
+		usageRange(document, usage),
+		message,
+		vscode.DiagnosticSeverity.Warning,
+	);
+
+	diagnostic.code = 'missing-translation';
+
+	return diagnostic;
+}
+
+function diagnosticFor(index, document, usage) {
+	if (null === index.entry(usage.scope, usage.key)) {
+		return unknownKeyDiagnostic(index, document, usage);
+	}
+
+	return pipeDiagnostic(document, usage) ?? missingDiagnostic(index, document, usage);
 }
 
 class Annotations {
@@ -154,10 +162,7 @@ class Annotations {
 
 		const usages = this.index.findUsages(document.getText());
 		const diagnostics = usages
-			.flatMap((usage) => [
-				diagnosticFor(this.index, document, usage),
-				pipeDiagnostic(document, usage),
-			])
+			.map((usage) => diagnosticFor(this.index, document, usage))
 			.filter((diagnostic) => null !== diagnostic);
 
 		this.diagnostics.set(document.uri, diagnostics);
@@ -175,7 +180,6 @@ class Annotations {
 		editor.setDecorations(hiddenType, groups.hidden);
 		editor.setDecorations(inlineType, groups.inline);
 		editor.setDecorations(ghostType, groups.ghost);
-		editor.setDecorations(bareType, groups.bare);
 	}
 
 	repaint(editor) {

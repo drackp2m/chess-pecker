@@ -2,11 +2,11 @@
 	"version": 1,
 	"algorithm": "sha256",
 	"files": {
-		"apps/web/src/app/component/chess-board/board-choreography.spec.ts": "979b0db1a0b87900f2664c3bcaa57c2e600ddf2d0e6f1d57666d1232d52d5c9d",
+		"apps/web/src/app/component/chess-board/board-choreography.spec.ts": "654006e725b86baea3a9b62f55d67020888fdc295b44630c0bf74ba663b90ca1",
 		"apps/web/src/app/component/chess-board/board-playback.spec.ts": "7ea321dd59ca97cb06a8fe788bc61a1d4f899125692c2938052ad34081a5f998",
 		"apps/web/src/app/component/chess-piece/chess-piece.component.spec.ts": "2379fabbde1467bfb96b35cd5ee0c75242bdc7243313f8d24a70e01ad5bdd6ba",
 		"apps/web/src/app/page/puzzle/store/puzzle/free-play.spec.ts": "85130751a2c0002ccfc20d4691c1c84b29499069f246599fc11f8cf8eae5703e",
 		"apps/web/src/app/page/puzzle/store/puzzle/main-line.spec.ts": "555fc581ccecbe5fc590b0cd4df30fb1f29fc477836570eb9615bf5d975708f5",
-		"apps/web/src/app/util/chess/board-transition.spec.ts": "2ac6ca0009e70ee91ac476a00559bde99eee0d535c8bf0f41380966ba4e923bc"
+		"apps/web/src/app/util/chess/board-transition.spec.ts": "c0925c0e6cbe34f8dc1df3c40e01a91f9f5aa3418a114a6fa19d87ed2a2a5849"
 	}
 }

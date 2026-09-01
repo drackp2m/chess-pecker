@@ -2,10 +2,13 @@ import { readBarrel } from '../catalogue/collect.mjs';
 import { isUlid, toPascalCase } from '../catalogue/config.mjs';
 import { matchesKey, readContext } from '../catalogue/context.mjs';
 import { freshnessOf, readState } from '../catalogue/freshness.mjs';
-import { buildScopeParams, entryLineOf, paramsName } from '../catalogue/params.mjs';
+import { paramTag, signatureDiff, spotsIn } from '../catalogue/message.mjs';
+import { buildScopeParams, entryLineOf, fieldLineOf, paramsName } from '../catalogue/params.mjs';
 
-const PARAM_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
+import { messageProblems } from './icu.mjs';
+
 const PARAMS = 'params';
+const FILE_START = { line: 1, col: 1 };
 
 const finding = (type, scope, file, message, where = {}) => ({
 	type,
@@ -18,9 +21,15 @@ const finding = (type, scope, file, message, where = {}) => ({
 	column: where.column ?? null,
 });
 
-const paramsOf = (value) => new Set([...String(value).matchAll(PARAM_PATTERN)].map(([, n]) => n));
-
 const isBlank = (value) => '' === String(value).trim();
+
+const JSON_POSITION = /\bline (\d+) column (\d+)\b/;
+
+function jsonAt(error) {
+	const found = JSON_POSITION.exec(String(error));
+
+	return found ? { line: Number(found[1]), col: Number(found[2]) } : {};
+}
 
 const expectedValue = (scope, ulid) => (scope.prefixed ? `${scope.name}.${ulid}` : ulid);
 
@@ -33,7 +42,7 @@ function checkLangFiles(scope, langs) {
 		if (!exists) {
 			findings.push(finding('missing-lang-file', scope.name, file, 'file not found', { lang }));
 		} else if (error) {
-			findings.push(finding('invalid-json', scope.name, file, error, { lang }));
+			findings.push(finding('invalid-json', scope.name, file, error, { ...jsonAt(error), lang }));
 		}
 	}
 
@@ -53,8 +62,9 @@ function checkStructure(scope, langs) {
 
 	if (scope.keys.constName !== expected) {
 		const message = `exports "${scope.keys.constName}", expected "${expected}"`;
+		const at = scope.keys.constAt ?? {};
 
-		findings.push(finding('bad-const-name', scope.name, scope.keysFile, message));
+		findings.push(finding('bad-const-name', scope.name, scope.keysFile, message, at));
 	}
 
 	return findings;
@@ -104,19 +114,27 @@ function missingAt(scope, entry, source) {
 	return { file: scope.keysFile, line: entry.line, col: entry.col };
 }
 
+const pendingAtSource = (source, ulid) =>
+	Boolean(source?.data) && (!(ulid in source.data) || isBlank(source.data[ulid]));
+
 function checkDeclared(scope, translation, lang, source) {
 	const findings = [];
 
 	for (const entry of scope.keys.entries) {
-		const label = `${entry.name} (${entry.ulid})`;
 		const value = translation.data[entry.ulid];
+
+		if ((undefined !== value && !isBlank(value)) || pendingAtSource(source, entry.ulid)) {
+			continue;
+		}
+
+		const label = `${entry.name} (${entry.ulid})`;
 
 		if (undefined === value) {
 			const at = missingAt(scope, entry, source);
 			const message = `${label} has no "${lang}" entry`;
 
 			findings.push(finding('missing-translation', scope.name, at.file, message, { ...at, lang }));
-		} else if (isBlank(value)) {
+		} else {
 			const at = { ...positionOf(translation.text, entry.ulid), lang };
 
 			findings.push(finding('empty-translation', scope.name, translation.file, label, at));
@@ -167,7 +185,7 @@ function checkFreshness(scope, { langs, defaultLang, i18nDir }) {
 	const state = readState(i18nDir, scope.name);
 
 	if (state.error) {
-		return [finding('invalid-json', scope.name, state.file, state.error)];
+		return [finding('invalid-json', scope.name, state.file, state.error, jsonAt(state.error))];
 	}
 
 	return freshnessOf(scope, state, { langs, defaultLang })
@@ -191,31 +209,30 @@ function checkUsage(scope, usages, commented) {
 		});
 }
 
-const listOf = (names) => `{{ ${names.join(' }}, {{ ')} }}`;
+const listOf = (names) => names.map(paramTag).join(', ');
 
-function comparePair(base, value, ulid) {
-	const expected = paramsOf(base);
-	const actual = paramsOf(value);
-	const dropped = [...expected].filter((name) => !actual.has(name));
-	const added = [...actual].filter((name) => !expected.has(name));
+const quoted = (keys) => keys.map((key) => `"${key}"`).join(', ');
+
+// A param the source does not have is this language's own to answer for, even while
+// params.ts lags behind; one it has yet to pick up is only the drift showing through.
+// What never gets a pass is the signature: a name both sides write, written as another
+// kind of argument or with a branch the source never declares.
+function comparePair(base, value, ulid, drifting) {
+	const { dropped, added, retyped, surplus } = signatureDiff(base, value);
+	const drops = drifting ? [] : dropped;
 
 	return [
-		...(dropped.length ? [`${ulid} drops ${listOf(dropped)}`] : []),
+		...(drops.length ? [`${ulid} drops ${listOf(drops)}`] : []),
 		...(added.length ? [`${ulid} adds ${listOf(added)}`] : []),
+		...retyped.map(
+			({ name, expected, actual }) =>
+				`${ulid} writes ${paramTag(name)} as ${actual}, not as ${expected}`,
+		),
+		...surplus.map(({ name, cases }) => `${ulid} adds ${quoted(cases)} to ${paramTag(name)}`),
 	];
 }
 
-// The declaration of that key when there is one; the translation that diverges
-// when the scope has no params file to point at.
-function mismatchAt(scope, params, translation, ulid) {
-	if (params.exists) {
-		return { file: params.file, ...entryLineOf(params.current, expectedValue(scope, ulid)) };
-	}
-
-	return { file: translation.file, ...positionOf(translation.text, ulid) };
-}
-
-function comparePairs(base, translation, lang, { scope, params }) {
+function comparePairs(base, translation, lang, { scope, drifting }) {
 	const findings = [];
 
 	for (const [ulid, value] of Object.entries(translation.data)) {
@@ -223,9 +240,11 @@ function comparePairs(base, translation, lang, { scope, params }) {
 			continue;
 		}
 
-		for (const message of comparePair(base[ulid], value, ulid)) {
-			const { file, ...at } = mismatchAt(scope, params, translation, ulid);
-			const where = { ...at, lang, column: PARAMS };
+		const drifts = drifting.has(expectedValue(scope, ulid));
+
+		for (const message of comparePair(base[ulid], value, ulid, drifts)) {
+			const where = { ...positionOf(translation.text, ulid), lang };
+			const file = translation.file;
 
 			findings.push(finding('param-mismatch', scope.name, file, `${message} in "${lang}"`, where));
 		}
@@ -234,36 +253,142 @@ function comparePairs(base, translation, lang, { scope, params }) {
 	return findings;
 }
 
-function checkParams(scope, langs, defaultLang, params) {
-	const base = scope.translations.get(defaultLang)?.data;
+const lineAt = (text, line) => String(text ?? '').split('\n')[line - 1] ?? '';
+
+// Where the argument is written inside the value, so a long sentence does not send the
+// developer hunting for the one interpolation that moved. A category points at the branch
+// that opens it, and falls back to the argument heading: one that is missing has no branch
+// of its own to be pointed at.
+export function spotPositionOf(text, ulid, { name, key = null }) {
+	const at = positionOf(text, ulid);
+	const spots = spotsIn(lineAt(text, at.line)).filter((spot) => spot.name === name);
+	const found = spots.find((spot) => spot.key === key) ?? spots.find((spot) => null === spot.key);
+
+	return found ? { line: at.line, col: found.index + 1 } : at;
+}
+
+const paramPositionOf = (text, ulid, name) => spotPositionOf(text, ulid, { name });
+
+const VALUE_OPENING = '": "';
+
+const escapedLength = (value) => JSON.stringify(value).length - 2;
+
+// The parser counts characters of the decoded string; the file counts columns of the line
+// it is written on, ULID and JSON escapes included. So the part of the value that comes
+// before the error is re-encoded to learn how wide it is on disk.
+export function syntaxPositionOf(text, ulid, at, value) {
+	const { line } = positionOf(text, ulid);
+	const opening = lineAt(text, line).indexOf(VALUE_OPENING);
+	const start = -1 === opening ? 0 : opening + VALUE_OPENING.length;
+	const lines = String(value ?? '').split('\n');
+	const head = [...lines.slice(0, at.line - 1), (lines[at.line - 1] ?? '').slice(0, at.col - 1)];
+
+	return { line, col: start + escapedLength(head.join('\n')) + 1 };
+}
+
+function messageFinding(scope, translation, lang, ulid, item) {
+	const entry = scope.keys.entries.find((key) => key.ulid === ulid);
+	const label = entry ? `${entry.name} (${ulid})` : ulid;
+	const at = item.at
+		? syntaxPositionOf(translation.text, ulid, item.at, translation.data[ulid])
+		: spotPositionOf(translation.text, ulid, item);
+	const message = `${label} ${item.message}`;
+
+	return finding(item.type, scope.name, translation.file, message, { ...at, lang });
+}
+
+// Every language answers for its own strings here, the source one included: a plural the
+// developer wrote by hand in "es-ES" is exactly what this pass exists to catch.
+function checkMessages(scope, langs) {
 	const findings = [];
 
-	if (!base) {
-		return findings;
-	}
-
-	for (const lang of langs.filter((entry) => entry !== defaultLang)) {
+	for (const lang of langs) {
 		const translation = scope.translations.get(lang);
 
-		if (translation.data) {
-			findings.push(...comparePairs(base, translation, lang, { scope, params }));
+		for (const [ulid, value] of Object.entries(translation.data ?? {})) {
+			if (isBlank(value)) {
+				continue;
+			}
+
+			for (const item of messageProblems(value, lang)) {
+				findings.push(messageFinding(scope, translation, lang, ulid, item));
+			}
 		}
 	}
 
 	return findings;
 }
 
-function driftFinding(scope, params, { key, removed }) {
-	const entry = scope.keys.entries.find((item) => item.value === key);
-	const message = removed
-		? `${key} is no longer declared`
-		: `${entry?.name ?? key} (${key}) does not match the default language`;
-	const at = { ...entryLineOf(params.current, key), column: PARAMS };
+const shifted = ({ removed, missing, extra }) =>
+	removed || 0 !== missing.length || 0 !== extra.length;
 
-	return finding('stale-params', scope.name, params.file, message, at);
+function checkParams(scope, langs, defaultLang, params) {
+	const base = scope.translations.get(defaultLang)?.data;
+	const findings = [];
+
+	if (!base || (params.required && !params.exists)) {
+		return findings;
+	}
+
+	const drifting = new Set(params.drift.filter(shifted).map(({ key }) => key));
+
+	for (const lang of langs.filter((entry) => entry !== defaultLang)) {
+		const translation = scope.translations.get(lang);
+
+		if (translation.data) {
+			findings.push(...comparePairs(base, translation, lang, { scope, drifting }));
+		}
+	}
+
+	return findings;
 }
 
-function checkParamsFile(scope, params) {
+const declaresFindings = (scope, params, drift, label) =>
+	drift.extra.map((name) => {
+		const message = `${paramsName(scope.name)} declares ${paramTag(name)} for ${label}, absent from the default language`;
+		const at = { ...FILE_START, ...fieldLineOf(params.current, drift.key, name), column: PARAMS };
+
+		return finding('stale-params', scope.name, params.file, message, at);
+	});
+
+const retypedFindings = (scope, params, drift, label) =>
+	drift.retyped.map(({ name, type, declared }) => {
+		const message = `${paramsName(scope.name)} declares ${paramTag(name)} as ${declared} for ${label}, ICU says ${type}`;
+		const at = { ...FILE_START, ...fieldLineOf(params.current, drift.key, name), column: PARAMS };
+
+		return finding('stale-params', scope.name, params.file, message, at);
+	});
+
+const usesFindings = (scope, source, drift, entry, label) =>
+	drift.missing.map((name) => {
+		const message = `${label} uses ${paramTag(name)}, not declared in ${paramsName(scope.name)}`;
+		const at = { ...paramPositionOf(source.text, entry.ulid, name), column: PARAMS };
+
+		return finding('stale-params', scope.name, source.file, message, at);
+	});
+
+// A key whose params moved is one problem per param, in the file that can answer
+// for it: what the source writes where it is written, what params.ts still
+// declares on the very field that declares it.
+function driftFindings(scope, params, source, drift) {
+	const entry = scope.keys.entries.find((item) => item.value === drift.key);
+	const label = entry ? `${entry.name} (${drift.key})` : drift.key;
+
+	if (drift.removed) {
+		const at = { ...FILE_START, ...entryLineOf(params.current, drift.key), column: PARAMS };
+		const message = `${drift.key} is no longer declared`;
+
+		return [finding('stale-params', scope.name, params.file, message, at)];
+	}
+
+	return [
+		...usesFindings(scope, source, drift, entry, label),
+		...declaresFindings(scope, params, drift, label),
+		...retypedFindings(scope, params, drift, label),
+	];
+}
+
+function checkParamsFile(scope, params, source) {
 	if (!params.exists) {
 		const message = `params.ts not found, ${paramsName(scope.name)} is not generated yet`;
 
@@ -278,11 +403,12 @@ function checkParamsFile(scope, params) {
 
 	if (0 === params.drift.length) {
 		const message = `${paramsName(scope.name)} needs regenerating`;
+		const at = { ...FILE_START, column: PARAMS };
 
-		return [finding('stale-params', scope.name, params.file, message, { column: PARAMS })];
+		return [finding('stale-params', scope.name, params.file, message, at)];
 	}
 
-	return params.drift.map((item) => driftFinding(scope, params, item));
+	return params.drift.flatMap((item) => driftFindings(scope, params, source, item));
 }
 
 // Only what the barrel itself can be blamed for: a params file that is not there
@@ -298,7 +424,7 @@ function barrelFindings(scope, barrel, params) {
 
 	if (params.exists && !barrel.params.has(paramsName(scope.name))) {
 		const message = `${paramsName(scope.name)} is never added to the I18nParams union`;
-		const at = { ...barrel.paramsAt, column: PARAMS };
+		const at = { line: barrel.line, col: barrel.col, ...barrel.paramsAt, column: PARAMS };
 
 		findings.push(finding('unregistered-params', scope.name, barrel.file, message, at));
 	}
@@ -335,7 +461,9 @@ function checkContextKeys(context, scopes) {
 // own to-do list, in the column of the language that still needs the word.
 function checkGlossary({ glossary }, langs, defaultLang) {
 	if (glossary.error) {
-		return [finding('invalid-json', GLOSSARY, glossary.file, glossary.error)];
+		const at = jsonAt(glossary.error);
+
+		return [finding('invalid-json', GLOSSARY, glossary.file, glossary.error, at)];
 	}
 
 	return glossary.terms.flatMap(({ term, translations, line, col }) =>
@@ -398,10 +526,11 @@ export function buildFindings({ scopes, usages, commented, langs, defaultLang, i
 
 		findings.push(...checkKeys(scope, seenUlids));
 		findings.push(...checkTranslations(scope, langs, defaultLang));
+		findings.push(...checkMessages(scope, langs));
 		findings.push(...checkFreshness(scope, { langs, defaultLang, i18nDir }));
 		findings.push(...checkUsage(scope, usages, commented));
+		findings.push(...checkParamsFile(scope, params, scope.translations.get(defaultLang)));
 		findings.push(...checkParams(scope, langs, defaultLang, params));
-		findings.push(...checkParamsFile(scope, params));
 	}
 
 	return findings;

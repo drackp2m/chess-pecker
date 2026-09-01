@@ -1,9 +1,10 @@
 import { Component, ElementRef, computed, inject, signal, viewChild } from '@angular/core';
 
 import { BoardDragGesture } from '@app/component/chess-board/board-drag';
-import { Point } from '@app/component/chess-board/board-geometry';
+import { Point, dropOffset } from '@app/component/chess-board/board-geometry';
+import { PieceLaunch, describeLaunch, launchSlides } from '@app/component/chess-board/board-launch';
 import { createBoardPlayback } from '@app/component/chess-board/board-playback';
-import { pieceElevation } from '@app/component/chess-board/board-stacking';
+import { squareElevation } from '@app/component/chess-board/board-stacking';
 import { ChessPieceComponent, PieceSlide } from '@app/component/chess-piece/chess-piece.component';
 import { BOARD_SIZE, FILES, RANKS, SQUARE_COUNT } from '@app/definition/chess.constant';
 import { Piece, PieceColor, Square } from '@app/definition/chess.type';
@@ -86,16 +87,22 @@ export class BoardDemoComponent {
 
 	readonly isClickEnabled = computed(() => this.preference.moveInputMethods().includes('click'));
 	readonly isDragEnabled = computed(() => this.preference.moveInputMethods().includes('drag'));
+	readonly isLiftEnabled = computed(() => this.preference.moveLift());
 
 	private readonly gesture = new BoardDragGesture({
 		squareAt: (point) => this.squareAt(point),
 		pieceAt: (square) => this.store.position().board[ChessSquare.toIndex(square)],
 		squareSize: () => this.strip().nativeElement.getBoundingClientRect().width / BOARD_SIZE,
+		squareCenter: (square) => this.centerOf(square),
 		isClickEnabled: () => this.isClickEnabled(),
 		pick: (square) => {
-			if (square !== this.store.selected()) {
-				this.store.selectSquare(square);
+			const isRaised = square === this.store.selected();
+
+			if (!isRaised) {
+				this.commit(square, undefined);
 			}
+
+			return isRaised;
 		},
 	});
 
@@ -107,6 +114,17 @@ export class BoardDemoComponent {
 	);
 
 	readonly hint = computed(() => this.describe());
+
+	private readonly launch = signal<PieceLaunch | undefined>(undefined);
+
+	private readonly slides = computed(() =>
+		launchSlides(
+			this.playback.slides(),
+			this.launch(),
+			this.store.transition(),
+			this.isLiftEnabled(),
+		),
+	);
 
 	private readonly strip = viewChild.required<ElementRef<HTMLElement>>('strip');
 
@@ -121,7 +139,7 @@ export class BoardDemoComponent {
 
 	activate(square: DemoSquare, event: MouseEvent): void {
 		if (0 === event.detail && this.isClickEnabled()) {
-			this.store.selectSquare(square.square);
+			this.commit(square.square, undefined);
 		}
 	}
 
@@ -140,10 +158,12 @@ export class BoardDemoComponent {
 	}
 
 	dropSquare(event: PointerEvent): void {
-		const target = this.gesture.release({ x: event.clientX, y: event.clientY });
+		const point = { x: event.clientX, y: event.clientY };
+		const wasCarried = undefined !== this.draggingFrom();
+		const target = this.gesture.release(point);
 
 		if (undefined !== target) {
-			this.store.selectSquare(target);
+			this.commit(target, wasCarried ? this.dropOffset(target, point) : undefined);
 		}
 	}
 
@@ -167,6 +187,21 @@ export class BoardDemoComponent {
 		);
 	}
 
+	private commit(square: Square, drop: Point | undefined): void {
+		const move = { from: this.store.selected(), to: square };
+		const before = this.store.transition();
+
+		this.store.selectSquare(square);
+
+		this.launch.set(describeLaunch(move, drop, before, this.store.transition()));
+	}
+
+	private dropOffset(square: Square, point: Point): Point {
+		const size = this.strip().nativeElement.getBoundingClientRect().width / BOARD_SIZE;
+
+		return dropOffset(this.centerOf(square), point, size);
+	}
+
 	/** Feature-detected: not every test environment implements pointer capture. */
 	private capturePointer(pointerId: number): void {
 		const element = this.strip().nativeElement;
@@ -174,6 +209,17 @@ export class BoardDemoComponent {
 		if ('function' === typeof (element as { setPointerCapture?: unknown }).setPointerCapture) {
 			element.setPointerCapture(pointerId);
 		}
+	}
+
+	/** One rank, so a square is only ever as far along as its file. */
+	private centerOf(square: Square): Point {
+		const rect = this.strip().nativeElement.getBoundingClientRect();
+		const file = ChessSquare.fileOf(ChessSquare.toIndex(square));
+
+		return {
+			x: rect.left + ((0.5 + file) * rect.width) / BOARD_SIZE,
+			y: rect.top + rect.height / 2,
+		};
 	}
 
 	/** One rank, so only the file matters; anything outside it drops the gesture. */
@@ -191,13 +237,14 @@ export class BoardDemoComponent {
 		const lastMove = this.store.lastMove();
 		const mistake = this.store.mistake();
 		const piece = this.position().board[index];
-		const travelling = this.playback.slides().find((pending) => square === pending.to);
+		const travelling = this.slides().find((pending) => square === pending.to);
+		const isSelected = square === this.store.selected();
 
 		return {
 			square,
 			piece,
 			isLight: ChessSquare.isLight(index),
-			isSelected: square === this.store.selected(),
+			isSelected,
 			isTarget: undefined !== target,
 			isCapture: undefined !== target?.captured,
 			isLastMove: undefined !== lastMove && (square === lastMove.from || square === lastMove.to),
@@ -205,7 +252,7 @@ export class BoardDemoComponent {
 			isAnnounced: square === this.store.announcedMove()?.from,
 			slide: travelling?.slide,
 			taken: this.playback.isSliding() ? travelling?.taken : undefined,
-			elevation: undefined === piece ? undefined : pieceElevation(piece),
+			elevation: squareElevation(piece, isSelected || undefined !== travelling?.slide),
 			// The strip is a board's bottom rank, so it carries that rank's edge: every
 			// square names its file, and only the first one names the rank.
 			fileLabel: FILES[ChessSquare.fileOf(index)],

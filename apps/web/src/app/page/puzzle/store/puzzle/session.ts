@@ -11,6 +11,7 @@ import { PlaybackTag } from '@app/definition/playback.type';
 import {
 	Puzzle,
 	PuzzleClosure,
+	PuzzleEvent,
 	PuzzleMove,
 	PuzzleOutcome,
 	PuzzleProgress,
@@ -32,6 +33,7 @@ import { ChessNotation } from '@app/util/chess/chess-notation';
 export interface PuzzleStoreProps extends PuzzleRecord {
 	/** Which free-play run is open, as an index into `freePlayRuns`, or none. */
 	freePlayIndex: number | undefined;
+	freePlayScratch: readonly PuzzleEvent[] | undefined;
 	/**
 	 * Plies the board stands behind the log, which the log must not hear about: the beat
 	 * before a piece leaves its square, and any step taken once the record is sealed.
@@ -98,6 +100,7 @@ export function buildPuzzleState(): PuzzleStoreProps {
 	return {
 		...blankRecord(),
 		freePlayIndex: undefined,
+		freePlayScratch: undefined,
 		rewound: 0,
 		revealed: undefined,
 		fen: ChessFen.serialize(ChessFen.initial()),
@@ -123,6 +126,7 @@ function startLine(fen: string): Partial<PuzzleStoreProps> {
 		...blankRecord(),
 		fen,
 		freePlayIndex: undefined,
+		freePlayScratch: undefined,
 		rewound: 0,
 		revealed: undefined,
 		announced: undefined,
@@ -177,6 +181,7 @@ export function restorePatch(
 		orientation: playerColor,
 		// Nothing comes back in flight: the record never said what was open when it was saved.
 		freePlayIndex: undefined,
+		freePlayScratch: undefined,
 		rewound: 0,
 		revealed: undefined,
 		announced: undefined,
@@ -221,16 +226,19 @@ function keptTransition(state: RewindState, cursor: number): BoardTransition | u
 
 /**
  * Leaves the free-play run. The sandbox stays in the log as the variation it was, so letting
- * go of its index is all it takes for the fold to return to the main line.
+ * go of it is all it takes for the fold to return to the line it hung off. A closed exercise
+ * keeps its rewind: it is not a beat in flight but where the board was left standing.
  */
 export function restoreFreePlayPatch(
 	state: RewindState,
 	anchor: FreePlayAnchor,
+	isScratch: boolean,
 ): Partial<PuzzleStoreProps> {
 	return {
 		freePlayIndex: undefined,
+		freePlayScratch: undefined,
 		// A beat the sandbox had in flight is dropped: the line comes back as it was picked up.
-		rewound: 0,
+		...(isScratch ? {} : { rewound: 0 }),
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
@@ -249,17 +257,22 @@ export function freePlayRestartCursor(anchor: FreePlayAnchor): number {
 
 /**
  * What starting over clears before the opening move is shown again. Nothing here rewinds:
- * the rewind that follows measures from the board the log describes.
+ * the rewind that follows measures from the board the log describes. The sandbox of a closed
+ * exercise keeps both the rewind and the answer: they are the line it hangs off.
  */
-export function restartPatch(closure: PuzzleClosure): Partial<PuzzleStoreProps> {
+export function restartPatch(
+	closure: PuzzleClosure,
+	isScratch: boolean,
+): Partial<PuzzleStoreProps> {
+	// A closed record takes no restart, so its played-out answer is let go of by hand.
+	const spent = 'open' === closure ? { rewound: 0 } : { rewound: 0, revealed: undefined };
+
 	return {
 		announced: undefined,
 		selected: undefined,
 		pendingPromotion: undefined,
 		transition: undefined,
-		rewound: 0,
-		// A closed record takes no restart, so its played-out answer is let go of by hand.
-		...('open' === closure ? {} : { revealed: undefined }),
+		...(isScratch ? {} : spent),
 	};
 }
 
@@ -285,8 +298,6 @@ export function revealPatch(
 		pendingPromotion: undefined,
 		transition: keptTransition(state, cursor),
 		closure: settleClosure(state.closure, 'revealed'),
-		// Asked for again, the answer replays afresh instead of onto the end of the last one.
-		revealed: undefined,
 		rewound: 0,
 		playback: undefined,
 	};

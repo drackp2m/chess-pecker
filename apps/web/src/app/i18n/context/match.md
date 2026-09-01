@@ -46,4 +46,4 @@ El FEN pegado no se pudo interpretar. «FEN» no se traduce ni se explica.
 
 ## ILLEGAL_MOVE
 
-`{{ notation }}` es la jugada en notación algebraica, tal como se escribe en el tablero: se copia sin traducir ni transliterar. Las comillas del original son parte del texto y se sustituyen por las que use el idioma de destino.
+`{notation}` es la jugada en notación algebraica, tal como se escribe en el tablero: se copia sin traducir ni transliterar. Las comillas del original son parte del texto y se sustituyen por las que use el idioma de destino.

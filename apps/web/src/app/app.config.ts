@@ -3,16 +3,15 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, inject, isDevMode, provideAppInitializer } from '@angular/core';
 import { TitleStrategy, provideRouter, withRouterConfig } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
-import { provideTransloco } from '@jsverse/transloco';
 
 import { APP_ROUTES } from '@app/app.routes';
-import { DEFAULT_LANGUAGE, LANGUAGES } from '@app/definition/language.type';
+import { provideI18n } from '@app/i18n';
 import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SettingRepository } from '@app/repository/setting.repository';
 import { LanguageService } from '@app/service/language.service';
 import { ThemeService } from '@app/service/theme.service';
-import { TranslocoLoaderService } from '@app/service/transloco-loader.service';
 import { UpdateService } from '@app/service/update.service';
+import { NotificationStore } from '@app/store/notification.store';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
 import { SingleEntryLocationStrategy } from '@app/strategy/single-entry-location.strategy';
@@ -28,6 +27,9 @@ export const appConfig: ApplicationConfig = {
 			const _languageService = inject(LanguageService);
 			const _updateService = inject(UpdateService);
 			const _localOwnerUseCase = inject(LocalOwnerUseCase);
+			// Polls the account for as long as a session is open, and nothing while there is
+			// none: it starts itself off the session, so injecting it is all it needs.
+			const _notificationStore = inject(NotificationStore);
 
 			// The session restore is a background refresh and not a boot gate, so it is fired
 			// without awaiting; the sync cycle behind it is the gate.
@@ -46,16 +48,7 @@ export const appConfig: ApplicationConfig = {
 				onSameUrlNavigation: 'reload',
 			}),
 		),
-		provideTransloco({
-			config: {
-				availableLangs: [...LANGUAGES],
-				defaultLang: DEFAULT_LANGUAGE,
-				fallbackLang: DEFAULT_LANGUAGE,
-				reRenderOnLangChange: true,
-				prodMode: !isDevMode(),
-			},
-			loader: TranslocoLoaderService,
-		}),
+		provideI18n(),
 		{ provide: LocationStrategy, useClass: SingleEntryLocationStrategy },
 		{ provide: TitleStrategy, useClass: TemplatePageTitleStrategy },
 		provideServiceWorker('ngsw-worker.js', {

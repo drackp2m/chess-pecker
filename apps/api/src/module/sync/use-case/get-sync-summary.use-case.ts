@@ -66,10 +66,21 @@ const PARTIAL_CYCLES = `with declared as (
  having count(ci.uuid) < d.item_count
  order by d.training_uuid, d."index"`;
 
-interface EntitySummaryRow {
-	entity: SyncEntity;
+/**
+ * The challenges the caller sent. They never travel upwards — the API owns them — but the
+ * device keeps a copy, and this is what tells it whether that copy has fallen behind. An
+ * answer moves the challenge's own clock, so a verdict is a change like any other here.
+ */
+const SHARE_SUMMARY = `select max(updated_at) as cursor, count(*)::int as count
+   from puzzle_share where sender_uuid = ?`;
+
+interface SummaryRow {
 	cursor: Date | string | null;
 	count: number;
+}
+
+interface EntitySummaryRow extends SummaryRow {
+	entity: SyncEntity;
 }
 
 /**
@@ -91,6 +102,9 @@ export class GetSyncSummaryUseCase {
 		const partial = (await connection.execute<SyncPartialCycle[]>(PARTIAL_CYCLES, [
 			user.uuid,
 		])) as SyncPartialCycle[];
+		const shares = (await connection.execute<SummaryRow[]>(SHARE_SUMMARY, [
+			user.uuid,
+		])) as SummaryRow[];
 
 		return {
 			serverTime: new GenerateNowDateUseCase().execute().toISOString(),
@@ -100,6 +114,7 @@ export class GetSyncSummaryUseCase {
 				version: (await this.puzzleRepository.lastUpdatedAt())?.toISOString() ?? EMPTY_VERSION,
 				total: await this.puzzleRepository.countAll(),
 			},
+			shares: toSummary(shares[0]),
 			partialCycles: partial,
 		};
 	}
@@ -123,10 +138,14 @@ function toEntities(rows: EntitySummaryRow[]): Record<SyncEntity, SyncEntitySumm
 	};
 
 	for (const row of rows) {
-		entities[row.entity] = { cursor: toIso(row.cursor), count: row.count };
+		entities[row.entity] = toSummary(row);
 	}
 
 	return entities;
+}
+
+function toSummary(row: SummaryRow | undefined): SyncEntitySummary {
+	return undefined === row ? NOTHING : { cursor: toIso(row.cursor), count: row.count };
 }
 
 function toIso(cursor: Date | string | null): string | null {

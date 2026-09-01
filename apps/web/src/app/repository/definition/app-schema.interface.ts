@@ -11,11 +11,13 @@ import {
 	AttemptSchemaV4,
 	AttemptSchemaV5,
 } from '@app/repository/definition/attempt-schema.interface';
+import { BookmarkSchema } from '@app/repository/definition/bookmark-schema.interface';
 import { CatalogCursorSchemaV16 } from '@app/repository/definition/catalog-cursor-schema.interface';
 import { CycleSchema } from '@app/repository/definition/cycle-schema.interface';
 import { PuzzleSchema, PuzzleSchemaV10 } from '@app/repository/definition/puzzle-schema.interface';
 import { PuzzleSetSchema } from '@app/repository/definition/puzzle-set-schema.interface';
 import { SettingSchema } from '@app/repository/definition/setting-schema.interface';
+import { ShareSchema } from '@app/repository/definition/share-schema.interface';
 import { SyncCursorSchema } from '@app/repository/definition/sync-cursor-schema.interface';
 import { TrainingSchema } from '@app/repository/definition/training-schema.interface';
 
@@ -25,9 +27,11 @@ export interface AppSchema
 		AttemptCursorSchema,
 		AttemptDraftSchema,
 		AttemptSchema,
+		BookmarkSchema,
 		PuzzleSchema,
 		PuzzleSetSchema,
 		SettingSchema,
+		ShareSchema,
 		SyncCursorSchema,
 		TrainingSchema {}
 

@@ -1,9 +1,12 @@
+const path = require('node:path');
+
 const vscode = require('vscode');
 
 const { Annotations } = require('./annotations');
 const { createKey } = require('./create-key');
 const { Findings } = require('./findings');
 const { i18nDefinitionProvider, i18nReferenceProvider } = require('./navigation');
+const { fail, report } = require('./output');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
 const { ensureTemplateSetup } = require('./setup');
 const { exportTranslations, importTranslations } = require('./transfer');
@@ -13,13 +16,11 @@ const { I18nIndex } = require('./index');
 
 const DEBOUNCE = 250;
 
-const langsSetting = () => vscode.workspace.getConfiguration('translocoUlidI18n').get('langs', []);
-
 async function reload(state, notify) {
-	const error = await state.index.reload(langsSetting());
+	const error = await state.index.reload();
 
-	if (null !== error && true === notify) {
-		vscode.window.showErrorMessage(`Transloco ULID i18n: ${error}`);
+	if (null !== error) {
+		(true === notify ? fail : report)([error]);
 	}
 
 	state.annotations.refreshAll();
@@ -38,6 +39,21 @@ function watchTranslations(state) {
 	watcher.onDidDelete(onChange);
 
 	return watcher;
+}
+
+function watchLanguageFile(state) {
+	const file = state.index.languageFile;
+
+	if ('' === file) {
+		return [];
+	}
+
+	const pattern = new vscode.RelativePattern(path.dirname(file), path.basename(file));
+	const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+
+	watcher.onDidChange(() => void reload(state, true));
+
+	return [watcher];
 }
 
 function watchSources({ usages, findings }) {
@@ -124,12 +140,13 @@ function subscriptionsOf(state) {
 		i18nDefinitionProvider(index, usages),
 		i18nReferenceProvider(index, usages),
 		watchTranslations(state),
+		...watchLanguageFile(state),
 		...watchSources(state),
 		...watchEditors(annotations),
 		...registerCommands(state),
 		vscode.workspace.onDidChangeConfiguration((event) => {
 			if (event.affectsConfiguration('translocoUlidI18n')) {
-				void reload(state, false);
+				void reload(state, true);
 			}
 		}),
 	];
@@ -150,7 +167,7 @@ async function activate(context) {
 		findings: new Findings(index),
 	};
 
-	await reload(state, false);
+	await reload(state, true);
 
 	context.subscriptions.push(...subscriptionsOf(state));
 }

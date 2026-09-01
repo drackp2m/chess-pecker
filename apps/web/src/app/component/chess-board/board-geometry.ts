@@ -31,6 +31,16 @@ export function squareAtPoint(
 	return ChessSquare.fromIndex(indexAtOrder(row * BOARD_SIZE + column, orientation));
 }
 
+/** Middle of a square, in page coordinates, honouring the flip. */
+export function pointAtSquare(rect: DOMRect, square: Square, orientation: PieceColor): Point {
+	const order = indexAtOrder(ChessSquare.toIndex(square), orientation);
+
+	return {
+		x: rect.left + ((0.5 + (order % BOARD_SIZE)) * rect.width) / BOARD_SIZE,
+		y: rect.top + ((0.5 + Math.floor(order / BOARD_SIZE)) * rect.height) / BOARD_SIZE,
+	};
+}
+
 /**
  * How far a piece has to travel to reach its destination, as a percentage of one
  * square, expressed as the offset it should animate *from*.
@@ -45,6 +55,10 @@ export function slideOffset(from: Square, to: Square, orientation: PieceColor): 
 		x: (ChessSquare.fileOf(start) - ChessSquare.fileOf(end)) * 100,
 		y: (ChessSquare.rowOf(start) - ChessSquare.rowOf(end)) * 100,
 	};
+}
+
+export function dropOffset(center: Point, point: Point, size: number): Point {
+	return { x: ((point.x - center.x) / size) * 100, y: ((point.y - center.y) / size) * 100 };
 }
 
 export function hasPassedThreshold(origin: Point, point: Point): boolean {

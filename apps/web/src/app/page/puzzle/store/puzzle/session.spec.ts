@@ -89,7 +89,7 @@ describe('the free play anchor', () => {
 	const LINE = buildLine(MATE_IN_3, ['f1f8', 'b2b1', 'b3d1', 'b1d1']);
 
 	function restore(anchor: FreePlayAnchor, cursor: number) {
-		return restoreFreePlayPatch({ cursor, transition: undefined }, anchor);
+		return restoreFreePlayPatch({ cursor, transition: undefined }, anchor, false);
 	}
 
 	it('captures the line free play picked up, deviation and all', () => {
@@ -112,9 +112,11 @@ describe('the free play anchor', () => {
 		const anchor = anchorFreePlay(LINE, undefined);
 		const slide = nextTransition(ChessFen.parse(MATE_IN_3), move(MATE_IN_3, 'f1f8'), 'played');
 
-		expect(restoreFreePlayPatch({ cursor: 4, transition: slide }, anchor).transition).toBe(slide);
+		expect(restoreFreePlayPatch({ cursor: 4, transition: slide }, anchor, false).transition).toBe(
+			slide,
+		);
 		expect(
-			restoreFreePlayPatch({ cursor: 6, transition: slide }, anchor).transition,
+			restoreFreePlayPatch({ cursor: 6, transition: slide }, anchor, false).transition,
 		).toBeUndefined();
 	});
 });

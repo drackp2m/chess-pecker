@@ -2,7 +2,7 @@
 
 @layer component {
 	.app-select {
-		@include field.shell('.search-input');
+		@include field.shell('.search-input', $slider: '.value-area');
 
 		select {
 			pointer-events: none;
@@ -17,8 +17,77 @@
 			opacity: 0;
 		}
 
-		.search-input {
+		.value-area {
+			position: relative;
+			padding: field.$vertical-padding field.$horizontal-padding;
 			padding-right: calc(#{field.$horizontal-padding} + 24px);
+			line-height: calc(1lh + var(--spacing-1));
+		}
+
+		.search-input {
+			padding: 0;
+		}
+
+		&.multiple {
+			&:not(.wrap) .value-area {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+
+			&.wrap {
+				--slide: calc(#{field.$vertical-padding} + 0.5lh);
+			}
+
+			.value-area.has-values .search-input {
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 0;
+			}
+
+			.option.selected {
+				box-shadow: inset 3px 0 0 var(--color-accent);
+			}
+		}
+
+		.chip {
+			--chip-padding-block: var(--spacing-1);
+
+			margin-right: var(--spacing-1);
+			padding: var(--chip-padding-block) var(--spacing-2);
+			border-radius: 14px;
+			background-color: var(--color-primary-mid);
+
+			@supports (-webkit-hyphens: none) {
+				--chip-padding-block: 1px;
+			}
+		}
+
+		.chip-tail {
+			white-space: nowrap;
+		}
+
+		.chip-remove {
+			cursor: pointer;
+
+			position: relative;
+			bottom: 1.5px;
+			left: 3px;
+
+			display: inline-flex;
+			align-items: center;
+
+			margin-left: var(--spacing-1);
+			padding: 2px;
+
+			vertical-align: middle;
+
+			@media (hover: hover) {
+				&:hover {
+					color: var(--color-accent);
+				}
+			}
 		}
 
 		.border-container {

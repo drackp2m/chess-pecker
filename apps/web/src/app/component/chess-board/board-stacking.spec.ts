@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { PIECE_ELEVATIONS, pieceElevation } from '@app/component/chess-board/board-stacking';
+import {
+	PIECE_ELEVATIONS,
+	pieceElevation,
+	squareElevation,
+} from '@app/component/chess-board/board-stacking';
 import { Piece, PieceColor, PieceType } from '@app/definition/chess.type';
 
 const TYPES: readonly PieceType[] = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn'];
@@ -48,5 +52,33 @@ describe('pieceElevation', () => {
 	it('keeps force ahead of colour, so a black king outranks a white queen', () => {
 		expect(elevationOf('black', 'king')).toBeGreaterThan(elevationOf('white', 'queen'));
 		expect(elevationOf('black', 'pawn')).toBeLessThan(elevationOf('white', 'pawn'));
+	});
+});
+
+describe('squareElevation', () => {
+	it('leaves an empty square without a level', () => {
+		expect(squareElevation(undefined, false)).toBeUndefined();
+		expect(squareElevation(undefined, true)).toBeUndefined();
+	});
+
+	it('gives a piece standing still the level its force earns', () => {
+		for (const piece of every()) {
+			expect(squareElevation(piece, false)).toBe(pieceElevation(piece));
+		}
+	});
+
+	it('rides the piece on the move over every piece standing still', () => {
+		const standing = every().map((piece) => squareElevation(piece, false) ?? 0);
+
+		for (const piece of every()) {
+			expect(squareElevation(piece, true)).toBeGreaterThan(Math.max(...standing));
+		}
+	});
+
+	it('gives every piece on the move the same level, whatever its force', () => {
+		const moving = every().map((piece) => squareElevation(piece, true));
+
+		expect(new Set(moving).size).toBe(1);
+		expect(moving[0]).toBe(PIECE_ELEVATIONS + 1);
 	});
 });

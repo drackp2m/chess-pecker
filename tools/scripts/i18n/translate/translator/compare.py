@@ -59,17 +59,28 @@ def overlap(left: dict[str, int], right: dict[str, int]) -> int:
     return sum(min(count, right.get(piece, 0)) for piece, count in left.items())
 
 
+# Only the orders both strings can actually have are averaged. Dividing by six
+# regardless caps a four-character string at 66.7 and a lone placeholder at
+# 16.7 even when it matches the reference exactly, which would score half the
+# bench — every one-word label — on how long it is rather than how right it is.
 def scored(left: str, right: str) -> tuple[float, float]:
     precisions = []
     recalls = []
 
     for order in range(1, ORDER + 1):
         mine, theirs = grams(left, order), grams(right, order)
-        shared = overlap(mine, theirs)
-        precisions.append(shared / sum(mine.values()) if mine else 0.0)
-        recalls.append(shared / sum(theirs.values()) if theirs else 0.0)
 
-    return sum(precisions) / ORDER, sum(recalls) / ORDER
+        if not mine or not theirs:
+            continue
+
+        shared = overlap(mine, theirs)
+        precisions.append(shared / sum(mine.values()))
+        recalls.append(shared / sum(theirs.values()))
+
+    if not precisions:
+        return 0.0, 0.0
+
+    return sum(precisions) / len(precisions), sum(recalls) / len(recalls)
 
 
 # chrF: the character n-gram F-score, which needs no tokenizer and does not

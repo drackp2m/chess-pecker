@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from .bench import DEFAULT_OUT as DEFAULT_BENCH_OUT
+from .bench import REPORT_NAME as BENCH_REPORT
 from .deepl import KEY_VAR
 from .models import ALIASES, DEFAULT_ALIAS, PROFILES
 from .ollama_client import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
@@ -19,20 +21,26 @@ examples:
   uv run translate --list-models
   uv run translate --cache
 
-  # One language, only what the source outgrew, with a bigger model
-  uv run translate translations/fr-FR.xlf --only-stale --model qwen-8b
+  # One language, only what the source outgrew, with another model
+  uv run translate translations/fr-FR.xlf --only-stale --model qwen35-9b
 
   # See what is really sent: two batches of ten, no model loaded
   uv run translate translations/fr-FR.xlf --limit 20 --dry-run
 
   # One unit per call, which is what a translation-only model needs
-  uv run translate translations/fr-FR.xlf --model translate-12b
+  uv run translate translations/fr-FR.xlf --model mlx-community/translategemma-12b-it-4bit
 
-  # What four models made of the same file, and where they disagree
+  # What two models made of the same file, and where they disagree
   uv run translate fr-FR.qwen35-9b.xlf fr-FR.gemma4-e4b.xlf --compare
 
   # The same file through DeepL, to use as the yardstick of that comparison
   uv run translate translations/fr-FR.xlf --deepl
+
+  # The whole bench through two models and DeepL, scored and tabulated
+  uv run translate --bench --model gemma-12b-qat,gemma4-e4b,deepl
+
+  # The same command once every pass is done: the report again, nothing retranslated
+  uv run translate --bench --model gemma-12b-qat,gemma4-e4b,deepl
 """
 
 
@@ -59,7 +67,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=Path,
         help=(
             "Output file, only with a single input. Defaults to "
-            "<input>.translated.xlf"
+            "<input>.translated.xlf. Under --bench, the directory every pass "
+            f"is written into. (default under --bench: {DEFAULT_BENCH_OUT}/)"
         ),
     )
 
@@ -78,15 +87,20 @@ def build_arg_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Model to translate with: one of the aliases from --list-models "
-            f"({', '.join(ALIASES)}) or any Hugging Face repository id. "
-            f"(default: {DEFAULT_ALIAS} for mlx, {DEFAULT_OLLAMA_MODEL} for ollama)"
+            f"({', '.join(ALIASES)}) or any Hugging Face repository id. Under "
+            "--bench, a comma-separated list of them, where 'deepl' counts as "
+            f"one more candidate. (default: {DEFAULT_ALIAS} for mlx, "
+            f"{DEFAULT_OLLAMA_MODEL} for ollama)"
         ),
     )
 
     parser.add_argument(
         "--list-models",
         action="store_true",
-        help="Print the known models with their size, disk footprint and prompt shape, then exit.",
+        help=(
+            "Print the known models with their size, their expected and actual "
+            "disk footprint and the date their conversion was published, then exit."
+        ),
     )
 
     parser.add_argument(
@@ -141,7 +155,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help=(
             "Translated XLIFF to treat as the yardstick under --compare, such "
             "as one written by a professional or another engine. Every other "
-            "file is scored against it instead of against the others."
+            "file is scored against it instead of against the others. Under "
+            "--bench it defaults to the file next to each input with the "
+            "'.blank' dropped, which is the translation written by hand."
         ),
     )
 
@@ -153,15 +169,31 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
+        "--bench",
+        action="store_true",
+        help=(
+            "Translate the given blank bench files with every model in "
+            "--model, score each pass against its reference and write one "
+            "markdown with the tables side by side. With no input file it "
+            "takes every *.blank.xlf of tools/scripts/i18n/bench. Each pass is "
+            "kept as its own XLIFF, so --compare can be re-run on it by hand, "
+            "and what it cost goes in a .json beside it. A pass whose file is "
+            "already complete is not translated again: re-running the command "
+            "rebuilds the report, speed included, without loading a model."
+        ),
+    )
+
+    parser.add_argument(
         "--profile",
         choices=("auto", *PROFILES),
         default="auto",
         help=(
             "How the prompt is shaped. 'instruct' layers the catalogue context "
             "into a system prompt and can translate in batches; 'translate' uses "
-            "the fixed structured turn a translation-only model such as "
-            "TranslateGemma expects, one unit per call. 'auto' takes it from the "
-            "model. (default: auto)"
+            "the fixed structured turn a translation-only model expects, one "
+            "unit per call. 'auto' takes it from the model, and no alias needs "
+            "it any more: a TranslateGemma repository id still selects it by "
+            "name. (default: auto)"
         ),
     )
 
@@ -239,7 +271,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--report",
         type=Path,
         default=None,
-        help="Write a markdown summary of the run to this file.",
+        help=(
+            "Write a markdown summary of the run to this file. Under --bench, "
+            f"the side-by-side comparison. (default under --bench: "
+            f"<output>/{BENCH_REPORT})"
+        ),
     )
 
     parser.add_argument(

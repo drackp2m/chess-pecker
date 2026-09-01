@@ -11,8 +11,11 @@ import {
 	UnsavedCount,
 } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
+import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
+import { NotificationStore } from '@app/store/notification.store';
 import { ProfileStore } from '@app/store/profile.store';
+import { ShareStore } from '@app/store/share.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
@@ -65,7 +68,10 @@ function configure(options: Options = {}) {
 	});
 	const stores = {
 		activity: store('activity'),
+		bookmark: store('bookmark'),
+		notification: store('notification'),
 		profile: store('profile'),
+		share: store('share'),
 		sync: store('sync'),
 		training: store('training'),
 	};
@@ -76,7 +82,10 @@ function configure(options: Options = {}) {
 			{ provide: LocalOwnerUseCase, useValue: localOwner },
 			{ provide: ModalStore, useValue: modalStore },
 			{ provide: ActivityStore, useValue: stores.activity },
+			{ provide: BookmarkStore, useValue: stores.bookmark },
+			{ provide: NotificationStore, useValue: stores.notification },
 			{ provide: ProfileStore, useValue: stores.profile },
+			{ provide: ShareStore, useValue: stores.share },
 			{ provide: SyncStore, useValue: stores.sync },
 			{ provide: TrainingStore, useValue: stores.training },
 		],
@@ -156,7 +165,17 @@ describe('DiscardLocalDataUseCase.execute', () => {
 
 		await discard.execute();
 
-		expect(order).toEqual(['activity', 'profile', 'sync', 'training', 'clear', 'release']);
+		expect(order).toEqual([
+			'activity',
+			'bookmark',
+			'notification',
+			'profile',
+			'share',
+			'sync',
+			'training',
+			'clear',
+			'release',
+		]);
 	});
 
 	it('resets every store holding user data', async () => {
@@ -165,7 +184,10 @@ describe('DiscardLocalDataUseCase.execute', () => {
 		await discard.execute();
 
 		expect(stores.activity.reset).toHaveBeenCalledTimes(1);
+		expect(stores.bookmark.reset).toHaveBeenCalledTimes(1);
+		expect(stores.notification.reset).toHaveBeenCalledTimes(1);
 		expect(stores.profile.reset).toHaveBeenCalledTimes(1);
+		expect(stores.share.reset).toHaveBeenCalledTimes(1);
 		expect(stores.sync.reset).toHaveBeenCalledTimes(1);
 		expect(stores.training.reset).toHaveBeenCalledTimes(1);
 	});

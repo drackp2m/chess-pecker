@@ -87,12 +87,17 @@ function planPromotion(position: ChessPosition, move: ChessMove): StagePlan[] {
 
 /**
  * Castling travels two pieces, so each gets a beat of its own or the move would be heard
- * once: the rook goes round first, the king follows and lands it.
+ * once. The king goes first, because the king is the piece the player moves to ask for the
+ * castling at all, and the rook follows it round and lands the move.
  */
 function planCastling(position: ChessPosition, move: ChessMove, side: CastlingSide): StagePlan[] {
+	const king: BoardSlideStep = { from: move.from, to: move.to, taken: undefined };
 	const rook = rookSlide(move, side);
 
-	return [{ slides: [rook], board: slid(position, rook), sound: 'move' }, played(position, move)];
+	return [
+		{ slides: [king], board: slid(position, king), sound: 'move' },
+		{ slides: [rook], board: undefined, sound: landing(position, move) },
+	];
 }
 
 /**

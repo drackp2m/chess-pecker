@@ -60,7 +60,7 @@ export class BootstrapHelper {
 					callback(null, false);
 				}
 			},
-			methods: 'GET,POST,PATCH,DELETE',
+			methods: 'GET,POST,PUT,PATCH,DELETE',
 			maxAge: 86400,
 		};
 	};

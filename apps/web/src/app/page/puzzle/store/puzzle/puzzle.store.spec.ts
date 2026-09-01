@@ -361,26 +361,23 @@ describe('PuzzleStore', () => {
 		expect(store.canRevealSolution()).toBe(true);
 	});
 
-	it('plays the line out again every time it is asked for after the exercise is over', () => {
+	it('takes the answer off the table once it is out, for the arrows to walk instead', () => {
 		const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 		miss(store);
 		store.revealSolution();
 		vi.advanceTimersByTime(REPLAY_TOTAL * 5);
 
-		expect(store.canRevealSolution()).toBe(true);
+		expect(store.canRevealSolution()).toBe(false);
 
-		// Nothing is left ahead, so it starts the line over instead of standing still.
+		const stood = store.cursor();
+
 		store.revealSolution();
 
-		expect(store.isRevealing()).toBe(true);
-		expect(store.cursor()).toBe(0);
-
-		vi.advanceTimersByTime(REPLAY_TOTAL * 6);
-
+		// Asked for again it does nothing at all: the line stands where it was left.
 		expect(store.isRevealing()).toBe(false);
+		expect(store.cursor()).toBe(stood);
 		expect(store.history()).toHaveLength(6);
-		expect(store.history().at(-1)?.san).toBe('Rxf1#');
 	});
 
 	it('counts misses per exercise, resetting them when the next one opens', () => {
@@ -1115,7 +1112,7 @@ describe('PuzzleStore', () => {
 			expect(store.closure()).toBe('open');
 		});
 
-		it('is settled by the first ask for the answer, and no later one revises it', () => {
+		it('is settled by the ask for the answer, which is the only one on offer', () => {
 			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
 
 			miss(store);
@@ -1124,9 +1121,24 @@ describe('PuzzleStore', () => {
 			expect(store.closure()).toBe('revealed');
 
 			vi.advanceTimersByTime(REPLAY_TOTAL * 5);
-			store.revealSolution();
 
+			expect(store.canRevealSolution()).toBe(false);
 			expect(store.closure()).toBe('revealed');
+		});
+
+		it('takes the flag with it when the line was found rather than handed over', () => {
+			const store = createStore(`${HEADER}\n${MATE_IN_3}`);
+
+			miss(store);
+			vi.advanceTimersByTime(UNDO_TOTAL);
+
+			expect(store.canRevealSolution()).toBe(true);
+
+			solve(store);
+
+			// The miss earned the flag, but the exercise is over: there is nothing left to give up.
+			expect(store.closure()).toBe('found');
+			expect(store.canRevealSolution()).toBe(false);
 		});
 
 		it('survives a restart, along with the verdict, the misses and the hint', () => {

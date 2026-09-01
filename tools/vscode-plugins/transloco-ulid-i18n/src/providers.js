@@ -4,7 +4,7 @@ const { applyInsertion } = require('./params');
 const { snippetItems } = require('./snippet');
 const { SELECTOR, locate, shorten, usageAt, usageRange } = require('./util');
 
-const MISSING = '⚠️ _missing_';
+const MISSING = '⚠️ _missing translation_';
 const MISSING_DESCRIPTION = '⚠️ missing translation';
 const DESCRIPTION_LENGTH = 80;
 
@@ -105,7 +105,7 @@ function languageRows(index, scope, ulid) {
 
 function keyItem(index, scope, key, order, context) {
 	const entry = index.entry(scope, key);
-	const { text, missing } = index.translation(scope, entry.ulid, index.defaultLang);
+	const { text, missing } = index.translation(scope, entry.ulid, index.displayLang);
 	const description = missing ? MISSING_DESCRIPTION : shorten(text, DESCRIPTION_LENGTH);
 	const item = new vscode.CompletionItem(
 		{ label: key, description },

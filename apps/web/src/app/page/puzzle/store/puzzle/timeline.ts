@@ -22,6 +22,7 @@ export interface TimelineInput {
 	readonly fen: string;
 	readonly record: PuzzleRecord;
 	readonly freePlayIndex: number | undefined;
+	readonly freePlayScratch: readonly PuzzleEvent[] | undefined;
 	readonly revealed: RevealedLine | undefined;
 	readonly rewound: number;
 	readonly puzzle: Puzzle | undefined;
@@ -391,6 +392,37 @@ function toLine(branch: Branch): TimelineLine {
 	};
 }
 
+/**
+ * The sandbox of a closed exercise, hung off the board the log was left standing on. It is
+ * kept nowhere, so it comes last: the rewind that stood the board there is already spent.
+ */
+function foldScratchInto(draft: Draft, input: TimelineInput): void {
+	const events = input.freePlayScratch;
+
+	if (undefined === events) {
+		return;
+	}
+
+	const index = input.record.freePlayRuns.length;
+	const mark = draft.branches.length;
+	const entry = draft.cursor;
+	const floor = runFloor(draft, entry);
+
+	draft.cursor = openRun(draft, index);
+	draft.run = index;
+
+	try {
+		for (const event of events) {
+			foldEvent(draft, event, floor);
+		}
+	} catch {
+		draft.branches.length = mark;
+		draft.cursor = entry;
+	}
+
+	draft.run = undefined;
+}
+
 function build(input: TimelineInput): Timeline {
 	const draft = startDraft(input);
 	const left = foldLog(draft, input.record);
@@ -403,7 +435,10 @@ function build(input: TimelineInput): Timeline {
 
 	foldRevealedInto(draft, input.revealed);
 
-	const { branch, ply } = seat(draft, draft.cursor.branch, draft.cursor.ply - input.rewound);
+	draft.cursor = seat(draft, draft.cursor.branch, draft.cursor.ply - input.rewound);
+	foldScratchInto(draft, input);
+
+	const { branch, ply } = draft.cursor;
 
 	return { lines: draft.branches.map(toLine), head: { line: branch.id, ply } };
 }

@@ -7,20 +7,24 @@ import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
+import { DEFAULT_MOVE_LIFT } from '@app/definition/piece-lift.constant';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { I18n } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
+import { provideTestingBookmarks } from '@app/testing/bookmark.harness';
 import { provideTestingI18n } from '@app/testing/i18n.harness';
 import {
 	HINT_TOTAL,
 	NAV_LABELS,
 	NAV_ORDER,
 	NavControl,
+	REPLAY_TOTAL,
 	navControls,
 } from '@app/testing/puzzle-store.harness';
+import { provideTestingShares } from '@app/testing/share.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 const PUZZLE: Puzzle = {
@@ -63,12 +67,15 @@ function createHost() {
 	TestBed.configureTestingModule({
 		providers: [
 			provideTestingI18n(),
+			provideTestingBookmarks(),
+			provideTestingShares(),
 			{
 				provide: BoardPreferenceService,
 				useValue: {
 					moveSpeed: signal(DEFAULT_MOVE_SPEED),
 					moveAnimation: signal(DEFAULT_MOVE_ANIMATION),
 					moveInputMethods: signal(MOVE_INPUT_METHODS_ALL),
+					moveLift: signal(DEFAULT_MOVE_LIFT),
 				},
 			},
 			{ provide: SoundService, useValue: { play: (): void => undefined } },
@@ -108,6 +115,13 @@ function createHost() {
 			element.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`)?.click();
 
 			fixture.detectChanges();
+		},
+
+		/** A control as it stands in the row, to read the state the view paints on it. */
+		control(label: string): HTMLButtonElement | null {
+			fixture.detectChanges();
+
+			return element.querySelector<HTMLButtonElement>(`[aria-label="${label}"]`);
 		},
 
 		themes(): string[] {
@@ -192,6 +206,23 @@ describe('PuzzleSolverComponent', () => {
 		host.click(I18n.common.BOARD_GIVE_UP);
 
 		expect(host.store.closure()).toBe('revealed');
+	});
+
+	it('marks the flag and puts it out of reach for good once it has been pressed', () => {
+		const host = createHost();
+
+		host.open();
+		host.store.selectSquare('b2');
+		host.store.selectSquare('c2');
+		host.click(I18n.common.BOARD_GIVE_UP);
+		host.advance(REPLAY_TOTAL * 5);
+
+		// The answer is out and watched to the end: all that is left is walking it.
+		const flag = host.control(I18n.common.BOARD_GIVE_UP);
+
+		expect(flag?.disabled).toBe(true);
+		expect(flag?.classList.contains('active')).toBe(true);
+		expect(host.enabledNav()).toEqual(['restart', 'back']);
 	});
 
 	it('hands the arrows on the ends of the row back to the host, under its own labels', () => {

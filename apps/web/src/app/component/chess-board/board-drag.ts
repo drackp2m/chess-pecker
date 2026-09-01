@@ -13,6 +13,11 @@ export interface DragGhost {
 	readonly x: number;
 	readonly y: number;
 	readonly size: number;
+	/** What is left of the way from the square it was lifted from, as a CSS `translate`. */
+	readonly offset: string;
+	/** Whether the piece has already caught up with the pointer. */
+	readonly isSettled: boolean;
+	readonly isRaised: boolean;
 }
 
 export interface BoardDragOptions {
@@ -21,9 +26,11 @@ export interface BoardDragOptions {
 	readonly pieceAt: (square: Square) => Piece | undefined;
 	/** Side of one square, in pixels, so the dragged piece keeps its size. */
 	readonly squareSize: () => number;
+	/** Middle of a square, in the geometry of the board being drawn. */
+	readonly squareCenter: (square: Square) => Point;
 	readonly isClickEnabled: () => boolean;
 	/** Picks the piece up, so the board shows where it may go while it travels. */
-	readonly pick: (square: Square) => void;
+	readonly pick: (square: Square) => boolean;
 }
 
 /**
@@ -36,6 +43,8 @@ export class BoardDragGesture {
 
 	private readonly dragging = signal<Square | undefined>(undefined);
 	private readonly pointer = signal<Point | undefined>(undefined);
+	private readonly catchUp = signal<Point | undefined>(undefined);
+	private readonly raised = signal(false);
 
 	private from: Square | undefined;
 	private origin: Point | undefined;
@@ -71,7 +80,8 @@ export class BoardDragGesture {
 		if (isStarting) {
 			this.hasDragged = true;
 			this.dragging.set(from);
-			this.options.pick(from);
+			this.lift(from, point);
+			this.raised.set(this.options.pick(from));
 		}
 
 		this.pointer.set(point);
@@ -99,6 +109,24 @@ export class BoardDragGesture {
 		this.isDraggable = false;
 		this.dragging.set(undefined);
 		this.pointer.set(undefined);
+		this.catchUp.set(undefined);
+		this.raised.set(false);
+	}
+
+	/**
+	 * The piece is drawn where it was standing and only then let go of, so it travels to the
+	 * pointer instead of appearing under it however far away the press landed.
+	 */
+	private lift(from: Square, point: Point): void {
+		const center = this.options.squareCenter(from);
+
+		this.catchUp.set({ x: center.x - point.x, y: center.y - point.y });
+
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				this.catchUp.set(undefined);
+			});
+		});
 	}
 
 	private describeGhost(): DragGhost | undefined {
@@ -111,7 +139,16 @@ export class BoardDragGesture {
 		}
 
 		const size = this.options.squareSize();
+		const catchUp = this.catchUp();
 
-		return { piece, x: point.x - size / 2, y: point.y - size / 2, size };
+		return {
+			piece,
+			x: point.x - size / 2,
+			y: point.y - size / 2,
+			size,
+			offset: undefined === catchUp ? '0 0' : `${catchUp.x.toString()}px ${catchUp.y.toString()}px`,
+			isSettled: undefined === catchUp,
+			isRaised: this.raised(),
+		};
 	}
 }

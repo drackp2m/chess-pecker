@@ -1,0 +1,11 @@
+<button
+	appThemed
+	appLongPress
+	icon="bookmark"
+	iconSquared
+	[attr.aria-label]="label() | i18n"
+	[class.active]="isHighlighted()"
+	[disabled]="isDisabled()"
+	(shortPress)="onPress()"
+	(longPress)="onHold()"
+></button>

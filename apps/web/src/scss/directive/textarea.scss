@@ -1,0 +1,42 @@
+@use '../abstract/field';
+
+@layer component {
+	.app-textarea {
+		// The control carries no vertical padding of its own: it lives inside the box that
+		// draws the border, which holds it instead. The textarea then clips its own scroll
+		// at its edges, so a line that is only half in view never survives above or below it.
+		--block-padding: 0px;
+
+		@include field.shell(textarea, $slide: calc(#{field.$vertical-padding} + 0.5lh));
+
+		> label {
+			padding-block: field.$vertical-padding;
+		}
+
+		textarea {
+			resize: none;
+
+			overflow-y: auto;
+			display: block;
+
+			width: 100%;
+			padding-block: 0;
+		}
+
+		&.resize-x textarea {
+			min-width: min(150px, 100%);
+		}
+
+		// A box that has been dragged sideways writes its own width, so the shell has to hug it
+		// instead of holding the whole row it was handed — otherwise the border and the notch
+		// stay where the textarea no longer is.
+		&.resized-x {
+			width: fit-content;
+			max-width: 100%;
+
+			textarea {
+				max-width: 100%;
+			}
+		}
+	}
+}

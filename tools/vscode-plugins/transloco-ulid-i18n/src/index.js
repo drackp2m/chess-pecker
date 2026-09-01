@@ -1,6 +1,8 @@
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
+const settings = require('./settings');
+
 const SCRIPTS_DIR = path.join('tools', 'scripts', 'i18n');
 
 const loadModule = (root, file) => import(pathToFileURL(path.join(root, SCRIPTS_DIR, file)).href);
@@ -9,7 +11,9 @@ class I18nIndex {
 	constructor(root) {
 		this.root = root;
 		this.langs = [];
-		this.defaultLang = 'en';
+		this.defaultLang = '';
+		this.displayLang = '';
+		this.languageFile = '';
 		this.i18nDir = '';
 		this.sourceDirs = [];
 		this.scopes = new Map();
@@ -60,9 +64,9 @@ class I18nIndex {
 		return [...(this.scopes.get(scopeName)?.entries.keys() ?? [])];
 	}
 
-	async reload(langsOverride) {
+	async reload() {
 		try {
-			await this.readWorkspace(langsOverride);
+			await this.readWorkspace();
 			this.error = null;
 		} catch (error) {
 			this.error = error instanceof Error ? error.message : String(error);
@@ -116,15 +120,21 @@ class I18nIndex {
 		return { checks, collect, config, findings, params };
 	}
 
-	async readWorkspace(langsOverride) {
+	async readWorkspace() {
 		const modules = await this.loadModules();
 		const { collect, config, params } = modules;
+		const languageFile = settings.languageFile(this.root, config.DEFAULTS);
+
+		this.languageFile = languageFile;
+
+		const { langs, defaultLang } = settings.readLanguages(config, languageFile);
 
 		this.modules = modules;
 		this.toKebabCase = config.toKebabCase;
 		this.patterns = collect.USAGE_PATTERNS;
-		this.langs = langsOverride?.length ? langsOverride : config.DEFAULTS.langs;
-		this.defaultLang = this.langs[0] ?? config.DEFAULTS.defaultLang;
+		this.langs = settings.resolveLangs(langs, defaultLang);
+		this.defaultLang = defaultLang;
+		this.displayLang = settings.resolveDisplayLang(this.langs, defaultLang);
 		this.i18nDir = path.join(this.root, config.DEFAULTS.i18nDir);
 		this.sourceDirs = config.DEFAULTS.sourceDirs.map((dir) => path.join(this.root, dir));
 

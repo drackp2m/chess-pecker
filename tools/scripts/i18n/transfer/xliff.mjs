@@ -1,20 +1,25 @@
+import { placeholdersIn } from '../catalogue/message.mjs';
+
 import { childrenNamed, encodeXml, findAll, firstNamed, parseXml } from './xml.mjs';
 
 const NAMESPACE = 'urn:oasis:names:tc:xliff:document:2.0';
-const PARAM_PATTERN = /\{\{\s*([\w.]+)\s*\}\}/g;
 const STATES = new Set(['initial', 'translated', 'reviewed', 'final']);
+
+// What a stale unit travels out with, and what it still carries when it comes back with
+// nobody having looked at it. Both sides of the trip read it, so it lives here.
+export const OUTDATED_SUB_STATE = 'chesspecker:outdated';
 
 const indent = (depth) => '\t'.repeat(depth);
 
 // One <data> per distinct interpolation, referenced from both sides: the translator sees an
 // atomic chip instead of typo-able text, and the import resolves it back exactly.
-function dataOf(texts) {
+function dataOf(texts, hash) {
 	const data = new Map();
 
 	for (const text of texts) {
-		for (const [match, name] of String(text ?? '').matchAll(PARAM_PATTERN)) {
-			if (!data.has(name)) {
-				data.set(name, { id: `d${data.size + 1}`, text: match });
+		for (const param of placeholdersIn(text, { hash })) {
+			if (!data.has(param.name)) {
+				data.set(param.name, { id: `d${data.size + 1}`, text: param.text });
 			}
 		}
 	}
@@ -22,16 +27,16 @@ function dataOf(texts) {
 	return data;
 }
 
-function inlineOf(text, data, prefix) {
+function inlineOf(text, data, prefix, hash) {
 	const parts = [];
 	let last = 0;
 	let count = 0;
 
-	for (const match of String(text).matchAll(PARAM_PATTERN)) {
-		parts.push(encodeXml(text.slice(last, match.index)));
+	for (const param of placeholdersIn(text, { hash })) {
+		parts.push(encodeXml(text.slice(last, param.index)));
 		count += 1;
-		parts.push(`<ph id="${prefix}${count}" dataRef="${data.get(match[1]).id}"/>`);
-		last = match.index + match[0].length;
+		parts.push(`<ph id="${prefix}${count}" dataRef="${data.get(param.name).id}"/>`);
+		last = param.index + param.length;
 	}
 
 	parts.push(encodeXml(text.slice(last)));
@@ -70,7 +75,8 @@ const subStateOf = (unit) =>
 		: ` subState="${encodeXml(unit.subState)}"`;
 
 function unitOf(unit, depth) {
-	const data = dataOf([unit.source, unit.target]);
+	const hash = true === unit.hash;
+	const data = dataOf([unit.source, unit.target], hash);
 	const state = '' === String(unit.target ?? '').trim() ? 'initial' : (unit.state ?? 'translated');
 
 	return [
@@ -78,8 +84,8 @@ function unitOf(unit, depth) {
 		...notesOf(unit.notes ?? [], depth + 1),
 		...originalDataOf(data, depth + 1),
 		`${indent(depth + 1)}<segment state="${state}"${subStateOf(unit)}>`,
-		`${indent(depth + 2)}<source>${inlineOf(unit.source ?? '', data, 's')}</source>`,
-		`${indent(depth + 2)}<target>${inlineOf(unit.target ?? '', data, 't')}</target>`,
+		`${indent(depth + 2)}<source>${inlineOf(unit.source ?? '', data, 's', hash)}</source>`,
+		`${indent(depth + 2)}<target>${inlineOf(unit.target ?? '', data, 't', hash)}</target>`,
 		`${indent(depth + 1)}</segment>`,
 		`${indent(depth)}</unit>`,
 	];

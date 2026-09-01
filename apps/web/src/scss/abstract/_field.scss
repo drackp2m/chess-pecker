@@ -21,11 +21,16 @@ $clip-gap: 3px;
 	}
 }
 
-@mixin shell($control, $slider: $control) {
+@mixin shell($control, $slider: $control, $slide: calc(var(--input-height) / 2)) {
 	$glow: var(--glow-size);
 	$glow-neg: calc(-1 * var(--glow-size));
 
 	--glow-size: 6px;
+
+	// How far the control drops — and the label rises — while the field is still empty.
+	// Half the box centres it on a one-line control; a multi-line one overrides it with
+	// half of a single line instead.
+	--slide: #{$slide};
 	--notch-start: calc(#{$horizontal-padding} - #{$clip-gap});
 	--notch-end: min(
 		calc(#{$horizontal-padding} + var(--label-width) + #{$clip-gap}),
@@ -51,7 +56,7 @@ $clip-gap: 3px;
 	}
 
 	#{$slider} {
-		transform: translateY(calc(var(--input-height) / 2));
+		transform: translateY(var(--slide));
 		transition: transform $transition-duration ease-in-out;
 	}
 
@@ -61,7 +66,7 @@ $clip-gap: 3px;
 	}
 
 	> label {
-		overflow: hidden;
+		overflow: clip;
 		display: block;
 		border-radius: $border-radius;
 		clip-path: inset(0 round $border-radius);
@@ -144,7 +149,7 @@ $clip-gap: 3px;
 		}
 
 		.label {
-			transform: translateY(calc(-1 * var(--input-height) / 2 + 1px));
+			transform: translateY(calc(-1 * var(--slide) + 1px));
 			font-size: var(--font-size-sm);
 		}
 	}

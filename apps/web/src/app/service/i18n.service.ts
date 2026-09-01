@@ -5,10 +5,12 @@ import { asapScheduler, observeOn } from 'rxjs';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
 import type { I18nParamsArg } from '@app/i18n';
+import { GenderService } from '@app/service/gender.service';
 
 @Injectable({ providedIn: 'root' })
 export class I18nService {
 	private readonly transloco = inject(TranslocoService);
+	private readonly genderService = inject(GenderService);
 
 	private readonly event = signal(0);
 
@@ -22,12 +24,16 @@ export class I18nService {
 	translate(key: string, params?: Record<string, unknown>): string {
 		this.event();
 
-		return this.transloco.translate(key, params);
+		return this.transloco.translate(key, this.withGender(params));
 	}
 
 	resolve(ref: TranslationRef): string {
 		this.event();
 
-		return this.transloco.translate(ref.key, ref.params);
+		return this.transloco.translate(ref.key, this.withGender(ref.params));
+	}
+
+	private withGender(params?: Record<string, unknown>): Record<string, unknown> {
+		return { gender: this.genderService.selectedGender(), ...params };
 	}
 }

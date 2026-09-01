@@ -3,90 +3,101 @@
 		<div class="flex-col gap-3">
 			<app-chess-board />
 
-			<div class="controls align-center px-3">
-				<button
-					appThemed
-					icon="chevron-left"
-					iconSquared
-					[attr.aria-label]="previousLabel() | i18n"
-					[disabled]="isPreviousDisabled()"
-					(click)="previous.emit()"
-				></button>
-
-				<div class="actions flex-row gap-3 justify-center">
+			<!-- Two rows, closer to each other than to the board: the line is driven from the
+			first one, and the second is what is done with the exercise once it is over. -->
+			<div class="flex-col gap-2">
+				<div class="controls align-center px-3">
 					<button
 						appThemed
-						icon="flag"
+						icon="chevron-left"
 						iconSquared
-						[attr.aria-label]="I18n.common.BOARD_GIVE_UP | i18n"
-						[class.active]="'revealed' === store.closure()"
-						[disabled]="!store.canRevealSolution()"
-						(click)="store.revealSolution()"
+						[attr.aria-label]="previousLabel() | i18n"
+						[disabled]="isPreviousDisabled()"
+						(click)="previous.emit()"
 					></button>
 
-					<button
-						appThemed
-						icon="rotate"
-						iconSquared
-						[attr.aria-label]="I18n.common.BOARD_FLIP | i18n"
-						(click)="store.flipBoard()"
-					></button>
+					<div class="actions flex-row gap-3 justify-center">
+						<button
+							appThemed
+							icon="flag"
+							iconSquared
+							[attr.aria-label]="I18n.common.BOARD_GIVE_UP | i18n"
+							[class.active]="'revealed' === store.closure()"
+							[disabled]="!store.canRevealSolution()"
+							(click)="store.revealSolution()"
+						></button>
+
+						<button
+							appThemed
+							icon="rotate"
+							iconSquared
+							[attr.aria-label]="I18n.common.BOARD_FLIP | i18n"
+							[class.active]="store.isBoardFlipped()"
+							(click)="store.flipBoard()"
+						></button>
+
+						<button
+							appThemed
+							icon="backward-fast"
+							iconSquared
+							[attr.aria-label]="I18n.common.BOARD_RESTART | i18n"
+							[disabled]="0 === store.cursor() && !store.canStepBackward()"
+							(click)="store.restart()"
+						></button>
+
+						<button
+							appThemed
+							icon="backward-step"
+							iconSquared
+							[attr.aria-label]="I18n.common.BOARD_STEP_BACKWARD | i18n"
+							[disabled]="store.isBusy() || !store.canStepBackward()"
+							(click)="store.stepBackward()"
+						></button>
+
+						<button
+							appThemed
+							icon="forward-step"
+							iconSquared
+							[attr.aria-label]="I18n.common.BOARD_STEP_FORWARD | i18n"
+							[disabled]="store.isBusy() || !store.canStepForward()"
+							(click)="store.stepForward()"
+						></button>
+
+						<button
+							appThemed
+							icon="magnifying-glass"
+							iconSquared
+							[attr.aria-label]="I18n.common.BOARD_FREE_PLAY | i18n"
+							[class.active]="store.isFreePlay()"
+							(click)="store.toggleFreePlay()"
+						></button>
+
+						<button
+							appThemed
+							icon="circle-info"
+							iconSquared
+							[attr.aria-label]="I18n.common.BOARD_HINT | i18n"
+							[class.active]="store.hintUsed()"
+							[disabled]="!store.canUseHint()"
+							(click)="store.useHint()"
+						></button>
+					</div>
 
 					<button
 						appThemed
-						icon="backward-fast"
+						icon="chevron-right"
 						iconSquared
-						[attr.aria-label]="I18n.common.BOARD_RESTART | i18n"
-						[disabled]="0 === store.cursor() && !store.canStepBackward()"
-						(click)="store.restart()"
-					></button>
-
-					<button
-						appThemed
-						icon="backward-step"
-						iconSquared
-						[attr.aria-label]="I18n.common.BOARD_STEP_BACKWARD | i18n"
-						[disabled]="store.isBusy() || !store.canStepBackward()"
-						(click)="store.stepBackward()"
-					></button>
-
-					<button
-						appThemed
-						icon="forward-step"
-						iconSquared
-						[attr.aria-label]="I18n.common.BOARD_STEP_FORWARD | i18n"
-						[disabled]="store.isBusy() || !store.canStepForward()"
-						(click)="store.stepForward()"
-					></button>
-
-					<button
-						appThemed
-						icon="magnifying-glass"
-						iconSquared
-						[attr.aria-label]="I18n.common.BOARD_FREE_PLAY | i18n"
-						[class.active]="store.isFreePlay()"
-						(click)="store.toggleFreePlay()"
-					></button>
-
-					<button
-						appThemed
-						icon="circle-info"
-						iconSquared
-						[attr.aria-label]="I18n.common.BOARD_HINT | i18n"
-						[class.active]="store.hintUsed()"
-						[disabled]="!store.canUseHint()"
-						(click)="store.useHint()"
+						[attr.aria-label]="nextLabel() | i18n"
+						[disabled]="isNextDisabled()"
+						(click)="next.emit()"
 					></button>
 				</div>
 
-				<button
-					appThemed
-					icon="chevron-right"
-					iconSquared
-					[attr.aria-label]="nextLabel() | i18n"
-					[disabled]="isNextDisabled()"
-					(click)="next.emit()"
-				></button>
+				<div class="actions flex-row gap-3 justify-center px-3">
+					<app-bookmark-button [lichessId]="puzzle.id" [isDisabled]="store.isOpen()" />
+
+					<app-share-button />
+				</div>
 			</div>
 		</div>
 

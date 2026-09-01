@@ -36,6 +36,9 @@ QUOTE_PAIRS = (
     ("‘", "’"),
 )
 SHORT_SOURCE = 24
+FORM_SEPARATOR = " · "
+COLLAPSED_DIMENSIONS = ("plural", "gender")
+SINGLE_FORM_LANGUAGES = frozenset({"id", "vi", "zh"})
 SENTENCE_END = ".!?…。।؟"
 TRAILING = ".。।"
 LATIN_RUN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]{3,}")
@@ -64,6 +67,16 @@ class Issue:
     detail: str
     hard: bool = False
     pairs: tuple[tuple[str, str], ...] = ()
+
+
+@dataclass(frozen=True)
+class Form:
+    label: str
+    text: str
+
+
+def base_of(lang: str) -> str:
+    return str(lang).split("-")[0].lower()
 
 
 # A model that keeps talking after its own end-of-turn token repeats it dozens
@@ -156,21 +169,26 @@ def check_markers(text: str, expected: list[str]) -> list[Issue]:
     return issues
 
 
-def limit_for(source: str) -> float:
-    if len(source) <= SHORT_SOURCE:
-        return max(SHORT_SOURCE * 3, len(source) * 4)
+def measured(text: str) -> int:
+    return len(PH_RE.sub("", text).strip())
 
-    return len(source) * MAX_RATIO
+
+def limit_for(length: int) -> float:
+    if length <= SHORT_SOURCE:
+        return max(SHORT_SOURCE * 3, length * 4)
+
+    return length * MAX_RATIO
 
 
 def check_length(text: str, source: str) -> list[Issue]:
-    limit = limit_for(source)
+    written, origin = measured(text), measured(source)
+    limit = limit_for(origin)
 
-    if len(text) > limit:
-        return [Issue("too-long", f"{len(text)} caracteres frente a {len(source)} del origen")]
+    if written > limit:
+        return [Issue("too-long", f"{written} caracteres frente a {origin} del origen")]
 
-    if len(source) > SHORT_SOURCE and len(text) < len(source) * MIN_RATIO:
-        return [Issue("too-short", f"{len(text)} caracteres frente a {len(source)} del origen")]
+    if origin > SHORT_SOURCE and written < origin * MIN_RATIO:
+        return [Issue("too-short", f"{written} caracteres frente a {origin} del origen")]
 
     return []
 
@@ -216,7 +234,7 @@ def bare(text: str, keep: tuple[str, ...]) -> str:
 # Latin alphabet is the source showing through — which is what a leaked
 # "Resuelto," looks like from here.
 def check_script(text: str, lang: str, keep: tuple[str, ...]) -> list[Issue]:
-    script = SCRIPTS.get(lang.split("-")[0].lower())
+    script = SCRIPTS.get(base_of(lang))
 
     if script is None:
         return []
@@ -237,6 +255,65 @@ def check_copy(text: str, source: str, keep: tuple[str, ...]) -> list[Issue]:
         return []
 
     return [Issue("untranslated", "idéntico al origen")]
+
+
+def named(forms: list[Form]) -> str:
+    labels = [form.label or "?" for form in forms]
+
+    if 2 > len(labels):
+        return "".join(labels)
+
+    return f"{', '.join(labels[:-1])} y {labels[-1]}"
+
+
+def check_identical(forms: list[Form]) -> list[Issue]:
+    grouped: dict[str, list[Form]] = {}
+
+    for form in forms:
+        written = form.text.strip()
+
+        if written:
+            grouped.setdefault(written, []).append(form)
+
+    alike = [(text, group) for text, group in grouped.items() if len(group) > 1]
+
+    if not alike:
+        return []
+
+    listed = "; ".join(f"{named(group)} → «{text}»" for text, group in alike)
+
+    return [Issue("forms-identical", f"formas iguales: {listed}")]
+
+
+def expanded(form: Form) -> list[str]:
+    parts = form.label.split(FORM_SEPARATOR)
+
+    return [part for part in parts if part.split(":", 1)[0] in COLLAPSED_DIMENSIONS]
+
+
+def check_surplus(forms: list[Form], lang: str) -> list[Issue]:
+    if base_of(lang) not in SINGLE_FORM_LANGUAGES:
+        return []
+
+    grown = [form for form in forms if expanded(form)]
+
+    if len(grown) < 2:
+        return []
+
+    return [
+        Issue(
+            "forms-surplus",
+            f"{lang} tiene una sola forma y han venido {len(grown)}: {named(grown)}",
+            True,
+        )
+    ]
+
+
+def validate_forms(forms: list[Form], lang: str = "") -> list[Issue]:
+    if len(forms) < 2:
+        return []
+
+    return [*check_surplus(forms, lang), *check_identical(forms)]
 
 
 def validate(

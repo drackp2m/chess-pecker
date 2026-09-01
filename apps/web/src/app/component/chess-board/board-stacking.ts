@@ -16,3 +16,13 @@ export const PIECE_ELEVATIONS = BY_FORCE.length * BY_COLOR.length;
 export function pieceElevation(piece: Piece): number {
 	return BY_FORCE.indexOf(piece.type) * BY_COLOR.length + BY_COLOR.indexOf(piece.color) + 1;
 }
+
+export const MOVING_ELEVATION = PIECE_ELEVATIONS + 1;
+
+export function squareElevation(piece: Piece | undefined, isMoving: boolean): number | undefined {
+	if (undefined === piece) {
+		return undefined;
+	}
+
+	return isMoving ? MOVING_ELEVATION : pieceElevation(piece);
+}

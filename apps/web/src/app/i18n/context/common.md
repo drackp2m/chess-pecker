@@ -34,7 +34,7 @@ Encabezado de la columna que nombra cada fila del resumen: una ronda de calibrac
 
 ## CYCLE
 
-`{{ index }}` es el número del ciclo, desde 1.
+`{index}` es el número del ciclo, desde 1.
 
 ## FIRST_TRY
 
@@ -54,7 +54,7 @@ Los nombres de las piezas con su color, en minúscula, tal como se leen dentro d
 
 ## SQUARE_*
 
-Textos accesibles de una casilla. `{{ square }}` es la coordenada algebraica (e4, d5) y no se traduce; `{{ piece }}` llega ya traducido desde `PIECE_*`, así que la frase tiene que sonar bien con ese nombre metido dentro y con su género y su número.
+Textos accesibles de una casilla. `{square}` es la coordenada algebraica (e4, d5) y no se traduce; `{piece}` llega ya traducido desde `PIECE_*`, así que la frase tiene que sonar bien con ese nombre metido dentro y con su género y su número.
 
 ## FIND_MOVE_*
 
@@ -66,7 +66,7 @@ La demostración del tablero que se ve en la página de ajustes y en la de inici
 
 ## DIFFICULTY*
 
-`DIFFICULTY` lleva dentro `{{ level }}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.
+`DIFFICULTY` lleva dentro `{level}`, que se rellena con uno de los `DIFFICULTY_EASY`, `DIFFICULTY_MEDIUM` o `DIFFICULTY_HARD`. Por eso los tres van en minúscula y tienen que concordar con la palabra «dificultad» del idioma de destino.
 
 ## CONNECTING*
 
@@ -82,15 +82,15 @@ No se llega al servidor. Lo importante del mensaje es lo que sigue funcionando s
 
 ## UPDATE_*
 
-Avisos del service worker sobre una versión nueva de la aplicación, y el botón que la aplica. `{{ version }}` es un número de versión y se copia tal cual.
+Avisos del service worker sobre una versión nueva de la aplicación, y el botón que la aplica. `{version}` es un número de versión y se copia tal cual.
 
 ## APP_UPDATED
 
-Confirmación de que la actualización ya está puesta. La «v» pegada al `{{ version }}` es parte del formato y se conserva.
+Confirmación de que la actualización ya está puesta. La «v» pegada al `{version}` es parte del formato y se conserva.
 
 ## SELECT_*
 
-Textos de un desplegable genérico: el marcador de posición cuando no hay nada elegido, el aviso de que la búsqueda no encuentra nada y la posición leída en voz alta.
+Textos de un desplegable genérico: el marcador de posición cuando no hay nada elegido, el aviso de que la búsqueda no encuentra nada, la posición leída en voz alta y el botón que quita una opción ya elegida de un desplegable de selección múltiple, donde `{option}` es el nombre de esa opción.
 
 ## PROMOTION_DIALOG
 
@@ -98,7 +98,7 @@ Título del diálogo que sale cuando un peón llega a la última fila y hay que 
 
 ## PROMOTE_TO*
 
-La coronación en sí. `PROMOTE_TO` encabeza la lista y `PROMOTE_TO_PIECE` es cada botón, con `{{ piece }}` ya traducido desde `PIECE_*`: la frase tiene que sonar bien con ese nombre dentro.
+La coronación en sí. `PROMOTE_TO` encabeza la lista y `PROMOTE_TO_PIECE` es cada botón, con `{piece}` ya traducido desde `PIECE_*`: la frase tiene que sonar bien con ese nombre dentro.
 
 ## CHART_*
 
@@ -110,11 +110,11 @@ Errores de los ajustes guardados en este dispositivo. `SETTINGS_BLOCKED_UPGRADE`
 
 ## SERVER_*
 
-`SERVER_DETAIL` es un contenedor: `{{ detail }}` llega en inglés desde el servidor y no se traduce.
+`SERVER_DETAIL` es un contenedor: `{detail}` llega en inglés desde el servidor y no se traduce.
 
 ## PENDING_SYNC_*
 
-Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{{ pending }}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{{ rejected }}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.
+Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.
 
 ## SYNC_*
 
@@ -131,3 +131,11 @@ Credenciales incorrectas. No se dice nunca cuál de las dos falló, si el usuari
 ## NO_SUCH_ACCOUNT
 
 No existe ninguna cuenta con ese nombre de usuario.
+
+## BOOKMARK_*
+
+El marcador: la lista en la que el jugador guarda un ejercicio ya terminado. Sólo una a la vez, así que guardarlo otra vez lo mueve de lista, no lo duplica. Los nombres de las cuatro listas van en plural, porque son las listas que después se podrán abrir. `BOOKMARK_ADD` y `BOOKMARK_EDIT` son etiquetas accesibles del icono, no se ven en pantalla. `BOOKMARK_SKIP_PROMPT` no habla del ejercicio que se está guardando, sino de lo que hará la pulsación corta a partir de ahora, así que elegir otra lista no la contradice. En `BOOKMARK_SKIP_PROMPT_HINT`, «mantén pulsado» es el gesto de dejar el dedo sobre el icono, nunca el de pulsar repetidas veces.
+
+## SHARE_*
+
+Compartir un ejercicio ya terminado con un amigo, que aquí es un reto: quien lo recibe lo resuelve y después se comparan los resultados de todos los que hayan participado. `SHARE` es la etiqueta accesible del icono, no se ve en pantalla. `SHARE_FRIEND` es la etiqueta de un selector, una palabra. `SHARE_MESSAGE` es opcional y `SHARE_MESSAGE_PLACEHOLDER` lo dice sin ordenar nada. En `SHARE_SENT`, `{username}` puede ser más de un nombre separado por comas. `SHARE_CHALLENGE_RECEIVED` y `SHARE_CHALLENGE_SOLVED` son avisos que llegan solos: `{username}` es siempre otra persona, nunca quien lee.

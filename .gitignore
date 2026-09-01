@@ -74,3 +74,7 @@ apps/api/migrations/.snapshot-*_test.json
 # that only runs on the host — its virtualenv and bytecode never leave the Mac
 .venv/
 __pycache__/
+
+# What `uv run translate --bench` writes: one XLIFF per model pass and the
+# markdown comparing them. Derived from tools/scripts/i18n/bench, and big
+bench-runs/

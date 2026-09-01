@@ -4,6 +4,7 @@ import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
 import { TranslocoService } from '@jsverse/transloco';
 import { Observable, Subscription, of } from 'rxjs';
 
+import { GenderService } from '@app/service/gender.service';
 import { TitleService } from '@app/service/title.service';
 
 const APP_NAME = 'Chess Pecker';
@@ -13,6 +14,7 @@ export class TemplatePageTitleStrategy extends TitleStrategy {
 	private readonly title = inject(Title);
 	private readonly titleService = inject(TitleService);
 	private readonly transloco = inject(TranslocoService);
+	private readonly genderService = inject(GenderService);
 
 	private resolved: Subscription | null = null;
 
@@ -32,6 +34,8 @@ export class TemplatePageTitleStrategy extends TitleStrategy {
 	}
 
 	private selectTitle(key: string): Observable<string> {
-		return '' === key ? of('') : this.transloco.selectTranslate<string>(key);
+		const params = { gender: this.genderService.selectedGender() };
+
+		return '' === key ? of('') : this.transloco.selectTranslate<string>(key, params);
 	}
 }

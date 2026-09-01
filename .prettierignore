@@ -25,5 +25,6 @@
 /apps/api/migrations
 /apps/api/node_modules
 /tools/scripts/i18n/translate/.venv
+/tools/scripts/i18n/translate/bench-runs
 /libs/api-definitions/node_modules
 Dockerfile

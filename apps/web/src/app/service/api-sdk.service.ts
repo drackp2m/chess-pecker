@@ -11,8 +11,15 @@ import type {
 	FriendshipGetRoutes,
 	FriendshipPatchRoutes,
 	FriendshipPostRoutes,
+	NotificationGetRoutes,
+	NotificationPostRoutes,
+	PuzzleBookmarkDeleteRoutes,
+	PuzzleBookmarkGetRoutes,
+	PuzzleBookmarkPutRoutes,
 	PuzzleGetRoutes,
 	PuzzlePostRoutes,
+	PuzzleShareGetRoutes,
+	PuzzleSharePostRoutes,
 	SyncGetRoutes,
 	SyncPostRoutes,
 	TrainingDeleteRoutes,
@@ -36,7 +43,10 @@ import { ApiCancelledError } from '@app/util/api-cancelled-error';
 const MODULE_SEGMENT: Record<ApiModule, string> = {
 	auth: 'auth',
 	friendship: 'friendship',
+	notification: 'notification',
 	puzzle: 'puzzle',
+	puzzleBookmark: 'puzzle-bookmark',
+	puzzleShare: 'puzzle-share',
 	sync: 'sync',
 	training: 'training',
 	user: 'user',
@@ -74,7 +84,10 @@ export class ApiSdkService {
 	readonly GET = {
 		auth: this.caller<AuthGetRoutes>('GET', 'auth'),
 		friendship: this.caller<FriendshipGetRoutes>('GET', 'friendship'),
+		notification: this.caller<NotificationGetRoutes>('GET', 'notification'),
 		puzzle: this.caller<PuzzleGetRoutes>('GET', 'puzzle'),
+		puzzleBookmark: this.caller<PuzzleBookmarkGetRoutes>('GET', 'puzzleBookmark'),
+		puzzleShare: this.caller<PuzzleShareGetRoutes>('GET', 'puzzleShare'),
 		sync: this.caller<SyncGetRoutes>('GET', 'sync'),
 		training: this.caller<TrainingGetRoutes>('GET', 'training'),
 		user: this.caller<UserGetRoutes>('GET', 'user'),
@@ -85,13 +98,16 @@ export class ApiSdkService {
 	readonly POST = {
 		auth: this.caller<AuthPostRoutes>('POST', 'auth'),
 		friendship: this.caller<FriendshipPostRoutes>('POST', 'friendship'),
+		notification: this.caller<NotificationPostRoutes>('POST', 'notification'),
 		puzzle: this.caller<PuzzlePostRoutes>('POST', 'puzzle'),
+		puzzleShare: this.caller<PuzzleSharePostRoutes>('POST', 'puzzleShare'),
 		sync: this.caller<SyncPostRoutes>('POST', 'sync'),
 		training: this.caller<TrainingPostRoutes>('POST', 'training'),
 		userBlock: this.caller<UserBlockPostRoutes>('POST', 'userBlock'),
 	};
 
 	readonly PUT = {
+		puzzleBookmark: this.caller<PuzzleBookmarkPutRoutes>('PUT', 'puzzleBookmark'),
 		userSetting: this.caller<UserSettingPutRoutes>('PUT', 'userSetting'),
 	};
 
@@ -101,6 +117,7 @@ export class ApiSdkService {
 
 	readonly DELETE = {
 		friendship: this.caller<FriendshipDeleteRoutes>('DELETE', 'friendship'),
+		puzzleBookmark: this.caller<PuzzleBookmarkDeleteRoutes>('DELETE', 'puzzleBookmark'),
 		training: this.caller<TrainingDeleteRoutes>('DELETE', 'training'),
 		userBlock: this.caller<UserBlockDeleteRoutes>('DELETE', 'userBlock'),
 		userSetting: this.caller<UserSettingDeleteRoutes>('DELETE', 'userSetting'),

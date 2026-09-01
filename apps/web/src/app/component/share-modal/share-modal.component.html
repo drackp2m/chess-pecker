@@ -1,0 +1,49 @@
+<div class="flex-col gap-4 p-4">
+	<p class="fs-sm color-contrast-mid">{{ I18n.common.SHARE_INTRO | i18n }}</p>
+
+	@if (isLoading()) {
+		<p class="fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
+	} @else if (hasFailed()) {
+		<p class="error fs-sm" role="alert">{{ I18n.common.SHARE_FRIENDS_ERROR | i18n }}</p>
+	} @else if (0 === friends().length) {
+		<p class="fs-sm color-contrast-mid">{{ I18n.common.SHARE_NO_FRIENDS | i18n }}</p>
+	} @else {
+		<select
+			appThemed
+			searchable
+			[label]="I18n.common.SHARE_FRIEND"
+			(change)="selectFriend($event)"
+			multiple
+			chips
+		>
+			@for (friend of friends(); track friend.uuid) {
+				<option [value]="friend.uuid">{{ friend.username }}</option>
+			}
+		</select>
+	}
+
+	<textarea
+		appThemed
+		autoGrow
+		rows="2"
+		maxRows="5"
+		[label]="I18n.common.SHARE_MESSAGE | i18n"
+		[placeholder]="I18n.common.SHARE_MESSAGE_PLACEHOLDER | i18n"
+		[value]="message()"
+		(input)="updateMessage($event)"
+	></textarea>
+
+	<div class="flex-row gap-2">
+		<button
+			appThemed
+			class="flex-grow"
+			color="accent"
+			[disabled]="!canConfirm()"
+			(click)="confirm()"
+		>
+			{{ I18n.common.SHARE_CONFIRM | i18n }}
+		</button>
+
+		<button appThemed class="flex-grow" (click)="dismiss()">{{ I18n.common.CANCEL | i18n }}</button>
+	</div>
+</div>

@@ -1,0 +1,9 @@
+<button
+	appThemed
+	icon="share-nodes"
+	iconSquared
+	[attr.aria-label]="I18n.common.SHARE | i18n"
+	[class.active]="isHighlighted()"
+	[disabled]="isDisabled()"
+	(click)="onClick()"
+></button>

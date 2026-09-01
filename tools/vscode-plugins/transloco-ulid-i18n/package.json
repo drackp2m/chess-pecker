@@ -58,18 +58,28 @@
 		"configuration": {
 			"title": "Transloco ULID i18n",
 			"properties": {
+				"translocoUlidI18n.languageFile": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "File declaring `LANGUAGES` and `DEFAULT_LANGUAGE`, read the way `pnpm i18n:check` reads it. Relative paths resolve from the workspace root. Empty means `apps/web/src/app/definition/language.type.ts`. Anything missing or malformed in it stops the extension and is reported in the *Transloco ULID i18n* output channel."
+				},
 				"translocoUlidI18n.langs": {
 					"type": "array",
 					"items": {
 						"type": "string"
 					},
 					"default": [],
-					"description": "Languages to resolve. Empty means the defaults from tools/scripts/i18n/catalogue/config.mjs."
+					"markdownDescription": "Languages to resolve. Empty means every language `LANGUAGES` declares in `#translocoUlidI18n.languageFile#`. A language it does not declare, or a list leaving the source language out, is an error."
+				},
+				"translocoUlidI18n.displayLang": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "Language rendered inline over each key usage, and in the completion descriptions. Empty means the `DEFAULT_LANGUAGE` declared in `#translocoUlidI18n.languageFile#`."
 				},
 				"translocoUlidI18n.inlineText": {
 					"type": "boolean",
 					"default": true,
-					"description": "Render the default language translation in place of every key usage."
+					"markdownDescription": "Render the `#translocoUlidI18n.displayLang#` translation in place of every key usage."
 				},
 				"translocoUlidI18n.transferDir": {
 					"type": "string",

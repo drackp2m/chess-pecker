@@ -29,6 +29,7 @@ import { ScheduledAction } from '@app/util/scheduled-action';
 
 /** The slide a stage earned, and the square whose piece is to run it. */
 export interface BoardSlide {
+	readonly from: Square;
 	readonly to: Square;
 	readonly slide: PieceSlide;
 	/** Drawn under the arriving piece, for as long as it has not arrived. */
@@ -239,6 +240,7 @@ function describeSlides(
 		const orientation = input.orientation();
 
 		return stage.slides.map(({ from, to, taken }) => ({
+			from,
 			to,
 			taken,
 			slide: { ...slideOffset(from, to, orientation), key: stage.tick },

@@ -6,12 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_MOVE_ANIMATION } from '@app/definition/board-animation.type';
 import { MOVE_INPUT_METHODS_ALL } from '@app/definition/board-input.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
+import { DEFAULT_MOVE_LIFT } from '@app/definition/piece-lift.constant';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { I18n } from '@app/i18n';
 import { PuzzlePage } from '@app/page/puzzle/puzzle.page';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { SoundService } from '@app/service/sound.service';
+import { provideTestingBookmarks } from '@app/testing/bookmark.harness';
 import { provideTestingI18n } from '@app/testing/i18n.harness';
+import { provideTestingShares } from '@app/testing/share.harness';
 import { PuzzleImportUseCase } from '@app/use-case/puzzle-import.use-case';
 
 /**
@@ -23,6 +26,8 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 		imports: [PuzzlePage],
 		providers: [
 			provideTestingI18n(),
+			provideTestingBookmarks(),
+			provideTestingShares(),
 			{ provide: ActivatedRoute, useValue: { snapshot: { data } } },
 			{
 				provide: BoardPreferenceService,
@@ -30,6 +35,7 @@ function createPage(data: Record<string, unknown>): PuzzlePage {
 					moveSpeed: signal(DEFAULT_MOVE_SPEED),
 					moveAnimation: signal(DEFAULT_MOVE_ANIMATION),
 					moveInputMethods: signal(MOVE_INPUT_METHODS_ALL),
+					moveLift: signal(DEFAULT_MOVE_LIFT),
 				},
 			},
 			{ provide: SoundService, useValue: { play: (): void => undefined } },

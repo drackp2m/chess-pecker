@@ -18,8 +18,13 @@ export const HINT = '?';
 export interface RecordState extends PuzzleRecord {
 	/** Which free-play run is open; while one is the target, the main line is not. */
 	readonly freePlayIndex: number | undefined;
+	readonly freePlayScratch: readonly PuzzleEvent[] | undefined;
 	/** How the exercise ended, which closes the record for good. */
 	readonly closure: PuzzleClosure;
+}
+
+export interface RecordWrite extends PuzzleRecord {
+	readonly freePlayScratch: readonly PuzzleEvent[] | undefined;
 }
 
 /** The one thing that can happen to a record; writers vary only in the event they hand it. */
@@ -35,8 +40,12 @@ export function blankRecord(): PuzzleRecord {
 }
 
 /** The record untouched, for everything that happens once it is closed. */
-function keep(state: PuzzleRecord): PuzzleRecord {
-	return { record: state.record, freePlayRuns: state.freePlayRuns };
+function keep(state: RecordState): RecordWrite {
+	return {
+		record: state.record,
+		freePlayRuns: state.freePlayRuns,
+		freePlayScratch: state.freePlayScratch,
+	};
 }
 
 /**
@@ -69,19 +78,32 @@ function writeAction(
 	}
 }
 
+function appendClosed(state: RecordState, action: PuzzleAction): RecordWrite {
+	const scratch = state.freePlayScratch;
+
+	if (undefined === scratch) {
+		return 'entry' === action.kind ? { ...keep(state), freePlayScratch: [] } : keep(state);
+	}
+
+	const write = 'entry' === action.kind ? undefined : writeAction(action);
+
+	return undefined === write ? keep(state) : { ...keep(state), freePlayScratch: write(scratch) };
+}
+
 /**
  * Writes where the exercise is recording now: the open free-play run, the main line otherwise,
- * nowhere once closed. Entering free play opens that target, so it is handled first.
+ * the sandbox once closed. Entering free play opens that target, so it is handled first.
  */
-export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
+export function append(state: RecordState, action: PuzzleAction): RecordWrite {
 	if ('open' !== state.closure) {
-		return keep(state);
+		return appendClosed(state, action);
 	}
 
 	if ('entry' === action.kind) {
 		return {
 			record: state.record,
 			freePlayRuns: [...state.freePlayRuns, { at: state.record.length, events: [] }],
+			freePlayScratch: undefined,
 		};
 	}
 
@@ -94,7 +116,7 @@ export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
 	const index = state.freePlayIndex;
 
 	if (undefined === index) {
-		return { record: write(state.record), freePlayRuns: state.freePlayRuns };
+		return { ...keep(state), record: write(state.record) };
 	}
 
 	const open = state.freePlayRuns[index];
@@ -105,7 +127,7 @@ export function append(state: RecordState, action: PuzzleAction): PuzzleRecord {
 	}
 
 	return {
-		record: state.record,
+		...keep(state),
 		freePlayRuns: state.freePlayRuns.map((run, at) =>
 			at === index ? { ...run, events: write(run.events) } : run,
 		),

@@ -8,6 +8,11 @@ import {
 	UserBlock,
 } from './friendship';
 import {
+	ListNotificationsRequest,
+	ReadNotificationsRequest,
+	UserNotification,
+} from './notification';
+import {
 	ApiPuzzle,
 	GetPuzzleCatalogRequest,
 	ImportPuzzleRequest,
@@ -15,6 +20,13 @@ import {
 	PuzzleCatalogPage,
 	SearchPuzzleRequest,
 } from './puzzle';
+import { PuzzleBookmark, UpsertPuzzleBookmarkRequest } from './puzzle-bookmark';
+import {
+	CreatePuzzleShareRequest,
+	GetSentPuzzleSharesRequest,
+	PuzzleShare,
+	PuzzleShareResultRequest,
+} from './puzzle-share';
 import {
 	GetSyncTrainingTreeRequest,
 	PushTrainingRequest,
@@ -53,7 +65,17 @@ export type ApiEndpointMap<M> = Record<keyof M, ApiEndpoint>;
 export type ApiVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 export type ApiModule =
-	'auth' | 'friendship' | 'puzzle' | 'sync' | 'training' | 'user' | 'userBlock' | 'userSetting';
+	| 'auth'
+	| 'friendship'
+	| 'notification'
+	| 'puzzle'
+	| 'puzzleBookmark'
+	| 'puzzleShare'
+	| 'sync'
+	| 'training'
+	| 'user'
+	| 'userBlock'
+	| 'userSetting';
 
 export interface AuthGetRoutes {
 	'/logout': { response: undefined };
@@ -85,6 +107,15 @@ export interface FriendshipDeleteRoutes {
 	'/user/:uuid': { path: { uuid: string }; response: undefined };
 }
 
+export interface NotificationGetRoutes {
+	/** Newest first, read ones included: the screen decides what a read row looks like. */
+	'': { query: ListNotificationsRequest; response: readonly UserNotification[] };
+}
+
+export interface NotificationPostRoutes {
+	'/read': { params: ReadNotificationsRequest; response: undefined };
+}
+
 export interface PuzzleGetRoutes {
 	'': { query: SearchPuzzleRequest; response: readonly ApiPuzzle[] };
 	'/catalog': { query: GetPuzzleCatalogRequest; response: PuzzleCatalogPage };
@@ -93,6 +124,39 @@ export interface PuzzleGetRoutes {
 
 export interface PuzzlePostRoutes {
 	'/import': { params: ImportPuzzleRequest; response: ImportPuzzleResult };
+}
+
+export interface PuzzleBookmarkGetRoutes {
+	'': { response: readonly PuzzleBookmark[] };
+}
+
+export interface PuzzleBookmarkPutRoutes {
+	'/:lichessId': {
+		path: { lichessId: string };
+		params: UpsertPuzzleBookmarkRequest;
+		response: PuzzleBookmark;
+	};
+}
+
+export interface PuzzleBookmarkDeleteRoutes {
+	'/:lichessId': { path: { lichessId: string }; response: undefined };
+}
+
+export interface PuzzleShareGetRoutes {
+	'/received': { response: readonly PuzzleShare[] };
+	/** The replication feed: a page moved since `since`, oldest first. */
+	'/sent': { query: GetSentPuzzleSharesRequest; response: readonly PuzzleShare[] };
+	'/:uuid': { path: { uuid: string }; response: PuzzleShare };
+}
+
+export interface PuzzleSharePostRoutes {
+	'': { params: CreatePuzzleShareRequest; response: PuzzleShare };
+	/** Answering a challenge. It counts once, so a second call is refused rather than kept. */
+	'/:uuid/attempt': {
+		path: { uuid: string };
+		params: PuzzleShareResultRequest;
+		response: PuzzleShare;
+	};
 }
 
 export interface SyncGetRoutes {

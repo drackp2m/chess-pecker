@@ -4,13 +4,13 @@ import path from 'node:path';
 import { isUlid } from '../catalogue/config.mjs';
 import { readContext, termsIn } from '../catalogue/context.mjs';
 import { hashOf, readStates, statusOf } from '../catalogue/freshness.mjs';
+import { paramTag } from '../catalogue/message.mjs';
 import { paramsFile, readDeclaredParams } from '../catalogue/params.mjs';
 
-import { buildXliff } from './xliff.mjs';
+import { formsOf } from './fanout.mjs';
+import { OUTDATED_SUB_STATE, buildXliff } from './xliff.mjs';
 
 export const DEFAULT_OUT_DIR = 'translations';
-
-export const OUTDATED_SUB_STATE = 'chesspecker:outdated';
 
 const OUTDATED_NOTE =
 	'the source changed after this was translated — the target below is the old translation';
@@ -51,7 +51,7 @@ const paramNote = (declared, key) => {
 		return [];
 	}
 
-	const text = [...fields].map(([name, type]) => `{{ ${name} }}: ${type}`).join(', ');
+	const text = [...fields].map(([name, type]) => `${paramTag(name)}: ${type}`).join(', ');
 
 	return [{ category: 'param', text }];
 };
@@ -116,25 +116,35 @@ function notesFor(scope, entry, options) {
 // --blank hands the unit over as if never translated, note and sub-state included, so
 // nothing in the file can seed a machine translator or pass for its answer.
 
-function unitFor(scope, entry, options) {
-	const { source, target, state, lang, blank } = options;
-	const text = source[entry.ulid] ?? '';
-	const value = target[entry.ulid] ?? '';
-	const status = statusOf(state, entry.ulid, lang, text, value);
-	const outdated = 'stale' === status && !blank;
+function statusFor(entry, options, forms) {
+	const { source, target, state, lang } = options;
+	const partial = forms.some((form) => '' === String(form.target ?? '').trim());
 
-	return {
-		id: entry.value,
-		notes: [
-			...(outdated ? [{ category: 'outdated', text: OUTDATED_NOTE }] : []),
-			...notesFor(scope, entry, { ...options, source: text }),
-			{ category: 'srcHash', text: hashOf(text) },
-		],
-		source: text,
-		target: blank ? '' : value,
+	return partial
+		? 'missing'
+		: statusOf(state, entry.ulid, lang, source[entry.ulid] ?? '', target[entry.ulid] ?? '');
+}
+
+function unitsFor(scope, entry, options) {
+	const { source, target, lang, defaultLang, blank } = options;
+	const text = source[entry.ulid] ?? '';
+	const forms = formsOf({ source: text, target: target[entry.ulid] ?? '', lang, defaultLang });
+	const status = statusFor(entry, options, forms);
+	const outdated = 'stale' === status && !blank;
+	const shared = [
+		...(outdated ? [{ category: 'outdated', text: OUTDATED_NOTE }] : []),
+		...notesFor(scope, entry, { ...options, source: text }),
+	];
+
+	return forms.map((form) => ({
+		id: `${entry.value}${form.suffix}`,
+		notes: [...shared, ...form.notes, { category: 'srcHash', text: hashOf(text) }],
+		source: form.source,
+		target: blank ? '' : form.target,
 		status,
+		...(form.hash ? { hash: true } : {}),
 		...(outdated ? { state: 'initial', subState: OUTDATED_SUB_STATE } : {}),
-	};
+	}));
 }
 
 function unitsOf(scope, options) {
@@ -142,12 +152,23 @@ function unitsOf(scope, options) {
 	const source = scope.translations.get(defaultLang)?.data ?? {};
 	const target = scope.translations.get(lang)?.data ?? {};
 	const declared = readDeclaredParams(paramsFile(scope.dir));
-	const shared = { declared, usages, root, context, lang, source, target, state, blank };
 	const keep = KEEPERS[filter] ?? KEEPERS.all;
+	const shared = {
+		declared,
+		usages,
+		root,
+		context,
+		lang,
+		defaultLang,
+		source,
+		target,
+		state,
+		blank,
+	};
 
 	return scope.keys.entries
 		.filter((entry) => isUlid(entry.ulid))
-		.map((entry) => unitFor(scope, entry, shared))
+		.flatMap((entry) => unitsFor(scope, entry, shared))
 		.filter((unit) => keep(unit.status));
 }
 
