@@ -4,13 +4,12 @@
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -328,13 +327,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -369,13 +367,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -415,13 +412,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -462,13 +458,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -506,13 +501,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -552,13 +546,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -651,13 +644,12 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -762,17 +754,16 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 			</segment>
 		</unit>
 	</file>
-	<file id="bench-icu" original="tools/scripts/i18n/bench/bench.json" xml:space="preserve">
+	<file id="bench-icu-puzzle" original="tools/scripts/i18n/bench/bench.json" xml:space="preserve">
 		<notes>
 			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
 Reglas que valen para todos los idiomas:
 
-- Los `{param}` se copian tal cual, con el mismo nombre y las mismas veces que en el origen. Lo que hay dentro de las llaves no se traduce ni se declina.
 - Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
 - El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
 - La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
@@ -780,9 +771,10 @@ Reglas que valen para todos los idiomas:
 - No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
 - Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
 			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
-			<note category="scope">Unidades sintéticas: emulan lo que la exportación con fan-out (paso 9) va a emitir cuando el catálogo hable ICU. Cada una es UNA rama de un plural o de un select de género, no la frase entera. El origen que se enseña es siempre la rama «other» del español, y las hermanas van en la nota «siblings»: la nota «category» dice qué rama se pide y «examples» con qué números se dispara. Traduce sólo esa rama, con la concordancia que le toque, y no la conviertas en una frase genérica que sirva para todas. Hoy el hueco del número viaja como {param}; tras el paso 9 será el «#» de ICU en el mismo sitio.</note>
+			<note category="scope">La página de práctica suelta: se resuelven ejercicios cargados a mano, fuera de un entrenamiento. Nada de lo que pasa aquí cuenta para la calibración ni para los ciclos.
+
+El ciclo de un ejercicio es siempre el mismo: se pide una jugada, si es la buena el tablero responde con la del rival, y si no lo es la deshace y deja intentarlo otra vez. Los mensajes son cortos y van en una tira de estado bajo el tablero, así que no pueden crecer mucho.</note>
 			<note category="glossary">ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
-sesión → session — la sesión iniciada contra el API, guardada en una cookie
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
 		</notes>
 		<unit id="puzzle.IMPORTED#plural:one">
@@ -819,6 +811,31 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<target></target>
 			</segment>
 		</unit>
+	</file>
+	<file id="bench-icu-common" original="tools/scripts/i18n/bench/bench.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">El scope raíz: todo lo que se usa desde más de una página. Aquí están la navegación, los controles del tablero, la accesibilidad de las casillas y las piezas, los estados de conexión y los errores que puede levantar cualquier pantalla.
+
+Casi todo son etiquetas muy cortas, y muchas se reutilizan en sitios distintos: una traducción que sólo encaja en un contexto rompe el otro. Ante la duda, la palabra más neutra.</note>
+			<note category="glossary">ejercicio → exercise — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
+sesión → session — la sesión iniciada contra el API, guardada en una cookie
+No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
 		<unit id="common.PENDING_SYNC_MESSAGE#plural:one">
 			<notes>
 				<note category="key">common.PENDING_SYNC_MESSAGE</note>
@@ -853,6 +870,31 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<target></target>
 			</segment>
 		</unit>
+	</file>
+	<file id="bench-icu-training" original="tools/scripts/i18n/bench/bench.json" xml:space="preserve">
+		<notes>
+			<note category="app">Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
+
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
+
+Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
+
+Reglas que valen para todos los idiomas:
+
+- Los puntos suspensivos son el carácter «…», nunca tres puntos seguidos.
+- El separador de fragmentos dentro de una línea es « · » (espacio, punto medio, espacio) y se conserva igual.
+- La notación de ajedrez, el FEN y el PGN no se traducen ni se transliteran.
+- Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
+- No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
+- Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.</note>
+			<note category="language">Inglés británico: `colour`, `behaviour`, `synchronisation`, `catalogue`. Registro seco y económico; los botones en imperativo (`Start the cycle`, no `Click here to start`). Comillas dobles rectas cuando el original lleva comillas. El decimal es el punto y el millar la coma.</note>
+			<note category="scope">La página del entrenamiento, que es el corazón de la aplicación. Un entrenamiento pasa por tres fases en este orden: la **calibración** busca el nivel del jugador a base de rondas; la **planificación** fija el conjunto de ejercicios y el ritmo diario; y luego se recorren los **ciclos**, cada uno una vuelta entera al mismo conjunto. Sólo puede haber un entrenamiento en curso.
+
+Ojo a los tres niveles, que no son lo mismo: una **fase** es uno de esos tres momentos y su nombre nunca se escribe en la interfaz; una **etapa** es una fila del resumen, o sea una ronda de calibración o un ciclo; y un **ciclo** es una de las dos clases de etapa.
+
+Los textos largos de esta página explican el método a alguien que lo está haciendo por primera vez: se traducen como prosa, no como jerga técnica calcada. Las etiquetas de los botones son imperativas y cortas.</note>
+			<note category="glossary">No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+		</notes>
 		<unit id="training.GAVE_UP_WATCHING#gender:male">
 			<notes>
 				<note category="key">training.GAVE_UP_WATCHING</note>

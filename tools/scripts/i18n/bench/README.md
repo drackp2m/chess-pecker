@@ -5,8 +5,8 @@ escrita al lado**. Es el patrón contra el que se miden los modelos: `--compare 
 estos ficheros y todo lo que salga de `--bench` (paso 4.2) se puntúa contra ellos.
 
 No es una traducción de producción. Nada de aquí entra en `apps/web/src/app/i18n/*.json`, y
-**`pnpm i18n:import` no debe apuntar nunca a este directorio**: las unidades sintéticas de
-`bench-icu` llevan identificadores que no existen en el catálogo y el importador las ofrecería
+**`pnpm i18n:import` no debe apuntar nunca a este directorio**: las unidades de los bloques
+`bench-icu-*` llevan identificadores que no existen en el catálogo y el importador las ofrecería
 como claves nuevas.
 
 ## Los ficheros
@@ -64,12 +64,21 @@ así que la traducción buena **esquiva el caso** con dos puntos. Es un límite 
 aplicación, no del modelo, y está en el banco para que se vea: si un modelo declina el hueco, está
 produciendo una frase que en pantalla saldrá rota.
 
-## El bloque `bench-icu`
+## Los bloques `bench-icu-*`
 
-Los `.xlf` traen un `<file id="bench-icu">` con unidades **sintéticas**: emulan lo que la
-exportación con fan-out (paso 9 del índice) va a emitir cuando el catálogo hable ICU. Cada una es
-una rama de un plural o de un `select` de género, con las notas que ese paso promete —`category`,
-`examples`, `siblings`, `gender-note`—, el origen puesto siempre en la rama `other` del español.
+Los `.xlf` traen tres bloques más —`bench-icu-puzzle`, `bench-icu-common` y
+`bench-icu-training`— con unidades escritas a mano que reproducen lo que la exportación con
+fan-out (paso 9 del índice) emite cuando el catálogo habla ICU. Cada una es una rama de un plural
+o de un `select` de género, con las notas de ese paso —`category`, `examples`, `siblings`,
+`gender-note`—, el origen puesto siempre en la rama `other` del español.
+
+**Van repartidos por scope, y no en un bloque propio, porque eso es lo que el modelo va a
+recibir.** Las tres claves son de `puzzle`, `common` y `training`, así que cada bloque lleva la
+nota de scope de su fichero de contexto, la misma que llevaría en una exportación de verdad.
+Tener un bloque solo obligaba a escribirle una nota de scope a mano, y esa nota acababa
+contándole al modelo que estaba ante un simulacro: leído eso, lo que se mide ya no es lo que
+pasará en producción. El sufijo del identificador es lo único que queda de aquello, y sirve para
+que el informe siga teniendo sus columnas aparte.
 
 Están porque sin ellas el banco mediría el catálogo de hoy y la decisión del paso 4.4 se toma
 sobre el de mañana. El ruso pasa de una unidad a cuatro por cada clave con plural, y la pregunta
@@ -112,11 +121,12 @@ Dos diferencias con lo que emitirá el paso 9, y las dos a favor de poder medir 
   `EXPLORATION` («Scan» → «Exploration»). Medir contra el catálogo habría premiado el error.
 - **`ru-RU` está vacío en el catálogo**, así que su mitad del banco no sale de ninguna traducción
   previa. Es texto escrito para esto.
-- **Las notas del fan-out no llegan hoy al modelo.** El prompt sólo monta las notas `context`,
-  `term` y `param`; `category`, `examples` y `siblings` se quedan en el XLIFF sin leer. El modelo
-  ve cuatro veces la misma frase española sin que nada le diga qué rama es cada una, así que
-  devuelve la misma traducción cuatro veces. **La columna `bench-icu` no mide al modelo hasta que
-  el paso 12 monte esas notas en el prompt**, y el fan-out del paso 9 no se puede validar antes.
+- **`siblings` sigue sin llegar al modelo.** Los pasos 12.2 y 12.3 montaron `category`,
+  `examples` y `gender-note` en el prompt, que son las que distinguen una rama de otra; la de las
+  hermanas se queda en el XLIFF sin leer, y entra con el paso 12.4, que es quien garantiza que las
+  hermanas caigan en el mismo lote. **Las medidas de `bench-icu-*` anteriores al 31/08/2026 no
+  valen**: se tomaron cuando el modelo veía cuatro veces la misma frase española sin nada que
+  distinguiera las ramas, y devolvía cuatro veces lo mismo.
 - **`hi-IN` no está.** El paso 4.4 tiene que decidir también sobre el hindi y este banco no le da
   nada: hacen falta cuarenta traducciones al hindi escritas por alguien que lo hable. Hasta
   entonces, la decisión sobre `hi-IN` se toma sin patrón debajo.
@@ -152,7 +162,8 @@ para un corte que el informe no traiga:
 uv run translate bench-runs/ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf --worst 20
 
 # Sólo las ramas de ICU
-uv run translate bench-runs/ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf --scope bench-icu
+uv run translate bench-runs/ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf \
+  --scope bench-icu-puzzle --scope bench-icu-common --scope bench-icu-training
 ```
 
 La puntuación cruza por identificador de unidad, así que la referencia y las pasadas tienen que

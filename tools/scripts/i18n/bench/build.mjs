@@ -13,9 +13,11 @@ import { buildXliff } from '../transfer/xliff.mjs';
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const ICU_FILE = 'bench-icu';
 const ORIGINAL = 'tools/scripts/i18n/bench/bench.json';
-const FILE_LEVELS = new Set(['app', 'language']);
+const FILE_LEVELS = new Set(['app', 'language', 'scope']);
 
 const load = (...names) => JSON.parse(readFileSync(path.join(DIR, ...names), 'utf8'));
+
+const scopeOf = (key) => key.split('.')[0];
 
 const bench = load('bench.json');
 
@@ -103,24 +105,31 @@ function icuUnits(entry, lang, gold) {
 	});
 }
 
-function icuFile(context, lang, gold) {
-	const units = bench.icu.flatMap((entry) => icuUnits(entry, lang, gold));
+// One block per scope, with that scope's own notes, because that is what the export
+// emits: the ICU units are keys of `puzzle`, `common` and `training`, and putting them
+// under one heading of their own would hand the model a scope note no real run sends.
+function icuFile(context, scope, lang, gold) {
+	const units = bench.icu
+		.filter((entry) => scopeOf(entry.key) === scope)
+		.flatMap((entry) => icuUnits(entry, lang, gold));
 	const shared = context
-		.contextFor(DEFAULTS.rootScope, '', lang)
+		.contextFor(scope, '', lang)
 		.filter((layer) => FILE_LEVELS.has(layer.level))
 		.map(({ level, text }) => ({ category: level, text }));
 	const sources = units.map((unit) => unit.source);
 
 	return {
-		id: ICU_FILE,
+		id: `${ICU_FILE}-${scope}`,
 		original: ORIGINAL,
-		notes: [
-			...shared,
-			{ category: 'scope', text: bench.icuScope },
-			...glossaryNotes(context, lang, sources),
-		],
+		notes: [...shared, ...glossaryNotes(context, lang, sources)],
 		units,
 	};
+}
+
+function icuFiles(context, lang, gold) {
+	const scopes = [...new Set(bench.icu.map((entry) => scopeOf(entry.key)))];
+
+	return scopes.map((scope) => icuFile(context, scope, lang, gold));
 }
 
 function missing(files, gold, wanted) {
@@ -176,7 +185,7 @@ let complete = true;
 for (const lang of bench.langs) {
 	const gold = load('gold', `${lang}.json`);
 	const document = buildExport({ ...options, scopes, lang, usages, context, blank: true });
-	const files = [...pickedFiles(document, wanted, gold), icuFile(context, lang, gold)];
+	const files = [...pickedFiles(document, wanted, gold), ...icuFiles(context, lang, gold)];
 
 	write(lang, files, options.defaultLang);
 	complete = report(lang, files, gold, wanted) && complete;

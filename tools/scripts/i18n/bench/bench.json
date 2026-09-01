@@ -1,6 +1,5 @@
 {
 	"langs": ["en-GB", "ru-RU"],
-	"icuScope": "Unidades sintéticas: emulan lo que la exportación con fan-out (paso 9) va a emitir cuando el catálogo hable ICU. Cada una es UNA rama de un plural o de un select de género, no la frase entera. El origen que se enseña es siempre la rama «other» del español, y las hermanas van en la nota «siblings»: la nota «category» dice qué rama se pide y «examples» con qué números se dispara. Traduce sólo esa rama, con la concordancia que le toque, y no la conviertas en una frase genérica que sirva para todas. Hoy el hueco del número viaja como {param}; tras el paso 9 será el «#» de ICU en el mismo sitio.",
 	"real": [
 		{
 			"key": "common.LINE",
@@ -180,7 +179,7 @@
 					"one": "se usa con 1, 21, 101 — todo lo acabado en 1 salvo el 11",
 					"few": "se usa con 2, 3, 4, 22, 23, 24…",
 					"many": "se usa con 0, 5, 11, 25, 100 — incluye el cero y del 5 al 20",
-					"other": "sólo la alcanzan los decimales: 0,5 · 1,5 · 2,5. Es obligatoria aunque no se vea nunca"
+					"other": "se usa con los decimales: 0,5 · 1,5 · 2,5"
 				}
 			}
 		},
@@ -200,7 +199,7 @@
 					"one": "se usa con 1, 21, 101 — todo lo acabado en 1 salvo el 11",
 					"few": "se usa con 2, 3, 4, 22, 23, 24…",
 					"many": "se usa con 0, 5, 11, 25, 100 — incluye el cero y del 5 al 20",
-					"other": "sólo la alcanzan los decimales: 0,5 · 1,5 · 2,5. Es obligatoria aunque no se vea nunca"
+					"other": "se usa con los decimales: 0,5 · 1,5 · 2,5"
 				}
 			}
 		},
