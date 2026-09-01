@@ -1,3 +1,93 @@
+# v1.26.0 (2026-09-01)
+
+## What's Changed
+
+### ✨ Features
+
+- add --bench, the model comparison harness ([609e19d](https://github.com/drackp2m/chess-pecker/commit/609e19da6260f535416b84dfc0275314dea35358)) by Marc Jovaní González
+- add the big candidates and pin each pass to its prompt shape ([c1f7265](https://github.com/drackp2m/chess-pecker/commit/c1f7265232dd7d5ded9b41b6adb8d9c65ae2b08e)) by Marc Jovaní González
+- add the gender setting and inject it into every translation ([4e2e56b](https://github.com/drackp2m/chess-pecker/commit/4e2e56b51caaff5631d86f423d8b0b7b6246a86e)) by Marc Jovaní González
+- add the shared ICU parser behind leavesOf and buildFrom ([1d9ae46](https://github.com/drackp2m/chess-pecker/commit/1d9ae46e3cdb45787055507d0921e32116913514)) by Marc Jovaní González
+- check the forms of a key against one another ([2356edd](https://github.com/drackp2m/chess-pecker/commit/2356eddfb8a1f854427957af75680d460846e297)) by Marc Jovaní González
+- export one XLIFF unit per plural or gender form ([b587522](https://github.com/drackp2m/chess-pecker/commit/b58752254b587ea4816760cb11247c7d0bf030af)) by Marc Jovaní González
+- file a finished exercise under one of four bookmark lists ([e0f3151](https://github.com/drackp2m/chess-pecker/commit/e0f3151bdba8f6c2c156075bbd91a79b5ffa9b7f)) by Marc Jovaní González
+- fly every piece off the board, with a setting to stop it ([84ef04d](https://github.com/drackp2m/chess-pecker/commit/84ef04dcc99b25e756d2ef296270bfb12fed88fd)) by Marc Jovaní González
+- import the forms of a key back as one ICU string ([b3bc4b5](https://github.com/drackp2m/chess-pecker/commit/b3bc4b5e8fc5e14549510e6ddc8c22aa79a127ad)) by Marc Jovaní González
+- infer the params.ts types from the ICU argument ([4bfb8e5](https://github.com/drackp2m/chess-pecker/commit/4bfb8e59e46b9a84074277aedf863f56de58baab)) by Marc Jovaní González
+- mark the flip board button while the board is inverted ([df33875](https://github.com/drackp2m/chess-pecker/commit/df33875f8612e1c9f942ce6e5c025198be56022f)) by Marc Jovaní González
+- mirror sent puzzle shares into a local store ([4f028b1](https://github.com/drackp2m/chess-pecker/commit/4f028b18f0c83fd211edc1aaaa9c0a23285520b8)) by Marc Jovaní González
+- open free play on a closed exercise, recording none of it ([22ff064](https://github.com/drackp2m/chess-pecker/commit/22ff064a395fa04473afcea3c145ac10f866b650)) by Marc Jovaní González
+- prune the models and remember what a pass cost ([539b233](https://github.com/drackp2m/chess-pecker/commit/539b233b6bf51af57e96f63b3a525107c509e4de)) by Marc Jovaní González
+- settle on gemma4-e4b-optiq and write the decision down ([d5f9745](https://github.com/drackp2m/chess-pecker/commit/d5f9745855938f4298a5289f9e9a2ad477ee2b7d)) by Marc Jovaní González
+- share solved exercises as challenges between friends ([70e37d4](https://github.com/drackp2m/chess-pecker/commit/70e37d4a233728dd26246ad52b149d44f7bea92b)) by Marc Jovaní González
+- show downloaded model sizes in --list-models ([4f6d2df](https://github.com/drackp2m/chess-pecker/commit/4f6d2df69a6e4bcdbf6498bf981d24d95e997c30)) by Marc Jovaní González
+- teach i18n:check the ICU rules and the plural whitelist ([c11e239](https://github.com/drackp2m/chess-pecker/commit/c11e239c45337df14d1d52825421847c85b1c77a)) by Marc Jovaní González
+- teach the catalogue ICU and swap in the messageformat transpiler ([cf89114](https://github.com/drackp2m/chess-pecker/commit/cf89114b8fba64b2237bd5e2377d9179a3a859d0)) by Marc Jovaní González
+- tell the model what the general plural form is for ([6c69359](https://github.com/drackp2m/chess-pecker/commit/6c69359a5eae0bceee401680200f870d6da6e3b6)) by Marc Jovaní González
+- tell the model which numbers select each plural form ([11bf637](https://github.com/drackp2m/chess-pecker/commit/11bf6375a57876c5806fe823d25df43d4c925333)) by Marc Jovaní González
+- tell the model which person each gender form is for ([7a1b635](https://github.com/drackp2m/chess-pecker/commit/7a1b63506f40dfaffe8e8ce4c799f5f101fc0da1)) by Marc Jovaní González
+- theme the multiple select with wrapped names and chips ([a297d9e](https://github.com/drackp2m/chess-pecker/commit/a297d9ef474298a742f696b59ca5c1c268c062f6)) by Marc Jovaní González
+- theme the textarea with row, growth and resize controls ([e6ae6b8](https://github.com/drackp2m/chess-pecker/commit/e6ae6b8b5e62ff959a20cae965b9909af8d76cec)) by Marc Jovaní González
+
+### 🎨 Styles
+
+- brighten board colors, notifications under navbar ([fda3880](https://github.com/drackp2m/chess-pecker/commit/fda3880c432b1dcba20ab5fe58fed498895a1c02)) by Marc Jovaní González
+- draw chess pieces from their own outlines, not a mask ([65aa8b5](https://github.com/drackp2m/chess-pecker/commit/65aa8b528160b0789b70857d3bd4d8db077a0f50)) by Marc Jovaní González
+- lift a dragged piece instead of teleporting it ([b943a26](https://github.com/drackp2m/chess-pecker/commit/b943a2633696ae10d3214c1e6eb782085fec0fe6)) by Marc Jovaní González
+- move textarea vertical padding to the label wrapper ([9e507b4](https://github.com/drackp2m/chess-pecker/commit/9e507b499a014c9d60e5dbae6fc0fefa43697ada)) by Marc Jovaní González
+- theme the multiple select with wrapped names and chips ([c2f1e57](https://github.com/drackp2m/chess-pecker/commit/c2f1e57a4f48dac4ae811972ae8e8620bfeb4d3c)) by Marc Jovaní González
+- write down why mistral-24b is a dead end here ([98c8a99](https://github.com/drackp2m/chess-pecker/commit/98c8a99dacceeb482f8608924fbd350ef720899c)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- add the i18n translation bench with its gold set ([4eaa592](https://github.com/drackp2m/chess-pecker/commit/4eaa5929fad896c9384fea4414187deb473321fd)) by Marc Jovaní González
+- assert the swallowed repair error instead of leaking it to stderr ([83e960c](https://github.com/drackp2m/chess-pecker/commit/83e960c8bc65c43bdf8025236123242965d7e0c3)) by Marc Jovaní González
+- cover the fallback to the source language ([dcae1bd](https://github.com/drackp2m/chess-pecker/commit/dcae1bdb4f57ba656de5b6a0e84744ba73c8979b)) by Marc Jovaní González
+- cover the plural whitelist and the finding columns ([4209aed](https://github.com/drackp2m/chess-pecker/commit/4209aedc2cc204e5cb850c5fde02e54e77fde880)) by Marc Jovaní González
+- keep a failed i18n test from leaking the TestBed ([aaf9fa7](https://github.com/drackp2m/chess-pecker/commit/aaf9fa7f8606675beec2a48eafa9b414f8a7e9a9)) by Marc Jovaní González
+- mock ShareStore in puzzle specs to silence IndexedDB noise ([8453c9c](https://github.com/drackp2m/chess-pecker/commit/8453c9c9d8c7995425945e6da7b073753d759f59)) by Marc Jovaní González
+- move the bench corpus and its gold to ICU braces ([4a5b008](https://github.com/drackp2m/chess-pecker/commit/4a5b00843f006cc089bf93447d284c02a8a4cd4c)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- decouple skip-prompt from the chosen bookmark list ([35786a3](https://github.com/drackp2m/chess-pecker/commit/35786a3beb1f93ae1d1abfb2dfed4119e6bfbc71)) by Marc Jovaní González
+- group svg icons by their shared aspect ratio ([fd16603](https://github.com/drackp2m/chess-pecker/commit/fd16603c8ca1b4774e85206231476f7a8ac23022)) by Marc Jovaní González
+- rename HF_TOKEN to HUGGINGFACE_TOKEN ([c6730b9](https://github.com/drackp2m/chess-pecker/commit/c6730b92c6285383211639d6b3d2268079f3d3d9)) by Marc Jovaní González
+- split the ICU bench by the scope each key has ([e540755](https://github.com/drackp2m/chess-pecker/commit/e5407557dbeb235b50725c2cee1fc2ee21369e37)) by Marc Jovaní González
+- split the selectable languages from the known ones ([99d9708](https://github.com/drackp2m/chess-pecker/commit/99d97082fbd621011248ad5557648b83f050536c)) by Marc Jovaní González
+- unify the param regex into message.mjs ([d7b1004](https://github.com/drackp2m/chess-pecker/commit/d7b1004e90b151d42f77552f35710eb389cba993)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- anchor every i18n finding where it can be fixed ([c50fb0e](https://github.com/drackp2m/chess-pecker/commit/c50fb0edcb2f5dfc1b7f3e31c12caf6e4402a89b)) by Marc Jovaní González
+- anchor the LANGUAGES regex to its declaration ([82bc6d4](https://github.com/drackp2m/chess-pecker/commit/82bc6d4aaed0a97670096d81441127fb3fbb14d3)) by Marc Jovaní González
+- choose the correct source sheet in the fan-out ([2840df8](https://github.com/drackp2m/chess-pecker/commit/2840df8e54df81892fed06b0154873bc7a72a1dc)) by Marc Jovaní González
+- configurable settings, dedicated output channel to the ULID i18n extension ([681ea00](https://github.com/drackp2m/chess-pecker/commit/681ea00f7249242d0f60c5c0ddc60b36d90a95f2)) by Marc Jovaní González
+- disable give up after it reveals the solution once ([131808b](https://github.com/drackp2m/chess-pecker/commit/131808b44c6623c315136d0f776568a0bc9ae65b)) by Marc Jovaní González
+- don't select a piece from dropping a drag on an illegal square ([75ea818](https://github.com/drackp2m/chess-pecker/commit/75ea818f5281afc1dbe7cbb98e532b008e366b10)) by Marc Jovaní González
+- fall back to the source language on a missing key ([19a7942](https://github.com/drackp2m/chess-pecker/commit/19a79428165bbf15a0148d329d4bf8accdc44ac9)) by Marc Jovaní González
+- land a dragged piece from where the pointer dropped it ([fbea75c](https://github.com/drackp2m/chess-pecker/commit/fbea75ce46855d2f8f92c23c4ae03dc8e2ee8a00)) by Marc Jovaní González
+- language codes ([dc03f29](https://github.com/drackp2m/chess-pecker/commit/dc03f297321d00da73c5004e1f16291cdd795549)) by Marc Jovaní González
+- leave the catalogue alone on a round trip with no edits ([b7bda0c](https://github.com/drackp2m/chess-pecker/commit/b7bda0cd4f0e46baf1d6653d1c7a859c5d680f32)) by Marc Jovaní González
+- order i18n findings list to match the table's scope and column order ([36b3b80](https://github.com/drackp2m/chess-pecker/commit/36b3b80722c84869993ed1f8b432aafc01556f5e)) by Marc Jovaní González
+- pinpoint param drift findings to their exact source and declaration lines ([6974992](https://github.com/drackp2m/chess-pecker/commit/6974992e618072a2090c23d3ef928af24055e19c)) by Marc Jovaní González
+- silence the i18n noise a pending source key causes ([9850fd7](https://github.com/drackp2m/chess-pecker/commit/9850fd778d66174fa7c213db6ffebb5e697d41a7)) by Marc Jovaní González
+- stop pieces shuffling when the one beside them is raised ([c0abc03](https://github.com/drackp2m/chess-pecker/commit/c0abc039766ad9f02be64e53105fb9a530f9ec93)) by Marc Jovaní González
+
+### 🏗️‍ Build System
+
+- drop the tooling tests from the deploy workflow ([6141111](https://github.com/drackp2m/chess-pecker/commit/6141111881142a3291c66170b05ecd8537a1f24f)) by Marc Jovaní González
+- report the tooling tests like Vitest ([23fbc7c](https://github.com/drackp2m/chess-pecker/commit/23fbc7c9ac7de71445dd827ae10426a6329c59a5)) by Marc Jovaní González
+- run the tooling tests from the hook and CI ([7ace627](https://github.com/drackp2m/chess-pecker/commit/7ace627a3959b9898730cc1e00272653b27f865a)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- blank the four languages pending translation ([a7eeae5](https://github.com/drackp2m/chess-pecker/commit/a7eeae57167feb64b128833ec827957584effac2)) by Marc Jovaní González
+- give i18n export and import a --help text ([4e8bf53](https://github.com/drackp2m/chess-pecker/commit/4e8bf533ddf6eb48db8fc7c7467b5b157d78d8d9)) by Marc Jovaní González
+- hide non-blocking i18n:check findings unless --verbose ([5c364be](https://github.com/drackp2m/chess-pecker/commit/5c364be5f30a0d83f649fc0acddc589fe4f9c23e)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.25.2...v1.26.0
+
 # v1.25.2 (2026-08-25)
 
 ## What's Changed
