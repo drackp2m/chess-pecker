@@ -241,6 +241,16 @@ the call:
   in the call are forms, one more line says so, so the rest are not read as plurals. Without this
   the fan-out is pointless: the model sees the same Spanish sentence four times with nothing to
   tell the copies apart, and answers the same thing four times.
+- **The gender rules.** `## Género` travels the same way and only when the call carries a form of a
+  gender select: agree with the person the form is written for, and — the counter-intuitive half —
+  when there is no gender to agree with, turn the sentence around rather than invent an ending the
+  language does not have. Which person _this_ form is for is per text, so it goes under it
+  (`- Género: quien usa la aplicación ha elegido «mujer».`), and in a language that does not mark
+  gender the same note says there is only one form and no concordance to make. The category name is
+  left out of that line on purpose: a `select` case is named by us and means nothing to a
+  translator, and printing it would put `- Género «other»` next to `- Forma «other»` on a key that
+  branches on both, which are two unrelated things. The two sections stack: a string that branches
+  on both carries its gender line and its plural line.
 - **The repeated context.** The export hangs a group's note on every key of that group, so ten keys
   of one group would carry the same paragraph ten times. It is written once and the rest point at
   it (`- Qué es: lo mismo que en el 8.`).
@@ -528,8 +538,8 @@ uv run translate --bench --model gemma-12b-qat,gemma4-e4b,gemma4-e4b-qat,deepl
    then the worst N units printed in full with the reference and every pass underneath. `--worst N`
    sets how many (default 10). The quality and cost tables are printed to the terminal as well, so
    nothing has to be opened to see them.
-6. **Reading it.** `under 50` first, then the `bench-icu` column of the by-scope table, which is
-   the fan-out of step 9 and the reason the bench has synthetic units at all. Then read the worst
+6. **Reading it.** `under 50` first, then the three `bench-icu-*` columns of the by-scope table,
+   which are the fan-out of step 9 and the reason those units are in the bench at all. Then read the worst
    list: the score says which units to read, not whether the translation is good. The bench README
    lists the units that always trip a check for reasons that are not the model's fault.
 

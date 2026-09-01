@@ -2,7 +2,7 @@
 
 Chess Pecker entrena la táctica de ajedrez por repetición, siguiendo el método Woodpecker: se monta un conjunto de ejercicios al nivel del jugador y se recorre entero varias veces, cada ciclo más rápido que el anterior, hasta que los patrones se reconocen de un vistazo. Es una aplicación web instalable (PWA) que sigue funcionando sin conexión; el servidor sólo guarda una copia de lo que se entrena en el dispositivo.
 
-Quien la usa es un jugador de club, no un principiante. La jerga del tablero —jaque, mate, coronación, rey ahogado, casilla, banda de rating— se da por sabida y no se explica ni se parafrasea. Lo que sí hay que traducir con cuidado es el vocabulario propio de la aplicación —entrenamiento, calibración, ronda, exploración, afinado, etapa, conjunto, ciclo, ritmo, y los tres finales de un ejercicio: a la primera, tras fallar y solución vista—, que está fijado en el glosario y significa siempre lo mismo en toda la interfaz.
+Quien la usa es un jugador de club, no un principiante: la jerga del tablero se da por sabida y no se parafrasea.
 
 Tono: directo, de tú, sin exclamaciones ni ánimo artificial. Las etiquetas de botones y de controles son cortas, imperativas y sin punto final; los mensajes de estado y de error son frases completas con punto. Un error dice qué ha pasado y qué se puede hacer, nunca pide perdón ni culpa a quien lo lee.
 
@@ -14,7 +14,6 @@ Reglas que valen para todos los idiomas:
 - Sólo lleva mayúscula la primera palabra de la frase y los nombres propios: nada de poner en mayúscula cada palabra de un título o de un botón.
 - No se añade prosa que no esté en el origen: ni «por favor», ni aclaraciones de más, ni comentarios del traductor.
 - Un texto de interfaz cabe en su hueco: la traducción no debería pasar de una vez y media la longitud del original.
-- Cuando la ficha pida la forma para «sin especificar», reformula la frase para que no haya nada que concordar en género. No inventes una terminación que el idioma no tenga.
 
 ## en-GB
 

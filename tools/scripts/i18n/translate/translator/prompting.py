@@ -54,6 +54,15 @@ PLURAL_RULES = """\
 - Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con «o».\
 """
 
+GENDER_RULES = """\
+## Género
+- Esta frase se escribe para una persona concreta, y su nota dice para quién.
+- Haz concordar con ella todo lo que el idioma de destino marque en género.
+- Si la nota dice que no se ha especificado, dale la vuelta a la frase para que no haya nada que \
+concordar: no inventes terminaciones que el idioma no tenga.
+- Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con barras.\
+"""
+
 CONTEXT_PREFIX = "- Qué es: "
 DEMAND_PREFIX = "- Usa sí o sí estas palabras: "
 
@@ -65,7 +74,13 @@ MIXED_PLURALS = (
     "- Sólo son formas de plural los textos que lo dicen en su nota; los demás no lo son."
 )
 
+MIXED_GENDERS = (
+    "- Sólo son formas de género los textos que lo dicen en su nota; los demás no lo son."
+)
+
 PLURAL_LABEL = "plural"
+FORM_LABELS = {PLURAL_LABEL: "forma", "gender": "género"}
+TAG_ARROW = " ← "
 
 EXAMPLE = """\
 Ejemplo:
@@ -176,6 +191,10 @@ class Unit:
         return " ".join(note_text(self.notes, "examples").split())
 
     @property
+    def gender(self) -> str:
+        return " ".join(note_text(self.notes, "gender-note").split())
+
+    @property
     def plural_key(self) -> str:
         for part in self.category.split(FORM_SEPARATOR):
             name, _, key = part.partition(":")
@@ -185,11 +204,36 @@ class Unit:
 
         return ""
 
+    @property
+    def form_tag(self) -> str:
+        parts = []
+
+        for part in self.category.split(FORM_SEPARATOR):
+            name, _, key = part.partition(":")
+            label = FORM_LABELS.get(name)
+
+            if label and key:
+                parts.append(f"{label} «{key}»")
+
+        return FORM_SEPARATOR.join(parts)
+
+    def tagged_source(self) -> str:
+        wrapped = f"{OPEN}{self.source}{CLOSE}"
+        tag = self.form_tag
+
+        return f"{wrapped}{TAG_ARROW}{tag}" if tag else wrapped
+
     def plural_lines(self) -> list[str]:
         if not self.examples:
             return []
 
         return [f"- Forma «{self.plural_key or self.category}»: {sentence(self.examples)}"]
+
+    def gender_lines(self) -> list[str]:
+        if not self.gender:
+            return []
+
+        return [f"- Género: {sentence(self.gender)}"]
 
     def markers_note(self) -> list[str]:
         lines = []
@@ -216,7 +260,7 @@ class Unit:
         return [DEMAND_PREFIX + ", ".join(pairs)] if pairs else []
 
     def detail_lines(self) -> list[str]:
-        lines = self.plural_lines()
+        lines = self.gender_lines() + self.plural_lines()
         params = note_text(self.notes, "param")
 
         if params and self.markers:
@@ -284,6 +328,19 @@ class Batch:
 
         return f"{PLURAL_RULES}\n{MIXED_PLURALS}"
 
+    @property
+    def has_genders(self) -> bool:
+        return any(unit.gender for unit in self.units)
+
+    def gender_section(self) -> str:
+        if not self.has_genders:
+            return ""
+
+        if all(unit.gender for unit in self.units):
+            return GENDER_RULES
+
+        return f"{GENDER_RULES}\n{MIXED_GENDERS}"
+
     def named_terms(self) -> set[str]:
         return {source.casefold() for unit in self.units for source, _ in unit.terms}
 
@@ -333,6 +390,7 @@ class Batch:
             self.rules_section(),
             self.marker_section(),
             self.plural_section(),
+            self.gender_section(),
             self.glossary_section(),
             self.retry_section(),
             self.example_section(),
@@ -350,7 +408,7 @@ class Batch:
 
         parts.append(
             f"Traduce al {self.block.target_lang} el texto que va entre {OPEN} y {CLOSE}, "
-            f"y responde sólo con la traducción:\n{OPEN}{unit.source}{CLOSE}"
+            f"y responde sólo con la traducción:\n{unit.tagged_source()}"
         )
 
         return "\n\n".join(parts)
@@ -370,7 +428,7 @@ class Batch:
         seen: dict[str, int] = {}
 
         for index, unit in enumerate(self.units, 1):
-            lines.append(f"{index} {OPEN}{unit.source}{CLOSE}")
+            lines.append(f"{index} {unit.tagged_source()}")
             lines.extend(f"  {line}" for line in unit.demand_lines())
 
             if unit.context:
@@ -381,7 +439,8 @@ class Batch:
         return (
             f"Traduce al {self.block.target_lang} los {self.size} textos numerados. Responde "
             f"con {self.size} líneas, cada una con su número, un espacio y sólo la traducción: "
-            f"sin las marcas {OPEN} {CLOSE}, sin las notas y sin ninguna línea de más.\n\n"
+            f"sin las marcas {OPEN} {CLOSE}, sin lo que venga después de {CLOSE}, sin las "
+            f"notas y sin ninguna línea de más.\n\n"
             + "\n".join(lines)
         )
 
