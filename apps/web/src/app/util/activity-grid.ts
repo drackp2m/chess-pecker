@@ -2,6 +2,7 @@ import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 
 import { fillActivityDays } from '@app/util/activity-day';
 import { ScaleBounds, positiveBounds, toBucket } from '@app/util/scale';
+import { addLabelDays, labelToUtcMidnight, zoneDayLabel } from '@app/util/timezone-date';
 import { addUtcDays, diffUtcDays, toIsoDate, utcMidnight } from '@app/util/utc-date';
 
 export const DAYS_PER_WEEK = 7;
@@ -55,11 +56,13 @@ export function activityRangeDays(months: number, today: Date = new Date()): num
 export function activityDaySeries(
 	days: readonly TrainingActivityDay[],
 	totalDays: number,
+	timeZone: string,
 	today: Date = new Date(),
 ): readonly TrainingActivityDay[] {
-	const end = utcMidnight(today);
+	const to = zoneDayLabel(today, timeZone);
+	const from = addLabelDays(to, -(totalDays - 1));
 
-	return fillActivityDays(days, addUtcDays(end, -(totalDays - 1)), end);
+	return fillActivityDays(days, labelToUtcMidnight(from), labelToUtcMidnight(to));
 }
 
 export function cyclePaceSeries(
