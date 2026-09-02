@@ -2,7 +2,12 @@ import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 
 import { fillActivityDays } from '@app/util/activity-day';
 import { ScaleBounds, positiveBounds, toBucket } from '@app/util/scale';
-import { addLabelDays, labelToUtcMidnight, zoneDayLabel } from '@app/util/timezone-date';
+import {
+	addLabelDays,
+	diffLabelDays,
+	labelToUtcMidnight,
+	zoneDayLabel,
+} from '@app/util/timezone-date';
 import { addUtcDays, diffUtcDays, toIsoDate, utcMidnight } from '@app/util/utc-date';
 
 export const DAYS_PER_WEEK = 7;
@@ -69,15 +74,17 @@ export function cyclePaceSeries(
 	days: readonly TrainingActivityDay[],
 	startedAt: string,
 	puzzlesPerDay: number,
+	timeZone: string,
 	today: Date = new Date(),
 ): readonly CyclePaceDay[] {
 	const counts = new Map(days.map((day) => [day.date, day.done]));
-	const start = utcMidnight(new Date(startedAt));
-	const total = Math.max(0, diffUtcDays(start, utcMidnight(today)) + 1);
+	const start = zoneDayLabel(new Date(startedAt), timeZone);
+	const end = zoneDayLabel(today, timeZone);
+	const total = Math.max(0, diffLabelDays(start, end) + 1);
 	let drift = 0;
 
 	return Array.from({ length: total }, (_unused, index) => {
-		const date = toIsoDate(addUtcDays(start, index));
+		const date = addLabelDays(start, index);
 		const done = counts.get(date) ?? 0;
 		const delta = done - puzzlesPerDay;
 

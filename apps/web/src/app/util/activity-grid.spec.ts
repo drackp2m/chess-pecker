@@ -211,6 +211,7 @@ describe('cyclePaceSeries', () => {
 			[day('2026-09-01', 5), day('2026-09-03', 3)],
 			startedAt,
 			3,
+			'UTC',
 			today,
 		);
 
@@ -228,7 +229,13 @@ describe('cyclePaceSeries', () => {
 
 	it('returns a single day when the cycle started today', () => {
 		const today = new Date('2026-09-04T12:00:00.000Z');
-		const series = cyclePaceSeries([day('2026-09-04', 1)], '2026-09-04T00:30:00.000Z', 2, today);
+		const series = cyclePaceSeries(
+			[day('2026-09-04', 1)],
+			'2026-09-04T00:30:00.000Z',
+			2,
+			'UTC',
+			today,
+		);
 
 		expect(series).toHaveLength(1);
 		expect(series[0]).toEqual({ date: '2026-09-04', done: 1, expected: 2, delta: -1, drift: -1 });
@@ -236,7 +243,7 @@ describe('cyclePaceSeries', () => {
 
 	it('returns nothing when the cycle starts in the future', () => {
 		const today = new Date('2026-09-04T12:00:00.000Z');
-		const series = cyclePaceSeries([], '2026-09-05T00:00:00.000Z', 3, today);
+		const series = cyclePaceSeries([], '2026-09-05T00:00:00.000Z', 3, 'UTC', today);
 
 		expect(series).toEqual([]);
 	});
@@ -244,7 +251,7 @@ describe('cyclePaceSeries', () => {
 	it('walks the cycle across the year boundary', () => {
 		const startedAt = '2026-12-30T23:00:00.000Z';
 		const today = new Date('2027-01-02T06:00:00.000Z');
-		const series = cyclePaceSeries([day('2027-01-01', 4)], startedAt, 4, today);
+		const series = cyclePaceSeries([day('2027-01-01', 4)], startedAt, 4, 'UTC', today);
 
 		expect(series.map((item) => item.date)).toEqual([
 			'2026-12-30',
@@ -255,6 +262,20 @@ describe('cyclePaceSeries', () => {
 		expect(series.map((item) => item.done)).toEqual([0, 0, 4, 0]);
 		expect(series.map((item) => item.delta)).toEqual([-4, -4, 0, -4]);
 		expect(series.map((item) => item.drift)).toEqual([-4, -8, -8, -12]);
+	});
+
+	it('uses civil days when the cycle starts near midnight UTC', () => {
+		const today = new Date('2026-09-02T00:30:00.000Z');
+		const series = cyclePaceSeries(
+			[day('2026-09-01', 2)],
+			'2026-09-02T00:30:00.000Z',
+			2,
+			'America/Los_Angeles',
+			today,
+		);
+
+		expect(series.map((item) => item.date)).toEqual(['2026-09-01']);
+		expect(series[0]?.done).toBe(2);
 	});
 });
 
