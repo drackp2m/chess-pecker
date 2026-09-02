@@ -108,7 +108,10 @@ def unquote(text: str) -> str:
 
 
 # A label never grew a full stop the original did not have: the model adds one
-# out of habit, and stripping it is cheaper and surer than asking again.
+# out of habit, and stripping it is cheaper and surer than asking again. The
+# other direction is the same trade — a sentence that came back without the
+# stop it started with gets it put back rather than retried. Only the full stop
+# is restored: a lost «?» or «…» is a change of meaning, not of typing.
 def fix_trailing(text: str, source: str) -> str:
     stripped = source.rstrip()
 
@@ -117,6 +120,9 @@ def fix_trailing(text: str, source: str) -> str:
 
     if text[-1] in TRAILING and stripped[-1] not in SENTENCE_END:
         return text[:-1].rstrip()
+
+    if "." == stripped[-1] and text[-1] not in SENTENCE_END:
+        return f"{text}."
 
     return text
 
