@@ -106,9 +106,7 @@ export class DashboardPage {
 
 			void this.training.load();
 
-			if ('authenticated' === status) {
-				void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS));
-			}
+			void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS));
 		});
 	}
 

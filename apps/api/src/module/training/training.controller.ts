@@ -34,7 +34,10 @@ export class TrainingController {
 		return this.listTrainingsUseCase.execute(user);
 	}
 
-	/** Aggregated over every training of the user, so it comes before `:uuid`. */
+	/**
+	 * @deprecated Activity is now aggregated locally by the web app.
+	 * Aggregated over every training of the user, so it comes before `:uuid`.
+	 */
 	@Get('activity')
 	async getActivity(
 		@CurrentUser() user: User,

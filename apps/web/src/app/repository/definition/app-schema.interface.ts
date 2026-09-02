@@ -18,12 +18,14 @@ import { PuzzleSchema, PuzzleSchemaV10 } from '@app/repository/definition/puzzle
 import { PuzzleSetSchema } from '@app/repository/definition/puzzle-set-schema.interface';
 import { SettingSchema } from '@app/repository/definition/setting-schema.interface';
 import { ShareSchema } from '@app/repository/definition/share-schema.interface';
-import { SyncCursorSchema } from '@app/repository/definition/sync-cursor-schema.interface';
+import {
+	SyncCursorSchema,
+	SyncCursorSchemaV17,
+} from '@app/repository/definition/sync-cursor-schema.interface';
 import { TrainingSchema } from '@app/repository/definition/training-schema.interface';
 
 export interface AppSchema
 	extends
-		ActivitySchema,
 		AttemptCursorSchema,
 		AttemptDraftSchema,
 		AttemptSchema,
@@ -34,6 +36,8 @@ export interface AppSchema
 		ShareSchema,
 		SyncCursorSchema,
 		TrainingSchema {}
+
+export interface AppSchemaV17 extends ActivitySchema, SyncCursorSchemaV17 {}
 
 export interface AppSchemaV16
 	extends

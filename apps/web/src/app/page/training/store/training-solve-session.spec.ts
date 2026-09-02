@@ -15,6 +15,7 @@ import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { CycleItemRow, TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { ActivityStore } from '@app/store/activity.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 import { TrainingRunEngineUseCase } from '@app/use-case/training-run-engine.use-case';
@@ -166,6 +167,7 @@ function configure(
 			TrainingSolveSession,
 			{ provide: AttemptRepository, useValue: attempts },
 			{ provide: TrainingRunEngineUseCase, useValue: repository },
+			{ provide: ActivityStore, useValue: { refresh: vi.fn() } },
 			{ provide: SyncStore, useValue: { isTreeBehind: () => false, push: vi.fn() } },
 			{ provide: TrainingStore, useValue: { active: signal(TRAINING), load: vi.fn() } },
 			{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },

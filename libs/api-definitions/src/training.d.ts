@@ -183,6 +183,7 @@ export interface TrainingAttempt extends PuzzleAttemptRecord {
 }
 
 export interface GetTrainingActivityRequest<TDate = string> {
+	/** @deprecated The web app aggregates activity from local attempts. */
 	/** Days the breakdown covers, today included. The backend clamps it to its maximum. */
 	days?: number;
 	/**
@@ -193,6 +194,7 @@ export interface GetTrainingActivityRequest<TDate = string> {
 }
 
 export interface TrainingActivity {
+	/** @deprecated The web app aggregates activity from local attempts. */
 	/** Every day in range with activity, or only those touched when `since` was sent. */
 	readonly days: readonly TrainingActivityDay[];
 	/** How far this response reaches, in server time. Stored as given and sent back next time. */

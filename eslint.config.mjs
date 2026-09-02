@@ -54,6 +54,7 @@ export default typescriptEslint.config(
 			'**/dist/**',
 			'**/out-tsc/**',
 			'**/coverage/**',
+			'**/.venv/**',
 			'ideas/**',
 			'apps/api/migrations/**',
 		],

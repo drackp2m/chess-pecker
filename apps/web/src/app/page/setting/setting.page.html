@@ -26,6 +26,20 @@
 	</div>
 
 	<div class="flex-col gap-2">
+		<h4>{{ I18n.setting.TIMEZONE | i18n }}</h4>
+
+		<p class="fs-sm color-contrast-mid">{{ I18n.setting.TIMEZONE_INTRO | i18n }}</p>
+
+		<form [formGroup]="form" class="flex-col gap-1">
+			<select appThemed searchable [label]="I18n.setting.TIMEZONE" formControlName="timezone">
+				@for (timezone of timezones; track timezone) {
+					<option [value]="timezone">{{ timezone }}</option>
+				}
+			</select>
+		</form>
+	</div>
+
+	<div class="flex-col gap-2">
 		<h4>{{ I18n.setting.GENDER | i18n }}</h4>
 
 		<p class="fs-sm color-contrast-mid">{{ I18n.setting.GENDER_INTRO | i18n }}</p>

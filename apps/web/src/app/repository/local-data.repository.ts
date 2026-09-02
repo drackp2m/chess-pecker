@@ -203,10 +203,9 @@ async function requeueStore(store: PendingStore<'readwrite'>, pendingSince: Date
 
 const syncStores: StoreNames<AppSchema>[] = [...SYNC_ENTITIES];
 
-const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'activity', 'share'];
+const userCursors: SyncCursorKey[] = [...SYNC_ENTITIES, 'share'];
 
 const userStores: StoreNames<AppSchema>[] = [
-	'activityDay',
 	'attempt',
 	// The restore cut leaves with the attempts: surviving, it would have the next user of
 	// the device ask only for what follows a cursor that is not theirs.

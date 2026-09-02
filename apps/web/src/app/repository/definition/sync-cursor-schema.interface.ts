@@ -5,7 +5,7 @@ import { DBSchema } from 'idb';
  * How a replica cursor is named: the eight tree tables as the server's summary names them,
  * plus the daily breakdown, the challenges sent and the catalogue, which belong to nobody.
  */
-export type SyncCursorKey = SyncEntity | 'activity' | 'catalog' | 'share';
+export type SyncCursorKey = SyncEntity | 'catalog' | 'share';
 
 export interface SyncCursorRow {
 	readonly key: SyncCursorKey;
@@ -27,5 +27,14 @@ export interface SyncCursorSchema extends DBSchema {
 	syncCursor: {
 		key: string;
 		value: SyncCursorRow;
+	};
+}
+
+export interface SyncCursorSchemaV17 extends DBSchema {
+	syncCursor: {
+		key: string;
+		value: Omit<SyncCursorRow, 'key'> & {
+			readonly key: SyncEntity | 'activity' | 'catalog' | 'share';
+		};
 	};
 }
