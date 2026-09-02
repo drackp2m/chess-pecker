@@ -79,6 +79,40 @@ describe('activityDaySeries', () => {
 		expect(days[0]?.done).toBe(0);
 		expect(days[26]?.done).toBe(1);
 	});
+
+	it('spans a window crossing a leap February', () => {
+		const today = new Date('2028-03-01T12:00:00.000Z');
+		const days = activityDaySeries(
+			[day('2028-02-28', 1), day('2028-02-29', 2), day('2028-03-01', 3)],
+			3,
+			'UTC',
+			today,
+		);
+
+		expect(days.map((item) => item.date)).toEqual(['2028-02-28', '2028-02-29', '2028-03-01']);
+		expect(days.map((item) => item.done)).toEqual([1, 2, 3]);
+	});
+
+	it('spans a window crossing a non-leap February', () => {
+		const today = new Date('2026-03-01T12:00:00.000Z');
+		const days = activityDaySeries([day('2026-02-28', 2), day('2026-03-01', 3)], 3, 'UTC', today);
+
+		expect(days.map((item) => item.date)).toEqual(['2026-02-27', '2026-02-28', '2026-03-01']);
+		expect(days.map((item) => item.done)).toEqual([0, 2, 3]);
+	});
+
+	it('spans a window crossing the year boundary', () => {
+		const today = new Date('2027-01-02T12:00:00.000Z');
+		const days = activityDaySeries([day('2026-12-31', 5)], 4, 'UTC', today);
+
+		expect(days.map((item) => item.date)).toEqual([
+			'2026-12-30',
+			'2026-12-31',
+			'2027-01-01',
+			'2027-01-02',
+		]);
+		expect(days.map((item) => item.done)).toEqual([0, 5, 0, 0]);
+	});
 });
 
 describe('filterActivityDays', () => {
