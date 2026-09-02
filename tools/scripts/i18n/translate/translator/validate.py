@@ -39,6 +39,21 @@ SHORT_SOURCE = 24
 FORM_SEPARATOR = " · "
 COLLAPSED_DIMENSIONS = ("plural", "gender")
 SINGLE_FORM_LANGUAGES = frozenset({"id", "vi", "zh"})
+# A model that ignores gender writes the male or female branch for "other"
+# with the personal pronoun clipped: «Сдался» off «Ты сдался». The tail after
+# these pronouns is what the neuter form is compared against.
+LEADING_PRONOUNS = (
+    "ты ",
+    "вы ",
+    "я ",
+    "you ",
+    "you’ve ",
+    "you've ",
+    "i ",
+    "i’ve ",
+    "i've ",
+    "je ",
+)
 SENTENCE_END = ".!?…。।؟"
 TRAILING = ".。।"
 LATIN_RUN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]{3,}")
@@ -272,23 +287,143 @@ def named(forms: list[Form]) -> str:
     return f"{', '.join(labels[:-1])} y {labels[-1]}"
 
 
+# A label is "plural:one", "gender:other", or "plural:one · gender:other" when
+# a key splits on several dimensions at once. Each part is a dimension and its
+# CLDR value.
+def expanded_parts(label: str) -> list[tuple[str, str]]:
+    pairs = []
+
+    for part in label.split(FORM_SEPARATOR):
+        name, _, key = part.partition(":")
+
+        if name in COLLAPSED_DIMENSIONS and key:
+            pairs.append((name, key))
+
+    return pairs
+
+
+def dimension_of(label: str) -> str:
+    pairs = expanded_parts(label)
+
+    return pairs[0][0] if pairs else ""
+
+
+def value_of(label: str) -> str:
+    pairs = expanded_parts(label)
+
+    return pairs[0][1] if pairs else label
+
+
+# The pronoun a gendered sentence opens with, dropped from the same sentence:
+# «Ты сдался» snips to «сдался». The neuter branch that matches that tail has
+# taken the masculine side instead of turning the sentence around.
+def pronoun_tail(text: str) -> str | None:
+    lowered = text.casefold().strip()
+
+    for pronoun in LEADING_PRONOUNS:
+        if lowered.startswith(pronoun):
+            return lowered[len(pronoun) :].strip()
+
+    return None
+
+
+def check_plural_forms(by_key: dict[str, str]) -> list[Issue]:
+    distinct = {text for text in by_key.values()}
+
+    if len(distinct) < 2:
+        single = next(iter(distinct))
+
+        return [Issue("forms-plural-collapsed", f"todos los números han salido igual: «{single}»", True)]
+
+    one = by_key.get("one")
+
+    if not one:
+        return []
+
+    merged = [key for key, text in by_key.items() if key != "one" and text == one]
+
+    if not merged:
+        return []
+
+    return [
+        Issue(
+            "forms-plural-singular",
+            f"la forma de singular se repite en {', '.join(merged)}: «{one}»",
+            True,
+            pairs=tuple((key, one) for key in merged),
+        )
+    ]
+
+
+def check_gender_forms(by_key: dict[str, str]) -> list[Issue]:
+    distinct = {text for text in by_key.values()}
+
+    if len(distinct) < 2:
+        return []
+
+    male = by_key.get("male")
+    female = by_key.get("female")
+    other = by_key.get("other")
+
+    if male and female and male == female and len(by_key) > 2:
+        return [Issue("forms-gender-lumped", f"las formas masculina y femenina han salido igual: «{male}»")]
+
+    if not other:
+        return []
+
+    for gendered, name in ((male, "masculina"), (female, "femenina")):
+        if not gendered:
+            continue
+
+        candidates = [gendered.casefold()]
+        tail = pronoun_tail(gendered)
+
+        if tail is not None:
+            candidates.append(tail)
+
+        if other.casefold() in candidates:
+            return [
+                Issue(
+                    "forms-gender-other",
+                    f"la forma neutra ha tomado la {name}: «{other}»",
+                    True,
+                    pairs=tuple((key, text) for key, text in by_key.items()),
+                )
+            ]
+
+    return []
+
+
 def check_identical(forms: list[Form]) -> list[Issue]:
     grouped: dict[str, list[Form]] = {}
+    by_key: dict[str, str] = {}
+    dimension = ""
 
     for form in forms:
         written = form.text.strip()
 
-        if written:
-            grouped.setdefault(written, []).append(form)
+        if not written:
+            continue
 
-    alike = [(text, group) for text, group in grouped.items() if len(group) > 1]
+        grouped.setdefault(written, []).append(form)
+        dimension = dimension or dimension_of(form.label)
+        by_key.setdefault(value_of(form.label), written)
 
-    if not alike:
+    if dimension == "plural":
+        issues = check_plural_forms(by_key)
+    elif dimension == "gender":
+        issues = check_gender_forms(by_key)
+    elif len(grouped) == 1:
+        (single,) = grouped
+
+        issues = [Issue("forms-identical", f"todas las formas han salido igual: «{single}»")]
+    else:
+        issues = []
+
+    if not issues:
         return []
 
-    listed = "; ".join(f"{named(group)} → «{text}»" for text, group in alike)
-
-    return [Issue("forms-identical", f"formas iguales: {listed}")]
+    return issues
 
 
 def expanded(form: Form) -> list[str]:
