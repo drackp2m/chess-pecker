@@ -1,6 +1,6 @@
 import { IDBPDatabase } from 'idb';
 
-import { AppSchema, AppSchemaV16 } from '@app/repository/definition/app-schema.interface';
+import { AppSchemaV16, AppSchemaV17 } from '@app/repository/definition/app-schema.interface';
 import { Migration } from '@app/repository/definition/migration.interface';
 
 /**
@@ -11,7 +11,7 @@ export const unifySyncCursorsMigration: Migration<AppSchemaV16> = {
 	version: 17,
 	description: 'gather the replica cursors into one store keyed by entity',
 	apply: async ({ database, transaction }) => {
-		const cursors = (database as unknown as IDBPDatabase<AppSchema>).createObjectStore(
+		const cursors = (database as unknown as IDBPDatabase<AppSchemaV17>).createObjectStore(
 			'syncCursor',
 			{ keyPath: 'key' },
 		);

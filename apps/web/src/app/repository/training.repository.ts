@@ -2,7 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import type {
 	GetTrainingAttemptsRequest,
 	Training,
-	TrainingActivity,
 	TrainingAttemptHistory,
 	TrainingProgress,
 } from '@chesspecker/api-definitions';
@@ -29,13 +28,6 @@ export class TrainingRepository {
 
 	async getProgress(uuid: string): Promise<TrainingProgress> {
 		return this.apiSdk.GET.training('/:uuid/progress', { path: { uuid } });
-	}
-
-	/** Without `since` the whole range comes back; with it, only the days touched since. */
-	async getActivity(days: number, since?: string): Promise<TrainingActivity> {
-		return this.apiSdk.GET.training('/activity', {
-			query: undefined === since ? { days } : { days, since },
-		});
 	}
 
 	/** One page of the history. Without `since` it starts from the beginning. */

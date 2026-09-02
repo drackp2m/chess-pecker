@@ -176,6 +176,7 @@ export interface SyncPostRoutes {
 
 export interface TrainingGetRoutes {
 	'': { response: readonly Training[] };
+	/** @deprecated The web app aggregates activity from local attempts. */
 	'/activity': { query: GetTrainingActivityRequest; response: TrainingActivity };
 	'/:uuid': { path: { uuid: string }; response: Training };
 	'/:uuid/progress': { path: { uuid: string }; response: TrainingProgress };
