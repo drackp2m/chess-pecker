@@ -25,6 +25,7 @@ import { createSettingStoreMigration } from '@app/repository/migration/v1_create
 import { indexRejectedRowsMigration } from '@app/repository/migration/v20_index-rejected-rows.migration';
 import { createBookmarkStoreMigration } from '@app/repository/migration/v21_create-bookmark-store.migration';
 import { createShareStoreMigration } from '@app/repository/migration/v22_create-share-store.migration';
+import { indexAttemptUpdatedAtMigration } from '@app/repository/migration/v23_index-attempt-updated-at.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
 import { rekeyAttemptStoreMigration } from '@app/repository/migration/v4_rekey-attempt-store.migration';
@@ -67,6 +68,7 @@ export abstract class Repository {
 		indexRejectedRowsMigration,
 		createBookmarkStoreMigration,
 		createShareStoreMigration,
+		indexAttemptUpdatedAtMigration,
 	];
 
 	static getLatestVersion(): number {
