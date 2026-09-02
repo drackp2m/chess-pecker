@@ -31,4 +31,13 @@ describe('activityDaySeries', () => {
 
 		expect(days.map((item) => item.date)).toEqual(['2026-09-02', '2026-09-03']);
 	});
+
+	it('fills missing days with zeros', () => {
+		const today = new Date('2026-09-03T12:00:00.000Z');
+		const days = activityDaySeries([day('2026-09-01', 5), day('2026-09-03', 3)], 3, 'UTC', today);
+
+		expect(days.map((item) => item.date)).toEqual(['2026-09-01', '2026-09-02', '2026-09-03']);
+		expect(days.map((item) => item.done)).toEqual([5, 0, 3]);
+		expect(days.map((item) => item.firstTry)).toEqual([0, 0, 0]);
+	});
 });
