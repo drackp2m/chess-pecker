@@ -162,6 +162,7 @@ describe('filterActivityDays', () => {
 		const days = filterActivityDays(
 			[day('2026-09-01', 1), day('2026-09-03', 2), day('2026-09-05', 3)],
 			3,
+			'UTC',
 			today,
 		);
 
@@ -171,14 +172,14 @@ describe('filterActivityDays', () => {
 
 	it('returns empty when all days are before the window', () => {
 		const today = new Date('2026-09-05T12:00:00.000Z');
-		const days = filterActivityDays([day('2026-09-01', 1)], 2, today);
+		const days = filterActivityDays([day('2026-09-01', 1)], 2, 'UTC', today);
 
 		expect(days).toEqual([]);
 	});
 
 	it('keeps only today when the window is one day', () => {
 		const today = new Date('2026-09-05T12:00:00.000Z');
-		const days = filterActivityDays([day('2026-09-04', 1), day('2026-09-05', 2)], 1, today);
+		const days = filterActivityDays([day('2026-09-04', 1), day('2026-09-05', 2)], 1, 'UTC', today);
 
 		expect(days.map((item) => item.date)).toEqual(['2026-09-05']);
 		expect(days[0]?.done).toBe(2);
@@ -186,7 +187,7 @@ describe('filterActivityDays', () => {
 
 	it('returns empty when the window is zero days', () => {
 		const today = new Date('2026-09-05T12:00:00.000Z');
-		const days = filterActivityDays([day('2026-09-05', 2)], 0, today);
+		const days = filterActivityDays([day('2026-09-05', 2)], 0, 'UTC', today);
 
 		expect(days).toEqual([]);
 	});
@@ -196,6 +197,7 @@ describe('filterActivityDays', () => {
 		const days = filterActivityDays(
 			[day('2026-07-01', 1), day('2026-09-01', 2), day('2026-09-05', 3)],
 			100,
+			'UTC',
 			today,
 		);
 
@@ -283,28 +285,35 @@ describe('activityRangeDays', () => {
 	it('counts the last calendar months with today included', () => {
 		const today = new Date('2026-09-15T12:00:00.000Z');
 
-		expect(activityRangeDays(0, today)).toBe(0);
-		expect(activityRangeDays(1, today)).toBe(31);
-		expect(activityRangeDays(3, today)).toBe(92);
+		expect(activityRangeDays(0, 'UTC', today)).toBe(0);
+		expect(activityRangeDays(1, 'UTC', today)).toBe(31);
+		expect(activityRangeDays(3, 'UTC', today)).toBe(92);
 	});
 
 	it('counts across the year boundary', () => {
 		const today = new Date('2027-01-10T12:00:00.000Z');
 
-		expect(activityRangeDays(2, today)).toBe(61);
+		expect(activityRangeDays(2, 'UTC', today)).toBe(61);
 	});
 
 	it('lands on 365 for a full year without leap days', () => {
 		const today = new Date('2027-03-01T12:00:00.000Z');
 
-		expect(activityRangeDays(12, today)).toBe(365);
+		expect(activityRangeDays(12, 'UTC', today)).toBe(365);
+	});
+
+	it('counts calendar months from the selected civil day', () => {
+		const today = new Date('2026-03-01T00:30:00.000Z');
+
+		expect(activityRangeDays(1, 'UTC', today)).toBe(28);
+		expect(activityRangeDays(1, 'America/Los_Angeles', today)).toBe(31);
 	});
 });
 
 describe('buildActivityGrid', () => {
 	it('pads partial weeks at both ends with nulls, monday-first', () => {
 		const today = new Date('2026-09-02T12:00:00.000Z');
-		const grid = buildActivityGrid([day('2026-09-01', 2)], 7, today);
+		const grid = buildActivityGrid([day('2026-09-01', 2)], 7, 'UTC', today);
 
 		expect(grid.map((column) => column.length)).toEqual([7, 7]);
 		expect(grid.flat().map((cell) => cell?.date ?? null)).toEqual([
@@ -330,6 +339,7 @@ describe('buildActivityGrid', () => {
 		const grid = buildActivityGrid(
 			[day('2026-08-27', 1), day('2026-09-01', 2), day('2026-09-02', 4)],
 			7,
+			'UTC',
 			today,
 		);
 		const cells = grid.flat().filter((cell): cell is ActivityCell => null !== cell);
@@ -347,7 +357,7 @@ describe('buildActivityGrid', () => {
 
 	it('maxes the level of every counted day when the counts are uniform', () => {
 		const today = new Date('2026-09-02T12:00:00.000Z');
-		const grid = buildActivityGrid([day('2026-09-01', 3), day('2026-09-02', 3)], 3, today);
+		const grid = buildActivityGrid([day('2026-09-01', 3), day('2026-09-02', 3)], 3, 'UTC', today);
 		const cells = grid.flat().filter((cell): cell is ActivityCell => null !== cell);
 
 		expect(cells.map((cell) => cell.level)).toEqual([0, 4, 4]);
@@ -355,10 +365,25 @@ describe('buildActivityGrid', () => {
 
 	it('zeroes every cell when there is no data at all', () => {
 		const today = new Date('2026-09-02T12:00:00.000Z');
-		const grid = buildActivityGrid([], 7, today);
+		const grid = buildActivityGrid([], 7, 'UTC', today);
 		const cells = grid.flat().filter((cell): cell is ActivityCell => null !== cell);
 
 		expect(cells).toHaveLength(7);
 		expect(cells.every((cell) => 0 === cell.done && 0 === cell.level)).toBe(true);
+	});
+
+	it('starts the week from the civil Monday in the requested timezone', () => {
+		const today = new Date('2026-09-07T00:30:00.000Z');
+		const grid = buildActivityGrid([day('2026-09-06', 2)], 1, 'America/Los_Angeles', today);
+
+		expect(grid.flat().map((cell) => cell?.date ?? null)).toEqual([
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			'2026-09-06',
+		]);
 	});
 });

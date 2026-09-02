@@ -59,6 +59,7 @@ export class ActivityHeatmapComponent {
 
 	readonly days = input<readonly TrainingActivityDay[]>([]);
 	readonly totalDays = input(DEFAULT_TOTAL_DAYS);
+	readonly timeZone = input('UTC');
 	readonly cellSize = input(DEFAULT_CELL_SIZE);
 
 	readonly dayFocus = output<ActivityCell | null>();
@@ -66,7 +67,7 @@ export class ActivityHeatmapComponent {
 	private readonly languageService = inject(LanguageService);
 
 	readonly weekColumns = computed<readonly (ActivityCell | null)[][]>(() =>
-		buildActivityGrid(this.days(), this.totalDays()),
+		buildActivityGrid(this.days(), this.totalDays(), this.timeZone()),
 	);
 
 	readonly monthLabels = computed<readonly (string | null)[]>(() =>

@@ -32,25 +32,30 @@ export interface ActivityCell {
 export function buildActivityGrid(
 	days: readonly TrainingActivityDay[],
 	totalDays: number,
+	timeZone: string,
 	today: Date = new Date(),
 ): readonly (ActivityCell | null)[][] {
 	const counts = new Map(days.map((day) => [day.date, day.done]));
-	const end = utcMidnight(today);
-	const rangeStart = addUtcDays(end, -(totalDays - 1));
+	const end = zoneDayLabel(today, timeZone);
+	const rangeStart = addLabelDays(end, -(totalDays - 1));
 	const start = mostRecentMonday(rangeStart);
-	const totalWeeks = Math.ceil((diffUtcDays(start, end) + 1) / DAYS_PER_WEEK);
+	const totalWeeks = Math.ceil((diffLabelDays(start, end) + 1) / DAYS_PER_WEEK);
 	const bounds = positiveBounds(counts.values());
 
 	return Array.from({ length: totalWeeks }, (_unused, week) =>
 		Array.from({ length: DAYS_PER_WEEK }, (_unused, weekday) =>
-			toCell(addUtcDays(start, week * DAYS_PER_WEEK + weekday), rangeStart, end, counts, bounds),
+			toCell(addLabelDays(start, week * DAYS_PER_WEEK + weekday), rangeStart, end, counts, bounds),
 		),
 	);
 }
 
 /** Exact day count of the last `months` calendar months, today included. */
-export function activityRangeDays(months: number, today: Date = new Date()): number {
-	const end = utcMidnight(today);
+export function activityRangeDays(
+	months: number,
+	timeZone: string,
+	today: Date = new Date(),
+): number {
+	const end = labelToUtcMidnight(zoneDayLabel(today, timeZone));
 	const start = new Date(
 		Date.UTC(end.getUTCFullYear(), end.getUTCMonth() - months, end.getUTCDate() + 1),
 	);
@@ -97,10 +102,11 @@ export function cyclePaceSeries(
 export function filterActivityDays(
 	days: readonly TrainingActivityDay[],
 	totalDays: number,
+	timeZone: string,
 	today: Date = new Date(),
 ): readonly TrainingActivityDay[] {
-	const end = utcMidnight(today);
-	const from = toIsoDate(addUtcDays(end, -(totalDays - 1)));
+	const end = zoneDayLabel(today, timeZone);
+	const from = addLabelDays(end, -(totalDays - 1));
 
 	return days.filter((day) => day.date >= from);
 }
@@ -141,7 +147,7 @@ export function weekdayAbbreviations(
 	locale: string,
 	today: Date = new Date(),
 ): readonly (string | null)[] {
-	const monday = mostRecentMonday(utcMidnight(today));
+	const monday = labelToUtcMidnight(mostRecentMonday(toIsoDate(utcMidnight(today))));
 	const formatter = new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' });
 
 	return Array.from({ length: DAYS_PER_WEEK }, (_unused, weekday) =>
@@ -152,9 +158,9 @@ export function weekdayAbbreviations(
 }
 
 function toCell(
-	date: Date,
-	rangeStart: Date,
-	end: Date,
+	date: string,
+	rangeStart: string,
+	end: string,
 	counts: ReadonlyMap<string, number>,
 	bounds: ScaleBounds,
 ): ActivityCell | null {
@@ -162,25 +168,26 @@ function toCell(
 		return null;
 	}
 
-	const isoDate = toIsoDate(date);
-	const done = counts.get(isoDate) ?? 0;
+	const done = counts.get(date) ?? 0;
 
 	return {
-		date: isoDate,
+		date,
 		done,
 		level: toBucket(done, bounds, ACTIVITY_LEVELS) as ActivityCell['level'],
 	};
 }
 
 function startsMonth(date: Date): boolean {
-	const monday = mostRecentMonday(date);
+	const monday = labelToUtcMidnight(mostRecentMonday(toIsoDate(date)));
 
 	return monday.getUTCMonth() === date.getUTCMonth() && DAYS_PER_WEEK >= monday.getUTCDate();
 }
 
 /** Monday-first: `getUTCDay()` puts Sunday at 0, so it is shifted to land Monday there. */
-function mostRecentMonday(date: Date): Date {
-	return addUtcDays(date, -((date.getUTCDay() + 6) % 7));
+function mostRecentMonday(label: string): string {
+	const weekday = labelToUtcMidnight(label).getUTCDay();
+
+	return addLabelDays(label, -((weekday + 6) % 7));
 }
 
 function capitalize(text: string): string {

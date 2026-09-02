@@ -10,6 +10,7 @@ import { SegmentDirective } from '@app/directive/segment/segment.directive';
 import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
 import { toTrainingSummary } from '@app/page/dashboard/training-summary';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { TimezoneService } from '@app/service/timezone.service';
 import { ActivityStore } from '@app/store/activity.store';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
@@ -39,6 +40,7 @@ export class DashboardPage {
 	readonly session = inject(SessionStore);
 	readonly training = inject(TrainingStore);
 	readonly activity = inject(ActivityStore);
+	protected readonly timezoneService = inject(TimezoneService);
 
 	readonly summary = computed(() => toTrainingSummary(this.training.progress()));
 
@@ -47,10 +49,16 @@ export class DashboardPage {
 	readonly activityRanges = ACTIVITY_RANGES;
 	readonly activityMonths = signal<number>(DEFAULT_ACTIVITY_MONTHS);
 
-	readonly activityDays = computed(() => activityRangeDays(this.activityMonths()));
+	readonly activityDays = computed(() =>
+		activityRangeDays(this.activityMonths(), this.timezoneService.selectedTimezone()),
+	);
 
 	readonly visibleActivity = computed(() =>
-		filterActivityDays(this.activity.days(), this.activityDays()),
+		filterActivityDays(
+			this.activity.days(),
+			this.activityDays(),
+			this.timezoneService.selectedTimezone(),
+		),
 	);
 
 	readonly totalActivity = computed(() =>
@@ -91,12 +99,13 @@ export class DashboardPage {
 		effect(() => {
 			const status = this.session.status();
 			const syncedAt = this.training.lastSyncedAt();
+			const timeZone = this.timezoneService.selectedTimezone();
 
 			if ('unknown' === status) {
 				return;
 			}
 
-			const pass = `${status}:${(syncedAt?.getTime() ?? 0).toString()}`;
+			const pass = `${status}:${(syncedAt?.getTime() ?? 0).toString()}:${timeZone}`;
 
 			if (pass === this.loadedFor) {
 				return;
@@ -106,7 +115,7 @@ export class DashboardPage {
 
 			void this.training.load();
 
-			void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS));
+			void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS, timeZone));
 		});
 	}
 
