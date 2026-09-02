@@ -11,5 +11,3 @@ allowBuilds:
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@angular/*'
-patchedDependencies:
-  vitest-mock-extended@5.1.0: patches/vitest-mock-extended@5.1.0.patch
