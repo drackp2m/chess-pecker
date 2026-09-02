@@ -24,11 +24,18 @@ interface ActivityCounts {
 	durationMs: number;
 }
 
+interface MonthDays {
+	count: number;
+	days: readonly TrainingActivityDay[];
+}
+
 @Injectable({
 	providedIn: 'root',
 })
 export class ActivityAggregateUseCase {
 	private readonly attempts = inject(AttemptRepository);
+
+	private readonly months = new Map<string, MonthDays>();
 
 	async read(
 		rangeDays: number,
@@ -37,14 +44,57 @@ export class ActivityAggregateUseCase {
 	): Promise<readonly TrainingActivityDay[]> {
 		const to = zoneDayLabel(today, timeZone);
 		const from = addLabelDays(to, -(Math.min(rangeDays, MAX_ACTIVITY_DAYS) - 1));
-		const attempts = await this.attempts.findRangeByUpdatedAt(
-			labelToUtcMidnight(addLabelDays(from, -1)),
-			labelToUtcMidnight(addLabelDays(to, 2)),
-		);
-		const days = aggregate(attempts, from, to, timeZone);
+		const days: TrainingActivityDay[] = [];
+
+		for (const month of monthsIn(from, to)) {
+			days.push(...(await this.monthDays(month, timeZone)));
+		}
 
 		return fillActivityDays(days, labelToUtcMidnight(from), labelToUtcMidnight(to));
 	}
+
+	private async monthDays(
+		month: string,
+		timeZone: string,
+	): Promise<readonly TrainingActivityDay[]> {
+		const [start, end] = monthBounds(month);
+		const lower = labelToUtcMidnight(addLabelDays(start, -1));
+		const upper = labelToUtcMidnight(addLabelDays(end, 2));
+		const count = await this.attempts.countRangeByUpdatedAt(lower, upper);
+		const cached = this.months.get(`${timeZone}:${month}`);
+
+		if (cached?.count === count) {
+			return cached.days;
+		}
+
+		const rows = await this.attempts.findRangeByUpdatedAt(lower, upper);
+		const days = aggregate(rows, start, end, timeZone);
+
+		this.months.set(`${timeZone}:${month}`, { count, days });
+
+		return days;
+	}
+}
+
+function monthsIn(from: string, to: string): string[] {
+	const last = to.slice(0, 7);
+	const months: string[] = [];
+	let month = from.slice(0, 7);
+
+	while (month <= last) {
+		months.push(month);
+		month = nextMonth(month);
+	}
+
+	return months;
+}
+
+function monthBounds(month: string): readonly [string, string] {
+	return [`${month}-01`, addLabelDays(`${nextMonth(month)}-01`, -1)];
+}
+
+function nextMonth(month: string): string {
+	return addLabelDays(`${month}-01`, 32).slice(0, 7);
 }
 
 function aggregate(

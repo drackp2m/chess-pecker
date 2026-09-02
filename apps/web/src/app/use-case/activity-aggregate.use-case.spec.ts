@@ -30,8 +30,13 @@ function attempt(over: Partial<AttemptRow> = {}): AttemptRow {
 }
 
 function configure(rows: readonly AttemptRow[]) {
+	const within = (from: Date, to: Date) =>
+		rows.filter((row) => row.updatedAt >= from && row.updatedAt <= to);
 	const repository = {
-		findRangeByUpdatedAt: vi.fn(() => Promise.resolve([...rows])),
+		findRangeByUpdatedAt: vi.fn((from: Date, to: Date) => Promise.resolve(within(from, to))),
+		countRangeByUpdatedAt: vi.fn((from: Date, to: Date) =>
+			Promise.resolve(within(from, to).length),
+		),
 	};
 
 	TestBed.configureTestingModule({
@@ -109,6 +114,36 @@ describe('ActivityAggregateUseCase.read', () => {
 		expect(day(result, '2026-08-31').done).toBe(0);
 		expect(day(result, '2026-09-01').done).toBe(1);
 		expect(day(result, '2026-09-02').done).toBe(0);
-		expect(repository.findRangeByUpdatedAt).toHaveBeenCalledOnce();
+		expect(repository.findRangeByUpdatedAt).toHaveBeenCalledTimes(2);
+	});
+
+	it('reuses a cached month when its row count has not moved', async () => {
+		const { aggregate, repository } = configure([
+			attempt({ updatedAt: new Date('2026-08-15T10:00:00.000Z') }),
+			attempt({ updatedAt: new Date('2026-09-01T10:00:00.000Z') }),
+		]);
+
+		const first = await aggregate.read(20, 'UTC', TODAY);
+		const second = await aggregate.read(20, 'UTC', TODAY);
+
+		expect(repository.findRangeByUpdatedAt).toHaveBeenCalledTimes(2);
+		expect(second).toEqual(first);
+	});
+
+	it('recomputes only the month a new attempt touches', async () => {
+		const rows = [
+			attempt({ updatedAt: new Date('2026-08-15T10:00:00.000Z') }),
+			attempt({ updatedAt: new Date('2026-09-01T10:00:00.000Z') }),
+		];
+		const { aggregate, repository } = configure(rows);
+
+		await aggregate.read(20, 'UTC', TODAY);
+
+		rows.push(attempt({ updatedAt: new Date('2026-09-02T10:00:00.000Z') }));
+		const result = await aggregate.read(20, 'UTC', TODAY);
+
+		expect(repository.findRangeByUpdatedAt).toHaveBeenCalledTimes(3);
+		expect(day(result, '2026-08-15').done).toBe(1);
+		expect(day(result, '2026-09-02').done).toBe(1);
 	});
 });
