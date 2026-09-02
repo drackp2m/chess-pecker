@@ -1,3 +1,34 @@
+# v1.27.0 (2026-09-02)
+
+## What's Changed
+
+### ✨ Features
+
+- add configurable timezone setting ([d9974b5](https://github.com/drackp2m/chess-pecker/commit/d9974b5ad7494ab8de8034f887d0c9e484ae4e95)) by Marc Jovaní González
+- add timezone date utilities ([9275ecc](https://github.com/drackp2m/chess-pecker/commit/9275ecc6dfd1cdb6978d9a5d27d9d67b30b92873)) by Marc Jovaní González
+- aggregate activity from local attempts ([a289311](https://github.com/drackp2m/chess-pecker/commit/a289311651ba02051939ab2adfae8a65439781fe)) by Marc Jovaní González
+- derive activity from local data ([8e6ef2a](https://github.com/drackp2m/chess-pecker/commit/8e6ef2a6b6debcd5e8898fc368867e3c267b41da)) by Marc Jovaní González
+- query local attempts by completion date ([18906b1](https://github.com/drackp2m/chess-pecker/commit/18906b1dd66e5cfdbf8a0c9029c993d609dd2ddb)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- remove legacy remote activity aggregation ([b133e0f](https://github.com/drackp2m/chess-pecker/commit/b133e0ff6fb59cb03d183715ac92341149e181ae)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- put back a full stop the model dropped ([53ae624](https://github.com/drackp2m/chess-pecker/commit/53ae624a31547019020b45fc03dd21e8dbf11855)) by Marc Jovaní González
+- score the forms check by dimension, not by duplicates ([fc75cda](https://github.com/drackp2m/chess-pecker/commit/fc75cdac7627cdc2ef91eb019309bcbe503c3023)) by Marc Jovaní González
+
+### 🚀 Performance Improvements
+
+- memoize local activity aggregation by month ([daee034](https://github.com/drackp2m/chess-pecker/commit/daee034c4fad5c293a454009a4dda55f3a50ac3c)) by Marc Jovaní González
+
+### 🏗️‍ Build System
+
+- index local attempts by update date ([d4f1526](https://github.com/drackp2m/chess-pecker/commit/d4f1526b68004497654d642f80731234fa080c55)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.26.0...v1.27.0
+
 # v1.26.0 (2026-09-01)
 
 ## What's Changed
