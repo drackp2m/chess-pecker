@@ -2,7 +2,7 @@ import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 import { describe, expect, it } from 'vitest';
 
 import { emptyActivityDay } from '@app/util/activity-day';
-import { activityDaySeries, filterActivityDays } from '@app/util/activity-grid';
+import { activityDaySeries, cyclePaceSeries, filterActivityDays } from '@app/util/activity-grid';
 
 function day(
 	date: string,
@@ -193,5 +193,60 @@ describe('filterActivityDays', () => {
 		);
 
 		expect(days.map((item) => item.date)).toEqual(['2026-07-01', '2026-09-01', '2026-09-05']);
+	});
+});
+
+describe('cyclePaceSeries', () => {
+	it('walks the cycle days accumulating delta and drift', () => {
+		const startedAt = '2026-09-01T10:00:00.000Z';
+		const today = new Date('2026-09-04T12:00:00.000Z');
+		const series = cyclePaceSeries(
+			[day('2026-09-01', 5), day('2026-09-03', 3)],
+			startedAt,
+			3,
+			today,
+		);
+
+		expect(series.map((item) => item.date)).toEqual([
+			'2026-09-01',
+			'2026-09-02',
+			'2026-09-03',
+			'2026-09-04',
+		]);
+		expect(series.map((item) => item.done)).toEqual([5, 0, 3, 0]);
+		expect(series.map((item) => item.expected)).toEqual([3, 3, 3, 3]);
+		expect(series.map((item) => item.delta)).toEqual([2, -3, 0, -3]);
+		expect(series.map((item) => item.drift)).toEqual([2, -1, -1, -4]);
+	});
+
+	it('returns a single day when the cycle started today', () => {
+		const today = new Date('2026-09-04T12:00:00.000Z');
+		const series = cyclePaceSeries([day('2026-09-04', 1)], '2026-09-04T00:30:00.000Z', 2, today);
+
+		expect(series).toHaveLength(1);
+		expect(series[0]).toEqual({ date: '2026-09-04', done: 1, expected: 2, delta: -1, drift: -1 });
+	});
+
+	it('returns nothing when the cycle starts in the future', () => {
+		const today = new Date('2026-09-04T12:00:00.000Z');
+		const series = cyclePaceSeries([], '2026-09-05T00:00:00.000Z', 3, today);
+
+		expect(series).toEqual([]);
+	});
+
+	it('walks the cycle across the year boundary', () => {
+		const startedAt = '2026-12-30T23:00:00.000Z';
+		const today = new Date('2027-01-02T06:00:00.000Z');
+		const series = cyclePaceSeries([day('2027-01-01', 4)], startedAt, 4, today);
+
+		expect(series.map((item) => item.date)).toEqual([
+			'2026-12-30',
+			'2026-12-31',
+			'2027-01-01',
+			'2027-01-02',
+		]);
+		expect(series.map((item) => item.done)).toEqual([0, 0, 4, 0]);
+		expect(series.map((item) => item.delta)).toEqual([-4, -4, 0, -4]);
+		expect(series.map((item) => item.drift)).toEqual([-4, -8, -8, -12]);
 	});
 });
