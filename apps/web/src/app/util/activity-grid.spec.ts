@@ -4,8 +4,12 @@ import { describe, expect, it } from 'vitest';
 import { emptyActivityDay } from '@app/util/activity-day';
 import { activityDaySeries, filterActivityDays } from '@app/util/activity-grid';
 
-function day(date: string, done: number): TrainingActivityDay {
-	return { ...emptyActivityDay(date), done };
+function day(
+	date: string,
+	done = 0,
+	values: Partial<Omit<TrainingActivityDay, 'date'>> = {},
+): TrainingActivityDay {
+	return { ...emptyActivityDay(date), done, ...values };
 }
 
 describe('activityDaySeries', () => {
@@ -112,6 +116,36 @@ describe('activityDaySeries', () => {
 			'2027-01-02',
 		]);
 		expect(days.map((item) => item.done)).toEqual([0, 5, 0, 0]);
+	});
+
+	it('carries every counter through and zeroes full gap days across months', () => {
+		const today = new Date('2026-02-05T12:00:00.000Z');
+		const heavy = day('2026-01-29', 4, {
+			firstTry: 2,
+			afterMiss: 1,
+			shown: 1,
+			mistakes: 3,
+			hints: 2,
+			durationMs: 60_000,
+		});
+		const light = day('2026-02-02', 3, { firstTry: 1, revealed: 2 });
+		const days = activityDaySeries([heavy, light], 8, 'UTC', today);
+
+		expect(days.map((item) => item.date)).toEqual([
+			'2026-01-29',
+			'2026-01-30',
+			'2026-01-31',
+			'2026-02-01',
+			'2026-02-02',
+			'2026-02-03',
+			'2026-02-04',
+			'2026-02-05',
+		]);
+		expect(days[0]).toEqual(heavy);
+		expect(days[4]).toEqual(light);
+		expect(days[4]?.mistakes).toBe(0);
+		expect(days[1]).toEqual(emptyActivityDay('2026-01-30'));
+		expect(days[5]).toEqual(emptyActivityDay('2026-02-03'));
 	});
 });
 
