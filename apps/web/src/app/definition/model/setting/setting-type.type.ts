@@ -11,6 +11,7 @@ export interface SettingType {
 	THEME: 'THEME';
 	PAUSE_AFTER_NEXT_TURN: 'PAUSE_AFTER_NEXT_TURN';
 	LANGUAGE: 'LANGUAGE';
+	TIMEZONE: 'TIMEZONE';
 	GENDER: 'GENDER';
 	LAST_SEEN_VERSION: 'LAST_SEEN_VERSION';
 	MOVE_ANIMATION: 'MOVE_ANIMATION';
@@ -27,6 +28,7 @@ export interface SettingPayload {
 	THEME: Theme | 'system';
 	PAUSE_AFTER_NEXT_TURN: boolean;
 	LANGUAGE: Language;
+	TIMEZONE: string;
 	GENDER: Gender;
 	LAST_SEEN_VERSION: string;
 	MOVE_ANIMATION: MoveAnimation;

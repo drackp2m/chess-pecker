@@ -2,6 +2,7 @@ export enum SettingType {
 	THEME = 'theme',
 	PAUSE_AFTER_NEXT_TURN = 'pause-after-next-turn',
 	LANGUAGE = 'language',
+	TIMEZONE = 'timezone',
 	GENDER = 'gender',
 	LAST_SEEN_VERSION = 'last-seen-version',
 	MOVE_ANIMATION = 'move-animation',
