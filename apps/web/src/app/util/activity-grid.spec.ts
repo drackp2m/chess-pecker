@@ -2,7 +2,14 @@ import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 import { describe, expect, it } from 'vitest';
 
 import { emptyActivityDay } from '@app/util/activity-day';
-import { activityDaySeries, cyclePaceSeries, filterActivityDays } from '@app/util/activity-grid';
+import {
+	ActivityCell,
+	activityDaySeries,
+	activityRangeDays,
+	buildActivityGrid,
+	cyclePaceSeries,
+	filterActivityDays,
+} from '@app/util/activity-grid';
 
 function day(
 	date: string,
@@ -248,5 +255,89 @@ describe('cyclePaceSeries', () => {
 		expect(series.map((item) => item.done)).toEqual([0, 0, 4, 0]);
 		expect(series.map((item) => item.delta)).toEqual([-4, -4, 0, -4]);
 		expect(series.map((item) => item.drift)).toEqual([-4, -8, -8, -12]);
+	});
+});
+
+describe('activityRangeDays', () => {
+	it('counts the last calendar months with today included', () => {
+		const today = new Date('2026-09-15T12:00:00.000Z');
+
+		expect(activityRangeDays(0, today)).toBe(0);
+		expect(activityRangeDays(1, today)).toBe(31);
+		expect(activityRangeDays(3, today)).toBe(92);
+	});
+
+	it('counts across the year boundary', () => {
+		const today = new Date('2027-01-10T12:00:00.000Z');
+
+		expect(activityRangeDays(2, today)).toBe(61);
+	});
+
+	it('lands on 365 for a full year without leap days', () => {
+		const today = new Date('2027-03-01T12:00:00.000Z');
+
+		expect(activityRangeDays(12, today)).toBe(365);
+	});
+});
+
+describe('buildActivityGrid', () => {
+	it('pads partial weeks at both ends with nulls, monday-first', () => {
+		const today = new Date('2026-09-02T12:00:00.000Z');
+		const grid = buildActivityGrid([day('2026-09-01', 2)], 7, today);
+
+		expect(grid.map((column) => column.length)).toEqual([7, 7]);
+		expect(grid.flat().map((cell) => cell?.date ?? null)).toEqual([
+			null,
+			null,
+			null,
+			'2026-08-27',
+			'2026-08-28',
+			'2026-08-29',
+			'2026-08-30',
+			'2026-08-31',
+			'2026-09-01',
+			'2026-09-02',
+			null,
+			null,
+			null,
+			null,
+		]);
+	});
+
+	it('buckets counts from 0 to 4 using the positive range', () => {
+		const today = new Date('2026-09-02T12:00:00.000Z');
+		const grid = buildActivityGrid(
+			[day('2026-08-27', 1), day('2026-09-01', 2), day('2026-09-02', 4)],
+			7,
+			today,
+		);
+		const cells = grid.flat().filter((cell): cell is ActivityCell => null !== cell);
+
+		expect(cells.map((cell) => [cell.done, cell.level])).toEqual([
+			[1, 1],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[0, 0],
+			[2, 2],
+			[4, 4],
+		]);
+	});
+
+	it('maxes the level of every counted day when the counts are uniform', () => {
+		const today = new Date('2026-09-02T12:00:00.000Z');
+		const grid = buildActivityGrid([day('2026-09-01', 3), day('2026-09-02', 3)], 3, today);
+		const cells = grid.flat().filter((cell): cell is ActivityCell => null !== cell);
+
+		expect(cells.map((cell) => cell.level)).toEqual([0, 4, 4]);
+	});
+
+	it('zeroes every cell when there is no data at all', () => {
+		const today = new Date('2026-09-02T12:00:00.000Z');
+		const grid = buildActivityGrid([], 7, today);
+		const cells = grid.flat().filter((cell): cell is ActivityCell => null !== cell);
+
+		expect(cells).toHaveLength(7);
+		expect(cells.every((cell) => 0 === cell.done && 0 === cell.level)).toBe(true);
 	});
 });
