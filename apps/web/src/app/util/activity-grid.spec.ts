@@ -24,4 +24,11 @@ describe('activityDaySeries', () => {
 
 		expect(days.map((item) => item.date)).toEqual(['2026-09-01', '2026-09-02']);
 	});
+
+	it('windows ahead on an extreme-east zone without daylight saving', () => {
+		const today = new Date('2026-09-02T10:00:00.000Z');
+		const days = activityDaySeries([], 2, 'Pacific/Kiritimati', today);
+
+		expect(days.map((item) => item.date)).toEqual(['2026-09-02', '2026-09-03']);
+	});
 });
