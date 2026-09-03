@@ -1,3 +1,13 @@
+# v1.29.1 (2026-09-03)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- configure MikroORM CLI SWC loader ([21afbb9](https://github.com/drackp2m/chess-pecker/commit/21afbb9f10ea9c780ebc93f8c3460ca55c3b3374)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.29.0...v1.29.1
+
 # v1.29.0 (2026-09-03)
 
 ## What's Changed
