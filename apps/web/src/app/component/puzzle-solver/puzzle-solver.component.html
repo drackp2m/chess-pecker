@@ -94,7 +94,7 @@
 				</div>
 
 				<div class="actions flex-row gap-3 justify-center px-3">
-					<app-share-button />
+					<app-share-button [allowWhileOpen]="allowShareWhileOpen()" />
 
 					<app-bookmark-button
 						[lichessId]="puzzle.id"

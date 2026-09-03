@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import type { PuzzleShareResultRequest } from '@chesspecker/api-definitions';
 import { firstValueFrom } from 'rxjs';
 
@@ -33,7 +33,10 @@ export class ShareButtonComponent {
 	private readonly shareStore = inject(ShareStore);
 
 	/** Only a finished exercise is worth sending: there is nothing to compare until it is. */
-	readonly isDisabled = computed(() => undefined === this.store.puzzle() || this.store.isOpen());
+	readonly allowWhileOpen = input(false);
+	readonly isDisabled = computed(
+		() => undefined === this.store.puzzle() || (this.store.isOpen() && !this.allowWhileOpen()),
+	);
 
 	private readonly isShared = computed(() => {
 		const puzzle = this.store.puzzle();

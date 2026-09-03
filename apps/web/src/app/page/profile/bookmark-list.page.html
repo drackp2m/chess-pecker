@@ -24,6 +24,7 @@
 			[isPreviousDisabled]="!store.library.hasPrevious()"
 			[isNextDisabled]="!store.library.hasNext()"
 			[allowBookmarkWhileOpen]="true"
+			[allowShareWhileOpen]="true"
 			(previous)="store.previousPuzzle()"
 			(next)="store.nextPuzzle()"
 		/>
