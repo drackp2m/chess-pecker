@@ -24,7 +24,7 @@
 		"import:puzzles": "node tools/scripts/import-puzzles.mjs",
 		"split:chess": "node tools/scripts/split-chess-set.mjs",
 		"svg:clean": "node tools/scripts/optimize-svg.mjs",
-		"prepare": "husky"
+		"prepare": "node .husky/prepare.mjs"
 	},
 	"devDependencies": {
 		"@eslint/js": "10.0.1",

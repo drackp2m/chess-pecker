@@ -64,20 +64,6 @@ CMD mkdir -p ~/.vscode-server/extensions \
 
 
 
-FROM base AS deps-api-prod
-
-USER node
-
-COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY --chown=node:node apps/web/package.json ./apps/web/
-COPY --chown=node:node apps/api/package.json ./apps/api/
-COPY --chown=node:node libs/api-definitions/package.json ./libs/api-definitions/
-COPY --chown=node:node patches ./patches
-
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @chesspecker/api
-
-
-
 FROM deps AS build-api
 
 USER node
@@ -85,6 +71,8 @@ USER node
 COPY --chown=node:node . .
 
 RUN pnpm --filter @chesspecker/api run build
+
+RUN pnpm --filter @chesspecker/api --prod deploy /tmp/api-deploy --legacy
 
 
 
@@ -104,13 +92,6 @@ RUN chown -R node:node /usr/src/app
 
 USER node
 
-COPY --chown=node:node --from=deps-api-prod /usr/src/app/node_modules /usr/src/app/node_modules
-COPY --chown=node:node --from=deps-api-prod /usr/src/app/apps/api/node_modules ./node_modules
-COPY --chown=node:node --from=build-api /usr/src/app/apps/api/package.json ./package.json
-COPY --chown=node:node --from=build-api /usr/src/app/apps/api/dist ./dist
-COPY --chown=node:node --from=build-api /usr/src/app/libs/api-definitions/package.json /usr/src/app/libs/api-definitions/package.json
-COPY --chown=node:node --from=build-api /usr/src/app/libs/api-definitions/dist /usr/src/app/libs/api-definitions/dist
-
-COPY --chown=node:node --from=build-api /usr/src/app/package.json /usr/src/app/package.json
+COPY --chown=node:node --from=build-api /tmp/api-deploy ./
 
 CMD ["sh", "-c", "node_modules/.bin/mikro-orm migration:up && node dist/main.js"]
