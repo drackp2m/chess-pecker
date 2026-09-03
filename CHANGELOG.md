@@ -1,3 +1,13 @@
+# v1.29.2 (2026-09-03)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- preserve MikroORM entity auto-discovery in production ([74a99a2](https://github.com/drackp2m/chess-pecker/commit/74a99a2581014fb0d71495a0daaf6feaafc0de30)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.29.1...v1.29.2
+
 # v1.29.1 (2026-09-03)
 
 ## What's Changed
