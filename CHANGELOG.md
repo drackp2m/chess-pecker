@@ -1,3 +1,13 @@
+# v1.29.0 (2026-09-03)
+
+## What's Changed
+
+### ✨ Features
+
+- reorganize training profile and bookmark flows ([b1dda2e](https://github.com/drackp2m/chess-pecker/commit/b1dda2ef54a1551d03532dc9829aa7d03412ebcb)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.28.0...v1.29.0
+
 # v1.28.0 (2026-09-03)
 
 ## What's Changed
