@@ -1,5 +1,5 @@
-import { AuthUser, LoginRequest, RegisterRequest } from './auth';
-import {
+import type { AuthUser, LoginRequest, RegisterRequest } from './auth';
+import type {
 	BlockUserRequest,
 	FriendRequests,
 	FriendUser,
@@ -7,12 +7,12 @@ import {
 	SendFriendRequest,
 	UserBlock,
 } from './friendship';
-import {
+import type {
 	ListNotificationsRequest,
 	ReadNotificationsRequest,
 	UserNotification,
 } from './notification';
-import {
+import type {
 	ApiPuzzle,
 	GetPuzzleCatalogRequest,
 	ImportPuzzleRequest,
@@ -20,21 +20,21 @@ import {
 	PuzzleCatalogPage,
 	SearchPuzzleRequest,
 } from './puzzle';
-import { PuzzleBookmark, UpsertPuzzleBookmarkRequest } from './puzzle-bookmark';
-import {
+import type { PuzzleBookmark, UpsertPuzzleBookmarkRequest } from './puzzle-bookmark';
+import type {
 	CreatePuzzleShareRequest,
 	GetSentPuzzleSharesRequest,
 	PuzzleShare,
 	PuzzleShareResultRequest,
 } from './puzzle-share';
-import {
+import type {
 	GetSyncTrainingTreeRequest,
 	PushTrainingRequest,
 	PushTrainingResult,
 	SyncSummary,
 	SyncTrainingTree,
 } from './sync';
-import {
+import type {
 	CalibrationRound,
 	CalibrationRoundPuzzles,
 	GetTrainingActivityRequest,
@@ -46,8 +46,8 @@ import {
 	TrainingCycleItem,
 	TrainingProgress,
 } from './training';
-import { SearchUserRequest, UserSummary } from './user';
-import { UpsertUserSettingRequest, UserSetting } from './user-setting';
+import type { SearchUserRequest, UserSummary } from './user';
+import type { UpsertUserSettingRequest, UserSetting } from './user-setting';
 
 export interface ApiEndpoint {
 	readonly path?: Readonly<Record<string, string>>;

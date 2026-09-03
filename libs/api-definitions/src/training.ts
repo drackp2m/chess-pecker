@@ -1,5 +1,5 @@
-import { ApiPuzzle } from './puzzle';
-import { SyncTimestamps } from './sync';
+import type { ApiPuzzle } from './puzzle';
+import type { SyncTimestamps } from './sync';
 
 export type TrainingStatus = 'calibrating' | 'planning' | 'running' | 'finished' | 'cancelled';
 

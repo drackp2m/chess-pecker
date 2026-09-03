@@ -1,4 +1,4 @@
-import { UserSummary } from './user';
+import type { UserSummary } from './user';
 
 export type UserNotificationType = 'puzzle-share-received' | 'puzzle-share-solved';
 

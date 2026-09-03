@@ -1,5 +1,5 @@
-import { PuzzleAttemptClosure } from './training';
-import { UserSummary } from './user';
+import type { PuzzleAttemptClosure } from './training';
+import type { UserSummary } from './user';
 
 /**
  * What somebody made of a shared exercise. The same shape for whoever solved it, sender

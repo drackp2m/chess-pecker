@@ -1,5 +1,5 @@
-import { ApiPuzzle } from './puzzle';
-import {
+import type { ApiPuzzle } from './puzzle';
+import type {
 	CalibrationRoundKind,
 	CalibrationRoundOutcome,
 	FreePlayRun,

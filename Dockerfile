@@ -27,6 +27,7 @@ USER node
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=node:node apps/web/package.json ./apps/web/
 COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node libs/api-definitions/package.json ./libs/api-definitions/
 COPY --chown=node:node patches ./patches
 
 RUN pnpm install --frozen-lockfile
@@ -70,6 +71,7 @@ USER node
 COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=node:node apps/web/package.json ./apps/web/
 COPY --chown=node:node apps/api/package.json ./apps/api/
+COPY --chown=node:node libs/api-definitions/package.json ./libs/api-definitions/
 COPY --chown=node:node patches ./patches
 
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @chesspecker/api
@@ -106,6 +108,8 @@ COPY --chown=node:node --from=deps-api-prod /usr/src/app/node_modules /usr/src/a
 COPY --chown=node:node --from=deps-api-prod /usr/src/app/apps/api/node_modules ./node_modules
 COPY --chown=node:node --from=build-api /usr/src/app/apps/api/package.json ./package.json
 COPY --chown=node:node --from=build-api /usr/src/app/apps/api/dist ./dist
+COPY --chown=node:node --from=build-api /usr/src/app/libs/api-definitions/package.json /usr/src/app/libs/api-definitions/package.json
+COPY --chown=node:node --from=build-api /usr/src/app/libs/api-definitions/dist /usr/src/app/libs/api-definitions/dist
 
 COPY --chown=node:node --from=build-api /usr/src/app/package.json /usr/src/app/package.json
 

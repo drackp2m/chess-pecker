@@ -136,6 +136,9 @@ jobs:
       - name: Register tsc problem matcher
         run: echo "::add-matcher::.github/matchers/tsc.json"
 
+      - name: Build shared definitions
+        run: pnpm --filter @chesspecker/api-definitions build
+
       - name: Run typecheck
         run: |
           set -o pipefail

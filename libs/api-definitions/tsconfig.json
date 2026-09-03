@@ -1,5 +1,3 @@
-/* The package ships no JavaScript, so this project never emits: it exists to compile the
-   declarations on their own with `skipLibCheck` off, which both apps turn on. */
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
@@ -10,5 +8,5 @@
 		"skipLibCheck": false,
 		"noEmit": true
 	},
-	"include": ["src/**/*.d.ts"]
+	"include": ["src/**/*.ts"]
 }
