@@ -1,6 +1,6 @@
+import type { LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
 import { Test, TestingModule } from '@nestjs/testing';
 import { mock } from 'vitest-mock-extended';
-import type { LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
 
 import { User } from '../user/user.entity';
 

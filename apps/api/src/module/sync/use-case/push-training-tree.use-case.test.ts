@@ -1,4 +1,9 @@
-import type { PushTrainingResult } from '@chesspecker/api-definitions';
+import type {
+	PushCycleNodeParsed,
+	PushTrainingNodeParsed,
+	PushTrainingRequestParsed,
+	PushTrainingResult,
+} from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 import { TestingModule } from '@nestjs/testing';
 
@@ -19,11 +24,6 @@ import { TrainingGoal } from '../../training/training-goal.entity';
 import { TrainingPuzzle } from '../../training/training-puzzle.entity';
 import { Training } from '../../training/training.entity';
 import { User } from '../../user/user.entity';
-import type {
-	PushCycleNodeParsed,
-	PushTrainingNodeParsed,
-	PushTrainingRequestParsed,
-} from '@chesspecker/api-definitions';
 import { SyncModule } from '../sync.module';
 import {
 	BORN,
@@ -59,8 +59,8 @@ interface TreeCounts {
 
 function tree(
 	refs: TreeRefs,
-		node: Partial<PlainNode<PushTrainingNodeParsed>>,
-	): PushTrainingRequestParsed {
+	node: Partial<PlainNode<PushTrainingNodeParsed>>,
+): PushTrainingRequestParsed {
 	return { training: { ...trainingNode(refs), ...node } };
 }
 

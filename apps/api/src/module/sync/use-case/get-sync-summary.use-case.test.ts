@@ -1,3 +1,4 @@
+import type { PushTrainingRequestParsed } from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 import { TestingModule } from '@nestjs/testing';
 
@@ -7,7 +8,6 @@ import { AppModule } from '../../app/app.module';
 import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
 import { TrainingCycle } from '../../training/training-cycle.entity';
 import { User } from '../../user/user.entity';
-import type { PushTrainingRequestParsed } from '@chesspecker/api-definitions';
 import { SyncModule } from '../sync.module';
 import {
 	BORN,

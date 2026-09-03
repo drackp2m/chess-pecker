@@ -14,13 +14,19 @@ import type {
 } from './training';
 
 export interface SyncTimestamps<TDate = string> {
-	createdAt?: TDate;
-	updatedAt?: TDate;
+	createdAt?: TDate | undefined;
+	updatedAt?: TDate | undefined;
 }
 
 const syncTimestampsSchema = z.object({
-	createdAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
-	updatedAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	createdAt: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
+	updatedAt: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
 });
 
 const syncNodeSchema = syncTimestampsSchema.extend({
@@ -66,7 +72,10 @@ export interface PushTrainingNode<TDate = string> extends SyncNode<TDate> {
 
 const pushGoalNodeSchema = syncNodeSchema.extend({
 	puzzlesPerDay: z.number().int().min(1).optional(),
-	endDate: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	endDate: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
 });
 
 export type PushGoalNodeParsed = z.output<typeof pushGoalNodeSchema>;
@@ -122,7 +131,10 @@ export type PushCycleNodeParsed = z.output<typeof pushCycleNodeSchema>;
 export const pushTrainingNodeSchema = syncNodeSchema.extend({
 	status: z.enum(['calibrating', 'planning', 'running', 'finished', 'cancelled']),
 	finishedReason: z.enum(['completed', 'plateau', 'max-cycles', 'cancelled']).optional(),
-	finishedAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	finishedAt: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
 	goals: z.array(pushGoalNodeSchema),
 	rounds: z.array(pushCalibrationRoundNodeSchema),
 	puzzles: z.array(pushTrainingPuzzleNodeSchema),
@@ -194,7 +206,10 @@ export interface GetSyncTrainingTreeRequest<TDate = string> {
 }
 
 export const getSyncTrainingTreeRequestSchema = z.object({
-	since: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	since: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
 });
 
 export interface SyncTreeRow<TDate = string> {

@@ -1,4 +1,4 @@
-import { Check, Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/decorators/es';
+import { Check, Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 
@@ -19,7 +19,7 @@ export class TrainingCalibrationRound extends SyncableBaseEntity<TrainingCalibra
 	training!: Training;
 
 	/** Global order of the rounds within the training, from 1. */
-	@Property()
+	@Property({ type: 'number' })
 	index!: number;
 
 	/**
@@ -30,7 +30,7 @@ export class TrainingCalibrationRound extends SyncableBaseEntity<TrainingCalibra
 	kind!: CalibrationRoundKind;
 
 	/** The bottom of the hundred (600 ⇒ 600-699); the top is always `rating + 99`. */
-	@Property()
+	@Property({ type: 'number' })
 	rating!: number;
 
 	/** Anything but `pending` says the round is closed, so there is no `finishedAt`. */

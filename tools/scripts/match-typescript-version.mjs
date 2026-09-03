@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const fixMode = process.argv.includes('--fix');
@@ -52,6 +52,7 @@ if (fixMode) {
 	for (const { packagePath, packageJson, found } of mismatches) {
 		if (!found) {
 			console.error(`⛔ Falta la dependencia TypeScript: ${packagePath}`);
+
 			continue;
 		}
 

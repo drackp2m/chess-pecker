@@ -1,5 +1,5 @@
-import { Injectable, Scope } from '@nestjs/common';
 import type { LoginRequest } from '@chesspecker/api-definitions';
+import { Injectable, Scope } from '@nestjs/common';
 
 import { UnauthorizedException } from '../../../shared/exception/unauthorized-exception.exception';
 import { UserRepository } from '../../user/user.repository';

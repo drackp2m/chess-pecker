@@ -10,7 +10,9 @@ export class PuzzleBookmarkRepository extends CustomRepository<PuzzleBookmark> {
 	async upsertByPuzzle(bookmark: PuzzleBookmark): Promise<PuzzleBookmark> {
 		// The data goes in explicitly and not as an instance: from an entity the EntityManager
 		// has never seen, `upsert` reads no fields and sends an empty insert.
-		return this.entityManager.fork().upsert(
+		const entityManager = this.entityManager.fork();
+
+		await entityManager.upsert(
 			PuzzleBookmark,
 			{
 				uuid: bookmark.uuid,
@@ -25,5 +27,10 @@ export class PuzzleBookmarkRepository extends CustomRepository<PuzzleBookmark> {
 				onConflictMergeFields: ['type', 'updatedAt'],
 			},
 		);
+
+		return entityManager.findOneOrFail(PuzzleBookmark, {
+			user: bookmark.user,
+			puzzle: bookmark.puzzle,
+		});
 	}
 }

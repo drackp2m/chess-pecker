@@ -1,7 +1,6 @@
 import type { SyncEntity, SyncNodeParsed } from '@chesspecker/api-definitions';
 import { EntityManager, EntityName, FilterQuery } from '@mikro-orm/core';
 
-
 import { syncKey } from './sync-node.util';
 
 export interface SyncRow {

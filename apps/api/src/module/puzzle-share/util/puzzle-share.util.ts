@@ -5,6 +5,8 @@ import type {
 	PuzzleShareResultRequest,
 } from '@chesspecker/api-definitions';
 
+import { toIsoDate } from '../../../shared/util/to-iso-date';
+import { PuzzleAttemptClosure } from '../../training/definition/puzzle-attempt-closure.enum';
 import { User } from '../../user/user.entity';
 import { PuzzleShareAttempt } from '../puzzle-share-attempt.entity';
 import { PuzzleShareRecipient } from '../puzzle-share-recipient.entity';
@@ -18,7 +20,7 @@ export function presentResult(attempt: PuzzleShareAttempt): PuzzleShareResult {
 		hintUsed: attempt.hintUsed,
 		mistakeCount: attempt.mistakeCount,
 		...(undefined === attempt.durationMs ? {} : { durationMs: attempt.durationMs }),
-		createdAt: attempt.createdAt.toISOString(),
+		createdAt: toIsoDate(attempt.createdAt),
 	};
 }
 
@@ -51,8 +53,8 @@ export function presentShare(
 		message: share.message ?? null,
 		sender: presentParticipant(share.sender, byUser),
 		recipients: recipients.map((row) => presentParticipant(row.recipient, byUser)),
-		createdAt: share.createdAt.toISOString(),
-		updatedAt: share.updatedAt.toISOString(),
+		createdAt: toIsoDate(share.createdAt),
+		updatedAt: toIsoDate(share.updatedAt),
 	};
 }
 
@@ -69,7 +71,7 @@ export function buildAttempt(
 		share,
 		user,
 		solved: result.solved,
-		closure: result.closure,
+		closure: result.closure as PuzzleAttemptClosure,
 		hintUsed: result.hintUsed,
 		mistakeCount: result.mistakeCount,
 		...(undefined === result.durationMs ? {} : { durationMs: result.durationMs }),

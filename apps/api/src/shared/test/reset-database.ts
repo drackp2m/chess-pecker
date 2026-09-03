@@ -1,4 +1,4 @@
-import { MikroORM } from '@mikro-orm/postgresql';
+import { type EntityManager, MikroORM, type PostgreSqlDriver } from '@mikro-orm/postgresql';
 
 import { integrationMikroOrmConfig } from './integration-mikro-orm.config';
 
@@ -9,9 +9,9 @@ export default async function setup(): Promise<void> {
 		);
 	}
 
-	const orm = await MikroORM.init(integrationMikroOrmConfig());
+	const orm = await MikroORM.init<PostgreSqlDriver, EntityManager>(integrationMikroOrmConfig());
 
-	await orm.schema.dropSchema({ dropMigrationsTable: true });
+	await orm.schema.drop({ dropMigrationsTable: true });
 	await orm.migrator.up();
 	await orm.close();
 }

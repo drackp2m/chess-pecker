@@ -7,6 +7,8 @@
 		"resolvePackageJsonExports": true,
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
 		"useDefineForClassFields": false,
 		"types": ["node", "vitest/globals"],
 		"outDir": "./dist",

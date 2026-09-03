@@ -1,13 +1,24 @@
-import { EntityManager, FilterQuery, FindOneOptions, FindOptions, Primary } from '@mikro-orm/core';
+import { Utils } from '@mikro-orm/core';
+import type {
+	EntityManager,
+	EntityName,
+	FilterQuery,
+	FindOneOptions,
+	FindOptions,
+	Primary,
+} from '@mikro-orm/core';
 
 import { NotFoundException } from '../exception/not-found.exception';
 
 import { CustomBaseEntity } from './custom-base.entity';
 
+type RepositoryFindOptions<T, Hint extends string> = Omit<FindOptions<T, Hint>, 'using'>;
+type RepositoryFindOneOptions<T, Hint extends string> = Omit<FindOneOptions<T, Hint>, 'using'>;
+
 export class CustomRepository<T extends CustomBaseEntity<T>> {
 	constructor(
 		protected readonly entityManager: EntityManager,
-		private readonly entityName: string,
+		private readonly entityName: EntityName<T>,
 	) {}
 
 	getReference(id: Primary<T>): T {
@@ -16,12 +27,12 @@ export class CustomRepository<T extends CustomBaseEntity<T>> {
 
 	async getOne<Hint extends string = never>(
 		query: FilterQuery<T>,
-		options?: FindOneOptions<T, Hint>,
+		options?: RepositoryFindOneOptions<T, Hint>,
 	): Promise<T> {
-		const user = await this.entityManager.fork().findOne(this.entityName, query, options);
+		const user = await this.entityManager.fork().findOne<T, Hint>(this.entityName, query, options);
 
 		if (null === user) {
-			const entityName = this.entityName.replace('Entity', '').toLocaleLowerCase();
+			const entityName = Utils.className(this.entityName).replace('Entity', '').toLocaleLowerCase();
 
 			throw new NotFoundException('not exists', entityName);
 		}
@@ -31,9 +42,9 @@ export class CustomRepository<T extends CustomBaseEntity<T>> {
 
 	async getMany<Hint extends string = never>(
 		query: FilterQuery<T> = {},
-		options?: FindOptions<T, Hint>,
+		options?: RepositoryFindOptions<T, Hint>,
 	): Promise<T[]> {
-		return this.entityManager.fork().find(this.entityName, query, options);
+		return this.entityManager.fork().find<T, Hint>(this.entityName, query, options);
 	}
 
 	async insert(entity: T): Promise<T> {

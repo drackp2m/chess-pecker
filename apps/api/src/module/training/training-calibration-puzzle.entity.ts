@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/decorators/es';
+import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';
@@ -16,6 +16,6 @@ export class TrainingCalibrationPuzzle extends SyncableBaseEntity<TrainingCalibr
 	@ManyToOne(() => Puzzle)
 	puzzle!: Puzzle;
 
-	@Property()
+	@Property({ type: 'number' })
 	position!: number;
 }

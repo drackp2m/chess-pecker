@@ -1,7 +1,4 @@
-import type {
-	PushCycleItemNodeParsed,
-	PushCycleNodeParsed,
-} from '@chesspecker/api-definitions';
+import type { PushCycleItemNodeParsed, PushCycleNodeParsed } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
@@ -72,7 +69,7 @@ export class PushCycleBranchUseCase {
 			new TrainingCycle({
 				training,
 				index: node.index,
-				status: node.status,
+				status: node.status as TrainingCycleStatus,
 				itemCount: Math.max(node.itemCount, setSize),
 			}),
 			node,
@@ -80,7 +77,7 @@ export class PushCycleBranchUseCase {
 
 		return {
 			row: claimSyncRow(context, 'cycle', node, cycle),
-			closedHere: TrainingCycleStatus.Finished === node.status,
+			closedHere: 'finished' === node.status,
 		};
 	}
 
@@ -95,11 +92,11 @@ export class PushCycleBranchUseCase {
 			return false;
 		}
 
-		row.status = node.status;
+		row.status = node.status as TrainingCycleStatus;
 
 		this.applySyncTimestampsUseCase.execute(row, node);
 
-		return TrainingCycleStatus.Finished === node.status;
+		return 'finished' === node.status;
 	}
 
 	/**

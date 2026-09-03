@@ -5,7 +5,6 @@ import type {
 	SyncRejection,
 } from '@chesspecker/api-definitions';
 
-
 /**
  * What a push reports back: the uuid each row ended up with, so the device can rekey, and
  * the ones that will never land, so it stops retrying them.

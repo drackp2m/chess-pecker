@@ -1,6 +1,6 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { loginRequestSchema, registerRequestSchema } from '@chesspecker/api-definitions';
 import type { LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 
 import { User } from '../user/user.entity';
 

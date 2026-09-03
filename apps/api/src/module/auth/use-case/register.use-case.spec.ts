@@ -1,6 +1,6 @@
+import type { RegisterRequest } from '@chesspecker/api-definitions';
 import { Test, TestingModule } from '@nestjs/testing';
 import { mock } from 'vitest-mock-extended';
-import type { RegisterRequest } from '@chesspecker/api-definitions';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';

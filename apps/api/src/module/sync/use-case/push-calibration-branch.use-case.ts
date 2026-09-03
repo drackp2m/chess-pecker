@@ -4,6 +4,8 @@ import type {
 } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
+import { CalibrationRoundKind } from '../../training/definition/calibration-round-kind.enum';
+import { CalibrationRoundOutcome } from '../../training/definition/calibration-round-outcome.enum';
 import { TrainingCalibrationPuzzle } from '../../training/training-calibration-puzzle.entity';
 import { TrainingCalibrationRound } from '../../training/training-calibration-round.entity';
 import { Training } from '../../training/training.entity';
@@ -77,7 +79,7 @@ export class PushCalibrationBranchUseCase {
 			return;
 		}
 
-		row.outcome = node.outcome;
+		row.outcome = node.outcome as CalibrationRoundOutcome;
 
 		this.applySyncTimestampsUseCase.execute(row, node);
 	}
@@ -90,9 +92,9 @@ export class PushCalibrationBranchUseCase {
 			new TrainingCalibrationRound({
 				training,
 				index: node.index,
-				kind: node.kind,
+				kind: node.kind as CalibrationRoundKind,
 				rating: node.rating,
-				outcome: node.outcome,
+				outcome: node.outcome as CalibrationRoundOutcome,
 			}),
 			node,
 		);

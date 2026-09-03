@@ -26,7 +26,10 @@ export interface UpsertPuzzleBookmarkRequest<TDate = string> {
 
 export const upsertPuzzleBookmarkRequestSchema = z.object({
 	type: z.enum(['favorite', 'hard', 'easy', 'unclear']),
-	updatedAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	updatedAt: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
 });
 
 export type UpsertPuzzleBookmarkRequestParsed = z.output<typeof upsertPuzzleBookmarkRequestSchema>;

@@ -77,7 +77,12 @@ export const puzzleShareResultRequestSchema = z.object({
 	closure: z.enum(['found', 'revealed']),
 	hintUsed: z.boolean(),
 	mistakeCount: z.coerce.number().int().min(0),
-	durationMs: z.coerce.number().int().min(0).max(24 * 60 * 60 * 1000).optional(),
+	durationMs: z.coerce
+		.number()
+		.int()
+		.min(0)
+		.max(24 * 60 * 60 * 1000)
+		.optional(),
 });
 
 export interface CreatePuzzleShareRequest {

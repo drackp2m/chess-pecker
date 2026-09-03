@@ -1,4 +1,4 @@
-import { Entity, Index, ManyToOne, Unique } from '@mikro-orm/decorators/es';
+import { Entity, Index, ManyToOne, Unique } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';

@@ -3,6 +3,7 @@ import { EntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { Puzzle } from '../../puzzle/puzzle.entity';
+import { PuzzleAttemptClosure } from '../../training/definition/puzzle-attempt-closure.enum';
 import { PuzzleAttemptKind } from '../../training/definition/puzzle-attempt-kind.enum';
 import { PuzzleAttempt } from '../../training/puzzle-attempt.entity';
 import { TrainingCalibrationRound } from '../../training/training-calibration-round.entity';
@@ -84,7 +85,7 @@ export class PushSyncAttemptUseCase {
 				puzzle,
 				durationMs: node.durationMs,
 				solved: node.solved,
-				closure: node.closure,
+				closure: node.closure as PuzzleAttemptClosure,
 				hintUsed: node.hintUsed,
 				mistakeCount: node.mistakeCount,
 				record: node.record,

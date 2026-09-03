@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { toIsoDate } from '../../../shared/util/to-iso-date';
 import { Puzzle } from '../../puzzle/puzzle.entity';
 import { TrainingCalibrationPuzzle } from '../../training/training-calibration-puzzle.entity';
 import { TrainingCalibrationPuzzleRepository } from '../../training/training-calibration-puzzle.repository';
@@ -111,9 +112,9 @@ function toRow(entity: SyncedEntity): SyncTreeRow {
 	return {
 		uuid: entity.uuid,
 		...(undefined === clientRef ? {} : { clientRef }),
-		createdAt: entity.createdAt.toISOString(),
-		updatedAt: entity.updatedAt.toISOString(),
-		receivedAt: entity.receivedAt.toISOString(),
+		createdAt: toIsoDate(entity.createdAt),
+		updatedAt: toIsoDate(entity.updatedAt),
+		receivedAt: toIsoDate(entity.receivedAt),
 	};
 }
 
@@ -125,7 +126,7 @@ function toTrainingNode(training: Training): SyncTreeTrainingNode {
 		...toRow(training),
 		status: training.status,
 		...(undefined === finishedReason ? {} : { finishedReason }),
-		...(undefined === finishedAt ? {} : { finishedAt: finishedAt.toISOString() }),
+		...(undefined === finishedAt ? {} : { finishedAt: toIsoDate(finishedAt) }),
 	};
 }
 
@@ -147,7 +148,7 @@ function toItemNode(row: TrainingCycleItem): SyncTreeItemNode {
 }
 
 function toDateString(endDate: Date | string): string {
-	return endDate instanceof Date ? endDate.toISOString().slice(0, 10) : endDate;
+	return toIsoDate(endDate).slice(0, 10);
 }
 
 function collectPuzzles(set: TrainingPuzzle[], dealt: TrainingCalibrationPuzzle[]): Puzzle[] {

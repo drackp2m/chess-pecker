@@ -18,10 +18,7 @@ export class ListNotificationsUseCase {
 	 * Newest first and capped: an account that never opened the inbox would otherwise drag
 	 * its whole history down on every poll.
 	 */
-	async execute(
-		user: User,
-		query: ListNotificationsRequest,
-	): Promise<UserNotificationResponse[]> {
+	async execute(user: User, query: ListNotificationsRequest): Promise<UserNotificationResponse[]> {
 		const notifications = await this.userNotificationRepository.getMany(
 			{ user: user.uuid },
 			{

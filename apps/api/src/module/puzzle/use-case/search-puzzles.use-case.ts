@@ -1,5 +1,5 @@
-import { FilterQuery } from '@mikro-orm/core';
 import type { SearchPuzzleRequest } from '@chesspecker/api-definitions';
+import { FilterQuery } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { Puzzle } from '../puzzle.entity';

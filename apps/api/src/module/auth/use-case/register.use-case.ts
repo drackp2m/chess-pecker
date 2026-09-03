@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
 import type { RegisterRequest } from '@chesspecker/api-definitions';
+import type { EntityData } from '@mikro-orm/core';
+import { Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
@@ -34,7 +35,16 @@ export class RegisterUseCase {
 
 		registerRequest.password = await this.hashPasswordUseCase.execute(registerRequest.password);
 
-		const user = new User(registerRequest);
+		const userData: EntityData<User> = {
+			username: registerRequest.username,
+			password: registerRequest.password,
+		};
+
+		if (undefined !== registerRequest.email) {
+			userData.email = registerRequest.email;
+		}
+
+		const user = new User(userData);
 
 		return this.userRepository.insert(user);
 	}

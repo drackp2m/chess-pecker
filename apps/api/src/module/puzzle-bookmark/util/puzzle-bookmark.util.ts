@@ -1,5 +1,6 @@
 import type { PuzzleBookmark as PuzzleBookmarkResponse } from '@chesspecker/api-definitions';
 
+import { toIsoDate } from '../../../shared/util/to-iso-date';
 import { PuzzleBookmark } from '../puzzle-bookmark.entity';
 
 /**
@@ -15,7 +16,7 @@ export function presentBookmark(
 		uuid: bookmark.uuid,
 		lichessId,
 		type: bookmark.type,
-		createdAt: bookmark.createdAt.toISOString(),
-		updatedAt: bookmark.updatedAt.toISOString(),
+		createdAt: toIsoDate(bookmark.createdAt),
+		updatedAt: toIsoDate(bookmark.updatedAt),
 	};
 }

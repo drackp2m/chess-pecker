@@ -1,6 +1,7 @@
 import type { GetTrainingAttemptsRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
+import { toIsoDate } from '../../../shared/util/to-iso-date';
 import {
 	TrainingAttempt,
 	TrainingAttemptHistory,
@@ -67,8 +68,8 @@ function toHistoryEntry(attempt: PuzzleAttempt): TrainingAttempt {
 		mistakeCount: attempt.mistakeCount,
 		record: attempt.record,
 		freePlayRuns: attempt.freePlayRuns,
-		createdAt: attempt.createdAt.toISOString(),
-		updatedAt: attempt.updatedAt.toISOString(),
+		createdAt: toIsoDate(attempt.createdAt),
+		updatedAt: toIsoDate(attempt.updatedAt),
 		...(undefined === roundUuid ? {} : { roundUuid }),
 		...(undefined === cycleItemUuid ? {} : { cycleItemUuid }),
 		...(undefined === position ? {} : { position }),

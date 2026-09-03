@@ -1,5 +1,5 @@
 import type { FreePlayRun, PuzzleEvent } from '@chesspecker/api-definitions';
-import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/decorators/es';
+import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';
@@ -42,21 +42,21 @@ export class PuzzleAttempt extends SyncableBaseEntity<PuzzleAttempt> {
 	puzzle!: Puzzle;
 
 	/** Time accumulated with the exercise on screen, not the gap between two dates. */
-	@Property()
+	@Property({ type: 'number' })
 	durationMs!: number;
 
 	/** Judged on the first try, so `false` is final however long the search goes on. */
-	@Property()
+	@Property({ type: 'boolean' })
 	solved!: boolean;
 
 	/** What that search came to: found, or given up on. */
 	@Enum({ items: () => PuzzleAttemptClosure })
 	closure!: PuzzleAttemptClosure;
 
-	@Property({ default: false })
+	@Property({ type: 'boolean', default: false })
 	hintUsed!: boolean;
 
-	@Property({ default: 0 })
+	@Property({ type: 'number', default: 0 })
 	mistakeCount!: number;
 
 	/**

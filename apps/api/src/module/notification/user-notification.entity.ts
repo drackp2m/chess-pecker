@@ -1,4 +1,4 @@
-import { Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/decorators/es';
+import { Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { PuzzleShare } from '../puzzle-share/puzzle-share.entity';
@@ -31,6 +31,6 @@ export class UserNotification extends CustomBaseEntity<UserNotification> {
 	@ManyToOne(() => PuzzleShare, { deleteRule: 'cascade', nullable: true })
 	share?: PuzzleShare;
 
-	@Property({ nullable: true })
+	@Property({ type: 'datetime', nullable: true })
 	readAt?: Date;
 }

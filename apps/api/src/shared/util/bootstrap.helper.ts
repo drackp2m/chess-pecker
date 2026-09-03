@@ -5,10 +5,9 @@ import {
 	INestApplication,
 	Logger,
 	NestApplicationOptions,
+	StandardSchemaValidationPipe,
 } from '@nestjs/common';
-import { StandardSchemaValidationPipe } from '@nestjs/common/pipes';
-import { GlobalPrefixOptions } from '@nestjs/common/interfaces';
-import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import type { CorsOptions, GlobalPrefixOptions } from '@nestjs/common/internal';
 import { NextFunction, Request, Response } from 'express';
 
 import { ConfigurationService } from '../module/config/configuration.service';

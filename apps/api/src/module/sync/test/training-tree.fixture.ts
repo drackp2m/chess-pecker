@@ -63,7 +63,10 @@ export function buildRefs(): TreeRefs {
 	};
 }
 
-export function attemptNode(clientRef: string, lichessId: string): PlainNode<PushAttemptNodeParsed> {
+export function attemptNode(
+	clientRef: string,
+	lichessId: string,
+): PlainNode<PushAttemptNodeParsed> {
 	return {
 		clientRef,
 		createdAt: BORN,

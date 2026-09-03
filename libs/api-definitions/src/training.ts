@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import type { ApiPuzzle } from './puzzle';
 import type { SyncTimestamps } from './sync';
 
@@ -221,7 +223,10 @@ export interface GetTrainingActivityRequest<TDate = string> {
 
 export const getTrainingActivityRequestSchema = z.object({
 	days: z.coerce.number().int().min(1).max(371).optional(),
-	since: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	since: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
 });
 
 export type GetTrainingActivityRequestParsed = z.output<typeof getTrainingActivityRequestSchema>;
@@ -255,4 +260,3 @@ export interface TrainingActivityDay {
 	readonly hints: number;
 	readonly durationMs: number;
 }
-import { z } from 'zod';

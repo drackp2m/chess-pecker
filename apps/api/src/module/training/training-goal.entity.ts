@@ -1,4 +1,4 @@
-import { Check, Entity, Index, ManyToOne, Property } from '@mikro-orm/decorators/es';
+import { Check, Entity, Index, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 
@@ -19,7 +19,7 @@ export class TrainingGoal extends SyncableBaseEntity<TrainingGoal> {
 	@ManyToOne(() => Training, { deleteRule: 'cascade' })
 	training!: Training;
 
-	@Property({ nullable: true })
+	@Property({ type: 'number', nullable: true })
 	puzzlesPerDay?: number;
 
 	@Property({ type: 'date', nullable: true })
