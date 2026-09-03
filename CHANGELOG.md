@@ -1,3 +1,17 @@
+# v1.29.3 (2026-09-03)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- make Husky setup compatible with Docker builds ([dd1f487](https://github.com/drackp2m/chess-pecker/commit/dd1f487c958985609b782c4fced5ff0ad2f8798f)) by Marc Jovaní González
+
+### 🏗️‍ Build System
+
+- package API with pnpm deploy ([c83418f](https://github.com/drackp2m/chess-pecker/commit/c83418fad16231c46ee760e49bf5dc13e70b61ad)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.29.2...v1.29.3
+
 # v1.29.2 (2026-09-03)
 
 ## What's Changed
