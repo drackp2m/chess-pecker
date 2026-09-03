@@ -1,4 +1,4 @@
-import { Entity, Property, Unique } from '@mikro-orm/core';
+import { Entity, Property, Unique } from '@mikro-orm/decorators/es';
 
 import { GenerateNowDateUseCase } from '../use-case/generate-now-date.use-case';
 

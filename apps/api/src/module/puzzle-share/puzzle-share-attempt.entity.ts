@@ -1,4 +1,4 @@
-import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
+import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/decorators/es';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { PuzzleAttemptClosure } from '../training/definition/puzzle-attempt-closure.enum';

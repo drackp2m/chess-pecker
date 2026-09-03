@@ -1,4 +1,4 @@
-import { Check, Entity, ManyToOne, Unique } from '@mikro-orm/core';
+import { Check, Entity, ManyToOne, Unique } from '@mikro-orm/decorators/es';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { User } from '../user/user.entity';

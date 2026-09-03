@@ -1,5 +1,5 @@
-import { BaseEntity, Entity, PrimaryKey, Property } from '@mikro-orm/core';
-import type { EntityData } from '@mikro-orm/core';
+import { BaseEntity, type EntityData } from '@mikro-orm/core';
+import { Entity, PrimaryKey, Property } from '@mikro-orm/decorators/es';
 
 import { GenerateNowDateUseCase } from '../use-case/generate-now-date.use-case';
 import { GenerateUuidUseCase } from '../use-case/generate-uuid.use-case';

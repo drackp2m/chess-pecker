@@ -1,4 +1,4 @@
-import { Entity, Index, Property } from '@mikro-orm/core';
+import { Entity, Index, Property } from '@mikro-orm/decorators/es';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 

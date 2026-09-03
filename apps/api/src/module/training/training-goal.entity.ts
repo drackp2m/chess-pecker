@@ -1,4 +1,4 @@
-import { Check, Entity, Index, ManyToOne, Property } from '@mikro-orm/core';
+import { Check, Entity, Index, ManyToOne, Property } from '@mikro-orm/decorators/es';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 

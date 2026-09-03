@@ -1,4 +1,4 @@
-import { Entity, Enum, ManyToOne, Unique } from '@mikro-orm/core';
+import { Entity, Enum, ManyToOne, Unique } from '@mikro-orm/decorators/es';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';

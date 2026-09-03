@@ -6,8 +6,6 @@ import { CustomBaseEntity } from './custom-base.entity';
 
 export class CustomRepository<T extends CustomBaseEntity<T>> {
 	constructor(
-		// `protected` so repositories extending this can write the queries the generic methods
-		// below do not cover: upserts, aggregates.
 		protected readonly entityManager: EntityManager,
 		private readonly entityName: string,
 	) {}

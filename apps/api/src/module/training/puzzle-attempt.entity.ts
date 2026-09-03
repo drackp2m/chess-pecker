@@ -1,5 +1,5 @@
 import type { FreePlayRun, PuzzleEvent } from '@chesspecker/api-definitions';
-import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/core';
+import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/decorators/es';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';
