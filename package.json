@@ -17,6 +17,7 @@
 		"test:tools": "node tools/scripts/test/tools-test.mjs",
 		"test:lock": "node tools/scripts/test-lock/index.mjs",
 		"test:lock:select": "node tools/scripts/test-lock/index.mjs --select",
+		"typescript:match": "node tools/scripts/match-typescript-version.mjs",
 		"update:deps": "sh tools/scripts/update-deps.sh",
 		"git:sync": "sh tools/scripts/sync-git-main.sh",
 		"pnpm:match": "node tools/scripts/match-pnpm-version.mjs",
@@ -50,7 +51,7 @@
 		"stylelint": "17.14.1",
 		"stylelint-config-clean-order": "10.0.0",
 		"stylelint-config-standard-scss": "17.0.0",
-		"typescript": "^6.0.3",
+		"typescript": "6.0.3",
 		"typescript-eslint": "8.69.0"
 	}
 }

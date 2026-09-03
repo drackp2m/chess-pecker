@@ -1,9 +1,9 @@
+import type { BlockUserRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
 import { UserRepository } from '../../user/user.repository';
-import { BlockUserRequestDto } from '../dto/request/block-user-request.dto';
 import { FriendshipRepository } from '../friendship.repository';
 import { UserBlock } from '../user-block.entity';
 import { UserBlockRepository } from '../user-block.repository';
@@ -16,7 +16,7 @@ export class BlockUserUseCase {
 		private readonly friendshipRepository: FriendshipRepository,
 	) {}
 
-	async execute(blocker: User, blockRequest: BlockUserRequestDto): Promise<UserBlock> {
+	async execute(blocker: User, blockRequest: BlockUserRequest): Promise<UserBlock> {
 		const blocked = await this.userRepository.getOne({ username: blockRequest.username });
 
 		if (blocked.uuid === blocker.uuid) {

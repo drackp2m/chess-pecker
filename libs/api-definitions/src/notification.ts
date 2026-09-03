@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import type { UserSummary } from './user';
 
 export type UserNotificationType = 'puzzle-share-received' | 'puzzle-share-solved';
@@ -24,3 +26,11 @@ export interface ListNotificationsRequest {
 export interface ReadNotificationsRequest {
 	uuids: string[];
 }
+
+export const listNotificationsRequestSchema = z.object({
+	limit: z.coerce.number().int().min(1).max(100).optional(),
+});
+
+export const readNotificationsRequestSchema = z.object({
+	uuids: z.array(z.uuid()).min(1).max(100),
+});

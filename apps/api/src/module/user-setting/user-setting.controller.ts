@@ -1,9 +1,10 @@
+import { upsertUserSettingRequestSchema } from '@chesspecker/api-definitions';
+import type { UpsertUserSettingRequest } from '@chesspecker/api-definitions';
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Put } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
-import { UpsertUserSettingRequestDto } from './dto/request/upsert-user-setting-request.dto';
 import { DeleteUserSettingUseCase } from './use-case/delete-user-setting.use-case';
 import { GetUserSettingsUseCase } from './use-case/get-user-settings.use-case';
 import { UpsertUserSettingUseCase } from './use-case/upsert-user-setting.use-case';
@@ -26,7 +27,7 @@ export class UserSettingController {
 	async upsert(
 		@CurrentUser() user: User,
 		@Param('key') key: string,
-		@Body() upsertRequest: UpsertUserSettingRequestDto,
+		@Body({ schema: upsertUserSettingRequestSchema }) upsertRequest: UpsertUserSettingRequest,
 	): Promise<UserSetting> {
 		return this.upsertUserSettingUseCase.execute(user, key, upsertRequest);
 	}

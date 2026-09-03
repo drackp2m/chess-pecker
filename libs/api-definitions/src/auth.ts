@@ -1,15 +1,21 @@
+import { z } from 'zod';
+
 import type { UserRole } from './user';
 
-export interface LoginRequest {
-	username: string;
-	password: string;
-}
+export const loginRequestSchema = z.object({
+	username: z.string().min(1),
+	password: z.string().min(1),
+});
 
-export interface RegisterRequest {
-	username: string;
-	password: string;
-	email?: string;
-}
+export type LoginRequest = z.input<typeof loginRequestSchema>;
+
+export const registerRequestSchema = z.object({
+	username: z.string().min(1),
+	password: z.string().min(1),
+	email: z.email().optional(),
+});
+
+export type RegisterRequest = z.input<typeof registerRequestSchema>;
 
 export interface AuthUser {
 	readonly uuid: string;

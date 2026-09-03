@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * The list an exercise was filed under. One per user and exercise: filing it again moves it,
  * it does not add a second row.
@@ -21,3 +23,10 @@ export interface UpsertPuzzleBookmarkRequest<TDate = string> {
 	 */
 	updatedAt?: TDate;
 }
+
+export const upsertPuzzleBookmarkRequestSchema = z.object({
+	type: z.enum(['favorite', 'hard', 'easy', 'unclear']),
+	updatedAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
+});
+
+export type UpsertPuzzleBookmarkRequestParsed = z.output<typeof upsertPuzzleBookmarkRequestSchema>;

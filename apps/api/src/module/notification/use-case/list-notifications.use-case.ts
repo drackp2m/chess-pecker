@@ -1,8 +1,10 @@
-import type { UserNotification as UserNotificationResponse } from '@chesspecker/api-definitions';
+import type {
+	ListNotificationsRequest,
+	UserNotification as UserNotificationResponse,
+} from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
-import { ListNotificationsRequestDto } from '../dto/request/list-notifications-request.dto';
 import { UserNotificationRepository } from '../user-notification.repository';
 import { presentNotification } from '../util/user-notification.util';
 
@@ -18,7 +20,7 @@ export class ListNotificationsUseCase {
 	 */
 	async execute(
 		user: User,
-		query: ListNotificationsRequestDto,
+		query: ListNotificationsRequest,
 	): Promise<UserNotificationResponse[]> {
 		const notifications = await this.userNotificationRepository.getMany(
 			{ user: user.uuid },

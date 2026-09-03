@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { useContainer } from 'class-validator';
 import cookieParser from 'cookie-parser';
 
 import { AppModule } from './module/app/app.module';
@@ -15,8 +14,6 @@ async function bootstrap(): Promise<void> {
 		AppModule,
 		BootstrapHelper.nestApplicationOptions(apiConfig),
 	);
-
-	useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
 	app.setGlobalPrefix(...BootstrapHelper.globalPrefix(apiConfig));
 	app.useGlobalPipes(BootstrapHelper.validationPipe);

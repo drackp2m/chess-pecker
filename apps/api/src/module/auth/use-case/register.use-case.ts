@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import type { RegisterRequest } from '@chesspecker/api-definitions';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
 import { UserRepository } from '../../user/user.repository';
-import { RegisterRequestDto } from '../dto/request/register-request.dto';
 
 import { HashPasswordUseCase } from './hash-password.use-case';
 
@@ -14,7 +14,7 @@ export class RegisterUseCase {
 		private readonly hashPasswordUseCase: HashPasswordUseCase,
 	) {}
 
-	async execute(registerRequest: RegisterRequestDto): Promise<User> {
+	async execute(registerRequest: RegisterRequest): Promise<User> {
 		const userExists = await this.userRepository.getMany({
 			$or: [
 				{ username: registerRequest.username },

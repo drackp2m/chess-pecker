@@ -1,7 +1,7 @@
+import type { UpsertUserSettingRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
-import { UpsertUserSettingRequestDto } from '../dto/request/upsert-user-setting-request.dto';
 import { UserSetting } from '../user-setting.entity';
 import { UserSettingRepository } from '../user-setting.repository';
 
@@ -12,7 +12,7 @@ export class UpsertUserSettingUseCase {
 	async execute(
 		user: User,
 		key: string,
-		upsertRequest: UpsertUserSettingRequestDto,
+		upsertRequest: UpsertUserSettingRequest,
 	): Promise<UserSetting> {
 		return this.userSettingRepository.upsertByKey(
 			new UserSetting({ user, key, value: { value: upsertRequest.value } }),
