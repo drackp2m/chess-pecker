@@ -93,5 +93,6 @@ RUN chown -R node:node /usr/src/app
 USER node
 
 COPY --chown=node:node --from=build-api /tmp/api-deploy ./
+COPY --chown=node:node --from=build-api /usr/src/app/package.json /usr/src/app/package.json
 
 CMD ["sh", "-c", "node_modules/.bin/mikro-orm migration:up && node dist/main.js"]
