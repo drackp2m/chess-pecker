@@ -1,3 +1,13 @@
+# v1.29.6 (2026-09-03)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- restore API version in production message ([95af88d](https://github.com/drackp2m/chess-pecker/commit/95af88d658c29b9c1d6086dc52c677b49a526e3a)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.29.5...v1.29.6
+
 # v1.29.5 (2026-09-03)
 
 ## What's Changed
