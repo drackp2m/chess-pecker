@@ -29,6 +29,7 @@ COPY --chown=node:node apps/web/package.json ./apps/web/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node libs/api-definitions/package.json ./libs/api-definitions/
 COPY --chown=node:node patches ./patches
+COPY --chown=node:node .husky/prepare.mjs ./.husky/prepare.mjs
 
 RUN pnpm install --frozen-lockfile
 
