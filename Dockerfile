@@ -72,7 +72,7 @@ COPY --chown=node:node . .
 
 RUN pnpm --filter @chesspecker/api run build
 
-RUN pnpm --filter @chesspecker/api --prod deploy /tmp/api-deploy --legacy
+RUN pnpm --filter @chesspecker/api --prod --ignore-scripts deploy /tmp/api-deploy --legacy
 
 
 
