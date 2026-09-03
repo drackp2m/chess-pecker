@@ -1,3 +1,13 @@
+# v1.29.4 (2026-09-03)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- Dockerfile install with --ignore-scripts ([93df80c](https://github.com/drackp2m/chess-pecker/commit/93df80c311dc6b1f8797fb90824a5e8ea7ddc605)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.29.3...v1.29.4
+
 # v1.29.3 (2026-09-03)
 
 ## What's Changed
