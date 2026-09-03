@@ -1,9 +1,18 @@
-import type { PushTrainingResult } from '@chesspecker/api-definitions';
+import type {
+	PushGoalNodeParsed,
+	PushTrainingNodeParsed,
+	PushTrainingPuzzleNodeParsed,
+	PushTrainingRequestParsed,
+	PushTrainingResult,
+} from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
+import type { EntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
+import { TrainingFinishedReason } from '../../training/definition/training-finished-reason.enum';
+import { TrainingStatus } from '../../training/definition/training-status.enum';
 import { TrainingGoal } from '../../training/training-goal.entity';
 import { TrainingPuzzle } from '../../training/training-puzzle.entity';
 import { Training } from '../../training/training.entity';
@@ -11,10 +20,6 @@ import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-t
 import { User } from '../../user/user.entity';
 import { SyncPushContext } from '../definition/sync-push-context.interface';
 import { SyncPushOutcome } from '../definition/sync-push-outcome';
-import { PushGoalNodeDto } from '../dto/request/push-goal-node.dto';
-import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
-import { PushTrainingPuzzleNodeDto } from '../dto/request/push-training-puzzle-node.dto';
-import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
 import { claimSyncRow, isFresherNode, loadTreePuzzles, reuseSyncRow } from '../util/sync-node.util';
 import { loadTreeRows } from '../util/sync-tree-rows.util';
 
@@ -34,7 +39,7 @@ export class PushTrainingTreeUseCase {
 		private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase,
 	) {}
 
-	async execute(user: User, request: PushTrainingRequestDto): Promise<PushTrainingResult> {
+	async execute(user: User, request: PushTrainingRequestParsed): Promise<PushTrainingResult> {
 		const node = request.training;
 		const receivedAt = new GenerateNowDateUseCase().execute();
 		const outcome = new SyncPushOutcome(receivedAt);
@@ -57,7 +62,11 @@ export class PushTrainingTreeUseCase {
 	}
 
 	/** The gate: the tree belongs to whoever pushes it, and that is all that is checked. */
-	private pushTraining(context: SyncPushContext, user: User, node: PushTrainingNodeDto): Training {
+	private pushTraining(
+		context: SyncPushContext,
+		user: User,
+		node: PushTrainingNodeParsed,
+	): Training {
 		const existing = context.rows.training.find(node, 'training');
 
 		if (undefined !== existing) {
@@ -75,15 +84,15 @@ export class PushTrainingTreeUseCase {
 	}
 
 	/** Finishing or cancelling a training happens long after its tree went up. */
-	private refreshTraining(row: Training, node: PushTrainingNodeDto): void {
+	private refreshTraining(row: Training, node: PushTrainingNodeParsed): void {
 		if (!isFresherNode(node, row)) {
 			return;
 		}
 
-		row.status = node.status;
+		row.status = node.status as TrainingStatus;
 
 		if (undefined !== node.finishedReason) {
-			row.finishedReason = node.finishedReason;
+			row.finishedReason = node.finishedReason as TrainingFinishedReason;
 		}
 
 		if (undefined !== node.finishedAt) {
@@ -93,25 +102,34 @@ export class PushTrainingTreeUseCase {
 		this.applySyncTimestampsUseCase.execute(row, node);
 	}
 
-	private buildTraining(user: User, node: PushTrainingNodeDto): Training {
-		return this.applySyncTimestampsUseCase.execute(
-			new Training({
-				user,
-				status: node.status,
-				...(undefined === node.finishedReason ? {} : { finishedReason: node.finishedReason }),
-				...(undefined === node.finishedAt ? {} : { finishedAt: node.finishedAt }),
-			}),
-			node,
-		);
+	private buildTraining(user: User, node: PushTrainingNodeParsed): Training {
+		const data: EntityData<Training> = {
+			user,
+			status: node.status as TrainingStatus,
+		};
+
+		if (undefined !== node.finishedReason) {
+			data.finishedReason = node.finishedReason as TrainingFinishedReason;
+		}
+
+		if (undefined !== node.finishedAt) {
+			data.finishedAt = node.finishedAt;
+		}
+
+		return this.applySyncTimestampsUseCase.execute(new Training(data), node);
 	}
 
-	private pushGoals(context: SyncPushContext, training: Training, nodes: PushGoalNodeDto[]): void {
+	private pushGoals(
+		context: SyncPushContext,
+		training: Training,
+		nodes: PushGoalNodeParsed[],
+	): void {
 		for (const node of nodes) {
 			this.pushGoal(context, training, node);
 		}
 	}
 
-	private pushGoal(context: SyncPushContext, training: Training, node: PushGoalNodeDto): void {
+	private pushGoal(context: SyncPushContext, training: Training, node: PushGoalNodeParsed): void {
 		const existing = context.rows.trainingGoal.find(node, 'trainingGoal');
 
 		if (undefined !== existing) {
@@ -131,15 +149,18 @@ export class PushTrainingTreeUseCase {
 		claimSyncRow(context, 'trainingGoal', node, this.buildGoal(training, node));
 	}
 
-	private buildGoal(training: Training, node: PushGoalNodeDto): TrainingGoal {
-		return this.applySyncTimestampsUseCase.execute(
-			new TrainingGoal({
-				training,
-				...(undefined === node.puzzlesPerDay ? {} : { puzzlesPerDay: node.puzzlesPerDay }),
-				...(undefined === node.endDate ? {} : { endDate: node.endDate }),
-			}),
-			node,
-		);
+	private buildGoal(training: Training, node: PushGoalNodeParsed): TrainingGoal {
+		const data: EntityData<TrainingGoal> = { training };
+
+		if (undefined !== node.puzzlesPerDay) {
+			data.puzzlesPerDay = node.puzzlesPerDay;
+		}
+
+		if (undefined !== node.endDate) {
+			data.endDate = node.endDate;
+		}
+
+		return this.applySyncTimestampsUseCase.execute(new TrainingGoal(data), node);
 	}
 
 	/**
@@ -149,7 +170,7 @@ export class PushTrainingTreeUseCase {
 	private async pushSet(
 		context: SyncPushContext,
 		training: Training,
-		nodes: PushTrainingPuzzleNodeDto[],
+		nodes: PushTrainingPuzzleNodeParsed[],
 	): Promise<Map<string, TrainingPuzzle>> {
 		const stored = await context.entityManager.find(TrainingPuzzle, { training });
 		const set = new Map<string, TrainingPuzzle>();
@@ -172,7 +193,7 @@ export class PushTrainingTreeUseCase {
 	private pushSetEntry(
 		context: SyncPushContext,
 		training: Training,
-		node: PushTrainingPuzzleNodeDto,
+		node: PushTrainingPuzzleNodeParsed,
 	): TrainingPuzzle | undefined {
 		const existing = context.rows.trainingPuzzle.find(node, 'trainingPuzzle');
 

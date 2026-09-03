@@ -1,5 +1,6 @@
 import type { UserNotification as UserNotificationResponse } from '@chesspecker/api-definitions';
 
+import { toIsoDate } from '../../../shared/util/to-iso-date';
 import { UserNotification } from '../user-notification.entity';
 
 /**
@@ -14,7 +15,7 @@ export function presentNotification(notification: UserNotification): UserNotific
 		type: notification.type,
 		actor: undefined === actor ? null : { uuid: actor.uuid, username: actor.username },
 		shareUuid: notification.share?.uuid ?? null,
-		readAt: notification.readAt?.toISOString() ?? null,
-		createdAt: notification.createdAt.toISOString(),
+		readAt: undefined === notification.readAt ? null : toIsoDate(notification.readAt),
+		createdAt: toIsoDate(notification.createdAt),
 	};
 }

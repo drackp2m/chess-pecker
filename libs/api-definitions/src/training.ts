@@ -1,5 +1,7 @@
-import { ApiPuzzle } from './puzzle';
-import { SyncTimestamps } from './sync';
+import { z } from 'zod';
+
+import type { ApiPuzzle } from './puzzle';
+import type { SyncTimestamps } from './sync';
 
 export type TrainingStatus = 'calibrating' | 'planning' | 'running' | 'finished' | 'cancelled';
 
@@ -75,11 +77,20 @@ export interface SetTrainingGoalRequest<TDate = string> extends SyncTimestamps<T
 /** One step of the game: a move in long notation, or a negative marker. */
 export type PuzzleEvent = string | number;
 
+export const puzzleEventSchema = z.union([z.string(), z.number()]);
+
 /** A visit to free play: where the main line stood, and what was played inside. */
 export interface FreePlayRun {
 	at: number;
 	events: PuzzleEvent[];
 }
+
+export const freePlayRunSchema = z.object({
+	at: z.number().int().nonnegative(),
+	events: z.array(puzzleEventSchema),
+});
+
+export type FreePlayRunParsed = z.infer<typeof freePlayRunSchema>;
 
 /**
  * How the attempt went, the same in calibration as in a cycle. `solved` is the grade, sealed
@@ -94,6 +105,18 @@ export interface PuzzleAttemptRecord {
 	record: PuzzleEvent[];
 	freePlayRuns: FreePlayRun[];
 }
+
+export const puzzleAttemptRecordSchema = z.object({
+	durationMs: z.number().int().nonnegative(),
+	solved: z.boolean(),
+	closure: z.enum(['found', 'revealed']),
+	hintUsed: z.boolean(),
+	mistakeCount: z.number().int().nonnegative(),
+	record: z.array(puzzleEventSchema),
+	freePlayRuns: z.array(freePlayRunSchema),
+});
+
+export type PuzzleAttemptRecordParsed = z.infer<typeof puzzleAttemptRecordSchema>;
 
 export interface CycleProgress {
 	readonly uuid: string;
@@ -147,6 +170,11 @@ export interface GetTrainingAttemptsRequest {
 	limit?: number;
 }
 
+export const getTrainingAttemptsRequestSchema = z.object({
+	since: z.string().max(255).optional(),
+	limit: z.coerce.number().int().min(1).max(250).optional(),
+});
+
 /**
  * A training's history as the server stored it, which is where a device with nothing —
  * brand new, or emptied on logout — rebuilds the exercises already solved from.
@@ -192,6 +220,16 @@ export interface GetTrainingActivityRequest<TDate = string> {
 	 */
 	since?: TDate;
 }
+
+export const getTrainingActivityRequestSchema = z.object({
+	days: z.coerce.number().int().min(1).max(371).optional(),
+	since: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
+});
+
+export type GetTrainingActivityRequestParsed = z.output<typeof getTrainingActivityRequestSchema>;
 
 export interface TrainingActivity {
 	/** @deprecated The web app aggregates activity from local attempts. */

@@ -1,10 +1,10 @@
+import type { SendFriendRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
 import { UserRepository } from '../../user/user.repository';
-import { SendFriendRequestDto } from '../dto/request/send-friend-request.dto';
 import { Friendship } from '../friendship.entity';
 import { FriendshipRepository } from '../friendship.repository';
 import { UserBlockRepository } from '../user-block.repository';
@@ -17,7 +17,7 @@ export class SendFriendRequestUseCase {
 		private readonly userBlockRepository: UserBlockRepository,
 	) {}
 
-	async execute(requester: User, sendRequest: SendFriendRequestDto): Promise<Friendship> {
+	async execute(requester: User, sendRequest: SendFriendRequest): Promise<Friendship> {
 		const addressee = await this.userRepository.getOne({ username: sendRequest.username });
 
 		if (addressee.uuid === requester.uuid) {

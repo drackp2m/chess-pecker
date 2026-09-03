@@ -1,6 +1,6 @@
+import type { ImportPuzzleRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
-import { ImportPuzzleRequestDto } from '../dto/request/import-puzzle-request.dto';
 import { Puzzle } from '../puzzle.entity';
 import { PuzzleRepository } from '../puzzle.repository';
 
@@ -8,7 +8,7 @@ import { PuzzleRepository } from '../puzzle.repository';
 export class ImportPuzzlesUseCase {
 	constructor(private readonly puzzleRepository: PuzzleRepository) {}
 
-	async execute(importRequest: ImportPuzzleRequestDto): Promise<{ imported: number }> {
+	async execute(importRequest: ImportPuzzleRequest): Promise<{ imported: number }> {
 		const puzzles = importRequest.puzzles.map((puzzle) => new Puzzle(puzzle));
 
 		const upserted = await this.puzzleRepository.upsertManyByLichessId(puzzles);

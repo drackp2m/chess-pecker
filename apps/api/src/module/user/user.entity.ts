@@ -1,4 +1,4 @@
-import { Entity, Enum, Property } from '@mikro-orm/core';
+import { Entity, Enum, Property } from '@mikro-orm/decorators/legacy';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 
@@ -7,13 +7,13 @@ import { UserRepository } from './user.repository';
 
 @Entity({ repository: () => UserRepository })
 export class User extends CustomBaseEntity<User> {
-	@Property({ unique: true })
+	@Property({ type: 'string', unique: true })
 	username!: string;
 
-	@Property({ hidden: true })
+	@Property({ type: 'string', hidden: true })
 	password!: string;
 
-	@Property({ unique: true, nullable: true })
+	@Property({ type: 'string', unique: true, nullable: true })
 	email?: string;
 
 	@Enum({ items: () => UserRole, default: UserRole.Registered })

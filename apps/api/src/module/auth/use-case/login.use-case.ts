@@ -1,9 +1,9 @@
+import type { LoginRequest } from '@chesspecker/api-definitions';
 import { Injectable, Scope } from '@nestjs/common';
 
 import { UnauthorizedException } from '../../../shared/exception/unauthorized-exception.exception';
 import { UserRepository } from '../../user/user.repository';
 import { JwtCookie } from '../definition/jwt-cookie.enum';
-import { LoginRequestDto } from '../dto/request/login-request.dto';
 
 import { CheckPasswordUseCase } from './check-password.use-case';
 import { CreateJwtAccessTokenUseCase } from './create-jwt-access-token.use-case';
@@ -20,7 +20,7 @@ export class LoginUseCase {
 		private readonly setJwtToken: SetJwtTokenUseCase,
 	) {}
 
-	async execute(loginRequest: LoginRequestDto): Promise<void> {
+	async execute(loginRequest: LoginRequest): Promise<void> {
 		const user = await this.userRepository.getOne({ username: loginRequest.username });
 
 		if (!(await this.checkPassword.execute(loginRequest.password, user.password))) {

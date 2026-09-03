@@ -5,10 +5,9 @@ import {
 	INestApplication,
 	Logger,
 	NestApplicationOptions,
-	ValidationPipe,
+	StandardSchemaValidationPipe,
 } from '@nestjs/common';
-import { GlobalPrefixOptions } from '@nestjs/common/interfaces';
-import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import type { CorsOptions, GlobalPrefixOptions } from '@nestjs/common/internal';
 import { NextFunction, Request, Response } from 'express';
 
 import { ConfigurationService } from '../module/config/configuration.service';
@@ -17,10 +16,7 @@ import { ApiConfig } from '../module/config/definition/api-config.type';
 import { HttpExceptionFilter } from './exception-filter';
 
 export class BootstrapHelper {
-	static readonly validationPipe = new ValidationPipe({
-		whitelist: true,
-		transform: true,
-	});
+	static readonly validationPipe = new StandardSchemaValidationPipe();
 
 	static readonly exceptionsFilter = new HttpExceptionFilter();
 

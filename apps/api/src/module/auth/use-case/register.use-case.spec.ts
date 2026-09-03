@@ -1,3 +1,4 @@
+import type { RegisterRequest } from '@chesspecker/api-definitions';
 import { Test, TestingModule } from '@nestjs/testing';
 import { mock } from 'vitest-mock-extended';
 
@@ -7,7 +8,6 @@ import { GenerateUuidUseCase } from '../../../shared/use-case/generate-uuid.use-
 import { UserFaker } from '../../user/factory/user.faker';
 import { User } from '../../user/user.entity';
 import { UserRepository } from '../../user/user.repository';
-import { RegisterRequestDto } from '../dto/request/register-request.dto';
 
 import { HashPasswordUseCase } from './hash-password.use-case';
 import { RegisterUseCase } from './register.use-case';
@@ -45,7 +45,7 @@ describe('RegisterUseCase', () => {
 
 			userRepository.getMany.mockResolvedValueOnce([fakeUser]);
 
-			const registerRequest: RegisterRequestDto = {
+			const registerRequest: RegisterRequest = {
 				username: fakeUser.username,
 				password: 'password',
 			};
@@ -62,7 +62,7 @@ describe('RegisterUseCase', () => {
 
 			userRepository.getMany.mockResolvedValueOnce([fakeUser]);
 
-			const registerRequest: RegisterRequestDto = {
+			const registerRequest: RegisterRequest = {
 				username: 'drackp2m',
 				password: 'password',
 				email,
@@ -78,7 +78,7 @@ describe('RegisterUseCase', () => {
 			userRepository.getMany.mockResolvedValueOnce([]);
 			userRepository.insert.mockRejectedValueOnce(new Error('database error'));
 
-			const registerRequest: RegisterRequestDto = {
+			const registerRequest: RegisterRequest = {
 				username: 'drackp2m',
 				password: 'password',
 			};
@@ -102,7 +102,7 @@ describe('RegisterUseCase', () => {
 
 			hashPasswordUseCase.execute.mockResolvedValueOnce(fakeUser.password);
 
-			const registerRequest: RegisterRequestDto = {
+			const registerRequest: RegisterRequest = {
 				username: fakeUser.username,
 				password: fakeUser.password,
 			};

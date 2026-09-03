@@ -1,9 +1,10 @@
+import { blockUserRequestSchema } from '@chesspecker/api-definitions';
+import type { BlockUserRequest } from '@chesspecker/api-definitions';
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
-import { BlockUserRequestDto } from './dto/request/block-user-request.dto';
 import { BlockUserUseCase } from './use-case/block-user.use-case';
 import { ListBlockedUsersUseCase } from './use-case/list-blocked-users.use-case';
 import { UnblockUserUseCase } from './use-case/unblock-user.use-case';
@@ -25,7 +26,7 @@ export class UserBlockController {
 	@Post()
 	async block(
 		@CurrentUser() user: User,
-		@Body() blockRequest: BlockUserRequestDto,
+		@Body({ schema: blockUserRequestSchema }) blockRequest: BlockUserRequest,
 	): Promise<UserBlock> {
 		return this.blockUserUseCase.execute(user, blockRequest);
 	}

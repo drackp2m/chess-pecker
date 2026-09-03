@@ -1,5 +1,7 @@
-import { PuzzleAttemptClosure } from './training';
-import { UserSummary } from './user';
+import { z } from 'zod';
+
+import type { PuzzleAttemptClosure } from './training';
+import type { UserSummary } from './user';
 
 /**
  * What somebody made of a shared exercise. The same shape for whoever solved it, sender
@@ -53,6 +55,11 @@ export interface GetSentPuzzleSharesRequest<TDate = string> {
 	limit?: number;
 }
 
+export const getSentPuzzleSharesRequestSchema = z.object({
+	since: z.coerce.date().optional(),
+	limit: z.coerce.number().int().min(1).max(200).optional(),
+});
+
 /**
  * The numbers a solve reports. They come from the device, like every other attempt does:
  * this is a game between friends and not a ranking.
@@ -64,6 +71,19 @@ export interface PuzzleShareResultRequest {
 	mistakeCount: number;
 	durationMs?: number;
 }
+
+export const puzzleShareResultRequestSchema = z.object({
+	solved: z.boolean(),
+	closure: z.enum(['found', 'revealed']),
+	hintUsed: z.boolean(),
+	mistakeCount: z.coerce.number().int().min(0),
+	durationMs: z.coerce
+		.number()
+		.int()
+		.min(0)
+		.max(24 * 60 * 60 * 1000)
+		.optional(),
+});
 
 export interface CreatePuzzleShareRequest {
 	lichessId: string;
@@ -78,3 +98,11 @@ export interface CreatePuzzleShareRequest {
 	/** How the sender did, so the comparison has something on it from the first moment. */
 	result?: PuzzleShareResultRequest;
 }
+
+export const createPuzzleShareRequestSchema = z.object({
+	lichessId: z.string().min(1),
+	recipientUuids: z.array(z.uuid()).min(1).max(25),
+	message: z.string().max(500).optional(),
+	attemptUuid: z.uuid().optional(),
+	result: puzzleShareResultRequestSchema.optional(),
+});

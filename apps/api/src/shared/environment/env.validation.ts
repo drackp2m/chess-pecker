@@ -1,13 +1,8 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { plainToInstance } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsString, validateSync } from 'class-validator';
 import { config } from 'dotenv';
-
-import type { ApiProtocol } from './api-protocol.type';
-import type { JwtAlgorithm } from './jwt-algorithm.type';
-import type { NodeEnv } from './node-env.type';
+import { z } from 'zod';
 
 function workspaceRoot(): string {
 	let current = process.cwd();
@@ -27,108 +22,51 @@ function workspaceRoot(): string {
 
 config({ path: join(workspaceRoot(), '.env') });
 
-class EnvironmentVariables {
-	@IsString()
-	@IsNotEmpty()
-	NODE_ENV!: NodeEnv;
+const environmentSchema = z.object({
+	NODE_ENV: z.enum(['production', 'development', 'test']),
+	DB_HOST: z.string().min(1),
+	DB_PORT: z.coerce.number(),
+	DB_USER: z.string().min(1),
+	DB_PASS: z.string().min(1),
+	DB_NAME: z.string().min(1),
+	DB_NAME_TEST: z.string().min(1),
+	DB_CERT: z.string().min(1),
+	API_PROTOCOL: z.enum(['https', 'http']),
+	API_DOMAIN: z.string().min(1),
+	API_PORT: z.coerce.number(),
+	API_PREFIX: z.string().min(1),
+	API_DEBUG_PORT: z.coerce.number().optional(),
+	API_CORS_ALLOWED_DOMAINS: z.string().min(1),
+	API_COOKIE_SECRET: z.string().min(1),
+	API_COOKIE_DOMAIN: z.string().min(1),
+	JWT_ID: z.string().min(1),
+	JWT_ALGORITHM: z.enum([
+		'HS256',
+		'HS384',
+		'HS512',
+		'RS256',
+		'RS384',
+		'RS512',
+		'ES256',
+		'ES384',
+		'ES512',
+		'PS256',
+		'PS384',
+		'PS512',
+	]),
+	JWT_ISSUER: z.string().min(1),
+	JWT_AUDIENCE: z.string().min(1),
+	JWT_ACCESS_TOKEN_EXPIRES_IN: z.string().min(1),
+	JWT_REFRESH_TOKEN_EXPIRES_IN: z.string().min(1),
+	JWT_SECRET: z.string().min(1),
+});
 
-	@IsString()
-	@IsNotEmpty()
-	DB_HOST!: string;
+export function validate(config: Record<string, unknown>): z.output<typeof environmentSchema> {
+	const result = environmentSchema.safeParse(config);
 
-	@IsNumber()
-	DB_PORT!: number;
-
-	@IsString()
-	@IsNotEmpty()
-	DB_USER!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	DB_PASS!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	DB_NAME!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	DB_NAME_TEST!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	DB_CERT!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	API_PROTOCOL!: ApiProtocol;
-
-	@IsString()
-	@IsNotEmpty()
-	API_DOMAIN!: string;
-
-	@IsNumber()
-	API_PORT!: number;
-
-	@IsString()
-	@IsNotEmpty()
-	API_PREFIX!: string;
-
-	@IsNumber()
-	API_DEBUG_PORT?: number;
-
-	@IsString()
-	@IsNotEmpty()
-	API_CORS_ALLOWED_DOMAINS!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	API_COOKIE_SECRET!: string;
-
-	@IsString()
-	API_COOKIE_DOMAIN!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	JWT_ID!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	JWT_ALGORITHM!: JwtAlgorithm;
-
-	@IsString()
-	@IsNotEmpty()
-	JWT_ISSUER!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	JWT_AUDIENCE!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	JWT_ACCESS_TOKEN_EXPIRES_IN!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	JWT_REFRESH_TOKEN_EXPIRES_IN!: string;
-
-	@IsString()
-	@IsNotEmpty()
-	JWT_SECRET!: string;
-}
-
-export function validate(config: Record<string, unknown>): EnvironmentVariables {
-	const validatedConfig = plainToInstance(EnvironmentVariables, config, {
-		enableImplicitConversion: true,
-	});
-
-	const errors = validateSync(validatedConfig, {
-		skipMissingProperties: true,
-	});
-
-	if (0 < errors.length) {
-		throw new Error(errors.toString());
+	if (!result.success) {
+		throw new Error(z.prettifyError(result.error));
 	}
 
-	return validatedConfig;
+	return result.data;
 }

@@ -19,7 +19,7 @@ pnpm workspace monorepo (`pnpm-workspace.yaml` → `apps/*`, `libs/*`):
 
 - `apps/web` (`@chesspecker/web`) — the Angular app.
 - `apps/api` (`@chesspecker/api`) — NestJS + MikroORM + Postgres.
-- `libs/api-definitions` (`@chesspecker/api-definitions`) — the shapes crossing the HTTP boundary: requests, responses, state unions, and the route table the web SDK is typed against. **Ships no JavaScript** — every file is a `.d.ts`, so **always `import type` from it**; a plain import fails at runtime. Compiled with `skipLibCheck` off (the `lint` job runs that typecheck).
+- `libs/api-definitions` (`@chesspecker/api-definitions`) — the shapes crossing the HTTP boundary: requests, responses, state unions, route table, and runtime Zod schemas. It emits JavaScript for schema imports; import types with `import type` and schemas as value imports. Compiled with `skipLibCheck` off (the `lint` job runs that typecheck).
 
 The root package holds no runtime dependency — only the repo-wide toolchain and scripts that delegate with `pnpm --filter`. semantic-release versions the **root** `package.json`; `@app/package` resolves there.
 
@@ -33,7 +33,7 @@ Relative `./` / `../` imports are blocked by `no-restricted-imports`. Use the al
 
 `@app/component`, `@app/definition`, `@app/directive`, `@app/guard`, `@app/interceptor`, `@app/layout`, `@app/model`, `@app/page`, `@app/pipe`, `@app/repository`, `@app/service`, `@app/store`, `@app/strategy`, `@app/testing`, `@app/use-case`, `@app/util`, plus `@app/package` and `@app/tools/*` (which reach into the repo root). Root singletons have exact aliases: `@app/app.config`, `@app/app.routes`, `@app/app.component`.
 
-Anything shared with the API comes from `@chesspecker/api-definitions`, always as `import type`.
+Anything shared with the API comes from `@chesspecker/api-definitions`; use `import type` for types and a value import for runtime schemas.
 
 ## Architecture
 

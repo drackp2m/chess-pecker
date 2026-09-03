@@ -1,4 +1,5 @@
-import { ExecutionContext, HttpArgumentsHost } from '@nestjs/common/interfaces';
+import type { ExecutionContext } from '@nestjs/common';
+import type { HttpArgumentsHost } from '@nestjs/common/internal';
 import { Test, TestingModule } from '@nestjs/testing';
 import { mock } from 'vitest-mock-extended';
 

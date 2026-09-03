@@ -19,11 +19,12 @@ import { DurationPipe } from '@app/pipe/duration.pipe';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { I18nService } from '@app/service/i18n.service';
+import { TimezoneService } from '@app/service/timezone.service';
 import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
 import { TrainingStore } from '@app/store/training.store';
 import { CyclePaceDay, activityDaySeries, cyclePaceSeries } from '@app/util/activity-grid';
-import { diffUtcDays, utcMidnight } from '@app/util/utc-date';
+import { diffLabelDays, zoneDayLabel } from '@app/util/timezone-date';
 
 const DAILY_RANGE_DAYS = 14;
 const DEFAULT_SET_SIZE = 1000;
@@ -74,6 +75,7 @@ export class TrainingPage implements OnInit {
 	private readonly activity = inject(ActivityStore);
 	private readonly i18n = inject(I18nService);
 	private readonly modalStore = inject(ModalStore);
+	private readonly timezoneService = inject(TimezoneService);
 
 	readonly phaseLabel = computed(() => {
 		const status = this.store.active()?.status;
@@ -84,7 +86,11 @@ export class TrainingPage implements OnInit {
 	readonly hoveredDay = signal<ChartPoint | null>(null);
 
 	private readonly dailyBreakdown = computed(() =>
-		activityDaySeries(this.activity.days(), DAILY_RANGE_DAYS),
+		activityDaySeries(
+			this.activity.days(),
+			DAILY_RANGE_DAYS,
+			this.timezoneService.selectedTimezone(),
+		),
 	);
 
 	readonly dailyChart = computed<ChartData>(() => {
@@ -114,7 +120,12 @@ export class TrainingPage implements OnInit {
 
 		return undefined === cycle || null === pace
 			? []
-			: cyclePaceSeries(this.activity.days(), cycle.startedAt, pace);
+			: cyclePaceSeries(
+					this.activity.days(),
+					cycle.startedAt,
+					pace,
+					this.timezoneService.selectedTimezone(),
+				);
 	});
 
 	readonly cyclePaceChart = computed<ChartData>(() => {
@@ -253,9 +264,11 @@ export class TrainingPage implements OnInit {
 			return DAILY_RANGE_DAYS;
 		}
 
-		const started = utcMidnight(new Date(startedAt));
+		const timeZone = this.timezoneService.selectedTimezone();
+		const started = zoneDayLabel(new Date(startedAt), timeZone);
+		const today = zoneDayLabel(new Date(), timeZone);
 
-		return Math.max(DAILY_RANGE_DAYS, diffUtcDays(started, utcMidnight(new Date())) + 1);
+		return Math.max(DAILY_RANGE_DAYS, diffLabelDays(started, today) + 1);
 	}
 
 	private dailyBars(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {

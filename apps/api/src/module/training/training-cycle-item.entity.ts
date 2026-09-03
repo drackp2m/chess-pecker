@@ -1,4 +1,4 @@
-import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/core';
+import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 
@@ -21,6 +21,6 @@ export class TrainingCycleItem extends SyncableBaseEntity<TrainingCycleItem> {
 	trainingPuzzle!: TrainingPuzzle;
 
 	/** 0..X-1, the order they are presented in. */
-	@Property()
+	@Property({ type: 'number' })
 	position!: number;
 }

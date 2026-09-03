@@ -1,3 +1,5 @@
+import { sendFriendRequestSchema } from '@chesspecker/api-definitions';
+import type { SendFriendRequest } from '@chesspecker/api-definitions';
 import {
 	Body,
 	Controller,
@@ -14,7 +16,6 @@ import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
 import { FriendshipStatus } from './definition/friendship-status.enum';
-import { SendFriendRequestDto } from './dto/request/send-friend-request.dto';
 import { Friendship } from './friendship.entity';
 import { AnswerFriendRequestUseCase } from './use-case/answer-friend-request.use-case';
 import { ListFriendRequestsUseCase } from './use-case/list-friend-requests.use-case';
@@ -53,7 +54,7 @@ export class FriendshipController {
 	@Post('request')
 	async sendRequest(
 		@CurrentUser() user: User,
-		@Body() sendRequest: SendFriendRequestDto,
+		@Body({ schema: sendFriendRequestSchema }) sendRequest: SendFriendRequest,
 	): Promise<Friendship> {
 		return this.sendFriendRequestUseCase.execute(user, sendRequest);
 	}

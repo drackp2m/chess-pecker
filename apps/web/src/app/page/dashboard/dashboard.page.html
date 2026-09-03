@@ -27,6 +27,7 @@
 			<app-activity-heatmap
 				[days]="visibleActivity()"
 				[totalDays]="activityDays()"
+				[timeZone]="timezoneService.selectedTimezone()"
 				(dayFocus)="onDayFocus($event)"
 			/>
 

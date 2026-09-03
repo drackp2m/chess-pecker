@@ -1,4 +1,4 @@
-import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
+import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { PuzzleAttemptClosure } from '../training/definition/puzzle-attempt-closure.enum';
@@ -24,19 +24,19 @@ export class PuzzleShareAttempt extends CustomBaseEntity<PuzzleShareAttempt> {
 	@ManyToOne(() => User, { deleteRule: 'cascade' })
 	user!: User;
 
-	@Property()
+	@Property({ type: 'boolean' })
 	solved!: boolean;
 
 	@Enum({ items: () => PuzzleAttemptClosure })
 	closure!: PuzzleAttemptClosure;
 
-	@Property({ default: false })
+	@Property({ type: 'boolean', default: false })
 	hintUsed!: boolean;
 
-	@Property({ default: 0 })
+	@Property({ type: 'number', default: 0 })
 	mistakeCount!: number;
 
 	/** Only a training runs a clock, so an answer from anywhere else has no time to report. */
-	@Property({ nullable: true })
+	@Property({ type: 'number', nullable: true })
 	durationMs?: number;
 }

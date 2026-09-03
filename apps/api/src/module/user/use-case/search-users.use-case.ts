@@ -1,7 +1,6 @@
-import type { UserSummary } from '@chesspecker/api-definitions';
+import type { SearchUserRequest, UserSummary } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
-import { SearchUserRequestDto } from '../dto/request/search-user-request.dto';
 import { User } from '../user.entity';
 import { UserRepository } from '../user.repository';
 
@@ -21,7 +20,7 @@ export class SearchUsersUseCase {
 	 * Prefix search, so someone can be found before being asked. Returns `UserSummary` and
 	 * never the caller themselves, whom the next use case would refuse anyway.
 	 */
-	async execute(currentUser: User, search: SearchUserRequestDto): Promise<UserSummary[]> {
+	async execute(currentUser: User, search: SearchUserRequest): Promise<UserSummary[]> {
 		const users = await this.userRepository.getMany(
 			{
 				username: { $ilike: `${escapeLikePattern(search.username)}%` },

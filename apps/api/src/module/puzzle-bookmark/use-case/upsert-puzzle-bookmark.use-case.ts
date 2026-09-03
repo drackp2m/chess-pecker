@@ -1,10 +1,13 @@
-import type { PuzzleBookmark as PuzzleBookmarkResponse } from '@chesspecker/api-definitions';
+import type {
+	PuzzleBookmark as PuzzleBookmarkResponse,
+	UpsertPuzzleBookmarkRequestParsed,
+} from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { User } from '../../user/user.entity';
-import { UpsertPuzzleBookmarkRequestDto } from '../dto/request/upsert-puzzle-bookmark-request.dto';
+import { PuzzleBookmarkType } from '../definition/puzzle-bookmark-type.enum';
 import { PuzzleBookmark } from '../puzzle-bookmark.entity';
 import { PuzzleBookmarkRepository } from '../puzzle-bookmark.repository';
 import { presentBookmark } from '../util/puzzle-bookmark.util';
@@ -23,13 +26,18 @@ export class UpsertPuzzleBookmarkUseCase {
 	async execute(
 		user: User,
 		lichessId: string,
-		upsertRequest: UpsertPuzzleBookmarkRequestDto,
+		upsertRequest: UpsertPuzzleBookmarkRequestParsed,
 	): Promise<PuzzleBookmarkResponse> {
 		const puzzle = await this.puzzleRepository.getOne({ lichessId });
 		const updatedAt = upsertRequest.updatedAt ?? new GenerateNowDateUseCase().execute();
 
 		const stored = await this.puzzleBookmarkRepository.upsertByPuzzle(
-			new PuzzleBookmark({ user, puzzle, type: upsertRequest.type, updatedAt }),
+			new PuzzleBookmark({
+				user,
+				puzzle,
+				type: upsertRequest.type as PuzzleBookmarkType,
+				updatedAt,
+			}),
 		);
 
 		return presentBookmark(stored, lichessId);

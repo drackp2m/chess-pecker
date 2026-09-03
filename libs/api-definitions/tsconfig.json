@@ -1,14 +1,12 @@
-/* The package ships no JavaScript, so this project never emits: it exists to compile the
-   declarations on their own with `skipLibCheck` off, which both apps turn on. */
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
 		"target": "ES2023",
 		"module": "preserve",
-		"lib": ["ES2023"],
+		"lib": ["ES2023", "DOM"],
 		"types": [],
 		"skipLibCheck": false,
 		"noEmit": true
 	},
-	"include": ["src/**/*.d.ts"]
+	"include": ["src/**/*.ts"]
 }

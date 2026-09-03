@@ -1,4 +1,4 @@
-import { Entity, Index, Property } from '@mikro-orm/core';
+import { Entity, Index, Property } from '@mikro-orm/decorators/legacy';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 
@@ -10,7 +10,7 @@ import { PuzzleRepository } from './puzzle.repository';
  */
 @Entity({ repository: () => PuzzleRepository })
 export class Puzzle extends CustomBaseEntity<Puzzle> {
-	@Property({ unique: true })
+	@Property({ type: 'string', unique: true })
 	lichessId!: string;
 
 	/** The position *before* the opponent's move. */
@@ -23,7 +23,7 @@ export class Puzzle extends CustomBaseEntity<Puzzle> {
 
 	/** Lichess' exact ELO. The hundred band is `rating / 100`, and is not stored. */
 	@Index()
-	@Property()
+	@Property({ type: 'number' })
 	rating!: number;
 
 	@Index({ type: 'gin' })

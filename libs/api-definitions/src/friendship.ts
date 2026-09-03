@@ -1,4 +1,6 @@
-import { UserRole } from './user';
+import { z } from 'zod';
+
+import type { UserRole } from './user';
 
 export type FriendshipStatus = 'pending' | 'accepted' | 'declined';
 
@@ -36,3 +38,11 @@ export interface SendFriendRequest {
 export interface BlockUserRequest {
 	username: string;
 }
+
+export const sendFriendRequestSchema = z.object({
+	username: z.string().min(1),
+});
+
+export const blockUserRequestSchema = z.object({
+	username: z.string().min(1),
+});

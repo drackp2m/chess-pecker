@@ -1,4 +1,4 @@
-import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/core';
+import { Entity, Enum, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 
@@ -17,12 +17,12 @@ export class TrainingCycle extends SyncableBaseEntity<TrainingCycle> {
 	training!: Training;
 
 	/** Cycle number, starting at 1. */
-	@Property()
+	@Property({ type: 'number' })
 	index!: number;
 
 	@Enum({ items: () => TrainingCycleStatus, default: TrainingCycleStatus.Running })
 	status!: TrainingCycleStatus;
 
-	@Property()
+	@Property({ type: 'number' })
 	itemCount!: number;
 }

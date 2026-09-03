@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * The payload is wrapped rather than bare, so a scalar setting can gain fields later without
  * changing the column's type.
@@ -17,3 +19,7 @@ export interface UserSetting {
 export interface UpsertUserSettingRequest {
 	value: unknown;
 }
+
+export const upsertUserSettingRequestSchema = z.object({
+	value: z.unknown(),
+});

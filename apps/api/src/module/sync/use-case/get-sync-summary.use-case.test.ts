@@ -1,3 +1,4 @@
+import type { PushTrainingRequestParsed } from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 import { TestingModule } from '@nestjs/testing';
 
@@ -7,7 +8,6 @@ import { AppModule } from '../../app/app.module';
 import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
 import { TrainingCycle } from '../../training/training-cycle.entity';
 import { User } from '../../user/user.entity';
-import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
 import { SyncModule } from '../sync.module';
 import {
 	BORN,
@@ -118,7 +118,7 @@ describe('GetSyncSummaryUseCase', () => {
 	});
 
 	describe('a cycle whose slots did not all make it up', () => {
-		const cutTree = (refs: TreeRefs, itemCount: number): PushTrainingRequestDto => ({
+		const cutTree = (refs: TreeRefs, itemCount: number): PushTrainingRequestParsed => ({
 			training: {
 				...trainingNode(refs),
 				cycles: [

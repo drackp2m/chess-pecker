@@ -1,7 +1,7 @@
+import type { SearchPuzzleRequest } from '@chesspecker/api-definitions';
 import { FilterQuery } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
-import { SearchPuzzleRequestDto } from '../dto/request/search-puzzle-request.dto';
 import { Puzzle } from '../puzzle.entity';
 import { PuzzleRepository } from '../puzzle.repository';
 
@@ -11,7 +11,7 @@ export class SearchPuzzlesUseCase {
 
 	constructor(private readonly puzzleRepository: PuzzleRepository) {}
 
-	async execute(search: SearchPuzzleRequestDto): Promise<Puzzle[]> {
+	async execute(search: SearchPuzzleRequest): Promise<Puzzle[]> {
 		const query: FilterQuery<Puzzle> = {
 			...(search.ratingMin !== undefined || search.ratingMax !== undefined
 				? {

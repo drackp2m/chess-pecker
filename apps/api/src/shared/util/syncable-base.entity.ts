@@ -1,4 +1,4 @@
-import { Entity, Property, Unique } from '@mikro-orm/core';
+import { Entity, Property, Unique } from '@mikro-orm/decorators/legacy';
 
 import { GenerateNowDateUseCase } from '../use-case/generate-now-date.use-case';
 
@@ -13,9 +13,13 @@ export abstract class SyncableBaseEntity<
 	T extends SyncableBaseEntity<T>,
 > extends CustomBaseEntity<T> {
 	@Unique()
-	@Property({ nullable: true })
+	@Property({ type: 'string', nullable: true })
 	clientRef?: string;
 
-	@Property({ defaultRaw: 'now()', onUpdate: () => new GenerateNowDateUseCase().execute() })
+	@Property({
+		type: 'datetime',
+		defaultRaw: 'now()',
+		onUpdate: () => new GenerateNowDateUseCase().execute(),
+	})
 	receivedAt: Date = new GenerateNowDateUseCase().execute();
 }

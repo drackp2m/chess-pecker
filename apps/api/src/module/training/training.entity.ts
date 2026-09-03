@@ -1,4 +1,4 @@
-import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/core';
+import { Check, Entity, Enum, Index, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 
 import { SyncableBaseEntity } from '../../shared/util/syncable-base.entity';
 import { User } from '../user/user.entity';
@@ -27,6 +27,6 @@ export class Training extends SyncableBaseEntity<Training> {
 	@Enum({ items: () => TrainingFinishedReason, nullable: true })
 	finishedReason?: TrainingFinishedReason;
 
-	@Property({ nullable: true })
+	@Property({ type: 'datetime', nullable: true })
 	finishedAt?: Date;
 }

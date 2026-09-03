@@ -1,9 +1,10 @@
+import type { RegisterRequest } from '@chesspecker/api-definitions';
+import type { EntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
 import { UserRepository } from '../../user/user.repository';
-import { RegisterRequestDto } from '../dto/request/register-request.dto';
 
 import { HashPasswordUseCase } from './hash-password.use-case';
 
@@ -14,7 +15,7 @@ export class RegisterUseCase {
 		private readonly hashPasswordUseCase: HashPasswordUseCase,
 	) {}
 
-	async execute(registerRequest: RegisterRequestDto): Promise<User> {
+	async execute(registerRequest: RegisterRequest): Promise<User> {
 		const userExists = await this.userRepository.getMany({
 			$or: [
 				{ username: registerRequest.username },
@@ -34,7 +35,16 @@ export class RegisterUseCase {
 
 		registerRequest.password = await this.hashPasswordUseCase.execute(registerRequest.password);
 
-		const user = new User(registerRequest);
+		const userData: EntityData<User> = {
+			username: registerRequest.username,
+			password: registerRequest.password,
+		};
+
+		if (undefined !== registerRequest.email) {
+			userData.email = registerRequest.email;
+		}
+
+		const user = new User(userData);
 
 		return this.userRepository.insert(user);
 	}

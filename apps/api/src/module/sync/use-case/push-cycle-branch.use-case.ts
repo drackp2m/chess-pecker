@@ -1,3 +1,4 @@
+import type { PushCycleItemNodeParsed, PushCycleNodeParsed } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
@@ -8,8 +9,6 @@ import { TrainingPuzzle } from '../../training/training-puzzle.entity';
 import { Training } from '../../training/training.entity';
 import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-timestamps.use-case';
 import { SyncPushContext } from '../definition/sync-push-context.interface';
-import { PushCycleItemNodeDto } from '../dto/request/push-cycle-item-node.dto';
-import { PushCycleNodeDto } from '../dto/request/push-cycle-node.dto';
 import { claimSyncRow, isFresherNode, reuseSyncRow } from '../util/sync-node.util';
 
 import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
@@ -25,7 +24,7 @@ export class PushCycleBranchUseCase {
 	async execute(
 		context: SyncPushContext,
 		training: Training,
-		nodes: PushCycleNodeDto[],
+		nodes: PushCycleNodeParsed[],
 		set: ReadonlyMap<string, TrainingPuzzle>,
 	): Promise<void> {
 		const setSize = new Set(set.values()).size;
@@ -50,7 +49,7 @@ export class PushCycleBranchUseCase {
 	private pushCycle(
 		context: SyncPushContext,
 		training: Training,
-		node: PushCycleNodeDto,
+		node: PushCycleNodeParsed,
 		setSize: number,
 	): PushedCycle | undefined {
 		const existing = context.rows.cycle.find(node, 'cycle');
@@ -70,7 +69,7 @@ export class PushCycleBranchUseCase {
 			new TrainingCycle({
 				training,
 				index: node.index,
-				status: node.status,
+				status: node.status as TrainingCycleStatus,
 				itemCount: Math.max(node.itemCount, setSize),
 			}),
 			node,
@@ -78,7 +77,7 @@ export class PushCycleBranchUseCase {
 
 		return {
 			row: claimSyncRow(context, 'cycle', node, cycle),
-			closedHere: TrainingCycleStatus.Finished === node.status,
+			closedHere: 'finished' === node.status,
 		};
 	}
 
@@ -86,18 +85,18 @@ export class PushCycleBranchUseCase {
 	 * A cycle uploads open and closes when the device says so. Returns whether this push is
 	 * the one that finished it, which is the only claim the server checks afterwards.
 	 */
-	private refreshCycle(row: TrainingCycle, node: PushCycleNodeDto, setSize: number): boolean {
+	private refreshCycle(row: TrainingCycle, node: PushCycleNodeParsed, setSize: number): boolean {
 		row.itemCount = Math.max(row.itemCount, node.itemCount, setSize);
 
 		if (!isFresherNode(node, row)) {
 			return false;
 		}
 
-		row.status = node.status;
+		row.status = node.status as TrainingCycleStatus;
 
 		this.applySyncTimestampsUseCase.execute(row, node);
 
-		return TrainingCycleStatus.Finished === node.status;
+		return 'finished' === node.status;
 	}
 
 	/**
@@ -131,7 +130,7 @@ export class PushCycleBranchUseCase {
 		context: SyncPushContext,
 		training: Training,
 		cycle: TrainingCycle,
-		node: PushCycleItemNodeDto,
+		node: PushCycleItemNodeParsed,
 		set: ReadonlyMap<string, TrainingPuzzle>,
 	): void {
 		const item = this.resolveItem(context, cycle, node, set);
@@ -152,7 +151,7 @@ export class PushCycleBranchUseCase {
 	private resolveItem(
 		context: SyncPushContext,
 		cycle: TrainingCycle,
-		node: PushCycleItemNodeDto,
+		node: PushCycleItemNodeParsed,
 		set: ReadonlyMap<string, TrainingPuzzle>,
 	): TrainingCycleItem | undefined {
 		const existing = context.rows.cycleItem.find(node, 'cycleItem');

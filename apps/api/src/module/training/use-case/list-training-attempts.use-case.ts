@@ -1,11 +1,12 @@
+import type { GetTrainingAttemptsRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
+import { toIsoDate } from '../../../shared/util/to-iso-date';
 import {
 	TrainingAttempt,
 	TrainingAttemptHistory,
 } from '../definition/training-attempt-history.interface';
 import { TrainingPolicy } from '../definition/training-policy';
-import { GetTrainingAttemptsRequestDto } from '../dto/request/get-training-attempts-request.dto';
 import { PuzzleAttempt } from '../puzzle-attempt.entity';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
 import { Training } from '../training.entity';
@@ -20,7 +21,7 @@ export class ListTrainingAttemptsUseCase {
 	 */
 	async execute(
 		training: Training,
-		request: GetTrainingAttemptsRequestDto,
+		request: GetTrainingAttemptsRequest,
 	): Promise<TrainingAttemptHistory> {
 		const size = Math.min(request.limit ?? PAGE_SIZE, PAGE_SIZE);
 		const after = toCursor(request.since);
@@ -67,8 +68,8 @@ function toHistoryEntry(attempt: PuzzleAttempt): TrainingAttempt {
 		mistakeCount: attempt.mistakeCount,
 		record: attempt.record,
 		freePlayRuns: attempt.freePlayRuns,
-		createdAt: attempt.createdAt.toISOString(),
-		updatedAt: attempt.updatedAt.toISOString(),
+		createdAt: toIsoDate(attempt.createdAt),
+		updatedAt: toIsoDate(attempt.updatedAt),
 		...(undefined === roundUuid ? {} : { roundUuid }),
 		...(undefined === cycleItemUuid ? {} : { cycleItemUuid }),
 		...(undefined === position ? {} : { position }),

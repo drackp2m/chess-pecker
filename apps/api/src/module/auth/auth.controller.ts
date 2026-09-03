@@ -1,11 +1,11 @@
+import { loginRequestSchema, registerRequestSchema } from '@chesspecker/api-definitions';
+import type { LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
 import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
 
 import { User } from '../user/user.entity';
 
 import { CurrentUser } from './decorator/current-user.decorator';
 import { Public } from './decorator/public.decorator';
-import { LoginRequestDto } from './dto/request/login-request.dto';
-import { RegisterRequestDto } from './dto/request/register-request.dto';
 import { LoginUseCase } from './use-case/login.use-case';
 import { LogoutUseCase } from './use-case/logout.use-case';
 import { RefreshSessionUseCase } from './use-case/refresh-session.use-case';
@@ -24,14 +24,16 @@ export class AuthController {
 
 	@Public()
 	@Post('register')
-	async register(@Body() registerRequest: RegisterRequestDto): Promise<User> {
+	async register(
+		@Body({ schema: registerRequestSchema }) registerRequest: RegisterRequest,
+	): Promise<User> {
 		return this.registerUseCase.execute(registerRequest);
 	}
 
 	@Public()
 	@Post('login')
 	@HttpCode(HttpStatus.NO_CONTENT)
-	async login(@Body() loginRequest: LoginRequestDto): Promise<void> {
+	async login(@Body({ schema: loginRequestSchema }) loginRequest: LoginRequest): Promise<void> {
 		return this.loginUseCase.execute(loginRequest);
 	}
 

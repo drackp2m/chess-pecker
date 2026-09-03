@@ -1,11 +1,10 @@
+import type { LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
 import { Test, TestingModule } from '@nestjs/testing';
 import { mock } from 'vitest-mock-extended';
 
 import { User } from '../user/user.entity';
 
 import { AuthController } from './auth.controller';
-import { LoginRequestDto } from './dto/request/login-request.dto';
-import { RegisterRequestDto } from './dto/request/register-request.dto';
 import { LoginUseCase } from './use-case/login.use-case';
 import { LogoutUseCase } from './use-case/logout.use-case';
 import { RefreshSessionUseCase } from './use-case/refresh-session.use-case';
@@ -40,7 +39,7 @@ describe('AuthController', () => {
 		it('should return User instance', async () => {
 			registerUseCase.execute.mockResolvedValueOnce(new User());
 
-			const requestDto: RegisterRequestDto = {
+			const requestDto: RegisterRequest = {
 				username: 'drackp2m',
 				password: 'password',
 			};
@@ -53,7 +52,7 @@ describe('AuthController', () => {
 
 	describe('login', () => {
 		it('should return undefined', async () => {
-			const requestDto: LoginRequestDto = {
+			const requestDto: LoginRequest = {
 				username: 'drackp2m',
 				password: 'password',
 			};

@@ -1,12 +1,19 @@
-import type { PuzzleShare as PuzzleShareResponse } from '@chesspecker/api-definitions';
+import {
+	createPuzzleShareRequestSchema,
+	getSentPuzzleSharesRequestSchema,
+	puzzleShareResultRequestSchema,
+} from '@chesspecker/api-definitions';
+import type {
+	CreatePuzzleShareRequest,
+	GetSentPuzzleSharesRequest,
+	PuzzleShare as PuzzleShareResponse,
+	PuzzleShareResultRequest,
+} from '@chesspecker/api-definitions';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
 
-import { CreatePuzzleShareRequestDto } from './dto/request/create-puzzle-share-request.dto';
-import { GetSentPuzzleSharesRequestDto } from './dto/request/get-sent-puzzle-shares-request.dto';
-import { PuzzleShareResultRequestDto } from './dto/request/puzzle-share-result-request.dto';
 import { CreatePuzzleShareUseCase } from './use-case/create-puzzle-share.use-case';
 import { GetPuzzleShareUseCase } from './use-case/get-puzzle-share.use-case';
 import { ListPuzzleSharesUseCase } from './use-case/list-puzzle-shares.use-case';
@@ -33,7 +40,7 @@ export class PuzzleShareController {
 	@Get('sent')
 	async listSent(
 		@CurrentUser() user: User,
-		@Query() query: GetSentPuzzleSharesRequestDto,
+		@Query({ schema: getSentPuzzleSharesRequestSchema }) query: GetSentPuzzleSharesRequest<Date>,
 	): Promise<PuzzleShareResponse[]> {
 		return this.listPuzzleSharesUseCase.listSent(user, query.since, query.limit);
 	}
@@ -55,7 +62,7 @@ export class PuzzleShareController {
 	@Post()
 	async create(
 		@CurrentUser() user: User,
-		@Body() request: CreatePuzzleShareRequestDto,
+		@Body({ schema: createPuzzleShareRequestSchema }) request: CreatePuzzleShareRequest,
 	): Promise<PuzzleShareResponse> {
 		return this.createPuzzleShareUseCase.execute(user, request);
 	}
@@ -64,7 +71,7 @@ export class PuzzleShareController {
 	async submitAttempt(
 		@CurrentUser() user: User,
 		@Param('uuid') uuid: string,
-		@Body() request: PuzzleShareResultRequestDto,
+		@Body({ schema: puzzleShareResultRequestSchema }) request: PuzzleShareResultRequest,
 	): Promise<PuzzleShareResponse> {
 		return this.submitPuzzleShareAttemptUseCase.execute(user, uuid, request);
 	}

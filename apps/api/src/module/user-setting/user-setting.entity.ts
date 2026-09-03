@@ -1,5 +1,5 @@
 import type { SettingValue } from '@chesspecker/api-definitions';
-import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/core';
+import { Entity, ManyToOne, Property, Unique } from '@mikro-orm/decorators/legacy';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { User } from '../user/user.entity';
@@ -16,7 +16,7 @@ export class UserSetting extends CustomBaseEntity<UserSetting> {
 	@ManyToOne(() => User, { deleteRule: 'cascade' })
 	user!: User;
 
-	@Property()
+	@Property({ type: 'string' })
 	key!: string;
 
 	@Property({ type: 'json' })

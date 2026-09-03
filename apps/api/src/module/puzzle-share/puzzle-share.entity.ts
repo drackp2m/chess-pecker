@@ -1,4 +1,4 @@
-import { Entity, Index, ManyToOne, Property } from '@mikro-orm/core';
+import { Entity, Index, ManyToOne, Property } from '@mikro-orm/decorators/legacy';
 
 import { CustomBaseEntity } from '../../shared/util/custom-base.entity';
 import { Puzzle } from '../puzzle/puzzle.entity';
