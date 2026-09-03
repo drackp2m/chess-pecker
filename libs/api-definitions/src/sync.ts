@@ -1,4 +1,7 @@
+import { z } from 'zod';
+
 import type { ApiPuzzle } from './puzzle';
+import { puzzleAttemptRecordSchema } from './training';
 import type {
 	CalibrationRoundKind,
 	CalibrationRoundOutcome,
@@ -14,6 +17,18 @@ export interface SyncTimestamps<TDate = string> {
 	createdAt?: TDate;
 	updatedAt?: TDate;
 }
+
+const syncTimestampsSchema = z.object({
+	createdAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	updatedAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
+});
+
+const syncNodeSchema = syncTimestampsSchema.extend({
+	clientRef: z.uuid().optional(),
+	uuid: z.uuid().optional(),
+});
+
+export type SyncNodeParsed = z.output<typeof syncNodeSchema>;
 
 /** The eight tables that sync, under the name they carry on both sides. */
 export type SyncEntity =
@@ -48,6 +63,79 @@ export interface PushTrainingNode<TDate = string> extends SyncNode<TDate> {
 	puzzles: PushTrainingPuzzleNode<TDate>[];
 	cycles: PushCycleNode<TDate>[];
 }
+
+const pushGoalNodeSchema = syncNodeSchema.extend({
+	puzzlesPerDay: z.number().int().min(1).optional(),
+	endDate: z.iso.datetime().transform((value) => new Date(value)).optional(),
+});
+
+export type PushGoalNodeParsed = z.output<typeof pushGoalNodeSchema>;
+
+const pushAttemptNodeSchema = syncNodeSchema.extend({
+	lichessId: z.string().min(1),
+	...puzzleAttemptRecordSchema.shape,
+});
+
+export type PushAttemptNodeParsed = z.output<typeof pushAttemptNodeSchema>;
+
+const pushCalibrationPuzzleNodeSchema = syncNodeSchema.extend({
+	lichessId: z.string().min(1),
+	position: z.number().int().nonnegative(),
+});
+
+export type PushCalibrationPuzzleNodeParsed = z.output<typeof pushCalibrationPuzzleNodeSchema>;
+
+const pushTrainingPuzzleNodeSchema = syncNodeSchema.extend({
+	lichessId: z.string().min(1),
+});
+
+export type PushTrainingPuzzleNodeParsed = z.output<typeof pushTrainingPuzzleNodeSchema>;
+
+const pushCycleItemNodeSchema = syncNodeSchema.extend({
+	trainingPuzzleRef: z.uuid(),
+	position: z.number().int().nonnegative(),
+	attempts: z.array(pushAttemptNodeSchema),
+});
+
+export type PushCycleItemNodeParsed = z.output<typeof pushCycleItemNodeSchema>;
+
+const pushCalibrationRoundNodeSchema = syncNodeSchema.extend({
+	index: z.number().int().min(1),
+	kind: z.enum(['exploration', 'refine']),
+	rating: z.number().int().nonnegative(),
+	outcome: z.enum(['pending', 'raise', 'lower', 'accept']),
+	puzzles: z.array(pushCalibrationPuzzleNodeSchema),
+	attempts: z.array(pushAttemptNodeSchema),
+});
+
+export type PushCalibrationRoundNodeParsed = z.output<typeof pushCalibrationRoundNodeSchema>;
+
+const pushCycleNodeSchema = syncNodeSchema.extend({
+	index: z.number().int().min(1),
+	status: z.enum(['running', 'finished', 'cancelled']),
+	itemCount: z.number().int().min(1),
+	items: z.array(pushCycleItemNodeSchema),
+});
+
+export type PushCycleNodeParsed = z.output<typeof pushCycleNodeSchema>;
+
+export const pushTrainingNodeSchema = syncNodeSchema.extend({
+	status: z.enum(['calibrating', 'planning', 'running', 'finished', 'cancelled']),
+	finishedReason: z.enum(['completed', 'plateau', 'max-cycles', 'cancelled']).optional(),
+	finishedAt: z.iso.datetime().transform((value) => new Date(value)).optional(),
+	goals: z.array(pushGoalNodeSchema),
+	rounds: z.array(pushCalibrationRoundNodeSchema),
+	puzzles: z.array(pushTrainingPuzzleNodeSchema),
+	cycles: z.array(pushCycleNodeSchema),
+});
+
+export type PushTrainingNodeParsed = z.output<typeof pushTrainingNodeSchema>;
+
+export const pushTrainingRequestSchema = z.object({
+	training: pushTrainingNodeSchema,
+});
+
+export type PushTrainingRequestParsed = z.output<typeof pushTrainingRequestSchema>;
 
 export interface PushGoalNode<TDate = string> extends SyncNode<TDate> {
 	puzzlesPerDay?: number;
@@ -104,6 +192,10 @@ export interface PushAttemptNode<TDate = string> extends SyncNode<TDate> {
 export interface GetSyncTrainingTreeRequest<TDate = string> {
 	since?: TDate;
 }
+
+export const getSyncTrainingTreeRequestSchema = z.object({
+	since: z.iso.datetime().transform((value) => new Date(value)).optional(),
+});
 
 export interface SyncTreeRow<TDate = string> {
 	readonly uuid: string;

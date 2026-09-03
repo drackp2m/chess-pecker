@@ -1,3 +1,7 @@
+import type {
+	PushCalibrationPuzzleNodeParsed,
+	PushCalibrationRoundNodeParsed,
+} from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { TrainingCalibrationPuzzle } from '../../training/training-calibration-puzzle.entity';
@@ -5,8 +9,6 @@ import { TrainingCalibrationRound } from '../../training/training-calibration-ro
 import { Training } from '../../training/training.entity';
 import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-timestamps.use-case';
 import { SyncPushContext } from '../definition/sync-push-context.interface';
-import { PushCalibrationPuzzleNodeDto } from '../dto/request/push-calibration-puzzle-node.dto';
-import { PushCalibrationRoundNodeDto } from '../dto/request/push-calibration-round-node.dto';
 import { claimSyncRow, isFresherNode, reuseSyncRow } from '../util/sync-node.util';
 
 import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
@@ -22,7 +24,7 @@ export class PushCalibrationBranchUseCase {
 	execute(
 		context: SyncPushContext,
 		training: Training,
-		nodes: PushCalibrationRoundNodeDto[],
+		nodes: PushCalibrationRoundNodeParsed[],
 	): void {
 		for (const node of nodes) {
 			const round = this.pushRound(context, training, node);
@@ -44,7 +46,7 @@ export class PushCalibrationBranchUseCase {
 	private pushRound(
 		context: SyncPushContext,
 		training: Training,
-		node: PushCalibrationRoundNodeDto,
+		node: PushCalibrationRoundNodeParsed,
 	): TrainingCalibrationRound | undefined {
 		const existing = context.rows.calibrationRound.find(node, 'calibrationRound');
 
@@ -70,7 +72,7 @@ export class PushCalibrationBranchUseCase {
 	}
 
 	/** A round uploads open and decides afterwards: raise, lower, or accept the band. */
-	private refreshRound(row: TrainingCalibrationRound, node: PushCalibrationRoundNodeDto): void {
+	private refreshRound(row: TrainingCalibrationRound, node: PushCalibrationRoundNodeParsed): void {
 		if (!isFresherNode(node, row)) {
 			return;
 		}
@@ -82,7 +84,7 @@ export class PushCalibrationBranchUseCase {
 
 	private buildRound(
 		training: Training,
-		node: PushCalibrationRoundNodeDto,
+		node: PushCalibrationRoundNodeParsed,
 	): TrainingCalibrationRound {
 		return this.applySyncTimestampsUseCase.execute(
 			new TrainingCalibrationRound({
@@ -100,7 +102,7 @@ export class PushCalibrationBranchUseCase {
 	private pushDealt(
 		context: SyncPushContext,
 		round: TrainingCalibrationRound,
-		node: PushCalibrationPuzzleNodeDto,
+		node: PushCalibrationPuzzleNodeParsed,
 	): void {
 		const existing = context.rows.calibrationPuzzle.find(node, 'calibrationPuzzle');
 

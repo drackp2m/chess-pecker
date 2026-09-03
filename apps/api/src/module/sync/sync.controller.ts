@@ -1,4 +1,13 @@
-import type { PushTrainingResult, SyncSummary } from '@chesspecker/api-definitions';
+import {
+	getSyncTrainingTreeRequestSchema,
+	pushTrainingRequestSchema,
+} from '@chesspecker/api-definitions';
+import type {
+	GetSyncTrainingTreeRequest,
+	PushTrainingRequestParsed,
+	PushTrainingResult,
+	SyncSummary,
+} from '@chesspecker/api-definitions';
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
@@ -6,8 +15,6 @@ import { GetOwnedTrainingUseCase } from '../training/use-case/get-owned-training
 import { User } from '../user/user.entity';
 
 import { SyncTrainingTree } from './definition/sync-training-tree.interface';
-import { GetTrainingTreeRequestDto } from './dto/request/get-training-tree-request.dto';
-import { PushTrainingRequestDto } from './dto/request/push-training-request.dto';
 import { GetSyncSummaryUseCase } from './use-case/get-sync-summary.use-case';
 import { GetTrainingTreeUseCase } from './use-case/get-training-tree.use-case';
 import { PushTrainingTreeUseCase } from './use-case/push-training-tree.use-case';
@@ -35,7 +42,7 @@ export class SyncController {
 	async getTrainingTree(
 		@CurrentUser() user: User,
 		@Param('uuid') uuid: string,
-		@Query() query: GetTrainingTreeRequestDto,
+		@Query({ schema: getSyncTrainingTreeRequestSchema }) query: GetSyncTrainingTreeRequest<Date>,
 	): Promise<SyncTrainingTree> {
 		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);
 
@@ -45,7 +52,7 @@ export class SyncController {
 	@Post('training')
 	async pushTraining(
 		@CurrentUser() user: User,
-		@Body() pushRequest: PushTrainingRequestDto,
+		@Body({ schema: pushTrainingRequestSchema }) pushRequest: PushTrainingRequestParsed,
 	): Promise<PushTrainingResult> {
 		return this.pushTrainingTreeUseCase.execute(user, pushRequest);
 	}

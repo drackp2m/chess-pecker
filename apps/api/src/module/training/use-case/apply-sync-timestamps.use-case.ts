@@ -1,8 +1,8 @@
+import type { SyncTimestamps } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { BadRequestException } from '../../../shared/exception/bad-request.exception';
 import { CustomBaseEntity } from '../../../shared/util/custom-base.entity';
-import { SyncTimestampsDto } from '../dto/request/sync-timestamps.dto';
 
 @Injectable()
 export class ApplySyncTimestampsUseCase {
@@ -13,7 +13,7 @@ export class ApplySyncTimestampsUseCase {
 	 * The user owns the clock, so incoming dates get a sanity check. Enough while the stats
 	 * are personal; comparing them against a friend's would need server stamps.
 	 */
-	execute<T extends CustomBaseEntity<T>>(entity: T, timestamps: SyncTimestampsDto): T {
+	execute<T extends CustomBaseEntity<T>>(entity: T, timestamps: SyncTimestamps<Date>): T {
 		const now = Date.now();
 		const limit = now + ApplySyncTimestampsUseCase.futureToleranceMs;
 

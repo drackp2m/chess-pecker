@@ -1,3 +1,11 @@
+import {
+	getTrainingActivityRequestSchema,
+	getTrainingAttemptsRequestSchema,
+} from '@chesspecker/api-definitions';
+import type {
+	GetTrainingActivityRequest,
+	GetTrainingAttemptsRequest,
+} from '@chesspecker/api-definitions';
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
@@ -6,8 +14,6 @@ import { User } from '../user/user.entity';
 import { TrainingActivity } from './definition/training-activity.interface';
 import { TrainingAttemptHistory } from './definition/training-attempt-history.interface';
 import { TrainingProgress } from './definition/training-progress.interface';
-import { GetTrainingActivityRequestDto } from './dto/request/get-training-activity-request.dto';
-import { GetTrainingAttemptsRequestDto } from './dto/request/get-training-attempts-request.dto';
 import { Training } from './training.entity';
 import { FinishTrainingUseCase } from './use-case/finish-training.use-case';
 import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case';
@@ -41,7 +47,7 @@ export class TrainingController {
 	@Get('activity')
 	async getActivity(
 		@CurrentUser() user: User,
-		@Query() query: GetTrainingActivityRequestDto,
+		@Query({ schema: getTrainingActivityRequestSchema }) query: GetTrainingActivityRequest<Date>,
 	): Promise<TrainingActivity> {
 		return this.getTrainingActivityUseCase.execute(user, query);
 	}
@@ -74,7 +80,7 @@ export class TrainingController {
 	async listAttempts(
 		@CurrentUser() user: User,
 		@Param('uuid') uuid: string,
-		@Query() query: GetTrainingAttemptsRequestDto,
+		@Query({ schema: getTrainingAttemptsRequestSchema }) query: GetTrainingAttemptsRequest,
 	): Promise<TrainingAttemptHistory> {
 		const training = await this.getOwnedTrainingUseCase.execute(user, uuid);
 

@@ -1,7 +1,6 @@
-import type { SyncEntity } from '@chesspecker/api-definitions';
+import type { SyncEntity, SyncNodeParsed } from '@chesspecker/api-definitions';
 import { EntityManager, EntityName, FilterQuery } from '@mikro-orm/core';
 
-import { SyncNodeDto } from '../dto/request/sync-node.dto';
 
 import { syncKey } from './sync-node.util';
 
@@ -19,7 +18,7 @@ export function noKeys(): SyncKeys {
 	return { uuids: [], clientRefs: [] };
 }
 
-export function collectKey(keys: SyncKeys, node: SyncNodeDto): void {
+export function collectKey(keys: SyncKeys, node: SyncNodeParsed): void {
 	if (undefined !== node.uuid) {
 		keys.uuids.push(node.uuid);
 	}
@@ -43,7 +42,7 @@ export class SyncRowIndex<T extends SyncRow> {
 		}
 	}
 
-	find(node: SyncNodeDto, entity: SyncEntity): T | undefined {
+	find(node: SyncNodeParsed, entity: SyncEntity): T | undefined {
 		const key = syncKey(node, entity);
 
 		return 'uuid' in key ? this.byUuid.get(key.uuid) : this.byClientRef.get(key.clientRef);

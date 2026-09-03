@@ -1,11 +1,13 @@
-import type { SyncEntity } from '@chesspecker/api-definitions';
+import type {
+	PushTrainingNodeParsed,
+	SyncEntity,
+	SyncNodeParsed,
+} from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 
 import { BadRequestException } from '../../../shared/exception/bad-request.exception';
 import { Puzzle } from '../../puzzle/puzzle.entity';
 import { SyncPushContext } from '../definition/sync-push-context.interface';
-import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
-import { SyncNodeDto } from '../dto/request/sync-node.dto';
 
 export type SyncKey = { uuid: string } | { clientRef: string };
 
@@ -13,7 +15,7 @@ export type SyncKey = { uuid: string } | { clientRef: string };
  * How a row is looked up before insert: the uuid when it comes, since it means the row
  * already went up, and the retry key otherwise. That lookup is the whole idempotency.
  */
-export function syncKey(node: SyncNodeDto, entity: SyncEntity): SyncKey {
+export function syncKey(node: SyncNodeParsed, entity: SyncEntity): SyncKey {
 	const uuid = node.uuid ?? undefined;
 	const clientRef = node.clientRef ?? undefined;
 
@@ -32,7 +34,7 @@ export function syncKey(node: SyncNodeDto, entity: SyncEntity): SyncKey {
  * Whether what arrives is newer than what is stored. Three rows change state after birth,
  * so local wins — but only forwards: a late push never rewinds what is already there.
  */
-export function isFresherNode(node: SyncNodeDto, row: { updatedAt: Date }): boolean {
+export function isFresherNode(node: SyncNodeParsed, row: { updatedAt: Date }): boolean {
 	const updatedAt = node.updatedAt ?? undefined;
 
 	return undefined !== updatedAt && updatedAt.getTime() > row.updatedAt.getTime();
@@ -45,7 +47,7 @@ export function isFresherNode(node: SyncNodeDto, row: { updatedAt: Date }): bool
 export function reuseSyncRow<T extends { uuid: string }>(
 	context: SyncPushContext,
 	entity: SyncEntity,
-	node: SyncNodeDto,
+	node: SyncNodeParsed,
 	row: T,
 	belongsHere: boolean,
 	reason: string,
@@ -68,7 +70,7 @@ export function reuseSyncRow<T extends { uuid: string }>(
 export function claimSyncRow<T extends { uuid: string; receivedAt: Date; clientRef?: string }>(
 	context: SyncPushContext,
 	entity: SyncEntity,
-	node: SyncNodeDto,
+	node: SyncNodeParsed,
 	row: T,
 ): T {
 	const clientRef = node.clientRef ?? undefined;
@@ -88,7 +90,7 @@ export function claimSyncRow<T extends { uuid: string; receivedAt: Date; clientR
 /** The catalogue needed to translate the whole tree, in one query. */
 export async function loadTreePuzzles(
 	entityManager: EntityManager,
-	node: PushTrainingNodeDto,
+	node: PushTrainingNodeParsed,
 ): Promise<Map<string, Puzzle>> {
 	const lichessIds = [...collectLichessIds(node)];
 
@@ -101,7 +103,7 @@ export async function loadTreePuzzles(
 	return new Map(puzzles.map((puzzle) => [puzzle.lichessId, puzzle]));
 }
 
-function collectLichessIds(node: PushTrainingNodeDto): Set<string> {
+function collectLichessIds(node: PushTrainingNodeParsed): Set<string> {
 	const lichessIds = new Set(node.puzzles.map((puzzle) => puzzle.lichessId));
 
 	for (const round of node.rounds) {

@@ -1,10 +1,10 @@
+import type { GetTrainingActivityRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { User } from '../../user/user.entity';
 import { TrainingActivity } from '../definition/training-activity.interface';
 import { TrainingPolicy } from '../definition/training-policy';
-import { GetTrainingActivityRequestDto } from '../dto/request/get-training-activity-request.dto';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class GetTrainingActivityUseCase {
 	 * The cursor is read before the days on purpose: repeating a day is free, missing one
 	 * would leave it wrong forever.
 	 */
-	async execute(user: User, request: GetTrainingActivityRequestDto): Promise<TrainingActivity> {
+	async execute(user: User, request: GetTrainingActivityRequest<Date>): Promise<TrainingActivity> {
 		const cursor =
 			(await this.puzzleAttemptRepository.lastReceivedAt(user.uuid)) ??
 			new GenerateNowDateUseCase().execute();

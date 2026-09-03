@@ -19,9 +19,11 @@ import { TrainingGoal } from '../../training/training-goal.entity';
 import { TrainingPuzzle } from '../../training/training-puzzle.entity';
 import { Training } from '../../training/training.entity';
 import { User } from '../../user/user.entity';
-import { PushCycleNodeDto } from '../dto/request/push-cycle-node.dto';
-import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
-import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
+import type {
+	PushCycleNodeParsed,
+	PushTrainingNodeParsed,
+	PushTrainingRequestParsed,
+} from '@chesspecker/api-definitions';
 import { SyncModule } from '../sync.module';
 import {
 	BORN,
@@ -57,8 +59,8 @@ interface TreeCounts {
 
 function tree(
 	refs: TreeRefs,
-	node: Partial<PlainNode<PushTrainingNodeDto>>,
-): PushTrainingRequestDto {
+		node: Partial<PlainNode<PushTrainingNodeParsed>>,
+	): PushTrainingRequestParsed {
 	return { training: { ...trainingNode(refs), ...node } };
 }
 
@@ -334,8 +336,8 @@ describe('PushTrainingTreeUseCase', () => {
 	describe('a push cut halfway through the slots', () => {
 		const cutCycle = (
 			refs: TreeRefs,
-			over: Partial<PlainNode<PushCycleNodeDto>> = {},
-		): PlainNode<PushCycleNodeDto> => ({
+			over: Partial<PlainNode<PushCycleNodeParsed>> = {},
+		): PlainNode<PushCycleNodeParsed> => ({
 			clientRef: refs.cycle,
 			createdAt: BORN,
 			updatedAt: BORN,
@@ -355,7 +357,7 @@ describe('PushTrainingTreeUseCase', () => {
 			...over,
 		});
 
-		const truncated = (refs: TreeRefs): PushTrainingRequestDto =>
+		const truncated = (refs: TreeRefs): PushTrainingRequestParsed =>
 			tree(refs, { cycles: [cutCycle(refs)] });
 
 		it('leaves the cycle saying how many slots it should have, not how many arrived', async () => {

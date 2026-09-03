@@ -1,3 +1,4 @@
+import type { PushTrainingNodeParsed } from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 
 import { PuzzleAttempt } from '../../training/puzzle-attempt.entity';
@@ -8,7 +9,6 @@ import { TrainingCycle } from '../../training/training-cycle.entity';
 import { TrainingGoal } from '../../training/training-goal.entity';
 import { TrainingPuzzle } from '../../training/training-puzzle.entity';
 import { Training } from '../../training/training.entity';
-import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
 
 import { SyncKeys, SyncRowIndex, collectKey, loadRowIndex, noKeys } from './sync-row-index';
 
@@ -36,7 +36,7 @@ interface TreeKeys {
 
 export async function loadTreeRows(
 	entityManager: EntityManager,
-	node: PushTrainingNodeDto,
+	node: PushTrainingNodeParsed,
 ): Promise<SyncTreeRows> {
 	const keys = collectTreeKeys(node);
 
@@ -60,7 +60,7 @@ export async function loadTreeRows(
 	};
 }
 
-function collectTreeKeys(node: PushTrainingNodeDto): TreeKeys {
+function collectTreeKeys(node: PushTrainingNodeParsed): TreeKeys {
 	const keys: TreeKeys = {
 		training: noKeys(),
 		trainingGoal: noKeys(),
@@ -88,7 +88,7 @@ function collectTreeKeys(node: PushTrainingNodeDto): TreeKeys {
 	return keys;
 }
 
-function collectRoundKeys(keys: TreeKeys, node: PushTrainingNodeDto): void {
+function collectRoundKeys(keys: TreeKeys, node: PushTrainingNodeParsed): void {
 	for (const round of node.rounds) {
 		collectKey(keys.calibrationRound, round);
 
@@ -102,7 +102,7 @@ function collectRoundKeys(keys: TreeKeys, node: PushTrainingNodeDto): void {
 	}
 }
 
-function collectCycleKeys(keys: TreeKeys, node: PushTrainingNodeDto): void {
+function collectCycleKeys(keys: TreeKeys, node: PushTrainingNodeParsed): void {
 	for (const cycle of node.cycles) {
 		collectKey(keys.cycle, cycle);
 

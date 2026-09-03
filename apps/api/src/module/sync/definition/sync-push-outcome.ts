@@ -1,6 +1,10 @@
-import type { PushTrainingResult, SyncEntity, SyncRejection } from '@chesspecker/api-definitions';
+import type {
+	PushTrainingResult,
+	SyncEntity,
+	SyncNodeParsed,
+	SyncRejection,
+} from '@chesspecker/api-definitions';
 
-import { SyncNodeDto } from '../dto/request/sync-node.dto';
 
 /**
  * What a push reports back: the uuid each row ended up with, so the device can rekey, and
@@ -22,13 +26,13 @@ export class SyncPushOutcome {
 
 	constructor(private readonly receivedAt: Date) {}
 
-	keep(entity: SyncEntity, node: SyncNodeDto, uuid: string): void {
+	keep(entity: SyncEntity, node: SyncNodeParsed, uuid: string): void {
 		if (undefined !== node.clientRef) {
 			this.uuids[entity][node.clientRef] = uuid;
 		}
 	}
 
-	reject(entity: SyncEntity, node: SyncNodeDto, reason: string): void {
+	reject(entity: SyncEntity, node: SyncNodeParsed, reason: string): void {
 		if (undefined !== node.clientRef) {
 			this.rejected.push({ clientRef: node.clientRef, entity, reason });
 		}

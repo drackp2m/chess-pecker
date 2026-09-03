@@ -1,3 +1,10 @@
+import type {
+	PushAttemptNodeParsed,
+	PushCalibrationRoundNodeParsed,
+	PushCycleNodeParsed,
+	PushTrainingNodeParsed,
+	PushTrainingRequestParsed,
+} from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 
 import { GenerateUuidUseCase } from '../../../shared/use-case/generate-uuid.use-case';
@@ -8,12 +15,6 @@ import { PuzzleAttemptClosure } from '../../training/definition/puzzle-attempt-c
 import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
 import { TrainingStatus } from '../../training/definition/training-status.enum';
 import { User } from '../../user/user.entity';
-import { PushAttemptNodeDto } from '../dto/request/push-attempt-node.dto';
-import { PushCalibrationRoundNodeDto } from '../dto/request/push-calibration-round-node.dto';
-import { PushCycleNodeDto } from '../dto/request/push-cycle-node.dto';
-import { PushTrainingNodeDto } from '../dto/request/push-training-node.dto';
-import { PushTrainingRequestDto } from '../dto/request/push-training-request.dto';
-
 export type PlainNode<T> = { [K in keyof T]: T[K] };
 
 export const CALIBRATION_PUZZLE = 'aaaaa';
@@ -62,7 +63,7 @@ export function buildRefs(): TreeRefs {
 	};
 }
 
-export function attemptNode(clientRef: string, lichessId: string): PlainNode<PushAttemptNodeDto> {
+export function attemptNode(clientRef: string, lichessId: string): PlainNode<PushAttemptNodeParsed> {
 	return {
 		clientRef,
 		createdAt: BORN,
@@ -78,7 +79,7 @@ export function attemptNode(clientRef: string, lichessId: string): PlainNode<Pus
 	};
 }
 
-export function roundNode(refs: TreeRefs): PlainNode<PushCalibrationRoundNodeDto> {
+export function roundNode(refs: TreeRefs): PlainNode<PushCalibrationRoundNodeParsed> {
 	return {
 		clientRef: refs.round,
 		createdAt: BORN,
@@ -100,7 +101,7 @@ export function roundNode(refs: TreeRefs): PlainNode<PushCalibrationRoundNodeDto
 	};
 }
 
-export function cycleNode(refs: TreeRefs): PlainNode<PushCycleNodeDto> {
+export function cycleNode(refs: TreeRefs): PlainNode<PushCycleNodeParsed> {
 	return {
 		clientRef: refs.cycle,
 		createdAt: BORN,
@@ -125,7 +126,7 @@ export function cycleNode(refs: TreeRefs): PlainNode<PushCycleNodeDto> {
  * A tree with one row per table, which is what makes a count mean anything: a push that
  * duplicated would duplicate in one of the eight.
  */
-export function trainingNode(refs: TreeRefs): PlainNode<PushTrainingNodeDto> {
+export function trainingNode(refs: TreeRefs): PlainNode<PushTrainingNodeParsed> {
 	return {
 		clientRef: refs.training,
 		createdAt: BORN,
@@ -138,7 +139,7 @@ export function trainingNode(refs: TreeRefs): PlainNode<PushTrainingNodeDto> {
 	};
 }
 
-export function buildTree(refs: TreeRefs): PushTrainingRequestDto {
+export function buildTree(refs: TreeRefs): PushTrainingRequestParsed {
 	return { training: trainingNode(refs) };
 }
 

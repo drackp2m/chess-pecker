@@ -1,3 +1,4 @@
+import type { PushAttemptNodeParsed } from '@chesspecker/api-definitions';
 import { EntityData } from '@mikro-orm/core';
 import { Injectable } from '@nestjs/common';
 
@@ -9,7 +10,6 @@ import { TrainingCycleItem } from '../../training/training-cycle-item.entity';
 import { Training } from '../../training/training.entity';
 import { ApplySyncTimestampsUseCase } from '../../training/use-case/apply-sync-timestamps.use-case';
 import { SyncPushContext } from '../definition/sync-push-context.interface';
-import { PushAttemptNodeDto } from '../dto/request/push-attempt-node.dto';
 import { claimSyncRow, reuseSyncRow } from '../util/sync-node.util';
 
 /**
@@ -24,7 +24,7 @@ export class PushSyncAttemptUseCase {
 		context: SyncPushContext,
 		training: Training,
 		round: TrainingCalibrationRound,
-		node: PushAttemptNodeDto,
+		node: PushAttemptNodeParsed,
 	): void {
 		this.push(
 			context,
@@ -38,7 +38,7 @@ export class PushSyncAttemptUseCase {
 		context: SyncPushContext,
 		training: Training,
 		item: TrainingCycleItem,
-		node: PushAttemptNodeDto,
+		node: PushAttemptNodeParsed,
 	): void {
 		this.push(
 			context,
@@ -50,7 +50,7 @@ export class PushSyncAttemptUseCase {
 
 	private push(
 		context: SyncPushContext,
-		node: PushAttemptNodeDto,
+		node: PushAttemptNodeParsed,
 		parent: EntityData<PuzzleAttempt>,
 		belongsHere: (attempt: PuzzleAttempt) => boolean,
 	): void {
@@ -74,7 +74,7 @@ export class PushSyncAttemptUseCase {
 	}
 
 	private build(
-		node: PushAttemptNodeDto,
+		node: PushAttemptNodeParsed,
 		parent: EntityData<PuzzleAttempt>,
 		puzzle: Puzzle,
 	): PuzzleAttempt {
