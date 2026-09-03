@@ -1,3 +1,13 @@
+# v1.29.5 (2026-09-03)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- skip development scripts during production deploy ([ee6cea7](https://github.com/drackp2m/chess-pecker/commit/ee6cea705deca091c66278febbd953a1c4d45a6b)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.29.4...v1.29.5
+
 # v1.29.4 (2026-09-03)
 
 ## What's Changed
