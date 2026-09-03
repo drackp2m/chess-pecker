@@ -1,4 +1,7 @@
-import type { PuzzleShare as PuzzleShareResponse } from '@chesspecker/api-definitions';
+import type {
+	PuzzleShare as PuzzleShareResponse,
+	PuzzleShareResultRequest,
+} from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
@@ -6,7 +9,6 @@ import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-da
 import { UserNotificationType } from '../../notification/definition/user-notification-type.enum';
 import { CreateNotificationsUseCase } from '../../notification/use-case/create-notifications.use-case';
 import { User } from '../../user/user.entity';
-import { PuzzleShareResultRequestDto } from '../dto/request/puzzle-share-result-request.dto';
 import { PuzzleShareAttemptRepository } from '../puzzle-share-attempt.repository';
 import { PuzzleShareRecipientRepository } from '../puzzle-share-recipient.repository';
 import { PuzzleShare } from '../puzzle-share.entity';
@@ -34,7 +36,7 @@ export class SubmitPuzzleShareAttemptUseCase {
 	async execute(
 		user: User,
 		uuid: string,
-		request: PuzzleShareResultRequestDto,
+		request: PuzzleShareResultRequest,
 	): Promise<PuzzleShareResponse> {
 		const share = await this.getPuzzleShareUseCase.execute(user, uuid);
 		const answered = await this.puzzleShareAttemptRepository.getMany(

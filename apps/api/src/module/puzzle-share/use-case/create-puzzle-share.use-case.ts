@@ -1,4 +1,7 @@
-import type { PuzzleShare as PuzzleShareResponse } from '@chesspecker/api-definitions';
+import type {
+	CreatePuzzleShareRequest,
+	PuzzleShare as PuzzleShareResponse,
+} from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
@@ -10,7 +13,6 @@ import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { PuzzleAttempt } from '../../training/puzzle-attempt.entity';
 import { PuzzleAttemptRepository } from '../../training/puzzle-attempt.repository';
 import { User } from '../../user/user.entity';
-import { CreatePuzzleShareRequestDto } from '../dto/request/create-puzzle-share-request.dto';
 import { PuzzleShareAttempt } from '../puzzle-share-attempt.entity';
 import { PuzzleShareRecipient } from '../puzzle-share-recipient.entity';
 import { PuzzleShare } from '../puzzle-share.entity';
@@ -34,7 +36,7 @@ export class CreatePuzzleShareUseCase {
 	 * An exercise outside the catalogue answers 404, like filing a bookmark on one does: a
 	 * challenge nobody else can open is not worth sending.
 	 */
-	async execute(sender: User, request: CreatePuzzleShareRequestDto): Promise<PuzzleShareResponse> {
+	async execute(sender: User, request: CreatePuzzleShareRequest): Promise<PuzzleShareResponse> {
 		const puzzle = await this.puzzleRepository.getOne({ lichessId: request.lichessId });
 		const recipients = await this.resolveRecipients(sender, request.recipientUuids);
 		const sourceAttempt = await this.findSourceAttempt(sender, request.attemptUuid);
@@ -104,7 +106,7 @@ export class CreatePuzzleShareUseCase {
 	private buildSenderAttempt(
 		share: PuzzleShare,
 		sender: User,
-		request: CreatePuzzleShareRequestDto,
+		request: CreatePuzzleShareRequest,
 	): PuzzleShareAttempt | undefined {
 		const result = request.result;
 

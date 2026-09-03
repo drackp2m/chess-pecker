@@ -1,7 +1,7 @@
+import type { GetPuzzleCatalogRequest } from '@chesspecker/api-definitions';
 import { Injectable } from '@nestjs/common';
 
 import { PuzzleCatalogPage } from '../definition/puzzle-catalog-page.interface';
-import { GetPuzzleCatalogRequestDto } from '../dto/request/get-puzzle-catalog-request.dto';
 import { PuzzleRepository } from '../puzzle.repository';
 
 @Injectable()
@@ -10,7 +10,7 @@ export class GetPuzzleCatalogUseCase {
 
 	constructor(private readonly puzzleRepository: PuzzleRepository) {}
 
-	async execute(request: GetPuzzleCatalogRequestDto): Promise<PuzzleCatalogPage> {
+	async execute(request: GetPuzzleCatalogRequest): Promise<PuzzleCatalogPage> {
 		const limit = request.limit ?? GetPuzzleCatalogUseCase.defaultLimit;
 		const total = await this.puzzleRepository.countAll();
 		const items = await this.puzzleRepository.getManyAfterLichessId(limit, request.after);

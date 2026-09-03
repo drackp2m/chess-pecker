@@ -2,10 +2,10 @@ import type {
 	PuzzleShareParticipant,
 	PuzzleShare as PuzzleShareResponse,
 	PuzzleShareResult,
+	PuzzleShareResultRequest,
 } from '@chesspecker/api-definitions';
 
 import { User } from '../../user/user.entity';
-import { PuzzleShareResultRequestDto } from '../dto/request/puzzle-share-result-request.dto';
 import { PuzzleShareAttempt } from '../puzzle-share-attempt.entity';
 import { PuzzleShareRecipient } from '../puzzle-share-recipient.entity';
 import { PuzzleShare } from '../puzzle-share.entity';
@@ -63,7 +63,7 @@ export function presentShare(
 export function buildAttempt(
 	share: PuzzleShare,
 	user: User,
-	result: PuzzleShareResultRequestDto,
+	result: PuzzleShareResultRequest,
 ): PuzzleShareAttempt {
 	return new PuzzleShareAttempt({
 		share,
