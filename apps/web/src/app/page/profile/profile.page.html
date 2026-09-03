@@ -1,4 +1,16 @@
 <section class="flex-col gap-6">
+	<div class="bookmark-section flex-col gap-2">
+		<h4>{{ I18n.common.BOOKMARK_TITLE | i18n }}</h4>
+
+		<div class="flex-row flex-wrap gap-2">
+			@for (type of bookmarkTypes; track type) {
+				<button appThemed class="bookmark-category" [appRouterLink]="bookmarkLink(type)">
+					{{ bookmarkLabels[type] | i18n }} ({{ bookmarkCount(type) }})
+				</button>
+			}
+		</div>
+	</div>
+
 	<div class="flex-col gap-2">
 		<h4>{{ I18n.profile.YOUR_ACCOUNT | i18n }}</h4>
 

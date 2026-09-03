@@ -7,7 +7,7 @@ const rootPackage = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const expected = rootPackage.devDependencies?.typescript;
 
 if (!expected || !/^\d+\.\d+\.\d+$/.test(expected)) {
-	console.error('❌ El package.json raíz debe definir una versión exacta de TypeScript.');
+	console.error('❌ The root package.json must define an exact TypeScript version.');
 	process.exit(1);
 }
 
@@ -44,14 +44,14 @@ for (const packagePath of packagePaths) {
 }
 
 if (!mismatches.length) {
-	console.log(`✅ Todos los proyectos usan TypeScript ${expected}.`);
+	console.log(`✅ All projects use TypeScript ${expected}.`);
 	process.exit(0);
 }
 
 if (fixMode) {
 	for (const { packagePath, packageJson, found } of mismatches) {
 		if (!found) {
-			console.error(`⛔ Falta la dependencia TypeScript: ${packagePath}`);
+			console.error(`⛔ TypeScript dependency is missing: ${packagePath}`);
 
 			continue;
 		}
@@ -63,20 +63,20 @@ if (fixMode) {
 		);
 
 		writeFileSync(packagePath, fixed, 'utf8');
-		console.log(`✏️  Corregido ${packagePath}`);
+		console.log(`✏️  Fixed ${packagePath}`);
 	}
 
 	if (mismatches.some(({ found }) => !found)) {
 		process.exit(1);
 	}
 
-	console.log(`\n✅ Versiones de TypeScript actualizadas a ${expected}.`);
+	console.log(`\n✅ TypeScript versions updated to ${expected}.`);
 	process.exit(0);
 }
 
 for (const { packagePath, found } of mismatches) {
-	console.error(`📄 ${packagePath}: ${found ?? 'falta'} (se esperaba ${expected})`);
+	console.error(`📄 ${packagePath}: ${found ?? 'missing'} (expected ${expected})`);
 }
 
-console.error('\n⛔ Las versiones de TypeScript no coinciden. Usa --fix para actualizarlas.');
+console.error('\n⛔ TypeScript versions do not match. Use --fix to update them.');
 process.exit(1);

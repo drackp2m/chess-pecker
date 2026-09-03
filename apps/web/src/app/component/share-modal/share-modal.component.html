@@ -34,6 +34,8 @@
 	></textarea>
 
 	<div class="flex-row gap-2">
+		<button appThemed class="flex-grow" (click)="dismiss()">{{ I18n.common.CANCEL | i18n }}</button>
+
 		<button
 			appThemed
 			class="flex-grow"
@@ -43,7 +45,5 @@
 		>
 			{{ I18n.common.SHARE_CONFIRM | i18n }}
 		</button>
-
-		<button appThemed class="flex-grow" (click)="dismiss()">{{ I18n.common.CANCEL | i18n }}</button>
 	</div>
 </div>

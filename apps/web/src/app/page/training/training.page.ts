@@ -1,20 +1,17 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import type {
-	CycleProgress,
-	TrainingActivityDay,
-	TrainingStatus,
-} from '@chesspecker/api-definitions';
+import type { CycleProgress, TrainingStatus } from '@chesspecker/api-definitions';
 import { firstValueFrom } from 'rxjs';
 
 import { ActivityChartComponent } from '@app/component/activity-chart/activity-chart.component';
 import type { ChartConfig } from '@app/component/activity-chart/chart-config';
-import type { ChartData, ChartPoint, ChartSeries } from '@app/component/activity-chart/chart-data';
+import type { ChartData, ChartPoint } from '@app/component/activity-chart/chart-data';
 import { CancelTrainingModalComponent } from '@app/component/cancel-training-modal/cancel-training-modal.component';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
-import { I18n } from '@app/i18n';
+import { I18n, provideI18nScope } from '@app/i18n';
+import { toTrainingSummary } from '@app/page/dashboard/training-summary';
 import { DurationPipe } from '@app/pipe/duration.pipe';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { TrainingRow } from '@app/repository/definition/training-schema.interface';
@@ -23,14 +20,13 @@ import { TimezoneService } from '@app/service/timezone.service';
 import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
 import { TrainingStore } from '@app/store/training.store';
-import { CyclePaceDay, activityDaySeries, cyclePaceSeries } from '@app/util/activity-grid';
+import { CyclePaceDay, cyclePaceSeries } from '@app/util/activity-grid';
 import { diffLabelDays, zoneDayLabel } from '@app/util/timezone-date';
 
 const DAILY_RANGE_DAYS = 14;
 const DEFAULT_SET_SIZE = 1000;
 const DEFAULT_PUZZLES_PER_DAY = 20;
 const MAX_SET_SIZE = 5000;
-const MS_PER_MINUTE = 60_000;
 
 const PHASE_LABEL = {
 	calibrating: I18n.training.PHASE_CALIBRATING,
@@ -66,6 +62,7 @@ const CYCLE_STATUS_LABEL = {
 		DurationPipe,
 		ActivityChartComponent,
 	],
+	providers: [provideI18nScope('training', 'dashboard')],
 })
 export class TrainingPage implements OnInit {
 	protected readonly I18n = I18n;
@@ -83,34 +80,7 @@ export class TrainingPage implements OnInit {
 		return undefined === status ? '' : PHASE_LABEL[status];
 	});
 
-	readonly hoveredDay = signal<ChartPoint | null>(null);
-
-	private readonly dailyBreakdown = computed(() =>
-		activityDaySeries(
-			this.activity.days(),
-			DAILY_RANGE_DAYS,
-			this.timezoneService.selectedTimezone(),
-		),
-	);
-
-	readonly dailyChart = computed<ChartData>(() => {
-		const days = [...this.dailyBreakdown()].reverse();
-
-		return {
-			points: days.map((day) => this.toDayPoint(day)),
-			series: [...this.dailyBars(days), ...this.dailyLines(days)],
-		};
-	});
-
-	readonly dailyConfig: ChartConfig = {
-		layout: { direction: 'rtl' },
-		bars: { count: 14, pad: true, grow: 'bar' },
-		overflow: { mode: 'drop' },
-	};
-
-	readonly dailyFirstTry = computed(() =>
-		this.dailyBreakdown().reduce((total, day) => total + day.firstTry, 0),
-	);
+	readonly summary = computed(() => toTrainingSummary(this.store.progress()));
 
 	readonly hoveredPaceDay = signal<ChartPoint | null>(null);
 
@@ -220,10 +190,6 @@ export class TrainingPage implements OnInit {
 		}
 	}
 
-	onDailyFocus(point: ChartPoint | null): void {
-		this.hoveredDay.set(point);
-	}
-
 	onPaceFocus(point: ChartPoint | null): void {
 		this.hoveredPaceDay.set(point);
 	}
@@ -269,61 +235,6 @@ export class TrainingPage implements OnInit {
 		const today = zoneDayLabel(new Date(), timeZone);
 
 		return Math.max(DAILY_RANGE_DAYS, diffLabelDays(started, today) + 1);
-	}
-
-	private dailyBars(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {
-		return [
-			{
-				id: 'firstTry',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_FIRST_TRY),
-				values: days.map((day) => day.firstTry),
-			},
-			{
-				id: 'afterMiss',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_AFTER_MISS),
-				values: days.map((day) => day.afterMiss),
-			},
-			{
-				id: 'shown',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_SHOWN),
-				values: days.map((day) => day.shown),
-			},
-		];
-	}
-
-	private dailyLines(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {
-		return [
-			{
-				id: 'mistakes',
-				type: 'line',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_MISTAKES),
-				values: days.map((day) => day.mistakes),
-				line: { curve: 'smooth' },
-			},
-			{
-				id: 'hints',
-				type: 'line',
-				label: this.i18n.translate(I18n.training.DAILY_SERIES_HINTS),
-				values: days.map((day) => day.hints),
-				line: { curve: 'smooth', dash: '6 4' },
-			},
-		];
-	}
-
-	private toDayPoint(day: TrainingActivityDay): ChartPoint {
-		return {
-			key: day.date,
-			label: Number(day.date.slice(8)).toString(),
-			description: this.i18n.translate(I18n.training.DAILY_DAY_DETAIL, {
-				date: day.date,
-				firstTry: day.firstTry,
-				afterMiss: day.afterMiss,
-				shown: day.shown,
-				mistakes: day.mistakes,
-				hints: day.hints,
-				minutes: Math.round(day.durationMs / MS_PER_MINUTE),
-			}),
-		};
 	}
 
 	private toPacePoint(day: CyclePaceDay): ChartPoint {

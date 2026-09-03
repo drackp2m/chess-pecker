@@ -94,9 +94,12 @@
 				</div>
 
 				<div class="actions flex-row gap-3 justify-center px-3">
-					<app-bookmark-button [lichessId]="puzzle.id" [isDisabled]="store.isOpen()" />
-
 					<app-share-button />
+
+					<app-bookmark-button
+						[lichessId]="puzzle.id"
+						[isDisabled]="store.isOpen() && !allowBookmarkWhileOpen()"
+					/>
 				</div>
 			</div>
 		</div>

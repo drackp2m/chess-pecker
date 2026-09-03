@@ -1,12 +1,14 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import type { FriendUser } from '@chesspecker/api-definitions';
+import type { FriendUser, PuzzleBookmarkType } from '@chesspecker/api-definitions';
 
+import { PUZZLE_BOOKMARK_LABEL, PUZZLE_BOOKMARK_TYPES } from '@app/definition/puzzle-bookmark.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { BookmarkStore } from '@app/store/bookmark.store';
 import { ProfileStore } from '@app/store/profile.store';
 import { SessionStore } from '@app/store/session.store';
 import { LogOutUseCase } from '@app/use-case/log-out.use-case';
@@ -22,6 +24,9 @@ export class ProfilePage implements OnInit {
 
 	readonly store = inject(ProfileStore);
 	readonly session = inject(SessionStore);
+	readonly bookmarks = inject(BookmarkStore);
+	readonly bookmarkTypes = PUZZLE_BOOKMARK_TYPES;
+	readonly bookmarkLabels = PUZZLE_BOOKMARK_LABEL;
 
 	private readonly logOutUseCase = inject(LogOutUseCase);
 
@@ -73,6 +78,14 @@ export class ProfilePage implements OnInit {
 
 	unblock(uuid: string): void {
 		void this.store.unblock(uuid);
+	}
+
+	bookmarkCount(type: PuzzleBookmarkType): number {
+		return this.bookmarks.bookmarkEntities().filter((bookmark) => bookmark.type === type).length;
+	}
+
+	bookmarkLink(type: PuzzleBookmarkType): string {
+		return `/profile/bookmarks/${type}`;
 	}
 
 	private async search(): Promise<void> {

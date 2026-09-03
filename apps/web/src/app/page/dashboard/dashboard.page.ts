@@ -1,30 +1,38 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import type { TrainingActivityDay } from '@chesspecker/api-definitions';
 
+import { ActivityChartComponent } from '@app/component/activity-chart/activity-chart.component';
+import type { ChartConfig } from '@app/component/activity-chart/chart-config';
+import type { ChartData, ChartPoint, ChartSeries } from '@app/component/activity-chart/chart-data';
 import { ActivityHeatmapComponent } from '@app/component/activity-heatmap/activity-heatmap.component';
 import { SegmentedControlComponent } from '@app/component/segmented-control/segmented-control.component';
-import type { TranslationRef } from '@app/definition/i18n.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { SegmentDirective } from '@app/directive/segment/segment.directive';
-import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
-import { toTrainingSummary } from '@app/page/dashboard/training-summary';
+import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { I18nService } from '@app/service/i18n.service';
 import { TimezoneService } from '@app/service/timezone.service';
 import { ActivityStore } from '@app/store/activity.store';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
-import { LogOutUseCase } from '@app/use-case/log-out.use-case';
-import { ActivityCell, activityRangeDays, filterActivityDays } from '@app/util/activity-grid';
+import {
+	ActivityCell,
+	activityDaySeries,
+	activityRangeDays,
+	filterActivityDays,
+} from '@app/util/activity-grid';
 
 const ACTIVITY_RANGES = [1, 2, 3, 6, 9, 12] as const;
 const DEFAULT_ACTIVITY_MONTHS = 6;
 const MAX_ACTIVITY_MONTHS = Math.max(...ACTIVITY_RANGES);
+const DAILY_RANGE_DAYS = 14;
+const MS_PER_MINUTE = 60_000;
 
 @Component({
 	templateUrl: './dashboard.page.html',
-	styleUrl: './dashboard.page.scss',
 	imports: [
+		ActivityChartComponent,
 		ButtonDirective,
 		RouterLinkDirective,
 		I18nPipe,
@@ -42,9 +50,8 @@ export class DashboardPage {
 	readonly activity = inject(ActivityStore);
 	protected readonly timezoneService = inject(TimezoneService);
 
-	readonly summary = computed(() => toTrainingSummary(this.training.progress()));
-
 	readonly hoveredDay = signal<ActivityCell | null>(null);
+	readonly hoveredDailyDay = signal<ChartPoint | null>(null);
 
 	readonly activityRanges = ACTIVITY_RANGES;
 	readonly activityMonths = signal<number>(DEFAULT_ACTIVITY_MONTHS);
@@ -65,30 +72,34 @@ export class DashboardPage {
 		this.visibleActivity().reduce((total, day) => total + day.done, 0),
 	);
 
-	/** What the one button on the training does, so the state is read before it is opened. */
-	readonly trainingLabel = computed<TranslationRef>(() => {
-		const runningCycle = this.training.runningCycle();
+	private readonly i18n = inject(I18nService);
 
-		if (null === this.training.active()) {
-			return i18nRef(I18n.training.START_TRAINING);
-		}
-
-		if ('calibrating' === this.training.active()?.status) {
-			return i18nRef(I18n.dashboard.TRAINING_REFINE);
-		}
-
-		return undefined === runningCycle
-			? i18nRef(I18n.dashboard.TRAINING_CONTINUE)
-			: i18nRef(I18n.dashboard.CYCLE_CONTINUE, { index: runningCycle.index });
-	});
-
-	/** Anything already in progress goes straight to the board; the rest needs the forms. */
-	private readonly trainingLink = computed(() =>
-		this.training.canSolve() ? '/training/solve' : '/training',
+	private readonly dailyBreakdown = computed(() =>
+		activityDaySeries(
+			this.activity.days(),
+			DAILY_RANGE_DAYS,
+			this.timezoneService.selectedTimezone(),
+		),
 	);
 
-	private readonly logOutUseCase = inject(LogOutUseCase);
-	private readonly router = inject(Router);
+	readonly dailyChart = computed<ChartData>(() => {
+		const days = [...this.dailyBreakdown()].reverse();
+
+		return {
+			points: days.map((day) => this.toDayPoint(day)),
+			series: [...this.dailyBars(days), ...this.dailyLines(days)],
+		};
+	});
+
+	readonly dailyConfig: ChartConfig = {
+		layout: { direction: 'rtl' },
+		bars: { count: 14, pad: true, grow: 'bar' },
+		overflow: { mode: 'drop' },
+	};
+
+	readonly dailyFirstTry = computed(() =>
+		this.dailyBreakdown().reduce((total, day) => total + day.firstTry, 0),
+	);
 
 	private loadedFor = '';
 
@@ -119,10 +130,6 @@ export class DashboardPage {
 		});
 	}
 
-	openTraining(): void {
-		void this.router.navigate([this.trainingLink()]);
-	}
-
 	onDayFocus(day: ActivityCell | null): void {
 		this.hoveredDay.set(day);
 	}
@@ -132,11 +139,62 @@ export class DashboardPage {
 		this.activityMonths.set(months);
 	}
 
-	logOut(): void {
-		void this.logOutUseCase.execute();
+	onDailyFocus(point: ChartPoint | null): void {
+		this.hoveredDailyDay.set(point);
 	}
 
-	retryConnection(): void {
-		void this.session.retry();
+	private dailyBars(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {
+		return [
+			{
+				id: 'firstTry',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_FIRST_TRY),
+				values: days.map((day) => day.firstTry),
+			},
+			{
+				id: 'afterMiss',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_AFTER_MISS),
+				values: days.map((day) => day.afterMiss),
+			},
+			{
+				id: 'shown',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_SHOWN),
+				values: days.map((day) => day.shown),
+			},
+		];
+	}
+
+	private dailyLines(days: readonly TrainingActivityDay[]): readonly ChartSeries[] {
+		return [
+			{
+				id: 'mistakes',
+				type: 'line',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_MISTAKES),
+				values: days.map((day) => day.mistakes),
+				line: { curve: 'smooth' },
+			},
+			{
+				id: 'hints',
+				type: 'line',
+				label: this.i18n.translate(I18n.training.DAILY_SERIES_HINTS),
+				values: days.map((day) => day.hints),
+				line: { curve: 'smooth', dash: '6 4' },
+			},
+		];
+	}
+
+	private toDayPoint(day: TrainingActivityDay): ChartPoint {
+		return {
+			key: day.date,
+			label: Number(day.date.slice(8)).toString(),
+			description: this.i18n.translate(I18n.training.DAILY_DAY_DETAIL, {
+				date: day.date,
+				firstTry: day.firstTry,
+				afterMiss: day.afterMiss,
+				shown: day.shown,
+				mistakes: day.mistakes,
+				hints: day.hints,
+				minutes: Math.round(day.durationMs / MS_PER_MINUTE),
+			}),
+		};
 	}
 }

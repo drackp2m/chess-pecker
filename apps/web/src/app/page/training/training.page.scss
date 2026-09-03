@@ -14,3 +14,31 @@ section {
 .empty {
 	opacity: 0.7;
 }
+
+.summary {
+	border-collapse: collapse;
+	width: 100%;
+	text-align: left;
+
+	th,
+	td {
+		padding: var(--spacing-1) var(--spacing-2);
+		border-bottom: 1px solid var(--color-primary-mid);
+	}
+
+	th[scope='col'] {
+		font-weight: var(--font-weight-lg);
+		color: var(--color-contrast-mid);
+	}
+
+	th[scope='row'] {
+		font-weight: var(--font-weight-md);
+	}
+
+	tbody tr:last-child {
+		th,
+		td {
+			border-bottom: 0;
+		}
+	}
+}

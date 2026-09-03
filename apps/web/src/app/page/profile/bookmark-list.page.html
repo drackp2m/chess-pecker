@@ -1,0 +1,31 @@
+<section class="flex-col gap-4">
+	@if (isLoading()) {
+		<p>{{ I18n.common.LOADING | i18n }}</p>
+	} @else if (loadError()) {
+		<p role="alert">{{ I18n.common.BOOKMARK_LOAD_ERROR | i18n }}</p>
+	} @else {
+		@if (store.puzzle(); as puzzle) {
+			<header class="flex-col gap-1">
+				<h4 class="title color-contrast-mid">
+					{{ I18n.common.SOLVING | i18n }}
+					<span class="color-contrast">{{ puzzle.id }}</span> · {{ counter() }}
+				</h4>
+
+				<div class="flex-row justify-between align-center gap-2">
+					<p class="headline fs-lg fw-lg">{{ I18n.common.BOOKMARK_TITLE | i18n }}</p>
+					<app-puzzle-difficulty />
+				</div>
+			</header>
+		}
+
+		<app-puzzle-solver
+			[previousLabel]="I18n.puzzle.PREVIOUS_EXERCISE"
+			[nextLabel]="I18n.puzzle.NEXT_EXERCISE"
+			[isPreviousDisabled]="!store.library.hasPrevious()"
+			[isNextDisabled]="!store.library.hasNext()"
+			[allowBookmarkWhileOpen]="true"
+			(previous)="store.previousPuzzle()"
+			(next)="store.nextPuzzle()"
+		/>
+	}
+</section>

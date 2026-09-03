@@ -35,6 +35,7 @@ export class PuzzleSolverComponent {
 	readonly nextLabel = input<string>(I18n.common.NEXT);
 	readonly isPreviousDisabled = input(false);
 	readonly isNextDisabled = input(false);
+	readonly allowBookmarkWhileOpen = input(false);
 
 	readonly previous = output();
 	readonly next = output();
