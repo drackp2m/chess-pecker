@@ -1,3 +1,49 @@
+# v1.28.0 (2026-09-03)
+
+## What's Changed
+
+### ✨ Features
+
+- add Zod validation and fix API types ([b244b83](https://github.com/drackp2m/chess-pecker/commit/b244b8350c393ae7ad3524ee01f8480bd0799656)) by Marc Jovaní González
+- migrate puzzle validation to zod ([ce8315c](https://github.com/drackp2m/chess-pecker/commit/ce8315c7dd75e5371dfbff162de99011ffa4f43a)) by Marc Jovaní González
+- migrate training sync validation to zod ([9a82660](https://github.com/drackp2m/chess-pecker/commit/9a82660b9ffa0185fd7d96ea3ac2729597535381)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- add gap-filling test for activity day series ([ba0a6a5](https://github.com/drackp2m/chess-pecker/commit/ba0a6a510f3d4ac039fb532710197509409504a2)) by Marc Jovaní González
+- cover activity range months and heatmap grid padding and levels ([70f91e2](https://github.com/drackp2m/chess-pecker/commit/70f91e250583a6a5462e62f7c3243b56c4f8d2d1)) by Marc Jovaní González
+- cover cycle pace series drift, single-day and future cycles ([0c293cf](https://github.com/drackp2m/chess-pecker/commit/0c293cfcef782fd61a2b08c6da547a77df2a223f)) by Marc Jovaní González
+- cover every activity counter across month-crossing gaps ([1236c42](https://github.com/drackp2m/chess-pecker/commit/1236c423f922d379a2663f6c403adf538b3100bc)) by Marc Jovaní González
+- cover extreme zones and DST seasons in zone day labels ([549ccd1](https://github.com/drackp2m/chess-pecker/commit/549ccd1416061186deb7b05093124fd7c97705aa)) by Marc Jovaní González
+- cover month-crossing windows with leap February and year boundary ([34adb77](https://github.com/drackp2m/chess-pecker/commit/34adb77007b6a4b431cfd1435b5f29a6087796b9)) by Marc Jovaní González
+- cover out-of-window filtering for activity series and filterActivityDays ([f569dc6](https://github.com/drackp2m/chess-pecker/commit/f569dc667e2ec6c5caa5cb7a1f7086feda82fb15)) by Marc Jovaní González
+- cover totalDays edge cases for activity series and filter ([9bb4391](https://github.com/drackp2m/chess-pecker/commit/9bb439132dc01e1a961d31b37abea988dffb83b5)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- close class-validator migration with zod ([1876a5d](https://github.com/drackp2m/chess-pecker/commit/1876a5d7fda8d2c5be5740f2562b40f9c7f24d38)) by Marc Jovaní González
+- migrate environment validation to zod ([fa863c9](https://github.com/drackp2m/chess-pecker/commit/fa863c9b68abe9781babb579d37caead8e6b8487)) by Marc Jovaní González
+- migrate simple modules validation to zod ([214053c](https://github.com/drackp2m/chess-pecker/commit/214053c99e3957442413cb1847b86eeb926e3663)) by Marc Jovaní González
+- turn API definitions into a runtime package ([e7766f4](https://github.com/drackp2m/chess-pecker/commit/e7766f4aa3ce2e329c5e65eb37ecee77262cfde6)) by Marc Jovaní González
+- window daily training chart on civil timezone days ([3d173e9](https://github.com/drackp2m/chess-pecker/commit/3d173e94245f5620419a2f761f8559ca6da2e15f)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- align activity heatmap with user timezone ([6eef3ec](https://github.com/drackp2m/chess-pecker/commit/6eef3ecba8ca7e7d3ce627ed0fad194038878aa4)) by Marc Jovaní González
+- align cycle pace charts with user timezone ([3f38d14](https://github.com/drackp2m/chess-pecker/commit/3f38d14a8c35874673234ea4ac712c7b51dc4026)) by Marc Jovaní González
+
+### 🏗️‍ Build System
+
+- update pnpm tu 11.25.0 ([184cc82](https://github.com/drackp2m/chess-pecker/commit/184cc820ddf2ddf26f8c02973606ba84b43c32d7)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- update Angular cli / core to 22.1.4 ([a7ec442](https://github.com/drackp2m/chess-pecker/commit/a7ec442fc0754247fd4579c698454a9cf47da9e7)) by Marc Jovaní González
+- update ngrx signals to 22.0.0 ([39a6468](https://github.com/drackp2m/chess-pecker/commit/39a64686d1258c7182c491e3abfeac0d159f2bc2)) by Marc Jovaní González
+- upgrade to NestJS12 and MikroORM 7 (remove legacy decorators) ([2fa8a05](https://github.com/drackp2m/chess-pecker/commit/2fa8a05ea00ab6655c4b14f78fb913638901b41d)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.27.0...v1.28.0
+
 # v1.27.0 (2026-09-02)
 
 ## What's Changed
