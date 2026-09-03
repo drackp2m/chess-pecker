@@ -5,16 +5,17 @@ import { PostgreSqlDriver } from '@mikro-orm/postgresql';
 import { MikroOrmNamingStrategy } from './mikro-orm.naming-strategy';
 import { databaseConfig } from './register/database-config';
 
+const isProduction = 'production' === process.env['NODE_ENV'];
+
 export default (): MikroOrmModuleSyncOptions => ({
 	driver: PostgreSqlDriver,
 	...databaseConfig(),
 	allowGlobalContext: false,
+	baseDir: process.cwd(),
 	forceUtcTimezone: true,
-	// Auto-detected on purpose: forcing `preferTs`/`tsNode` made the runtime load the .ts
-	// sources and crash, and `autoLoadEntities` would register these globs a second time.
 	extensions: [Migrator],
 	entities: ['dist/module/**/*.entity.js'],
-	entitiesTs: ['src/module/**/*.entity.ts'],
+	...(isProduction ? {} : { entitiesTs: ['src/module/**/*.entity.ts'] }),
 	namingStrategy: MikroOrmNamingStrategy,
 	migrations: {
 		tableName: 'migrations',

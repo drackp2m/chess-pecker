@@ -6,7 +6,7 @@ import { validate } from '../../../environment/env.validation';
 const config = validate(process.env);
 
 const driverOptions = 'production' === config.NODE_ENV && {
-	driverOptions: { connection: { ssl: { ca: config.DB_CERT } } },
+	driverOptions: { ssl: { ca: config.DB_CERT } },
 };
 
 export const databaseConfig = registerAs('database', (): MikroOrmModuleSyncOptions => ({
