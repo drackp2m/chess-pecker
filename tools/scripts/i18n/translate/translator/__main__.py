@@ -23,6 +23,7 @@ from .prompting import (
     build_messages,
     check_forms,
     fenced,
+    group_id,
     is_pending,
     parse_answers,
 )
@@ -262,9 +263,11 @@ def next_batch(jobs: list, start: int, size: int) -> Batch:
     block = jobs[start][0]
     units: list = []
     length = 0
+    group = group_id(jobs[start][1])
 
     for owner, unit in jobs[start:]:
-        crowded = len(units) >= size or length + len(unit.source) > BATCH_CHARS
+        same_group = group_id(unit) == group
+        crowded = not same_group and (len(units) >= size or length + len(unit.source) > BATCH_CHARS)
 
         if owner is not block or (units and crowded):
             break
