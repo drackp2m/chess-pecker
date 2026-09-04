@@ -178,7 +178,7 @@ def remembered_units(batch: Batch, memory) -> tuple[list, list]:
     left = []
 
     for unit in batch.units:
-        found = memory.get(batch.block.target_lang, unit.source)
+        found = memory.get(batch.block.target_lang, unit.source, unit.category)
 
         if found is None:
             left.append(unit)
@@ -204,14 +204,14 @@ def resolve(session: Session, batch: Batch) -> list:
 
         for index in sorted(accepted, reverse=True):
             unit = left.pop(index)
-            memory.remember(lang, unit.source, accepted[index])
+            memory.remember(lang, unit.source, accepted[index], unit.category)
             outcomes.append((unit, accepted[index], "batch", [], False))
 
     for unit in left:
         text, issues, review = translate_unit(session, batch.block, unit)
 
         if not review:
-            memory.remember(lang, unit.source, text)
+            memory.remember(lang, unit.source, text, unit.category)
 
         outcomes.append((unit, text, "model", issues, review))
 
@@ -284,7 +284,7 @@ def seed_memory(root, memory, source_lang, target_lang) -> None:
 
         for unit in units:
             if not unit.outdated and unit.previous.strip():
-                memory.seed(target_lang, unit.source, unit.previous)
+                memory.seed(target_lang, unit.source, unit.previous, unit.category)
 
 
 def apply_unit(unit, text: str, review: bool) -> None:
