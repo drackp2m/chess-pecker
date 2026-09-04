@@ -8,6 +8,7 @@ const { ensureTemplateSetup } = require('./setup');
 
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 const KEY_NAME = /^[A-Z][A-Z0-9_]*$/;
+const PARAM_NAME = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 const KEYS_END = '} as const;';
 
 function encodeTime(time) {
@@ -55,6 +56,72 @@ async function askName(index, scope) {
 			return null === index.entry(scope, value) ? null : `${value} already exists`;
 		},
 	});
+}
+
+async function askKind() {
+	const picked = await vscode.window.showQuickPick(
+		[
+			{ label: 'Texto', kind: 'plain' },
+			{ label: 'Plural', kind: 'plural' },
+		],
+		{ title: 'Tipo de clave' },
+	);
+
+	return picked?.kind ?? null;
+}
+
+async function askPluralArgument(name) {
+	const argument = await vscode.window.showInputBox({
+		title: `${name} · parámetro plural`,
+		value: 'count',
+		validateInput: (value) => (PARAM_NAME.test(value) ? null : 'Usa un nombre de parámetro válido'),
+	});
+
+	return argument;
+}
+
+async function askPluralForms(index, name, seed, categories) {
+	const forms = new Map();
+
+	for (const category of categories) {
+		const value = await vscode.window.showInputBox({
+			title: `${name} · ${index.defaultLang} · ${category}`,
+			value: categories[0] === category ? seed : '',
+			prompt: 'Obligatorio',
+		});
+
+		if (undefined === value || '' === value.trim()) {
+			return null;
+		}
+
+		forms.set(category, value);
+	}
+
+	return forms;
+}
+
+async function askPluralTexts(index, name, seed) {
+	const argument = await askPluralArgument(name);
+
+	if (undefined === argument) {
+		return null;
+	}
+
+	const { requiredCategoriesOf } = await index.load('catalogue/plurals.mjs');
+	const categories = requiredCategoriesOf(index.defaultLang) ?? ['one', 'other'];
+	const forms = await askPluralForms(index, name, seed, categories);
+
+	if (null === forms) {
+		return null;
+	}
+
+	const texts = new Map(index.langs.map((lang) => [lang, '']));
+	const branches = categories.map((category) => `${category} {${forms.get(category)}}`).join(' ');
+	const source = `{${argument}, plural, ${branches}}`;
+
+	texts.set(index.defaultLang, source);
+
+	return texts;
 }
 
 async function askTexts(index, name, seed) {
@@ -143,6 +210,15 @@ async function save(files) {
 	}
 }
 
+async function askKeyTexts(index, name, kind, editor) {
+	const selected = false === editor?.selection.isEmpty;
+	const seed = selected ? editor.document.getText(editor.selection).trim() : '';
+	const texts =
+		'plural' === kind ? await askPluralTexts(index, name, seed) : await askTexts(index, name, seed);
+
+	return { selected, texts };
+}
+
 async function createKey(index, annotations) {
 	const editor = vscode.window.activeTextEditor;
 	const scope = await pickScope(index, editor?.document);
@@ -157,9 +233,13 @@ async function createKey(index, annotations) {
 		return;
 	}
 
-	const selected = false === editor?.selection.isEmpty;
-	const seed = selected ? editor.document.getText(editor.selection).trim() : '';
-	const texts = await askTexts(index, name, seed);
+	const kind = await askKind();
+
+	if (null === kind) {
+		return;
+	}
+
+	const { selected, texts } = await askKeyTexts(index, name, kind, editor);
 
 	if (null === texts) {
 		return;
