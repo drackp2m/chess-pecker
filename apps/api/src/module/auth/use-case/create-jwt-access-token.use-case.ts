@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
@@ -6,7 +6,9 @@ import { ConfigurationService } from '../../../shared/module/config/configuratio
 @Injectable()
 export class CreateJwtAccessTokenUseCase {
 	constructor(
+		@Inject(JwtService)
 		private readonly jwtService: JwtService,
+		@Inject(ConfigurationService)
 		private readonly configurationService: ConfigurationService,
 	) {}
 

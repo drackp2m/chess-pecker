@@ -1,5 +1,5 @@
 import type { BlockUserRequest } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
@@ -11,8 +11,11 @@ import { UserBlockRepository } from '../user-block.repository';
 @Injectable()
 export class BlockUserUseCase {
 	constructor(
+		@Inject(UserBlockRepository)
 		private readonly userBlockRepository: UserBlockRepository,
+		@Inject(UserRepository)
 		private readonly userRepository: UserRepository,
+		@Inject(FriendshipRepository)
 		private readonly friendshipRepository: FriendshipRepository,
 	) {}
 

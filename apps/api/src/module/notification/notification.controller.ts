@@ -7,7 +7,7 @@ import type {
 	ReadNotificationsRequest,
 	UserNotification as UserNotificationResponse,
 } from '@chesspecker/api-definitions';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
@@ -18,7 +18,9 @@ import { ReadNotificationsUseCase } from './use-case/read-notifications.use-case
 @Controller('notification')
 export class NotificationController {
 	constructor(
+		@Inject(ListNotificationsUseCase)
 		private readonly listNotificationsUseCase: ListNotificationsUseCase,
+		@Inject(ReadNotificationsUseCase)
 		private readonly readNotificationsUseCase: ReadNotificationsUseCase,
 	) {}
 

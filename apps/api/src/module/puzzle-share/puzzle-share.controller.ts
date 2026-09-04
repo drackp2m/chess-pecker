@@ -9,7 +9,7 @@ import type {
 	PuzzleShare as PuzzleShareResponse,
 	PuzzleShareResultRequest,
 } from '@chesspecker/api-definitions';
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
@@ -23,10 +23,15 @@ import { SubmitPuzzleShareAttemptUseCase } from './use-case/submit-puzzle-share-
 @Controller('puzzle-share')
 export class PuzzleShareController {
 	constructor(
+		@Inject(CreatePuzzleShareUseCase)
 		private readonly createPuzzleShareUseCase: CreatePuzzleShareUseCase,
+		@Inject(ListPuzzleSharesUseCase)
 		private readonly listPuzzleSharesUseCase: ListPuzzleSharesUseCase,
+		@Inject(GetPuzzleShareUseCase)
 		private readonly getPuzzleShareUseCase: GetPuzzleShareUseCase,
+		@Inject(SubmitPuzzleShareAttemptUseCase)
 		private readonly submitPuzzleShareAttemptUseCase: SubmitPuzzleShareAttemptUseCase,
+		@Inject(PresentPuzzleSharesUseCase)
 		private readonly presentPuzzleSharesUseCase: PresentPuzzleSharesUseCase,
 	) {}
 

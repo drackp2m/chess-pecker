@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
 import { UserSetting } from '../user-setting.entity';
@@ -6,7 +6,10 @@ import { UserSettingRepository } from '../user-setting.repository';
 
 @Injectable()
 export class GetUserSettingsUseCase {
-	constructor(private readonly userSettingRepository: UserSettingRepository) {}
+	constructor(
+		@Inject(UserSettingRepository)
+		private readonly userSettingRepository: UserSettingRepository,
+	) {}
 
 	/**
 	 * Only the rows that exist. A missing key means the code's default, so the front fills the

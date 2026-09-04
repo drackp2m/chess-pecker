@@ -1,6 +1,6 @@
 import type { RegisterRequest } from '@chesspecker/api-definitions';
 import type { EntityData } from '@mikro-orm/core';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
@@ -11,7 +11,9 @@ import { HashPasswordUseCase } from './hash-password.use-case';
 @Injectable()
 export class RegisterUseCase {
 	constructor(
+		@Inject(UserRepository)
 		private readonly userRepository: UserRepository,
+		@Inject(HashPasswordUseCase)
 		private readonly hashPasswordUseCase: HashPasswordUseCase,
 	) {}
 

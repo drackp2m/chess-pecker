@@ -1,5 +1,5 @@
 import type { SendFriendRequest } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
@@ -12,8 +12,11 @@ import { UserBlockRepository } from '../user-block.repository';
 @Injectable()
 export class SendFriendRequestUseCase {
 	constructor(
+		@Inject(FriendshipRepository)
 		private readonly friendshipRepository: FriendshipRepository,
+		@Inject(UserRepository)
 		private readonly userRepository: UserRepository,
+		@Inject(UserBlockRepository)
 		private readonly userBlockRepository: UserBlockRepository,
 	) {}
 

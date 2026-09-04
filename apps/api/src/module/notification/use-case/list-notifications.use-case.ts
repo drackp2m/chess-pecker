@@ -2,7 +2,7 @@ import type {
 	ListNotificationsRequest,
 	UserNotification as UserNotificationResponse,
 } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
 import { UserNotificationRepository } from '../user-notification.repository';
@@ -12,7 +12,10 @@ const DEFAULT_LIMIT = 50;
 
 @Injectable()
 export class ListNotificationsUseCase {
-	constructor(private readonly userNotificationRepository: UserNotificationRepository) {}
+	constructor(
+		@Inject(UserNotificationRepository)
+		private readonly userNotificationRepository: UserNotificationRepository,
+	) {}
 
 	/**
 	 * Newest first and capped: an account that never opened the inbox would otherwise drag

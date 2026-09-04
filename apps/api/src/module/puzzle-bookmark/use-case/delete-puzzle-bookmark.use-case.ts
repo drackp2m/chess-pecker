@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { User } from '../../user/user.entity';
@@ -7,7 +7,9 @@ import { PuzzleBookmarkRepository } from '../puzzle-bookmark.repository';
 @Injectable()
 export class DeletePuzzleBookmarkUseCase {
 	constructor(
+		@Inject(PuzzleBookmarkRepository)
 		private readonly puzzleBookmarkRepository: PuzzleBookmarkRepository,
+		@Inject(PuzzleRepository)
 		private readonly puzzleRepository: PuzzleRepository,
 	) {}
 

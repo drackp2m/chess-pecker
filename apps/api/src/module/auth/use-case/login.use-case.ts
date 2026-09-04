@@ -1,5 +1,5 @@
 import type { LoginRequest } from '@chesspecker/api-definitions';
-import { Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
 
 import { UnauthorizedException } from '../../../shared/exception/unauthorized-exception.exception';
 import { UserRepository } from '../../user/user.repository';
@@ -13,9 +13,13 @@ import { SetJwtTokenUseCase } from './set-jwt-token.use-case';
 @Injectable({ scope: Scope.REQUEST })
 export class LoginUseCase {
 	constructor(
+		@Inject(UserRepository)
 		private readonly userRepository: UserRepository,
+		@Inject(CheckPasswordUseCase)
 		private readonly checkPassword: CheckPasswordUseCase,
+		@Inject(CreateJwtAccessTokenUseCase)
 		private readonly createAccessToken: CreateJwtAccessTokenUseCase,
+		@Inject(CreateJwtRefreshTokenUseCase)
 		private readonly createRefreshToken: CreateJwtRefreshTokenUseCase,
 		private readonly setJwtToken: SetJwtTokenUseCase,
 	) {}

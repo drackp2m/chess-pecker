@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
 import { FriendshipStatus } from '../definition/friendship-status.enum';
@@ -7,7 +7,10 @@ import { FriendshipRepository } from '../friendship.repository';
 
 @Injectable()
 export class ListFriendRequestsUseCase {
-	constructor(private readonly friendshipRepository: FriendshipRepository) {}
+	constructor(
+		@Inject(FriendshipRepository)
+		private readonly friendshipRepository: FriendshipRepository,
+	) {}
 
 	async execute(user: User): Promise<{ received: Friendship[]; sent: Friendship[] }> {
 		const pending = await this.friendshipRepository.getManyByUserAndStatus(

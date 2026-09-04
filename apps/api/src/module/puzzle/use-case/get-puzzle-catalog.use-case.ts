@@ -1,5 +1,5 @@
 import type { GetPuzzleCatalogRequest } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PuzzleCatalogPage } from '../definition/puzzle-catalog-page.interface';
 import { PuzzleRepository } from '../puzzle.repository';
@@ -8,7 +8,10 @@ import { PuzzleRepository } from '../puzzle.repository';
 export class GetPuzzleCatalogUseCase {
 	private static readonly defaultLimit = 500;
 
-	constructor(private readonly puzzleRepository: PuzzleRepository) {}
+	constructor(
+		@Inject(PuzzleRepository)
+		private readonly puzzleRepository: PuzzleRepository,
+	) {}
 
 	async execute(request: GetPuzzleCatalogRequest): Promise<PuzzleCatalogPage> {
 		const limit = request.limit ?? GetPuzzleCatalogUseCase.defaultLimit;

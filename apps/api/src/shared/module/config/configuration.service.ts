@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { ApiConfig } from './definition/api-config.type';
@@ -7,7 +7,10 @@ import { JwtConfig } from './definition/jwt-config.type';
 
 @Injectable()
 export class ConfigurationService {
-	constructor(private readonly configService: ConfigService) {}
+	constructor(
+		@Inject(ConfigService)
+		private readonly configService: ConfigService,
+	) {}
 
 	get database(): DatabaseConfig {
 		return this.configService.getOrThrow<DatabaseConfig>('database');

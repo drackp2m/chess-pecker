@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { CalibrationRoundPuzzles } from '../definition/calibration-round-puzzles.interface';
@@ -10,8 +10,11 @@ import { Training } from '../training.entity';
 @Injectable()
 export class GetCalibrationRoundPuzzlesUseCase {
 	constructor(
+		@Inject(TrainingCalibrationRoundRepository)
 		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
+		@Inject(TrainingCalibrationPuzzleRepository)
 		private readonly calibrationPuzzleRepository: TrainingCalibrationPuzzleRepository,
+		@Inject(PuzzleAttemptRepository)
 		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
 	) {}
 

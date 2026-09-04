@@ -6,7 +6,17 @@ import type {
 	GetTrainingActivityRequest,
 	GetTrainingAttemptsRequest,
 } from '@chesspecker/api-definitions';
-import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import {
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Inject,
+	Param,
+	Post,
+	Query,
+} from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
@@ -26,12 +36,19 @@ import { StartTrainingUseCase } from './use-case/start-training.use-case';
 @Controller('training')
 export class TrainingController {
 	constructor(
+		@Inject(StartTrainingUseCase)
 		private readonly startTrainingUseCase: StartTrainingUseCase,
+		@Inject(ListTrainingsUseCase)
 		private readonly listTrainingsUseCase: ListTrainingsUseCase,
+		@Inject(GetOwnedTrainingUseCase)
 		private readonly getOwnedTrainingUseCase: GetOwnedTrainingUseCase,
+		@Inject(GetTrainingProgressUseCase)
 		private readonly getTrainingProgressUseCase: GetTrainingProgressUseCase,
+		@Inject(GetTrainingActivityUseCase)
 		private readonly getTrainingActivityUseCase: GetTrainingActivityUseCase,
+		@Inject(ListTrainingAttemptsUseCase)
 		private readonly listTrainingAttemptsUseCase: ListTrainingAttemptsUseCase,
+		@Inject(FinishTrainingUseCase)
 		private readonly finishTrainingUseCase: FinishTrainingUseCase,
 	) {}
 

@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
+import { Controller, Get, Inject, NotFoundException, Param } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
@@ -16,8 +16,11 @@ import { GetOwnedTrainingUseCase } from './use-case/get-owned-training.use-case'
 @Controller('training/:uuid/cycle')
 export class TrainingCycleController {
 	constructor(
+		@Inject(GetOwnedTrainingUseCase)
 		private readonly getOwnedTrainingUseCase: GetOwnedTrainingUseCase,
+		@Inject(GetNextCycleItemUseCase)
 		private readonly getNextCycleItemUseCase: GetNextCycleItemUseCase,
+		@Inject(TrainingCycleRepository)
 		private readonly trainingCycleRepository: TrainingCycleRepository,
 	) {}
 

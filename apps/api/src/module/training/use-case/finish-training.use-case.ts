@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { TrainingCycleStatus } from '../definition/training-cycle-status.enum';
@@ -14,8 +14,11 @@ import { GetTrainingProgressUseCase } from './get-training-progress.use-case';
 @Injectable()
 export class FinishTrainingUseCase {
 	constructor(
+		@Inject(TrainingRepository)
 		private readonly trainingRepository: TrainingRepository,
+		@Inject(TrainingCycleRepository)
 		private readonly trainingCycleRepository: TrainingCycleRepository,
+		@Inject(GetTrainingProgressUseCase)
 		private readonly getTrainingProgressUseCase: GetTrainingProgressUseCase,
 	) {}
 

@@ -1,6 +1,16 @@
 import { blockUserRequestSchema } from '@chesspecker/api-definitions';
 import type { BlockUserRequest } from '@chesspecker/api-definitions';
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Inject,
+	Param,
+	Post,
+} from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
@@ -13,8 +23,11 @@ import { UserBlock } from './user-block.entity';
 @Controller('user-block')
 export class UserBlockController {
 	constructor(
+		@Inject(BlockUserUseCase)
 		private readonly blockUserUseCase: BlockUserUseCase,
+		@Inject(UnblockUserUseCase)
 		private readonly unblockUserUseCase: UnblockUserUseCase,
+		@Inject(ListBlockedUsersUseCase)
 		private readonly listBlockedUsersUseCase: ListBlockedUsersUseCase,
 	) {}
 

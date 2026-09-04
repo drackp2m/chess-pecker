@@ -1,5 +1,5 @@
 import type { PushCycleItemNodeParsed, PushCycleNodeParsed } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { TrainingCycleStatus } from '../../training/definition/training-cycle-status.enum';
 import { PuzzleAttempt } from '../../training/puzzle-attempt.entity';
@@ -17,7 +17,9 @@ import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
 @Injectable()
 export class PushCycleBranchUseCase {
 	constructor(
+		@Inject(PushSyncAttemptUseCase)
 		private readonly pushSyncAttemptUseCase: PushSyncAttemptUseCase,
+		@Inject(ApplySyncTimestampsUseCase)
 		private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase,
 	) {}
 
