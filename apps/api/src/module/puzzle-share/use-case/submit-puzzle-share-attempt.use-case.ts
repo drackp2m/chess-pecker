@@ -2,7 +2,7 @@ import type {
 	PuzzleShare as PuzzleShareResponse,
 	PuzzleShareResultRequest,
 } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
@@ -21,11 +21,17 @@ import { PresentPuzzleSharesUseCase } from './present-puzzle-shares.use-case';
 @Injectable()
 export class SubmitPuzzleShareAttemptUseCase {
 	constructor(
+		@Inject(PuzzleShareAttemptRepository)
 		private readonly puzzleShareAttemptRepository: PuzzleShareAttemptRepository,
+		@Inject(PuzzleShareRecipientRepository)
 		private readonly puzzleShareRecipientRepository: PuzzleShareRecipientRepository,
+		@Inject(PuzzleShareRepository)
 		private readonly puzzleShareRepository: PuzzleShareRepository,
+		@Inject(GetPuzzleShareUseCase)
 		private readonly getPuzzleShareUseCase: GetPuzzleShareUseCase,
+		@Inject(CreateNotificationsUseCase)
 		private readonly createNotificationsUseCase: CreateNotificationsUseCase,
+		@Inject(PresentPuzzleSharesUseCase)
 		private readonly presentPuzzleSharesUseCase: PresentPuzzleSharesUseCase,
 	) {}
 

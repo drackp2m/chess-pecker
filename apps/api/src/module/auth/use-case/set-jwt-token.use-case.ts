@@ -12,7 +12,9 @@ import { jwtCookiePath } from '../util/jwt-cookie-path.util';
 @Injectable({ scope: Scope.REQUEST })
 export class SetJwtTokenUseCase {
 	constructor(
-		@Inject(REQUEST) private readonly request: Request,
+		@Inject(REQUEST)
+		private readonly request: Request,
+		@Inject(ConfigurationService)
 		private readonly configService: ConfigurationService,
 	) {}
 

@@ -1,5 +1,5 @@
 import type { PuzzleShare as PuzzleShareResponse } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
 import { PuzzleShareRecipientRepository } from '../puzzle-share-recipient.repository';
@@ -12,8 +12,11 @@ const DEFAULT_LIMIT = 50;
 @Injectable()
 export class ListPuzzleSharesUseCase {
 	constructor(
+		@Inject(PuzzleShareRepository)
 		private readonly puzzleShareRepository: PuzzleShareRepository,
+		@Inject(PuzzleShareRecipientRepository)
 		private readonly puzzleShareRecipientRepository: PuzzleShareRecipientRepository,
+		@Inject(PresentPuzzleSharesUseCase)
 		private readonly presentPuzzleSharesUseCase: PresentPuzzleSharesUseCase,
 	) {}
 

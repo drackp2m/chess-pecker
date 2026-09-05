@@ -1,0 +1,15 @@
+<div class="board" role="img" aria-label="Posición del ejercicio">
+	@for (square of squares(); track $index) {
+		<div
+			class="square"
+			[class.light]="square.isLight"
+			[class.dark]="!square.isLight"
+			[class.from]="square.isFrom"
+			[class.to]="square.isTo"
+		>
+			@if (square.piece; as piece) {
+				<app-chess-piece [type]="piece.type" [color]="piece.color" />
+			}
+		</div>
+	}
+</div>

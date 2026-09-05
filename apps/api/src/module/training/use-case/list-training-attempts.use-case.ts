@@ -1,5 +1,5 @@
 import type { GetTrainingAttemptsRequest } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { toIsoDate } from '../../../shared/util/to-iso-date';
 import {
@@ -13,7 +13,10 @@ import { Training } from '../training.entity';
 
 @Injectable()
 export class ListTrainingAttemptsUseCase {
-	constructor(private readonly puzzleAttemptRepository: PuzzleAttemptRepository) {}
+	constructor(
+		@Inject(PuzzleAttemptRepository)
+		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
+	) {}
 
 	/**
 	 * The cut is the last row served and not a timestamp: two attempts can share an instant,

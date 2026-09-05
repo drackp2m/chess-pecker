@@ -5,7 +5,7 @@ import type {
 	SyncSummary,
 } from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { SYNC_SCHEMA_VERSION } from '../../../shared/util/sync-schema-version';
@@ -90,7 +90,9 @@ interface EntitySummaryRow extends SummaryRow {
 @Injectable()
 export class GetSyncSummaryUseCase {
 	constructor(
+		@Inject(EntityManager)
 		private readonly entityManager: EntityManager,
+		@Inject(PuzzleRepository)
 		private readonly puzzleRepository: PuzzleRepository,
 	) {}
 

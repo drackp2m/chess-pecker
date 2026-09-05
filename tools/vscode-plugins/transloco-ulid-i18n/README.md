@@ -52,11 +52,12 @@ It has no dependencies and no build step: the collectors are loaded straight fro
 
 - **Diagnostics** — one per usage, the worst thing true of it first: an undeclared key is an error
   in `.ts` and `.html`, a key interpolated without `| i18n` is an error too (the key is what
-  renders, so the page is wrong), and only then is a key still untranslated reported — a warning,
-  because it is work left to do rather than a mistake, raised whenever any language is missing the
-  string, the displayed one or not. The squiggle stays on the source characters the inline text
-  stands in for, so under a collapsed usage only its tail shows past the text — the mark is
-  deliberately quiet, and the message is in the Problems panel and on hover.
+  renders, so the page is wrong), an invalid ICU message is reported with the failing language, and
+  only then is a key still untranslated reported — a warning, because it is work left to do rather
+  than a mistake, raised whenever any language is missing the string, the displayed one or not. The
+  squiggle stays on the source characters the inline text stands in for, so under a collapsed usage
+  only its tail shows past the text — the mark is deliberately quiet, and the message is in the
+  Problems panel and on hover.
 - **Findings** — everything `pnpm i18n:check` reports, published as problems _on the i18n files
   themselves_ and refreshed whenever any of them changes. It is the same `buildFindings()` the CLI
   calls, with the finding type as the diagnostic code, so a stale `params.ts`, a param added to one
@@ -79,11 +80,13 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   `import { I18n } from '@app/i18n';`; the HTML one patches the sibling component instead, adding the
   same import, `protected readonly I18n = I18n;` and `I18nPipe` in `imports`. It leaves that file
   dirty on purpose, and it never touches `provideI18nScope` — a scoped key still needs it by hand.
-- **Create key** — `i18n: Create translation key` picks a scope, asks for the name and one text per
-  language, generates the ULID and writes `keys.ts` plus every `<lang>.json`. Languages left empty are
-  not written at all, so only the default one is required. With text selected it works as an extract:
-  the selection seeds the default language and is replaced by `{{ I18n.scope.KEY | i18n }}` in
-  HTML — wiring the sibling component up like the snippet does — or `I18n.scope.KEY` in TypeScript.
+- **Create key** — `i18n: Create translation key` picks a scope, asks for the name and whether the
+  key is plain text or a plural. A plural asks for its parameter and the source `one` and `other`
+  forms, then writes the ICU automatically. It generates the ULID and writes `keys.ts` plus every
+  `<lang>.json`; target languages remain empty until translated. With text selected it works as an
+  extract: the selection seeds the default language and is replaced by
+  `{{ I18n.scope.KEY | i18n }}` in HTML — wiring the sibling component up like the snippet does — or
+  `I18n.scope.KEY` in TypeScript.
 - **Create scope** — the scope picker ends in `New scope…`: it writes `<name>/keys.ts`, an empty
   `<name>/params.ts` and an empty `<name>/<lang>.json` per language, and registers the scope in
   `i18n/index.ts` twice — the import plus the camelCased property in the `I18n` barrel, which is what

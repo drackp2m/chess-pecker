@@ -1,6 +1,16 @@
 import { upsertUserSettingRequestSchema } from '@chesspecker/api-definitions';
 import type { UpsertUserSettingRequest } from '@chesspecker/api-definitions';
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Put } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Inject,
+	Param,
+	Put,
+} from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
@@ -13,8 +23,11 @@ import { UserSetting } from './user-setting.entity';
 @Controller('user-setting')
 export class UserSettingController {
 	constructor(
+		@Inject(GetUserSettingsUseCase)
 		private readonly getUserSettingsUseCase: GetUserSettingsUseCase,
+		@Inject(UpsertUserSettingUseCase)
 		private readonly upsertUserSettingUseCase: UpsertUserSettingUseCase,
+		@Inject(DeleteUserSettingUseCase)
 		private readonly deleteUserSettingUseCase: DeleteUserSettingUseCase,
 	) {}
 

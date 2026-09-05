@@ -1,5 +1,5 @@
 import type { GetTrainingActivityRequest } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { User } from '../../user/user.entity';
@@ -9,7 +9,10 @@ import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
 
 @Injectable()
 export class GetTrainingActivityUseCase {
-	constructor(private readonly puzzleAttemptRepository: PuzzleAttemptRepository) {}
+	constructor(
+		@Inject(PuzzleAttemptRepository)
+		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
+	) {}
 
 	/**
 	 * The cursor is read before the days on purpose: repeating a day is free, missing one

@@ -1,6 +1,6 @@
 import { loginRequestSchema, registerRequestSchema } from '@chesspecker/api-definitions';
 import type { LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Post } from '@nestjs/common';
 
 import { User } from '../user/user.entity';
 
@@ -16,9 +16,13 @@ import { RegisterUseCase } from './use-case/register.use-case';
 @Controller('auth')
 export class AuthController {
 	constructor(
+		@Inject(RegisterUseCase)
 		private readonly registerUseCase: RegisterUseCase,
+		@Inject(LoginUseCase)
 		private readonly loginUseCase: LoginUseCase,
+		@Inject(LogoutUseCase)
 		private readonly logoutUseCase: LogoutUseCase,
+		@Inject(RefreshSessionUseCase)
 		private readonly refreshSessionUseCase: RefreshSessionUseCase,
 	) {}
 

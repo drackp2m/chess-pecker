@@ -1,5 +1,5 @@
 import type { SearchUserRequest, UserSummary } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../user.entity';
 import { UserRepository } from '../user.repository';
@@ -14,7 +14,10 @@ const escapeLikePattern = (value: string): string => value.replace(/[\\%_]/gu, '
 
 @Injectable()
 export class SearchUsersUseCase {
-	constructor(private readonly userRepository: UserRepository) {}
+	constructor(
+		@Inject(UserRepository)
+		private readonly userRepository: UserRepository,
+	) {}
 
 	/**
 	 * Prefix search, so someone can be found before being asked. Returns `UserSummary` and

@@ -2,7 +2,7 @@ import type {
 	PuzzleBookmark as PuzzleBookmarkResponse,
 	UpsertPuzzleBookmarkRequestParsed,
 } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
@@ -15,7 +15,9 @@ import { presentBookmark } from '../util/puzzle-bookmark.util';
 @Injectable()
 export class UpsertPuzzleBookmarkUseCase {
 	constructor(
+		@Inject(PuzzleBookmarkRepository)
 		private readonly puzzleBookmarkRepository: PuzzleBookmarkRepository,
+		@Inject(PuzzleRepository)
 		private readonly puzzleRepository: PuzzleRepository,
 	) {}
 

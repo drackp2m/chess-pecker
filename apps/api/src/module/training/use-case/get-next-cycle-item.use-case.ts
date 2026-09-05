@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { PuzzleAttemptRepository } from '../puzzle-attempt.repository';
@@ -10,8 +10,11 @@ import { Training } from '../training.entity';
 @Injectable()
 export class GetNextCycleItemUseCase {
 	constructor(
+		@Inject(TrainingCycleRepository)
 		private readonly trainingCycleRepository: TrainingCycleRepository,
+		@Inject(TrainingCycleItemRepository)
 		private readonly trainingCycleItemRepository: TrainingCycleItemRepository,
+		@Inject(PuzzleAttemptRepository)
 		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
 	) {}
 

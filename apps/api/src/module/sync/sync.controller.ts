@@ -8,7 +8,7 @@ import type {
 	PushTrainingResult,
 	SyncSummary,
 } from '@chesspecker/api-definitions';
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { GetOwnedTrainingUseCase } from '../training/use-case/get-owned-training.use-case';
@@ -26,9 +26,13 @@ import { PushTrainingTreeUseCase } from './use-case/push-training-tree.use-case'
 @Controller('sync')
 export class SyncController {
 	constructor(
+		@Inject(GetSyncSummaryUseCase)
 		private readonly getSyncSummaryUseCase: GetSyncSummaryUseCase,
+		@Inject(GetOwnedTrainingUseCase)
 		private readonly getOwnedTrainingUseCase: GetOwnedTrainingUseCase,
+		@Inject(GetTrainingTreeUseCase)
 		private readonly getTrainingTreeUseCase: GetTrainingTreeUseCase,
+		@Inject(PushTrainingTreeUseCase)
 		private readonly pushTrainingTreeUseCase: PushTrainingTreeUseCase,
 	) {}
 

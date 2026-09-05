@@ -60,6 +60,24 @@ class I18nIndex {
 		return undefined === declared ? [] : [...declared].map(([name, type]) => ({ name, type }));
 	}
 
+	icuProblems(scopeName, ulid) {
+		const problems = this.modules?.icu?.messageProblems;
+
+		if (undefined === problems) {
+			return [];
+		}
+
+		return this.langs.flatMap((lang) => {
+			const translation = this.translation(scopeName, ulid, lang);
+
+			if (translation.missing) {
+				return [];
+			}
+
+			return problems(String(translation.text), lang).map((problem) => ({ lang, ...problem }));
+		});
+	}
+
 	keysOf(scopeName) {
 		return [...(this.scopes.get(scopeName)?.entries.keys() ?? [])];
 	}
@@ -111,13 +129,15 @@ class I18nIndex {
 			'catalogue/collect.mjs',
 			'catalogue/config.mjs',
 			'check/findings.mjs',
+			'check/icu.mjs',
 			'catalogue/params.mjs',
+			'catalogue/message.mjs',
 		];
-		const [checks, collect, config, findings, params] = await Promise.all(
+		const [checks, collect, config, findings, icu, params, message] = await Promise.all(
 			files.map((file) => loadModule(this.root, file)),
 		);
 
-		return { checks, collect, config, findings, params };
+		return { checks, collect, config, findings, icu, params, message };
 	}
 
 	async readWorkspace() {

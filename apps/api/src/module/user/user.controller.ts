@@ -1,6 +1,6 @@
 import { searchUserRequestSchema } from '@chesspecker/api-definitions';
 import type { SearchUserRequest, UserSummary } from '@chesspecker/api-definitions';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Query } from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 
@@ -9,7 +9,10 @@ import { User } from './user.entity';
 
 @Controller('user')
 export class UserController {
-	constructor(private readonly searchUsersUseCase: SearchUsersUseCase) {}
+	constructor(
+		@Inject(SearchUsersUseCase)
+		private readonly searchUsersUseCase: SearchUsersUseCase,
+	) {}
 
 	@Get()
 	async search(

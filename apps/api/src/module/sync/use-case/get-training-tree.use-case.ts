@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { toIsoDate } from '../../../shared/util/to-iso-date';
 import { Puzzle } from '../../puzzle/puzzle.entity';
@@ -35,11 +35,17 @@ interface SyncedEntity {
 @Injectable()
 export class GetTrainingTreeUseCase {
 	constructor(
+		@Inject(TrainingGoalRepository)
 		private readonly trainingGoalRepository: TrainingGoalRepository,
+		@Inject(TrainingCalibrationRoundRepository)
 		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
+		@Inject(TrainingCalibrationPuzzleRepository)
 		private readonly calibrationPuzzleRepository: TrainingCalibrationPuzzleRepository,
+		@Inject(TrainingPuzzleRepository)
 		private readonly trainingPuzzleRepository: TrainingPuzzleRepository,
+		@Inject(TrainingCycleRepository)
 		private readonly trainingCycleRepository: TrainingCycleRepository,
+		@Inject(TrainingCycleItemRepository)
 		private readonly trainingCycleItemRepository: TrainingCycleItemRepository,
 	) {}
 

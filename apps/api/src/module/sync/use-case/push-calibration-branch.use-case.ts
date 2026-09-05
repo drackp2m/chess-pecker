@@ -2,7 +2,7 @@ import type {
 	PushCalibrationPuzzleNodeParsed,
 	PushCalibrationRoundNodeParsed,
 } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { CalibrationRoundKind } from '../../training/definition/calibration-round-kind.enum';
 import { CalibrationRoundOutcome } from '../../training/definition/calibration-round-outcome.enum';
@@ -19,7 +19,9 @@ import { PushSyncAttemptUseCase } from './push-sync-attempt.use-case';
 @Injectable()
 export class PushCalibrationBranchUseCase {
 	constructor(
+		@Inject(PushSyncAttemptUseCase)
 		private readonly pushSyncAttemptUseCase: PushSyncAttemptUseCase,
+		@Inject(ApplySyncTimestampsUseCase)
 		private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase,
 	) {}
 

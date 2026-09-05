@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { User } from '../../user/user.entity';
@@ -6,7 +6,10 @@ import { FriendshipRepository } from '../friendship.repository';
 
 @Injectable()
 export class RemoveFriendshipUseCase {
-	constructor(private readonly friendshipRepository: FriendshipRepository) {}
+	constructor(
+		@Inject(FriendshipRepository)
+		private readonly friendshipRepository: FriendshipRepository,
+	) {}
 
 	/**
 	 * Unfriending, and cancelling an unanswered request. The row is deleted rather than

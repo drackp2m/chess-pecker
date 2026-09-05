@@ -5,6 +5,7 @@ const { shorten, usageDisplay, usageRange } = require('./util');
 
 const SUPPORTED = new Set(['typescript', 'html']);
 const MISSING = '⚠️ missing translation';
+const INVALID = '⚠️ invalid ICU';
 
 const hiddenType = vscode.window.createTextEditorDecorationType({
 	textDecoration: 'none; display: none;',
@@ -31,7 +32,43 @@ function inlineLabel(index, usage) {
 
 	const { text, missing } = index.translation(usage.scope, entry.ulid, index.displayLang);
 
-	return missing ? MISSING : shorten(text, inlineTextMaxLength());
+	if (missing) {
+		return MISSING;
+	}
+
+	try {
+		const representative = representativeText(index, text);
+		const max = Math.max(inlineTextMaxLength() - 2, 1);
+
+		return representative === text
+			? shorten(text, inlineTextMaxLength())
+			: `${shorten(representative, max)} *`;
+	} catch {
+		return INVALID;
+	}
+}
+
+function representativeText(index, text) {
+	const { leavesOf, paramsOf } = index.modules.message;
+	const dimensions = [...paramsOf(text)].filter(([, param]) => 'plain' !== param.type);
+
+	if (0 === dimensions.length) {
+		return text;
+	}
+
+	const preferred = dimensions.map(([name, param]) => {
+		const key =
+			'select' === param.type && 'gender' === name && param.cases.includes('male')
+				? 'male'
+				: 'other';
+
+		return `${param.type}:${key}`;
+	});
+	const leaf = leavesOf(text).find(({ path: value }) =>
+		value.every((segment, order) => segment === preferred[order]),
+	);
+
+	return leaf?.text ?? text;
 }
 
 function revealed(range, selections) {
@@ -133,12 +170,36 @@ function missingDiagnostic(index, document, usage) {
 	return diagnostic;
 }
 
+function icuDiagnostic(index, document, usage) {
+	const entry = index.entry(usage.scope, usage.key);
+	const problems = index.icuProblems(usage.scope, entry.ulid);
+
+	if (0 === problems.length) {
+		return null;
+	}
+
+	const message = problems.map(({ lang, message: detail }) => `${lang}: ${detail}`).join('; ');
+	const diagnostic = new vscode.Diagnostic(
+		usageRange(document, usage),
+		message,
+		vscode.DiagnosticSeverity.Error,
+	);
+
+	diagnostic.code = 'icu-message';
+
+	return diagnostic;
+}
+
 function diagnosticFor(index, document, usage) {
 	if (null === index.entry(usage.scope, usage.key)) {
 		return unknownKeyDiagnostic(index, document, usage);
 	}
 
-	return pipeDiagnostic(document, usage) ?? missingDiagnostic(index, document, usage);
+	return (
+		pipeDiagnostic(document, usage) ??
+		icuDiagnostic(index, document, usage) ??
+		missingDiagnostic(index, document, usage)
+	);
 }
 
 class Annotations {

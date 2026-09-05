@@ -1,5 +1,5 @@
 import type { PuzzleShare as PuzzleShareResponse } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PuzzleShareAttemptRepository } from '../puzzle-share-attempt.repository';
 import { PuzzleShareRecipientRepository } from '../puzzle-share-recipient.repository';
@@ -26,7 +26,9 @@ function groupByShare<T extends { share: { uuid: string } }>(rows: readonly T[])
 @Injectable()
 export class PresentPuzzleSharesUseCase {
 	constructor(
+		@Inject(PuzzleShareRecipientRepository)
 		private readonly puzzleShareRecipientRepository: PuzzleShareRecipientRepository,
+		@Inject(PuzzleShareAttemptRepository)
 		private readonly puzzleShareAttemptRepository: PuzzleShareAttemptRepository,
 	) {}
 

@@ -7,6 +7,7 @@ import {
 	Get,
 	HttpCode,
 	HttpStatus,
+	Inject,
 	Param,
 	Patch,
 	Post,
@@ -27,11 +28,17 @@ import { SendFriendRequestUseCase } from './use-case/send-friend-request.use-cas
 @Controller('friendship')
 export class FriendshipController {
 	constructor(
+		@Inject(SendFriendRequestUseCase)
 		private readonly sendFriendRequestUseCase: SendFriendRequestUseCase,
+		@Inject(AnswerFriendRequestUseCase)
 		private readonly answerFriendRequestUseCase: AnswerFriendRequestUseCase,
+		@Inject(RemoveFriendshipUseCase)
 		private readonly removeFriendshipUseCase: RemoveFriendshipUseCase,
+		@Inject(RemoveFriendshipByUserUseCase)
 		private readonly removeFriendshipByUserUseCase: RemoveFriendshipByUserUseCase,
+		@Inject(ListFriendsUseCase)
 		private readonly listFriendsUseCase: ListFriendsUseCase,
+		@Inject(ListFriendRequestsUseCase)
 		private readonly listFriendRequestsUseCase: ListFriendRequestsUseCase,
 	) {}
 

@@ -7,7 +7,7 @@ import type {
 } from '@chesspecker/api-definitions';
 import { EntityManager } from '@mikro-orm/core';
 import type { EntityData } from '@mikro-orm/core';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
@@ -33,9 +33,13 @@ import { PushCycleBranchUseCase } from './push-cycle-branch.use-case';
 @Injectable()
 export class PushTrainingTreeUseCase {
 	constructor(
+		@Inject(EntityManager)
 		private readonly entityManager: EntityManager,
+		@Inject(PushCalibrationBranchUseCase)
 		private readonly pushCalibrationBranchUseCase: PushCalibrationBranchUseCase,
+		@Inject(PushCycleBranchUseCase)
 		private readonly pushCycleBranchUseCase: PushCycleBranchUseCase,
+		@Inject(ApplySyncTimestampsUseCase)
 		private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase,
 	) {}
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
 import { FriendshipStatus } from '../definition/friendship-status.enum';
@@ -6,7 +6,10 @@ import { FriendshipRepository } from '../friendship.repository';
 
 @Injectable()
 export class ListFriendsUseCase {
-	constructor(private readonly friendshipRepository: FriendshipRepository) {}
+	constructor(
+		@Inject(FriendshipRepository)
+		private readonly friendshipRepository: FriendshipRepository,
+	) {}
 
 	/**
 	 * The row says who asked and who received, not who the friend is, so "the other one" is

@@ -9,8 +9,6 @@
 		"module": "preserve",
 		"lib": ["ES2023", "DOM"],
 		"importHelpers": true,
-		"experimentalDecorators": true,
-
 		// Paths
 		"paths": {
 			"@app/package": ["../../package.json"],

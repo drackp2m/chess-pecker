@@ -1,12 +1,15 @@
 import type { ImportPuzzleRequest } from '@chesspecker/api-definitions';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { Puzzle } from '../puzzle.entity';
 import { PuzzleRepository } from '../puzzle.repository';
 
 @Injectable()
 export class ImportPuzzlesUseCase {
-	constructor(private readonly puzzleRepository: PuzzleRepository) {}
+	constructor(
+		@Inject(PuzzleRepository)
+		private readonly puzzleRepository: PuzzleRepository,
+	) {}
 
 	async execute(importRequest: ImportPuzzleRequest): Promise<{ imported: number }> {
 		const puzzles = importRequest.puzzles.map((puzzle) => new Puzzle(puzzle));

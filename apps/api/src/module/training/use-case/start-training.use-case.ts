@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
 import { User } from '../../user/user.entity';
@@ -7,7 +7,10 @@ import { TrainingRepository } from '../training.repository';
 
 @Injectable()
 export class StartTrainingUseCase {
-	constructor(private readonly trainingRepository: TrainingRepository) {}
+	constructor(
+		@Inject(TrainingRepository)
+		private readonly trainingRepository: TrainingRepository,
+	) {}
 
 	/**
 	 * Born calibrating with no declared ELO: the user is never asked their level, the

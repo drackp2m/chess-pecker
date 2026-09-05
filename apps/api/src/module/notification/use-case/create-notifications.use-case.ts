@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { PuzzleShare } from '../../puzzle-share/puzzle-share.entity';
 import { User } from '../../user/user.entity';
@@ -19,7 +19,10 @@ export interface NotificationDraft {
  */
 @Injectable()
 export class CreateNotificationsUseCase {
-	constructor(private readonly userNotificationRepository: UserNotificationRepository) {}
+	constructor(
+		@Inject(UserNotificationRepository)
+		private readonly userNotificationRepository: UserNotificationRepository,
+	) {}
 
 	async execute(drafts: readonly NotificationDraft[]): Promise<void> {
 		await this.userNotificationRepository.insertMany(

@@ -1,11 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../../user/user.entity';
 import { UserSettingRepository } from '../user-setting.repository';
 
 @Injectable()
 export class DeleteUserSettingUseCase {
-	constructor(private readonly userSettingRepository: UserSettingRepository) {}
+	constructor(
+		@Inject(UserSettingRepository)
+		private readonly userSettingRepository: UserSettingRepository,
+	) {}
 
 	/**
 	 * Deleting a setting returns it to its default, which lives in the code and not as a row,

@@ -1,0 +1,22 @@
+<section class="flex-col gap-4">
+	<h4>{{ categoryLabel | i18n }}</h4>
+
+	@if (isLoading()) {
+		<p>{{ I18n.common.LOADING | i18n }}</p>
+	} @else if (loadError()) {
+		<p role="alert">{{ I18n.common.BOOKMARK_LOAD_ERROR | i18n }}</p>
+	} @else {
+		@if (0 === puzzles().length) {
+			<p class="empty">{{ I18n.common.CATALOG_EMPTY | i18n }}</p>
+		} @else {
+			<div class="exercise-grid">
+				@for (puzzle of puzzles(); track puzzle.id) {
+					<a class="exercise-card" [appRouterLink]="solveLink(puzzle.id)">
+						<app-static-chess-board [fen]="puzzle.fen" [firstMove]="puzzle.moves[0]" />
+						<span class="exercise-name">{{ puzzle.id }}</span>
+					</a>
+				}
+			</div>
+		}
+	}
+</section>

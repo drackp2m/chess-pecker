@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -13,7 +13,9 @@ import { JwtCookie } from '../definition/jwt-cookie.enum';
 export class JwtStrategyService extends PassportStrategy(Strategy) {
 	constructor(
 		// FixMe => configurationService private crash with "Property is declared but its value is never read"
+		@Inject(ConfigurationService)
 		protected readonly configurationService: ConfigurationService,
+		@Inject(UserRepository)
 		private readonly userRepository: UserRepository,
 	) {
 		super({

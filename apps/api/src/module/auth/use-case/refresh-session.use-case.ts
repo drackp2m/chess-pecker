@@ -13,11 +13,15 @@ import { SetJwtTokenUseCase } from './set-jwt-token.use-case';
 @Injectable({ scope: Scope.REQUEST })
 export class RefreshSessionUseCase {
 	constructor(
-		@Inject(REQUEST) private readonly request: Request,
+		@Inject(REQUEST)
+		private readonly request: Request,
+		@Inject(CheckJwtTokenUseCase)
 		private readonly checkJwtToken: CheckJwtTokenUseCase,
+		@Inject(CreateJwtAccessTokenUseCase)
 		private readonly createAccessToken: CreateJwtAccessTokenUseCase,
+		@Inject(CreateJwtRefreshTokenUseCase)
 		private readonly createRefreshToken: CreateJwtRefreshTokenUseCase,
-		private readonly setJwtToken: SetJwtTokenUseCase,
+		@Inject(SetJwtTokenUseCase) private readonly setJwtToken: SetJwtTokenUseCase,
 	) {}
 
 	execute(): void {

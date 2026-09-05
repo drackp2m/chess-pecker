@@ -3,7 +3,17 @@ import type {
 	PuzzleBookmark as PuzzleBookmarkResponse,
 	UpsertPuzzleBookmarkRequestParsed,
 } from '@chesspecker/api-definitions';
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Put } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Delete,
+	Get,
+	HttpCode,
+	HttpStatus,
+	Inject,
+	Param,
+	Put,
+} from '@nestjs/common';
 
 import { CurrentUser } from '../auth/decorator/current-user.decorator';
 import { User } from '../user/user.entity';
@@ -15,8 +25,11 @@ import { UpsertPuzzleBookmarkUseCase } from './use-case/upsert-puzzle-bookmark.u
 @Controller('puzzle-bookmark')
 export class PuzzleBookmarkController {
 	constructor(
+		@Inject(ListPuzzleBookmarksUseCase)
 		private readonly listPuzzleBookmarksUseCase: ListPuzzleBookmarksUseCase,
+		@Inject(UpsertPuzzleBookmarkUseCase)
 		private readonly upsertPuzzleBookmarkUseCase: UpsertPuzzleBookmarkUseCase,
+		@Inject(DeletePuzzleBookmarkUseCase)
 		private readonly deletePuzzleBookmarkUseCase: DeletePuzzleBookmarkUseCase,
 	) {}
 

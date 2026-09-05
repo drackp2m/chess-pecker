@@ -1,6 +1,6 @@
 import type { PushAttemptNodeParsed } from '@chesspecker/api-definitions';
 import { EntityData } from '@mikro-orm/core';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { Puzzle } from '../../puzzle/puzzle.entity';
 import { PuzzleAttemptClosure } from '../../training/definition/puzzle-attempt-closure.enum';
@@ -19,7 +19,10 @@ import { claimSyncRow, reuseSyncRow } from '../util/sync-node.util';
  */
 @Injectable()
 export class PushSyncAttemptUseCase {
-	constructor(private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase) {}
+	constructor(
+		@Inject(ApplySyncTimestampsUseCase)
+		private readonly applySyncTimestampsUseCase: ApplySyncTimestampsUseCase,
+	) {}
 
 	calibration(
 		context: SyncPushContext,

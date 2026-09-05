@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { NotFoundException } from '../../../shared/exception/not-found.exception';
 import { User } from '../../user/user.entity';
@@ -6,7 +6,10 @@ import { FriendshipRepository } from '../friendship.repository';
 
 @Injectable()
 export class RemoveFriendshipByUserUseCase {
-	constructor(private readonly friendshipRepository: FriendshipRepository) {}
+	constructor(
+		@Inject(FriendshipRepository)
+		private readonly friendshipRepository: FriendshipRepository,
+	) {}
 
 	/**
 	 * The same removal as `RemoveFriendshipUseCase` by the other person, since the row uuid

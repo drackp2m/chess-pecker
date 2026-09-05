@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { ForbiddenException } from '../../../shared/exception/forbidden.exception';
 import { PreconditionFailedException } from '../../../shared/exception/precondition-failed.exception';
@@ -9,7 +9,10 @@ import { FriendshipRepository } from '../friendship.repository';
 
 @Injectable()
 export class AnswerFriendRequestUseCase {
-	constructor(private readonly friendshipRepository: FriendshipRepository) {}
+	constructor(
+		@Inject(FriendshipRepository)
+		private readonly friendshipRepository: FriendshipRepository,
+	) {}
 
 	async execute(
 		user: User,

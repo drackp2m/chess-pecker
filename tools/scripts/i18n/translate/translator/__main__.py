@@ -23,6 +23,7 @@ from .prompting import (
     build_messages,
     check_forms,
     fenced,
+    group_id,
     is_pending,
     parse_answers,
 )
@@ -177,7 +178,7 @@ def remembered_units(batch: Batch, memory) -> tuple[list, list]:
     left = []
 
     for unit in batch.units:
-        found = memory.get(batch.block.target_lang, unit.source)
+        found = memory.get(batch.block.target_lang, unit.source, unit.category)
 
         if found is None:
             left.append(unit)
@@ -203,14 +204,14 @@ def resolve(session: Session, batch: Batch) -> list:
 
         for index in sorted(accepted, reverse=True):
             unit = left.pop(index)
-            memory.remember(lang, unit.source, accepted[index])
+            memory.remember(lang, unit.source, accepted[index], unit.category)
             outcomes.append((unit, accepted[index], "batch", [], False))
 
     for unit in left:
         text, issues, review = translate_unit(session, batch.block, unit)
 
         if not review:
-            memory.remember(lang, unit.source, text)
+            memory.remember(lang, unit.source, text, unit.category)
 
         outcomes.append((unit, text, "model", issues, review))
 
@@ -262,9 +263,11 @@ def next_batch(jobs: list, start: int, size: int) -> Batch:
     block = jobs[start][0]
     units: list = []
     length = 0
+    group = group_id(jobs[start][1])
 
     for owner, unit in jobs[start:]:
-        crowded = len(units) >= size or length + len(unit.source) > BATCH_CHARS
+        same_group = group_id(unit) == group
+        crowded = not same_group and (len(units) >= size or length + len(unit.source) > BATCH_CHARS)
 
         if owner is not block or (units and crowded):
             break
@@ -281,7 +284,7 @@ def seed_memory(root, memory, source_lang, target_lang) -> None:
 
         for unit in units:
             if not unit.outdated and unit.previous.strip():
-                memory.seed(target_lang, unit.source, unit.previous)
+                memory.seed(target_lang, unit.source, unit.previous, unit.category)
 
 
 def apply_unit(unit, text: str, review: bool) -> None:

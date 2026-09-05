@@ -1,6 +1,6 @@
 import type { SearchPuzzleRequest } from '@chesspecker/api-definitions';
 import { FilterQuery } from '@mikro-orm/core';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { Puzzle } from '../puzzle.entity';
 import { PuzzleRepository } from '../puzzle.repository';
@@ -9,7 +9,10 @@ import { PuzzleRepository } from '../puzzle.repository';
 export class SearchPuzzlesUseCase {
 	private static readonly defaultLimit = 50;
 
-	constructor(private readonly puzzleRepository: PuzzleRepository) {}
+	constructor(
+		@Inject(PuzzleRepository)
+		private readonly puzzleRepository: PuzzleRepository,
+	) {}
 
 	async execute(search: SearchPuzzleRequest): Promise<Puzzle[]> {
 		const query: FilterQuery<Puzzle> = {

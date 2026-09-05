@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { NotFoundException } from '../../../shared/exception/not-found.exception';
 import { User } from '../../user/user.entity';
@@ -13,7 +13,9 @@ import { PuzzleShareRepository } from '../puzzle-share.repository';
 @Injectable()
 export class GetPuzzleShareUseCase {
 	constructor(
+		@Inject(PuzzleShareRepository)
 		private readonly puzzleShareRepository: PuzzleShareRepository,
+		@Inject(PuzzleShareRecipientRepository)
 		private readonly puzzleShareRecipientRepository: PuzzleShareRecipientRepository,
 	) {}
 

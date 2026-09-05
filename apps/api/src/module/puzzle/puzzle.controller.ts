@@ -8,7 +8,7 @@ import type {
 	ImportPuzzleRequest,
 	SearchPuzzleRequest,
 } from '@chesspecker/api-definitions';
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Query } from '@nestjs/common';
 
 import { ProtectTo } from '../auth/decorator/protect-to.decorator';
 import { Public } from '../auth/decorator/public.decorator';
@@ -24,9 +24,13 @@ import { SearchPuzzlesUseCase } from './use-case/search-puzzles.use-case';
 @Controller('puzzle')
 export class PuzzleController {
 	constructor(
+		@Inject(SearchPuzzlesUseCase)
 		private readonly searchPuzzlesUseCase: SearchPuzzlesUseCase,
+		@Inject(GetPuzzleCatalogUseCase)
 		private readonly getPuzzleCatalogUseCase: GetPuzzleCatalogUseCase,
+		@Inject(GetPuzzleUseCase)
 		private readonly getPuzzleUseCase: GetPuzzleUseCase,
+		@Inject(ImportPuzzlesUseCase)
 		private readonly importPuzzlesUseCase: ImportPuzzlesUseCase,
 	) {}
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 
 import { CalibrationRoundOutcome } from '../definition/calibration-round-outcome.enum';
 import { TrainingPolicy } from '../definition/training-policy';
@@ -21,12 +21,19 @@ import { Training } from '../training.entity';
 @Injectable()
 export class GetTrainingProgressUseCase {
 	constructor(
+		@Inject(TrainingCycleRepository)
 		private readonly trainingCycleRepository: TrainingCycleRepository,
+		@Inject(TrainingCycleItemRepository)
 		private readonly trainingCycleItemRepository: TrainingCycleItemRepository,
+		@Inject(TrainingPuzzleRepository)
 		private readonly trainingPuzzleRepository: TrainingPuzzleRepository,
+		@Inject(TrainingGoalRepository)
 		private readonly trainingGoalRepository: TrainingGoalRepository,
+		@Inject(TrainingCalibrationRoundRepository)
 		private readonly calibrationRoundRepository: TrainingCalibrationRoundRepository,
+		@Inject(TrainingCalibrationPuzzleRepository)
 		private readonly calibrationPuzzleRepository: TrainingCalibrationPuzzleRepository,
+		@Inject(PuzzleAttemptRepository)
 		private readonly puzzleAttemptRepository: PuzzleAttemptRepository,
 	) {}
 
