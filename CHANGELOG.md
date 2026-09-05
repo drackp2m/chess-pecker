@@ -1,3 +1,26 @@
+# v1.30.0 (2026-09-05)
+
+## What's Changed
+
+### ✨ Features
+
+- add ICU support to the VSCode i18n extension ([76c2b19](https://github.com/drackp2m/chess-pecker/commit/76c2b1941117a290062d7c2ef86123234c08abaa)) by Marc Jovaní González
+
+### 🎨 Styles
+
+- add static puzzle previews to profile categories ([0a167be](https://github.com/drackp2m/chess-pecker/commit/0a167bead4f327d78ae7826f21da5ac694db8ef4)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- make API dependency injection explicit ([3a55d7e](https://github.com/drackp2m/chess-pecker/commit/3a55d7e6113a1641ec501934cf9546f75c15c3b3)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- keep ICU form groups together in translation batches ([3d5b7c1](https://github.com/drackp2m/chess-pecker/commit/3d5b7c14f255e1125fb984ac72cdbbc8dd4e1b21)) by Marc Jovaní González
+- separate translation memory by form ([6299bb3](https://github.com/drackp2m/chess-pecker/commit/6299bb30d917b8cd4c236c9df647939021858409)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.29.6...v1.30.0
+
 # v1.29.6 (2026-09-03)
 
 ## What's Changed
