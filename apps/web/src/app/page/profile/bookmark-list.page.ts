@@ -62,6 +62,12 @@ export class BookmarkListPage implements OnInit {
 			);
 
 			this.store.setPuzzles(exercises);
+			const selected = this.route.snapshot.paramMap.get('id');
+			const index = exercises.findIndex((puzzle) => puzzle.id === selected);
+
+			if (0 <= index) {
+				this.store.selectPuzzle(index);
+			}
 		} catch {
 			this.loadError.set(true);
 		} finally {

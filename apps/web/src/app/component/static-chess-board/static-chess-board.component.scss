@@ -1,0 +1,38 @@
+:host {
+	display: block;
+	width: 100%;
+}
+
+.board {
+	position: relative;
+
+	overflow: hidden;
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+	grid-template-rows: repeat(8, 1fr);
+
+	aspect-ratio: 1;
+	width: 100%;
+
+	box-shadow: 0 2px 12px rgb(0 0 0 / 25%);
+}
+
+.square {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&.light {
+		background-color: var(--board-square-light);
+	}
+
+	&.dark {
+		background-color: var(--board-square-dark);
+	}
+
+	&.from,
+	&.to {
+		background-image: linear-gradient(var(--board-square-last-move), var(--board-square-last-move));
+	}
+}
