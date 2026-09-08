@@ -98,6 +98,7 @@
 
 					<app-bookmark-button
 						[lichessId]="puzzle.id"
+						[attemptUuid]="attemptUuid()"
 						[isDisabled]="store.isOpen() && !allowBookmarkWhileOpen()"
 					/>
 				</div>

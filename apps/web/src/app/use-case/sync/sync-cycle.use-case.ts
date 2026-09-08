@@ -11,6 +11,7 @@ import {
 	sumPending,
 } from '@app/repository/local-data.repository';
 import { SessionStore } from '@app/store/session.store';
+import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { PuzzleCatalogReplicaUseCase } from '@app/use-case/puzzle-catalog-replica.use-case';
 import { RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
 import { ShareMirrorUseCase } from '@app/use-case/share-mirror.use-case';
@@ -67,6 +68,7 @@ export class SyncCycleUseCase {
 	private readonly catalog = inject(PuzzleCatalogReplicaUseCase);
 	private readonly repair = inject(RepairCycleUseCase);
 	private readonly shares = inject(ShareMirrorUseCase);
+	private readonly bookmarks = inject(BookmarkMirrorUseCase);
 	private readonly localData = inject(LocalDataRepository);
 
 	async execute(report: SyncReport): Promise<SyncPhase> {
@@ -89,6 +91,7 @@ export class SyncCycleUseCase {
 			report({ phase: 'pushing' });
 
 			const pushed = await this.pusher.execute();
+			await this.pushBookmarks();
 
 			report({ uploaded: pushed.confirmed, rejected: pushed.rejected, phase: 'ready' });
 			await this.countPending(report);
@@ -135,6 +138,7 @@ export class SyncCycleUseCase {
 		report({ phase: 'pulling' });
 
 		const pulled = await this.puller.execute(status);
+		await this.pullBookmarks();
 
 		report({ downloaded: pulled.rows, ...(pulled.interrupted ? {} : { behind: [] }) });
 
@@ -167,6 +171,22 @@ export class SyncCycleUseCase {
 		}
 	}
 
+	private async pullBookmarks(): Promise<void> {
+		try {
+			await this.bookmarks.pull();
+		} catch (error) {
+			console.error('Could not mirror the bookmarks', error);
+		}
+	}
+
+	private async pushBookmarks(): Promise<void> {
+		try {
+			await this.bookmarks.push();
+		} catch (error) {
+			console.error('Could not upload the bookmarks', error);
+		}
+	}
+
 	/**
 	 * Nothing to pull is nothing to wait for: boot opens the door on this alone, since the
 	 * rest of the pass changes nothing that is about to be painted.
@@ -190,6 +210,7 @@ export class SyncCycleUseCase {
 		report({ phase: 'pushing' });
 
 		const pushed = await this.pusher.execute();
+		await this.pushBookmarks();
 
 		report({ uploaded: pushed.confirmed, rejected: pushed.rejected });
 		await this.countPending(report);

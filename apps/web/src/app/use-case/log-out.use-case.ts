@@ -6,6 +6,7 @@ import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { ModalStore } from '@app/store/modal.store';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
+import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
 
 /**
@@ -22,6 +23,7 @@ export class LogOutUseCase {
 
 	private readonly syncStore = inject(SyncStore);
 	private readonly discardLocalDataUseCase = inject(DiscardLocalDataUseCase);
+	private readonly bookmarks = inject(BookmarkMirrorUseCase);
 
 	/** `false` when it never closed: the user cancelled, or the API could not. */
 	async execute(): Promise<boolean> {
@@ -59,7 +61,7 @@ export class LogOutUseCase {
 		try {
 			const { pending, rejected } = await this.localDataRepository.countUnsavedSync();
 
-			return 0 < pending + rejected;
+			return 0 < pending + rejected || (await this.bookmarks.hasPending());
 		} catch (error) {
 			console.error('Could not count what this device has not saved', error);
 

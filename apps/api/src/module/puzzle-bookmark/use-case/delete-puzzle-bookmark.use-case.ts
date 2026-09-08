@@ -1,3 +1,4 @@
+import type { DeletePuzzleBookmarkRequestParsed } from '@chesspecker/api-definitions';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
@@ -14,9 +15,19 @@ export class DeletePuzzleBookmarkUseCase {
 	) {}
 
 	/** Unfiling an exercise that was never filed is not an error: it ends up unfiled either way. */
-	async execute(user: User, lichessId: string): Promise<void> {
+	async execute(
+		user: User,
+		lichessId: string,
+		request: DeletePuzzleBookmarkRequestParsed,
+	): Promise<void> {
 		const puzzle = await this.puzzleRepository.getOne({ lichessId });
 
-		await this.puzzleBookmarkRepository.deleteMany({ user: user.uuid, puzzle: puzzle.uuid });
+		await this.puzzleBookmarkRepository.deleteByPuzzle(
+			user.uuid,
+			puzzle.uuid,
+			request.attemptUuid,
+			request.updatedAt,
+			request.eventUuid,
+		);
 	}
 }

@@ -66,6 +66,10 @@ export class TrainingSolveSession {
 		});
 	}
 
+	attemptUuid(): string | undefined {
+		return this.draft?.uuid;
+	}
+
 	/**
 	 * The board outlives its page, so an exercise comes back cursor and line intact — but not
 	 * mid-beat: a rewind left standing would be run again as if just asked for.

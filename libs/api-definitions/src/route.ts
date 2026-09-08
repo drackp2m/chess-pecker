@@ -20,7 +20,11 @@ import type {
 	PuzzleCatalogPage,
 	SearchPuzzleRequest,
 } from './puzzle';
-import type { PuzzleBookmark, UpsertPuzzleBookmarkRequest } from './puzzle-bookmark';
+import type {
+	PuzzleBookmark,
+	PuzzleBookmarkHistoryEntry,
+	UpsertPuzzleBookmarkRequest,
+} from './puzzle-bookmark';
 import type {
 	CreatePuzzleShareRequest,
 	GetSentPuzzleSharesRequest,
@@ -128,6 +132,7 @@ export interface PuzzlePostRoutes {
 
 export interface PuzzleBookmarkGetRoutes {
 	'': { response: readonly PuzzleBookmark[] };
+	'/history': { response: readonly PuzzleBookmarkHistoryEntry[] };
 }
 
 export interface PuzzleBookmarkPutRoutes {
@@ -139,7 +144,11 @@ export interface PuzzleBookmarkPutRoutes {
 }
 
 export interface PuzzleBookmarkDeleteRoutes {
-	'/:lichessId': { path: { lichessId: string }; response: undefined };
+	'/:lichessId': {
+		path: { lichessId: string };
+		query: { eventUuid?: string; attemptUuid?: string; updatedAt?: string };
+		response: undefined;
+	};
 }
 
 export interface PuzzleShareGetRoutes {

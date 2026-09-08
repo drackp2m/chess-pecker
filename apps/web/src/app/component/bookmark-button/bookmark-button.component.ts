@@ -29,6 +29,7 @@ export class BookmarkButtonComponent {
 	protected readonly I18n = I18n;
 
 	readonly lichessId = input.required<string>();
+	readonly attemptUuid = input<string>();
 	readonly isDisabled = input(false);
 
 	private readonly store = inject(BookmarkStore);
@@ -58,12 +59,12 @@ export class BookmarkButtonComponent {
 		}
 
 		if (this.isFiled()) {
-			await this.store.unfile(this.lichessId());
+			await this.store.unfile(this.lichessId(), this.attemptUuid());
 
 			return;
 		}
 
-		await this.store.file(this.lichessId(), DEFAULT_PUZZLE_BOOKMARK_TYPE);
+		await this.store.file(this.lichessId(), DEFAULT_PUZZLE_BOOKMARK_TYPE, this.attemptUuid());
 	}
 
 	async onHold(): Promise<void> {
@@ -94,11 +95,11 @@ export class BookmarkButtonComponent {
 		}
 
 		if (null === type) {
-			await this.store.unfile(this.lichessId());
+			await this.store.unfile(this.lichessId(), this.attemptUuid());
 
 			return;
 		}
 
-		await this.store.file(this.lichessId(), type);
+		await this.store.file(this.lichessId(), type, this.attemptUuid());
 	}
 }

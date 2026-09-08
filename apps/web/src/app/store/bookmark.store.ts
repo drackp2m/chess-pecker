@@ -74,9 +74,14 @@ export class BookmarkStore
 		return this.byPuzzle().get(lichessId)?.type;
 	}
 
-	async file(lichessId: string, type: PuzzleBookmarkType): Promise<void> {
+	async file(lichessId: string, type: PuzzleBookmarkType, attemptUuid?: string): Promise<void> {
 		try {
-			const saved = await this.mirror.file(lichessId, this.byPuzzle().get(lichessId), type);
+			const saved = await this.mirror.file(
+				lichessId,
+				this.byPuzzle().get(lichessId),
+				type,
+				attemptUuid,
+			);
 
 			patchState(this, setEntity(saved, bookmarkConfig), { error: null });
 		} catch (error: unknown) {
@@ -84,7 +89,7 @@ export class BookmarkStore
 		}
 	}
 
-	async unfile(lichessId: string): Promise<void> {
+	async unfile(lichessId: string, attemptUuid?: string): Promise<void> {
 		const current = this.byPuzzle().get(lichessId);
 
 		if (undefined === current) {
@@ -92,7 +97,7 @@ export class BookmarkStore
 		}
 
 		try {
-			await this.mirror.unfile(current);
+			await this.mirror.unfile(current, attemptUuid);
 
 			patchState(this, removeEntity(lichessId, bookmarkConfig), { error: null });
 		} catch (error: unknown) {

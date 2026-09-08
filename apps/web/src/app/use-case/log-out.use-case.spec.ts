@@ -6,6 +6,7 @@ import { LocalDataRepository, UnsavedCount } from '@app/repository/local-data.re
 import { ModalStore } from '@app/store/modal.store';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
+import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
 import { LogOutUseCase } from '@app/use-case/log-out.use-case';
 
@@ -44,6 +45,9 @@ function configure(options: Options = {}) {
 			return Promise.resolve();
 		}),
 	};
+	const bookmarks = {
+		hasPending: vi.fn(() => Promise.resolve(false)),
+	};
 	const discard = {
 		execute: vi.fn(() => {
 			order.push('discard');
@@ -58,6 +62,7 @@ function configure(options: Options = {}) {
 			{ provide: ModalStore, useValue: modalStore },
 			{ provide: SessionStore, useValue: sessionStore },
 			{ provide: SyncStore, useValue: syncStore },
+			{ provide: BookmarkMirrorUseCase, useValue: bookmarks },
 			{ provide: DiscardLocalDataUseCase, useValue: discard },
 		],
 	});
