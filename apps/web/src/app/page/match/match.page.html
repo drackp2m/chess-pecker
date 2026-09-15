@@ -20,6 +20,25 @@
 
 		<aside class="panel flex-col gap-4">
 			<div class="flex-col gap-2">
+				<h5>{{ I18n.match.OPPONENT | i18n }}</h5>
+
+				<div class="flex-col gap-4">
+					<select appThemed [label]="I18n.match.OPPONENT" (change)="selectOpponent($event)">
+						<option value="legacy">{{ I18n.match.LEGACY_ENGINE | i18n }}</option>
+						<option value="stockfish">Stockfish 18 Lite</option>
+					</select>
+
+					@if ('stockfish' === store.opponentModel()) {
+						<select appThemed [label]="I18n.match.ELO" (change)="selectElo($event)">
+							@for (elo of stockfishEloLevels; track elo) {
+								<option [value]="elo" [selected]="elo === store.stockfishElo()">{{ elo }}</option>
+							}
+						</select>
+					}
+				</div>
+			</div>
+
+			<div class="flex-col gap-2">
 				<h5>{{ I18n.match.SIDE | i18n }}</h5>
 
 				<div class="flex-row gap-2">

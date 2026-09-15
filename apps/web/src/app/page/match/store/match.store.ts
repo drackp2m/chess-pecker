@@ -14,6 +14,8 @@ import {
 import { ANNOUNCE_DELAY, THINK_DELAY, scaleForSpeed } from '@app/definition/move-speed.type';
 import { I18n, i18nRef } from '@app/i18n';
 import { ChessOpponentService } from '@app/page/match/service/chess-opponent.service';
+import { StockfishOpponentService } from '@app/page/match/service/stockfish-opponent.service';
+import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
 import { buildInitialState, rewindToPlayerTurn } from '@app/page/match/store/match-state';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { nextTransition } from '@app/util/chess/board-transition';
@@ -30,9 +32,13 @@ export class MatchStore
 {
 	private readonly opponent = inject(ChessOpponentService);
 
+	private readonly stockfish = inject(StockfishOpponentService);
+
 	private readonly speed = inject(BoardPreferenceService).moveSpeed;
 
 	private readonly scheduled = new ScheduledAction();
+
+	private opponentRequest = 0;
 
 	readonly legalMoves = computed(() => ChessMoveGenerator.legalMoves(this.position()));
 
@@ -73,7 +79,23 @@ export class MatchStore
 
 	startMatch(playerColor: PieceColor): void {
 		this.scheduled.cancel();
-		patchState(this, buildInitialState(playerColor));
+		patchState(this, {
+			...buildInitialState(playerColor),
+			opponentModel: this.opponentModel(),
+			stockfishElo: this.stockfishElo(),
+		});
+		this.scheduleOpponentMove();
+	}
+
+	setOpponentModel(opponentModel: 'legacy' | 'stockfish'): void {
+		this.scheduled.cancel();
+		patchState(this, { opponentModel });
+		this.scheduleOpponentMove();
+	}
+
+	setStockfishElo(stockfishElo: StockfishElo): void {
+		this.scheduled.cancel();
+		patchState(this, { stockfishElo });
 		this.scheduleOpponentMove();
 	}
 
@@ -90,6 +112,8 @@ export class MatchStore
 		this.scheduled.cancel();
 		patchState(this, {
 			...buildInitialState(position.turn),
+			opponentModel: this.opponentModel(),
+			stockfishElo: this.stockfishElo(),
 			position,
 			status: ChessMoveGenerator.status(position, []),
 		});
@@ -231,15 +255,18 @@ export class MatchStore
 	/** Hands the turn to the machine, which answers in notation after a short pause. */
 	private scheduleOpponentMove(): void {
 		this.scheduled.cancel();
+		const request = ++this.opponentRequest;
 
 		if ('playing' !== this.status() || this.position().turn === this.playerColor()) {
+			patchState(this, { isOpponentThinking: false });
+
 			return;
 		}
 
 		patchState(this, { isOpponentThinking: true });
 		this.scheduled.run(
 			() => {
-				this.announceOpponentMove();
+				this.announceOpponentMove(request);
 			},
 			scaleForSpeed(THINK_DELAY, this.speed()),
 		);
@@ -249,9 +276,39 @@ export class MatchStore
 	 * Reveals the machine's choice in two beats: the piece lights up on its own
 	 * square, and only then does the move actually get played.
 	 */
-	private announceOpponentMove(): void {
+	private announceOpponentMove(request: number): void {
 		const position = this.position();
-		const notation = this.opponent.chooseNotation(position);
+		const notation = this.chooseOpponentNotation(position);
+
+		if (notation instanceof Promise) {
+			void notation
+				.then((move) => {
+					this.finishOpponentMove(position, request, move);
+				})
+				.catch(() => {
+					if (request === this.opponentRequest) {
+						patchState(this, { isOpponentThinking: false });
+					}
+				});
+
+			return;
+		}
+
+		this.finishOpponentMove(position, request, notation);
+	}
+
+	private finishOpponentMove(
+		position: ChessPosition,
+		request: number,
+		notation: string | undefined,
+	): void {
+		if (
+			request !== this.opponentRequest ||
+			position !== this.position() ||
+			'playing' !== this.status()
+		) {
+			return;
+		}
 
 		patchState(this, {
 			isOpponentThinking: false,
@@ -269,5 +326,13 @@ export class MatchStore
 			},
 			scaleForSpeed(ANNOUNCE_DELAY, this.speed()),
 		);
+	}
+
+	private chooseOpponentNotation(
+		position: ChessPosition,
+	): string | undefined | Promise<string | undefined> {
+		return 'stockfish' === this.opponentModel()
+			? this.stockfish.chooseNotation(position, this.stockfishElo())
+			: this.opponent.chooseNotation(position);
 	}
 }

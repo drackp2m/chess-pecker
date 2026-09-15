@@ -28,6 +28,18 @@ El motor está calculando su jugada. «La máquina» es el rival de silicio: se 
 
 El bando con el que se juega: blancas o negras. `SIDE` es la etiqueta del control y `SIDE_HINT` avisa de que cambiar de bando empieza una partida nueva, o sea que se pierde la que hay.
 
+## OPPONENT
+
+La etiqueta del selector del rival de la partida.
+
+## LEGACY_ENGINE
+
+El nombre visible del rival original, conservado como alternativa al motor Stockfish.
+
+## ELO
+
+La etiqueta de la fuerza configurada para Stockfish. Se mantiene como «ELO».
+
 ## UNDO_MOVE
 
 Deshacer la última jugada de la partida. No es reiniciar ni empezar de nuevo.

@@ -8,6 +8,7 @@ import {
 	Square,
 } from '@app/definition/chess.type';
 import type { TranslationRef } from '@app/definition/i18n.type';
+import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
 import { ChessFen } from '@app/util/chess/chess-fen';
 
 export interface PendingPromotion {
@@ -21,6 +22,8 @@ export interface MatchStoreProps {
 	positionHistory: ChessPosition[];
 	history: ChessMoveRecord[];
 	playerColor: PieceColor;
+	opponentModel: 'legacy' | 'stockfish';
+	stockfishElo: StockfishElo;
 	orientation: PieceColor;
 	selected: Square | undefined;
 	pendingPromotion: PendingPromotion | undefined;
@@ -45,6 +48,8 @@ export function buildInitialState(playerColor: PieceColor = 'white'): MatchStore
 		positionHistory: [],
 		history: [],
 		playerColor,
+		opponentModel: 'legacy',
+		stockfishElo: 2300,
 		orientation: playerColor,
 		selected: undefined,
 		pendingPromotion: undefined,

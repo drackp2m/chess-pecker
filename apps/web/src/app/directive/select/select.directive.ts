@@ -93,7 +93,9 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 			this.onNativeValueChange();
 		});
 		this.nativeAdapter.observeOptionChanges(() => {
-			this.syncFromNativeSelect();
+			queueMicrotask(() => {
+				this.syncFromNativeSelect();
+			});
 		});
 		this.createShell();
 	}
