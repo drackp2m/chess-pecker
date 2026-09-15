@@ -21,7 +21,6 @@
 			position: relative;
 			padding: field.$vertical-padding field.$horizontal-padding;
 			padding-right: calc(#{field.$horizontal-padding} + 24px);
-			line-height: calc(1lh + var(--spacing-1));
 		}
 
 		.search-input {

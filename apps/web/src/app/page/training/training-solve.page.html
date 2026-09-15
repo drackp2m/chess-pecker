@@ -31,6 +31,7 @@
 		<app-puzzle-solver
 			[previousLabel]="I18n.training.PREVIOUS_EXERCISE"
 			[nextLabel]="nextLabel()"
+			[attemptUuid]="session.attemptUuid()"
 			[isPreviousDisabled]="!review.hasPrevious()"
 			[isNextDisabled]="isNextDisabled()"
 			(previous)="previous()"

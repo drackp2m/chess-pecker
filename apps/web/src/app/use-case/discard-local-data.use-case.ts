@@ -12,6 +12,7 @@ import { ProfileStore } from '@app/store/profile.store';
 import { ShareStore } from '@app/store/share.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
+import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 
 @Injectable({
@@ -20,6 +21,7 @@ import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 export class DiscardLocalDataUseCase {
 	private readonly localDataRepository = inject(LocalDataRepository);
 	private readonly localOwnerUseCase = inject(LocalOwnerUseCase);
+	private readonly bookmarks = inject(BookmarkMirrorUseCase);
 	private readonly modalStore = inject(ModalStore);
 
 	/**
@@ -61,7 +63,8 @@ export class DiscardLocalDataUseCase {
 
 			return (
 				0 < attempt.pending + attempt.rejected ||
-				0 < (await this.localDataRepository.countPuzzleSets())
+				0 < (await this.localDataRepository.countPuzzleSets()) ||
+				(await this.bookmarks.hasPending())
 			);
 		} catch (error) {
 			console.error('Could not count what this device would lose', error);

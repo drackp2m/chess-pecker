@@ -18,6 +18,7 @@ import { ProfileStore } from '@app/store/profile.store';
 import { ShareStore } from '@app/store/share.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
+import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 
@@ -58,6 +59,9 @@ function configure(options: Options = {}) {
 			return Promise.resolve();
 		}),
 	};
+	const bookmarks = {
+		hasPending: vi.fn(() => Promise.resolve(false)),
+	};
 	const modalStore = {
 		open: vi.fn(() => Promise.resolve({ instance: { onClose$: of(options.answer ?? false) } })),
 	};
@@ -80,6 +84,7 @@ function configure(options: Options = {}) {
 		providers: [
 			{ provide: LocalDataRepository, useValue: localData },
 			{ provide: LocalOwnerUseCase, useValue: localOwner },
+			{ provide: BookmarkMirrorUseCase, useValue: bookmarks },
 			{ provide: ModalStore, useValue: modalStore },
 			{ provide: ActivityStore, useValue: stores.activity },
 			{ provide: BookmarkStore, useValue: stores.bookmark },

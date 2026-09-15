@@ -34,6 +34,12 @@
 								"input": "src/app/i18n",
 								"output": "i18n",
 								"ignore": ["context/**", "state/**"]
+							},
+							{
+								"glob": "stockfish-18-lite-single*",
+								"input": "node_modules/stockfish/bin",
+								"output": "stockfish",
+								"followSymlinks": true
 							}
 						],
 						"styles": ["src/styles.scss"],

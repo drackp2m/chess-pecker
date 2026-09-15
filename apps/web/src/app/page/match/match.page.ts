@@ -6,14 +6,24 @@ import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { PieceColor } from '@app/definition/chess.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
+import { SelectDirective } from '@app/directive/select/select.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
+import { STOCKFISH_ELO_LEVELS } from '@app/page/match/service/stockfish-opponent.service';
+import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
 import { MatchStore } from '@app/page/match/store/match.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 
 @Component({
 	templateUrl: './match.page.html',
 	styleUrl: './match.page.scss',
-	imports: [ChessBoardComponent, MoveHistoryComponent, ButtonDirective, InputDirective, I18nPipe],
+	imports: [
+		ChessBoardComponent,
+		MoveHistoryComponent,
+		ButtonDirective,
+		InputDirective,
+		SelectDirective,
+		I18nPipe,
+	],
 	providers: [
 		provideI18nScope('match'),
 		MatchStore,
@@ -24,6 +34,7 @@ export class MatchPage {
 	protected readonly I18n = I18n;
 
 	readonly store = inject(MatchStore);
+	readonly stockfishEloLevels = STOCKFISH_ELO_LEVELS;
 
 	readonly fenDraft = signal('');
 
@@ -62,5 +73,23 @@ export class MatchPage {
 
 	updateFenDraft(event: Event): void {
 		this.fenDraft.set((event.target as HTMLInputElement).value);
+	}
+
+	selectOpponent(event: Event): void {
+		if (this.store.isOpponentThinking()) {
+			return;
+		}
+
+		this.store.setOpponentModel(
+			(event.target as HTMLSelectElement).value as 'legacy' | 'stockfish',
+		);
+	}
+
+	selectElo(event: Event): void {
+		if (this.store.isOpponentThinking()) {
+			return;
+		}
+
+		this.store.setStockfishElo(Number((event.target as HTMLSelectElement).value) as StockfishElo);
 	}
 }

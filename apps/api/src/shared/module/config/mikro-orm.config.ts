@@ -13,6 +13,9 @@ export default (): MikroOrmModuleSyncOptions => ({
 	allowGlobalContext: false,
 	baseDir: process.cwd(),
 	forceUtcTimezone: true,
+	schemaGenerator: {
+		defaultUpdateRule: 'cascade',
+	},
 	extensions: [Migrator],
 	entities: ['dist/module/**/*.entity.js'],
 	...(isProduction ? {} : { entitiesTs: ['src/module/**/*.entity.ts'] }),

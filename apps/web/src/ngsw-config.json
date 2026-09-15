@@ -29,6 +29,7 @@
 					"/font/**",
 					"/svg/**",
 					"/sound/**",
+					"/stockfish/**",
 					"/i18n/**",
 					"/icon-*.png",
 					"/apple-touch-icon.png"

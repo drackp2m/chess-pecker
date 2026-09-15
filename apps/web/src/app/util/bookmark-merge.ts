@@ -1,6 +1,9 @@
 import type { PuzzleBookmark } from '@chesspecker/api-definitions';
 
-import { BookmarkRow } from '@app/repository/definition/bookmark-schema.interface';
+import {
+	BookmarkHistoryRow,
+	BookmarkRow,
+} from '@app/repository/definition/bookmark-schema.interface';
 
 /** What the merge decided, in the three moves that carry it out. */
 export interface BookmarkMerge {
@@ -14,7 +17,11 @@ export interface BookmarkMerge {
 
 /** A row is behind whenever it has been written since the server last acknowledged it. */
 export function isPending(row: BookmarkRow): boolean {
-	return undefined === row.syncedAt || row.syncedAt.getTime() < row.updatedAt.getTime();
+	return (
+		undefined === row.syncedAt ||
+		row.syncedAt.getTime() < row.updatedAt.getTime() ||
+		(row.history ?? []).some((event) => undefined === event.syncedAt)
+	);
 }
 
 export function fromRemote(bookmark: PuzzleBookmark): BookmarkRow {
@@ -23,6 +30,7 @@ export function fromRemote(bookmark: PuzzleBookmark): BookmarkRow {
 	return {
 		lichessId: bookmark.lichessId,
 		type: bookmark.type,
+		...(undefined === bookmark.attemptUuid ? {} : { attemptUuid: bookmark.attemptUuid }),
 		createdAt: new Date(bookmark.createdAt),
 		updatedAt,
 		syncedAt: updatedAt,
@@ -73,7 +81,8 @@ function settle(row: BookmarkRow, mirrored: BookmarkRow | undefined, moves: Move
 	}
 
 	if (mirrored.updatedAt.getTime() > row.updatedAt.getTime()) {
-		moves.save.push(mirrored);
+		const history = mergeHistory(row, mirrored);
+		moves.save.push(0 === history.length ? mirrored : Object.assign({}, mirrored, { history }));
 
 		return;
 	}
@@ -84,4 +93,16 @@ function settle(row: BookmarkRow, mirrored: BookmarkRow | undefined, moves: Move
 		// Unfiled here and acknowledged, yet the server still files it: it came back.
 		moves.save.push(mirrored);
 	}
+}
+
+function mergeHistory(left: BookmarkRow, right: BookmarkRow): readonly BookmarkHistoryRow[] {
+	const entries = new Map((left.history ?? []).map((event) => [event.uuid, event]));
+
+	for (const event of right.history ?? []) {
+		entries.set(event.uuid, event);
+	}
+
+	return [...entries.values()].sort(
+		(first, second) => first.createdAt.getTime() - second.createdAt.getTime(),
+	);
 }

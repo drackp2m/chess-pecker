@@ -16,6 +16,7 @@ export function presentBookmark(
 		uuid: bookmark.uuid,
 		lichessId,
 		type: bookmark.type,
+		...(undefined === bookmark.attemptUuid ? {} : { attemptUuid: bookmark.attemptUuid }),
 		createdAt: toIsoDate(bookmark.createdAt),
 		updatedAt: toIsoDate(bookmark.updatedAt),
 	};

@@ -20,7 +20,7 @@ function workspaceRoot(): string {
 	return current;
 }
 
-config({ path: join(workspaceRoot(), '.env') });
+config({ path: join(workspaceRoot(), '.env'), quiet: true });
 
 const environmentSchema = z.object({
 	NODE_ENV: z.enum(['production', 'development', 'test']),

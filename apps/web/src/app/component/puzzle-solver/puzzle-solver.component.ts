@@ -37,6 +37,7 @@ export class PuzzleSolverComponent {
 	readonly isNextDisabled = input(false);
 	readonly allowBookmarkWhileOpen = input(false);
 	readonly allowShareWhileOpen = input(false);
+	readonly attemptUuid = input<string>();
 
 	readonly previous = output();
 	readonly next = output();

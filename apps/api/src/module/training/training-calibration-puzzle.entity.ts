@@ -7,8 +7,14 @@ import { TrainingCalibrationPuzzleRepository } from './training-calibration-puzz
 import { TrainingCalibrationRound } from './training-calibration-round.entity';
 
 @Entity({ repository: () => TrainingCalibrationPuzzleRepository })
-@Unique({ properties: ['calibrationRound', 'position'] })
-@Unique({ properties: ['calibrationRound', 'puzzle'] })
+@Unique({
+	name: 'training_calibration_puzzle_calibration_round_uui_e9549_unique',
+	properties: ['calibrationRound', 'position'],
+})
+@Unique({
+	name: 'training_calibration_puzzle_calibration_round_uui_ec26c_unique',
+	properties: ['calibrationRound', 'puzzle'],
+})
 export class TrainingCalibrationPuzzle extends SyncableBaseEntity<TrainingCalibrationPuzzle> {
 	@ManyToOne(() => TrainingCalibrationRound, { deleteRule: 'cascade' })
 	calibrationRound!: TrainingCalibrationRound;

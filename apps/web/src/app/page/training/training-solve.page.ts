@@ -31,6 +31,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	readonly run = inject(TrainingRunStore);
 	readonly board = inject(PuzzleStore);
 	readonly review = inject(TrainingReviewStore);
+	readonly session = inject(TrainingSolveSession);
 
 	readonly headline = computed(() => this.describe());
 
@@ -80,7 +81,6 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	});
 
 	private readonly router = inject(Router);
-	private readonly session = inject(TrainingSolveSession);
 
 	constructor() {
 		// The calibration is over the moment a band is accepted, and what it was for is the

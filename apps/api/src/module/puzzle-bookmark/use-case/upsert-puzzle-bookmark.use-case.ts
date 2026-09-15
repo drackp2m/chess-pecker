@@ -40,6 +40,9 @@ export class UpsertPuzzleBookmarkUseCase {
 				type: upsertRequest.type as PuzzleBookmarkType,
 				updatedAt,
 			}),
+			upsertRequest.eventUuid,
+			upsertRequest.attemptUuid,
+			updatedAt,
 		);
 
 		return presentBookmark(stored, lichessId);
