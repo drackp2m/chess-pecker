@@ -1,3 +1,18 @@
+# v1.31.0 (2026-09-15)
+
+## What's Changed
+
+### ✨ Features
+
+- implements Stockfish ([68acbeb](https://github.com/drackp2m/chess-pecker/commit/68acbeb0f9802bb99a8cfcdfe60de25be01fd78d)) by Marc Jovaní González
+- sync puzzle bookmark history across devices ([f219745](https://github.com/drackp2m/chess-pecker/commit/f21974588fa8de267e6850b11b292f6aee4b8557)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- orient the static boards according to the exercise ([abf9ecd](https://github.com/drackp2m/chess-pecker/commit/abf9ecd5fd38d3af265152ed20ce19b18787611c)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.30.0...v1.31.0
+
 # v1.30.0 (2026-09-05)
 
 ## What's Changed
