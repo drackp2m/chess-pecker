@@ -1,3 +1,14 @@
+# v1.31.1 (2026-09-28)
+
+## What's Changed
+
+### 🐛 Bug Fixes
+
+- avoid iOS status bar blur with sticky header and black style ([77a50fe](https://github.com/drackp2m/chess-pecker/commit/77a50fe8041e282b5c10a2ffc38c8719e1b4791b)) by Marc Jovaní González
+- serve PWA preview from root with local API ([ddc021d](https://github.com/drackp2m/chess-pecker/commit/ddc021dd86f63352e7e307782d06d77e8a160546)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.31.0...v1.31.1
+
 # v1.31.0 (2026-09-15)
 
 ## What's Changed
