@@ -3,8 +3,8 @@
 REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 CERT="$REPO_ROOT/.cert/cert.pem"
 KEY="$REPO_ROOT/.cert/key.pem"
-BASE_HREF="/chesspecker/"
-SERVE_DIR="dist/pwa"
+BASE_HREF="/"
+SERVE_DIR="dist/chesspecker/browser"
 APP_PORT=4201
 PROXY_PORT=4200
 
@@ -21,12 +21,8 @@ if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
   exit 1
 fi
 
-echo "🔗 Linking $SERVE_DIR/chesspecker → dist/chesspecker/browser..."
-mkdir -p "$SERVE_DIR"
-ln -sfn "../chesspecker/browser" "$SERVE_DIR/chesspecker"
-
 echo "🏗️ Building PWA in watch mode (base-href $BASE_HREF)..."
-ng build chesspecker --watch --base-href "$BASE_HREF" &
+ng build chesspecker --configuration preview --watch --base-href "$BASE_HREF" &
 BUILD_PID=$!
 
 echo "📂 Serving $SERVE_DIR over plain HTTP on port $APP_PORT..."
@@ -37,6 +33,6 @@ echo "🔐 Terminating TLS with local-ssl-proxy on port $PROXY_PORT..."
 local-ssl-proxy --source "$PROXY_PORT" --target "$APP_PORT" --hostname 0.0.0.0 --cert "$CERT" --key "$KEY" &
 PROXY_PID=$!
 
-echo "🚀 Ready → https://MarcBook-Air.local:$PROXY_PORT$BASE_HREF"
+echo "🚀 Ready → https://MarcBook-Air.local:$PROXY_PORT/"
 
 wait
