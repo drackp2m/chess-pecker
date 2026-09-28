@@ -21,6 +21,7 @@ export class LoginUseCase {
 		private readonly createAccessToken: CreateJwtAccessTokenUseCase,
 		@Inject(CreateJwtRefreshTokenUseCase)
 		private readonly createRefreshToken: CreateJwtRefreshTokenUseCase,
+		@Inject(SetJwtTokenUseCase)
 		private readonly setJwtToken: SetJwtTokenUseCase,
 	) {}
 
