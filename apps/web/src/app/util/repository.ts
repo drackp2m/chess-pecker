@@ -28,6 +28,7 @@ import { createBookmarkStoreMigration } from '@app/repository/migration/v21_crea
 import { createShareStoreMigration } from '@app/repository/migration/v22_create-share-store.migration';
 import { indexAttemptUpdatedAtMigration } from '@app/repository/migration/v23_index-attempt-updated-at.migration';
 import { dropActivityStoreMigration } from '@app/repository/migration/v24_drop-activity-store.migration';
+import { createMatchStoreMigration } from '@app/repository/migration/v25_create-match-store.migration';
 import { rekeySettingStoreMigration } from '@app/repository/migration/v2_rekey-setting-store.migration';
 import { createTrainingStoresMigration } from '@app/repository/migration/v3_create-training-stores.migration';
 import { rekeyAttemptStoreMigration } from '@app/repository/migration/v4_rekey-attempt-store.migration';
@@ -73,6 +74,7 @@ export abstract class Repository {
 		createShareStoreMigration,
 		indexAttemptUpdatedAtMigration,
 		dropActivityStoreMigration,
+		createMatchStoreMigration,
 	];
 
 	static getLatestVersion(): number {

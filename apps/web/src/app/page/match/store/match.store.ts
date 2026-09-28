@@ -1,33 +1,39 @@
-import { DestroyRef, Injectable, computed, inject } from '@angular/core';
+import { DestroyRef, Injectable, inject } from '@angular/core';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import { BoardPresenter } from '@app/definition/board-presenter.interface';
-import { PIECE_LETTER } from '@app/definition/chess.constant';
 import {
 	ChessMove,
-	ChessMoveRecord,
 	ChessPosition,
 	PieceColor,
 	PromotionPieceType,
 	Square,
 } from '@app/definition/chess.type';
+import { MatchOpponentModel, MatchSnapshot } from '@app/definition/match.type';
 import { ANNOUNCE_DELAY, THINK_DELAY, scaleForSpeed } from '@app/definition/move-speed.type';
 import { I18n, i18nRef } from '@app/i18n';
 import { ChessOpponentService } from '@app/page/match/service/chess-opponent.service';
+import { acceptsDraw } from '@app/page/match/service/draw-offer';
 import { StockfishOpponentService } from '@app/page/match/service/stockfish-opponent.service';
 import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
-import { buildInitialState, rewindToPlayerTurn } from '@app/page/match/store/match-state';
+import { withMatchComputed } from '@app/page/match/store/match-computed';
+import {
+	buildInitialState,
+	lineStatus,
+	playOnLine,
+	positionAt,
+	restoredState,
+} from '@app/page/match/store/match-state';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { nextTransition } from '@app/util/chess/board-transition';
 import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
-import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
 import { ChessNotation } from '@app/util/chess/chess-notation';
 import { ScheduledAction } from '@app/util/scheduled-action';
 
 @Injectable()
 export class MatchStore
-	extends signalStore({ protectedState: false }, withState(buildInitialState))
+	extends signalStore({ protectedState: false }, withState(buildInitialState), withMatchComputed())
 	implements BoardPresenter
 {
 	private readonly opponent = inject(ChessOpponentService);
@@ -40,63 +46,36 @@ export class MatchStore
 
 	private opponentRequest = 0;
 
-	readonly legalMoves = computed(() => ChessMoveGenerator.legalMoves(this.position()));
-
-	readonly movesFromSelection = computed(() => {
-		const selected = this.selected();
-
-		return undefined === selected ? [] : this.legalMoves().filter((move) => selected === move.from);
-	});
-
-	readonly lastMove = computed(() => this.history().at(-1));
-
-	readonly isPlayerTurn = computed(
-		() => 'playing' === this.status() && this.position().turn === this.playerColor(),
-	);
-
-	readonly isFinished = computed(() => 'playing' !== this.status() && 'idle' !== this.status());
-
-	readonly checkedSquare = computed(() => ChessMoveGenerator.checkedSquare(this.position()));
-
-	readonly fen = computed(() => ChessFen.serialize(this.position()));
-
-	// BoardPresenter contract. Free play has no refuted move to show, and the board
-	// only waits while the machine thinks.
-	readonly mistake = computed<ChessMove | undefined>(() => undefined);
-	readonly announcedMove = computed(() => this.announced());
-	readonly isBusy = this.isOpponentThinking;
-	readonly isLocked = this.isFinished;
-
 	constructor() {
 		super();
 
 		inject(DestroyRef).onDestroy(() => {
 			this.scheduled.cancel();
 		});
-
-		this.scheduleOpponentMove();
 	}
 
 	startMatch(playerColor: PieceColor): void {
-		this.scheduled.cancel();
-		patchState(this, {
-			...buildInitialState(playerColor),
-			opponentModel: this.opponentModel(),
-			stockfishElo: this.stockfishElo(),
-		});
+		this.reset(playerColor);
+		patchState(this, { status: 'playing' });
 		this.scheduleOpponentMove();
 	}
 
-	setOpponentModel(opponentModel: 'legacy' | 'stockfish'): void {
+	newMatch(): void {
+		this.reset(this.playerColor());
+	}
+
+	restore(snapshot: MatchSnapshot): void {
 		this.scheduled.cancel();
-		patchState(this, { opponentModel });
+		patchState(this, restoredState(snapshot));
 		this.scheduleOpponentMove();
+	}
+
+	setOpponentModel(opponentModel: MatchOpponentModel): void {
+		patchState(this, { opponentModel });
 	}
 
 	setStockfishElo(stockfishElo: StockfishElo): void {
-		this.scheduled.cancel();
 		patchState(this, { stockfishElo });
-		this.scheduleOpponentMove();
 	}
 
 	/** Loads an exercise position; the side to move in the FEN becomes the player. */
@@ -111,18 +90,17 @@ export class MatchStore
 
 		this.scheduled.cancel();
 		patchState(this, {
-			...buildInitialState(position.turn),
+			...buildInitialState(position.turn, position),
 			opponentModel: this.opponentModel(),
 			stockfishElo: this.stockfishElo(),
-			position,
-			status: ChessMoveGenerator.status(position, []),
+			status: lineStatus([position]),
 		});
 
 		return true;
 	}
 
 	selectSquare(square: Square): void {
-		if (!this.isPlayerTurn() || undefined !== this.pendingPromotion()) {
+		if (!this.canMove() || undefined !== this.pendingPromotion()) {
 			return;
 		}
 
@@ -134,10 +112,10 @@ export class MatchStore
 			return;
 		}
 
-		const piece = ChessBoard.pieceAt(this.position(), square);
-		const isOwnPiece = piece?.color === this.playerColor();
+		const position = this.position();
+		const isMovable = ChessBoard.pieceAt(position, square)?.color === position.turn;
 
-		patchState(this, { selected: isOwnPiece && square !== this.selected() ? square : undefined });
+		patchState(this, { selected: isMovable && square !== this.selected() ? square : undefined });
 	}
 
 	/**
@@ -145,7 +123,7 @@ export class MatchStore
 	 * opponent and every scripted exercise reach the board. `false` when it will not play.
 	 */
 	playNotation(notation: string): boolean {
-		const position = this.position();
+		const position = this.livePosition();
 		const move = ChessNotation.parse(position, notation);
 
 		if (undefined === move) {
@@ -154,7 +132,7 @@ export class MatchStore
 			return false;
 		}
 
-		this.commit(position, move);
+		this.commit(this.moves().length, move);
 
 		return true;
 	}
@@ -166,40 +144,78 @@ export class MatchStore
 			return;
 		}
 
+		const move = this.legalMoves().find(
+			(legal) =>
+				pending.from === legal.from && pending.to === legal.to && promotion === legal.promotion,
+		);
+
 		patchState(this, { pendingPromotion: undefined });
-		this.playNotation(`${pending.from}${pending.to}${PIECE_LETTER[promotion].toLowerCase()}`);
+
+		if (undefined !== move) {
+			this.playMove(move);
+		}
 	}
 
 	cancelPromotion(): void {
 		patchState(this, { pendingPromotion: undefined, selected: undefined });
 	}
 
-	/** Steps back to the player's previous turn, undoing the machine's reply too. */
-	undoLastMove(): void {
-		this.scheduled.cancel();
+	resign(): void {
+		if (!this.canResign()) {
+			return;
+		}
 
-		const rewound = rewindToPlayerTurn(
-			{
-				position: this.position(),
-				positionHistory: this.positionHistory(),
-				history: this.history(),
-			},
-			this.playerColor(),
-		);
+		this.scheduled.cancel();
+		this.opponentRequest += 1;
+		patchState(this, { status: 'resigned', isOpponentThinking: false, announced: undefined });
+	}
+
+	offerDraw(): void {
+		if (!this.canOfferDraw()) {
+			return;
+		}
+
+		const isAccepted = acceptsDraw(this.livePosition(), this.opponentColor(), this.moves().length);
+
+		patchState(this, isAccepted ? { status: 'agreed' } : { drawOfferedAt: this.moves().length });
+	}
+
+	toggleExploration(): void {
+		if (!this.isStarted()) {
+			return;
+		}
+
+		const game = this.game();
 
 		patchState(this, {
-			...rewound,
+			exploration: this.isExploring()
+				? undefined
+				: {
+						positions: game.positions.slice(0, game.cursor + 1),
+						moves: game.moves.slice(0, game.cursor),
+						cursor: game.cursor,
+					},
 			selected: undefined,
 			pendingPromotion: undefined,
-			isOpponentThinking: false,
-			announced: undefined,
 			transition: undefined,
-			status: ChessMoveGenerator.status(rewound.position, rewound.positionHistory),
-			notationError: undefined,
 		});
+	}
 
-		// Only reachable when the machine opened the game and nothing else was played.
-		this.scheduleOpponentMove();
+	stepBackward(): void {
+		this.moveCursor(this.line().cursor - 1);
+	}
+
+	stepForward(): void {
+		this.moveCursor(this.line().cursor + 1);
+	}
+
+	rewind(): void {
+		if (!this.canStepBackward()) {
+			return;
+		}
+
+		this.patchCursor(0);
+		patchState(this, { transition: undefined });
 	}
 
 	flipBoard(): void {
@@ -208,6 +224,46 @@ export class MatchStore
 
 	dismissError(): void {
 		patchState(this, { notationError: undefined });
+	}
+
+	private reset(playerColor: PieceColor): void {
+		this.scheduled.cancel();
+		this.opponentRequest += 1;
+		patchState(this, {
+			...buildInitialState(playerColor),
+			opponentModel: this.opponentModel(),
+			stockfishElo: this.stockfishElo(),
+		});
+	}
+
+	private moveCursor(cursor: number): void {
+		const line = this.line();
+
+		if (0 > cursor || line.moves.length < cursor) {
+			return;
+		}
+
+		const isForward = line.cursor < cursor;
+		const played = line.positions[Math.min(cursor, line.cursor)];
+		const stepped = line.moves[Math.min(cursor, line.cursor)];
+
+		this.patchCursor(cursor);
+
+		if (undefined !== played && undefined !== stepped) {
+			patchState(this, {
+				transition: nextTransition(played, stepped, isForward ? 'forward' : 'backward'),
+			});
+		}
+	}
+
+	private patchCursor(cursor: number): void {
+		const exploration = this.exploration();
+
+		patchState(this, {
+			...(undefined === exploration ? { cursor } : { exploration: { ...exploration, cursor } }),
+			selected: undefined,
+			pendingPromotion: undefined,
+		});
 	}
 
 	/** A click on a legal target: ask which piece to promote to, or just play it. */
@@ -224,29 +280,48 @@ export class MatchStore
 			return;
 		}
 
-		this.commit(this.position(), first);
+		this.playMove(first);
 	}
 
-	private commit(position: ChessPosition, move: ChessMove): void {
-		const record: ChessMoveRecord = {
-			...move,
-			san: ChessNotation.describe(position, move),
-			fullmoveNumber: position.fullmoveNumber,
-		};
-		const next = ChessBoard.apply(position, move);
-		// The position just left behind is what makes this one a repetition, so the
-		// verdict is read from the history the move produces, not the one it found.
-		const positionHistory = [...this.positionHistory(), position];
+	private playMove(move: ChessMove): void {
+		const exploration = this.exploration();
+
+		if (undefined === exploration) {
+			this.commit(this.cursor(), move);
+
+			return;
+		}
 
 		patchState(this, {
-			position: next,
-			positionHistory,
-			history: [...this.history(), record],
-			status: ChessMoveGenerator.status(next, positionHistory),
+			exploration: playOnLine(exploration, move),
 			selected: undefined,
 			pendingPromotion: undefined,
+			transition: nextTransition(positionAt(exploration), move, 'played'),
+		});
+	}
+
+	private commit(from: number, move: ChessMove): void {
+		const isFollowing = from === this.cursor();
+		const isShown = isFollowing && !this.isExploring();
+		const played = positionAt({ ...this.game(), cursor: from });
+		const game = playOnLine({ ...this.game(), cursor: from }, move);
+
+		patchState(this, {
+			positions: game.positions,
+			moves: game.moves,
+			cursor: isFollowing ? game.cursor : this.cursor(),
+			// The position just left behind is what makes this one a repetition, so the
+			// verdict is read from the history the move produces, not the one it found.
+			status: lineStatus(game.positions),
 			notationError: undefined,
-			transition: nextTransition(position, move, 'played'),
+			...(from < this.moves().length ? { drawOfferedAt: undefined, announced: undefined } : {}),
+			...(isShown
+				? {
+						selected: undefined,
+						pendingPromotion: undefined,
+						transition: nextTransition(played, move, 'played'),
+					}
+				: {}),
 		});
 
 		this.scheduleOpponentMove();
@@ -257,7 +332,7 @@ export class MatchStore
 		this.scheduled.cancel();
 		const request = ++this.opponentRequest;
 
-		if ('playing' !== this.status() || this.position().turn === this.playerColor()) {
+		if ('playing' !== this.status() || this.livePosition().turn === this.playerColor()) {
 			patchState(this, { isOpponentThinking: false });
 
 			return;
@@ -277,7 +352,7 @@ export class MatchStore
 	 * square, and only then does the move actually get played.
 	 */
 	private announceOpponentMove(request: number): void {
-		const position = this.position();
+		const position = this.livePosition();
 		const notation = this.chooseOpponentNotation(position);
 
 		if (notation instanceof Promise) {
@@ -304,7 +379,7 @@ export class MatchStore
 	): void {
 		if (
 			request !== this.opponentRequest ||
-			position !== this.position() ||
+			position !== this.livePosition() ||
 			'playing' !== this.status()
 		) {
 			return;

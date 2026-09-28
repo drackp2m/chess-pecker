@@ -12,6 +12,7 @@ words:
   - pipefail
   - projectable
   - sonarjs
+  - stockfish
   - titlecase
   - transloco
   - Vitest

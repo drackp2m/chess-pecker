@@ -14,6 +14,7 @@ import {
 import { BookmarkSchema } from '@app/repository/definition/bookmark-schema.interface';
 import { CatalogCursorSchemaV16 } from '@app/repository/definition/catalog-cursor-schema.interface';
 import { CycleSchema } from '@app/repository/definition/cycle-schema.interface';
+import { MatchSchema } from '@app/repository/definition/match-schema.interface';
 import { PuzzleSchema, PuzzleSchemaV10 } from '@app/repository/definition/puzzle-schema.interface';
 import { PuzzleSetSchema } from '@app/repository/definition/puzzle-set-schema.interface';
 import { SettingSchema } from '@app/repository/definition/setting-schema.interface';
@@ -30,6 +31,7 @@ export interface AppSchema
 		AttemptDraftSchema,
 		AttemptSchema,
 		BookmarkSchema,
+		MatchSchema,
 		PuzzleSchema,
 		PuzzleSetSchema,
 		SettingSchema,
