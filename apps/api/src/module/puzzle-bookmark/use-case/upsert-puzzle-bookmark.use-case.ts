@@ -42,7 +42,6 @@ export class UpsertPuzzleBookmarkUseCase {
 			}),
 			upsertRequest.eventUuid,
 			upsertRequest.attemptUuid,
-			updatedAt,
 		);
 
 		return presentBookmark(stored, lichessId);

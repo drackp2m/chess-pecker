@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import type { PuzzleBookmarkType } from '@chesspecker/api-definitions';
+import type { PuzzleBookmark, PuzzleBookmarkType } from '@chesspecker/api-definitions';
 
 import { AttemptRepository } from '@app/repository/attempt.repository';
 import { BookmarkLocalRepository } from '@app/repository/bookmark-local.repository';
@@ -9,7 +9,7 @@ import {
 } from '@app/repository/definition/bookmark-schema.interface';
 import { PuzzleBookmarkRepository } from '@app/repository/puzzle-bookmark.repository';
 import { SessionStore } from '@app/store/session.store';
-import { isPending, mergeBookmarks } from '@app/util/bookmark-merge';
+import { adoptRemote, isPending, markSynced, mergeBookmarks } from '@app/util/bookmark-merge';
 
 /**
  * The two sides of a bookmark: this device, which always answers, and the account, which
@@ -141,51 +141,54 @@ export class BookmarkMirrorUseCase {
 		}
 	}
 
-	private async send(row: BookmarkRow): Promise<BookmarkRow | null> {
-		let synced = row;
+	private async send(row: BookmarkRow): Promise<BookmarkRow> {
 		const history = row.history ?? [];
-
-		if (0 === history.length) {
-			await this.sendCurrent(row);
-		}
+		let synced = row;
+		let stored = 0 === history.length ? await this.sendCurrent(row) : null;
 
 		for (const event of history) {
 			if (undefined !== event.syncedAt) {
 				continue;
 			}
 
-			await this.sendEvent(row.lichessId, event);
-
-			synced = Object.assign({}, synced, {
-				history: (synced.history ?? []).map((candidate) =>
-					candidate.uuid === event.uuid ? { ...candidate, syncedAt: event.createdAt } : candidate,
-				),
-			});
+			stored = await this.sendEvent(row.lichessId, event);
+			synced = markSynced(synced, event);
 			await this.localRepository.save(synced);
 		}
 
-		const sealed = { ...synced, syncedAt: synced.updatedAt };
+		const sealed = adoptRemote({ ...synced, syncedAt: synced.updatedAt }, stored);
 		await this.localRepository.save(sealed);
 
 		return sealed;
 	}
 
-	private sendCurrent(row: BookmarkRow): Promise<void> {
-		return undefined === row.removedAt
-			? this.remoteRepository
-					.upsert(row.lichessId, row.type, row.updatedAt, undefined, row.attemptUuid)
-					.then(() => undefined)
-			: this.remoteRepository.remove(row.lichessId, undefined, row.attemptUuid, row.updatedAt);
+	private async sendCurrent(row: BookmarkRow): Promise<PuzzleBookmark | null> {
+		if (undefined !== row.removedAt) {
+			await this.remoteRepository.remove(row.lichessId, undefined, row.attemptUuid, row.updatedAt);
+
+			return null;
+		}
+
+		return this.remoteRepository.upsert(
+			row.lichessId,
+			row.type,
+			row.updatedAt,
+			undefined,
+			row.attemptUuid,
+		);
 	}
 
-	private async sendEvent(lichessId: string, event: BookmarkHistoryRow): Promise<void> {
+	private async sendEvent(
+		lichessId: string,
+		event: BookmarkHistoryRow,
+	): Promise<PuzzleBookmark | null> {
 		if (null === event.type) {
 			await this.remoteRepository.remove(lichessId, event.uuid, event.attemptUuid, event.createdAt);
 
-			return;
+			return null;
 		}
 
-		await this.remoteRepository.upsert(
+		return this.remoteRepository.upsert(
 			lichessId,
 			event.type,
 			event.createdAt,
