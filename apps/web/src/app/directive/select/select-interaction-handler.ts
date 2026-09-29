@@ -158,7 +158,7 @@ export class SelectInteractionHandler {
 	}
 
 	/**
-	 * Native-style type-ahead, since a readonly input cannot take the text. The keyboard takes
+	 * Native-style type-ahead, since a non-searchable combobox takes no text. The keyboard takes
 	 * the highlight so the scroll's mousemove echo cannot hand it back to the mouse.
 	 */
 	private handleTypeaheadKey(event: KeyboardEvent): void {

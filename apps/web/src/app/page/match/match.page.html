@@ -150,7 +150,12 @@
 						</select>
 
 						@if ('stockfish' === store.opponentModel()) {
-							<select appThemed [label]="I18n.match.ELO" (change)="selectElo($event)">
+							<select
+								appThemed
+								[label]="I18n.match.ELO"
+								(change)="selectElo($event)"
+								[searchable]="true"
+							>
 								@for (elo of stockfishEloLevels; track elo) {
 									<option [value]="elo" [selected]="elo === store.stockfishElo()">{{ elo }}</option>
 								}

@@ -8,6 +8,7 @@ import { APP_ROUTES } from '@app/app.routes';
 import { provideI18n } from '@app/i18n';
 import { authInterceptor } from '@app/interceptor/auth.interceptor';
 import { SettingRepository } from '@app/repository/setting.repository';
+import { DocumentScrollService } from '@app/service/document-scroll.service';
 import { LanguageService } from '@app/service/language.service';
 import { ThemeService } from '@app/service/theme.service';
 import { UpdateService } from '@app/service/update.service';
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
 			const _themeService = inject(ThemeService);
 			const _languageService = inject(LanguageService);
 			const _updateService = inject(UpdateService);
+			const _documentScrollService = inject(DocumentScrollService);
 			const _localOwnerUseCase = inject(LocalOwnerUseCase);
 			// Polls the account for as long as a session is open, and nothing while there is
 			// none: it starts itself off the session, so injecting it is all it needs.

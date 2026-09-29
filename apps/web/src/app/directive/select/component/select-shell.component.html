@@ -41,26 +41,44 @@
 					<span class="value-text">{{ store.selectedText() }}</span>
 				}
 			}
-			<input
-				#searchInput
-				class="search-input"
-				type="text"
-				role="combobox"
-				autocomplete="off"
-				[attr.aria-autocomplete]="store.searchable() ? 'list' : null"
-				[readOnly]="!store.searchable()"
-				[id]="searchInputId()"
-				[attr.aria-controls]="listboxId()"
-				[attr.aria-expanded]="store.isOpen()"
-				[attr.aria-label]="label() | i18n"
-				[placeholder]="placeholder() | i18n"
-				[value]="displayText()"
-				[disabled]="store.disabled()"
-				(focus)="onSearchFocus()"
-				(blur)="onSearchBlur()"
-				(input)="onSearchInput($event)"
-				(keydown)="onSearchKeydown($event)"
-			/>
+			@if (store.searchable()) {
+				<input
+					#searchInput
+					class="search-input"
+					type="text"
+					role="combobox"
+					autocomplete="off"
+					aria-autocomplete="list"
+					[id]="searchInputId()"
+					[attr.aria-controls]="listboxId()"
+					[attr.aria-expanded]="store.isOpen()"
+					[attr.aria-label]="label() | i18n"
+					[placeholder]="placeholder() | i18n"
+					[value]="displayText()"
+					[disabled]="store.disabled()"
+					(focus)="onSearchFocus()"
+					(blur)="onSearchBlur()"
+					(input)="onSearchInput($event)"
+					(keydown)="onSearchKeydown($event)"
+				/>
+			} @else {
+				<span
+					#searchInput
+					class="search-input"
+					role="combobox"
+					[class.placeholder]="'' === displayText()"
+					[id]="searchInputId()"
+					[attr.tabindex]="store.disabled() ? null : 0"
+					[attr.aria-disabled]="store.disabled() || null"
+					[attr.aria-controls]="listboxId()"
+					[attr.aria-expanded]="store.isOpen()"
+					[attr.aria-label]="label() | i18n"
+					(focus)="onSearchFocus()"
+					(blur)="onSearchBlur()"
+					(keydown)="onSearchKeydown($event)"
+					>{{ '' === displayText() ? (placeholder() | i18n) : displayText() }}</span
+				>
+			}
 		</div>
 		<ng-content></ng-content>
 	</label>

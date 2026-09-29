@@ -126,7 +126,7 @@ export class SelectShellComponent {
 	private readonly viewportService = inject(ViewportService);
 	private readonly wrapper = viewChild<ElementRef<HTMLElement>>('wrapper');
 	private readonly labelText = viewChild<ElementRef<HTMLElement>>('labelText');
-	private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+	private readonly searchInput = viewChild<ElementRef<HTMLElement>>('searchInput');
 	private readonly optionsScroller = viewChild<ElementRef<HTMLElement>>('optionsScroller');
 
 	private readonly gestures = new SelectShellGestures(this.store, {
@@ -266,6 +266,6 @@ export class SelectShellComponent {
 	private hasTextSelection(): boolean {
 		const element = this.searchInput()?.nativeElement;
 
-		return undefined !== element && element.selectionStart !== element.selectionEnd;
+		return element instanceof HTMLInputElement && element.selectionStart !== element.selectionEnd;
 	}
 }
