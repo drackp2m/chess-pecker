@@ -1,3 +1,20 @@
+# v1.32.0 (2026-09-29)
+
+## What's Changed
+
+### ✨ Features
+
+- add engine evaluation bar and captured material to match mode ([5e4d36f](https://github.com/drackp2m/chess-pecker/commit/5e4d36feaaa40bb87ae9f92437e66b2b58787859)) by Marc Jovaní González
+- align match controls with the solver and persist the game ([05b1aa4](https://github.com/drackp2m/chess-pecker/commit/05b1aa40f55dc2a4b6f828df614803d682342f8a)) by Marc Jovaní González
+- humanize stockfish opponent moves ([184e82e](https://github.com/drackp2m/chess-pecker/commit/184e82e32f4784ffbdde4dbc868fa5b2d11f95d5)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- inject SetJwtTokenUseCase explicitly in LoginUseCase ([21f01a9](https://github.com/drackp2m/chess-pecker/commit/21f01a910f6e5fb2ca2366e2f22f08a07c607051)) by Marc Jovaní González
+- stop iOS from shifting the view when a select takes focus ([9615c07](https://github.com/drackp2m/chess-pecker/commit/9615c07ae4708258374648ac278fadd3197e5b72)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.31.1...v1.32.0
+
 # v1.31.1 (2026-09-28)
 
 ## What's Changed
