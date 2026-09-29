@@ -68,6 +68,18 @@ Llevar el tablero a la posición inicial de la partida para repasarla. No deshac
 
 Volver a elegir rival y bando para empezar otra partida. Sólo se puede cuando la actual ha terminado o el jugador todavía no ha movido.
 
+## EVALUATION
+
+La etiqueta accesible de la barra de dos colores que muestra qué bando va con ventaja según el motor. Se lee seguida de la cifra, por ejemplo «+1.3» o «M3», que no se traduce.
+
+## CAPTURED_PIECES
+
+La etiqueta accesible de la fila de piezas que un bando le ha comido al otro. «Capturadas» en el sentido del ajedrez.
+
+## SHOW_ANALYSIS
+
+Casilla que se marca al elegir rival y bando: si esa partida lleva encima del tablero la barra de evaluación del motor. Viene marcada según el ajuste del mismo nombre, y cambiarla aquí solo afecta a la partida que empieza.
+
 ## EXERCISE_POSITION
 
 Se puede cargar en la partida la posición de un ejercicio para seguir jugándola. `LOAD_POSITION` es el botón que lo hace.

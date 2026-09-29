@@ -24,7 +24,13 @@
 
 	<div class="layout">
 		<div class="flex-col gap-3">
-			<app-chess-board />
+			<div class="flex-col">
+				@if (store.isStarted()) {
+					<app-match-analysis [isGaugeShown]="isAnalysisShown()" />
+				}
+
+				<app-chess-board />
+			</div>
 
 			@if (store.isStarted()) {
 				<div class="controls align-center px-3">
@@ -128,8 +134,6 @@
 					</p>
 				</div>
 
-				<app-move-history [title]="I18n.common.MOVES" class="flex-grow" />
-
 				<p class="fen mono fs-sm color-contrast-mid">{{ store.fen() }}</p>
 			} @else if (persistence.isRestored()) {
 				<div class="flex-col gap-2">
@@ -152,6 +156,14 @@
 								}
 							</select>
 						}
+
+						<input
+							appThemed
+							type="checkbox"
+							[label]="I18n.match.SHOW_ANALYSIS | i18n"
+							[checked]="isAnalysisShown()"
+							(change)="toggleAnalysis($event)"
+						/>
 					</div>
 				</div>
 

@@ -180,6 +180,43 @@
 		</div>
 	</div>
 
+	<div class="flex-col gap-4">
+		<div class="flex-col gap-2">
+			<h4>{{ I18n.setting.ANALYSIS | i18n }}</h4>
+
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.ANALYSIS_INTRO | i18n }}</p>
+		</div>
+
+		<div class="flex-col gap-2">
+			<h5>{{ I18n.setting.ANALYSIS_BAR | i18n }}</h5>
+
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.ANALYSIS_BAR_INTRO | i18n }}</p>
+
+			<form [formGroup]="form" class="flex-col gap-1">
+				<input
+					appThemed
+					type="checkbox"
+					[label]="I18n.setting.ANALYSIS_BAR_TOGGLE | i18n"
+					formControlName="analysisBar"
+				/>
+			</form>
+		</div>
+
+		<div class="flex-col gap-2">
+			<h5>{{ I18n.setting.ANALYSIS_DEPTH | i18n }}</h5>
+
+			<p class="fs-sm color-contrast-mid">{{ I18n.setting.ANALYSIS_DEPTH_INTRO | i18n }}</p>
+
+			<form [formGroup]="form" class="flex-col gap-1">
+				<select appThemed [label]="I18n.setting.ANALYSIS_DEPTH" formControlName="analysisDepth">
+					@for (depth of analysisDepths; track depth) {
+						<option [value]="depth">{{ depth }}</option>
+					}
+				</select>
+			</form>
+		</div>
+	</div>
+
 	<div class="flex-col gap-2">
 		<h4>{{ I18n.setting.BOOKMARK | i18n }}</h4>
 

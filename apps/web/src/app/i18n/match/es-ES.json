@@ -24,5 +24,8 @@
 	"01M3M8Y6KF681R29ZFV9BVPZR3": "Ir al principio de la partida",
 	"01M3M8Y6KFRVEHASS9KE660RHW": "Nueva partida",
 	"01M3ME4YE220Z6PZXVYBAA2QPS": "Partida contra la máquina",
-	"01M3ME4YE2BSRWW0SD8JRNB6V2": "Partida contra {opponent}"
+	"01M3ME4YE2BSRWW0SD8JRNB6V2": "Partida contra {opponent}",
+	"01M3MF6N5HFA8D2MC5NABY4451": "Evaluación de la posición",
+	"01M3MF6N5HEBYE55BXKCKF9NJ7": "Piezas capturadas",
+	"01M3MMHFT3DPXH4KE1G00KPJGD": "Mostrar la barra de evaluación"
 }

@@ -1,0 +1,59 @@
+<div class="summary flex-col gap-2 px-3">
+	<app-move-history />
+
+	<div class="captures">
+		@for (side of sides(); track side.color) {
+			<ul
+				class="captured flex-row align-center"
+				[class.trailing]="$last"
+				[attr.aria-label]="I18n.match.CAPTURED_PIECES | i18n"
+			>
+				@for (group of side.captured; track group.type) {
+					<li class="group flex-row">
+						@for (type of group.pieces; track $index) {
+							<app-chess-piece
+								class="piece"
+								role="img"
+								[type]="type"
+								[color]="side.rival"
+								[attr.aria-label]="PIECE_LABEL_KEY[side.rival][type] | i18n"
+							/>
+						}
+					</li>
+				}
+
+				@if (side.advantage; as advantage) {
+					<li class="advantage fs-sm fw-lg color-contrast-mid">+{{ advantage }}</li>
+				}
+			</ul>
+		}
+	</div>
+</div>
+
+@if (isGaugeShown()) {
+	<div
+		class="gauge"
+		role="img"
+		[attr.aria-label]="(I18n.match.EVALUATION | i18n) + ': ' + (bar().label ?? '…')"
+	>
+		@for (layer of bar().layers; track $index) {
+			<div
+				class="layer"
+				aria-hidden="true"
+				[class.white]="'white' === layer.color"
+				[class.black]="'black' === layer.color"
+				[style.clip-path]="layer.clip"
+			>
+				@if (bar().label; as label) {
+					<span
+						class="score fs-sm fw-xl"
+						[class.trails]="bar().isTrailingAhead"
+						[style.left.%]="bar().split"
+					>
+						{{ label }}
+					</span>
+				}
+			</div>
+		}
+	</div>
+}

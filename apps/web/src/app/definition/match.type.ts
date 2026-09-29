@@ -10,6 +10,7 @@ export interface MatchSnapshot {
 	readonly playerColor: PieceColor;
 	readonly opponentModel: MatchOpponentModel;
 	readonly stockfishElo: number;
+	readonly showAnalysis: boolean | undefined;
 	readonly orientation: PieceColor;
 	readonly status: MatchPhase;
 }

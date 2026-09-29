@@ -7,6 +7,7 @@ import {
 	pickHumanizedMove,
 	readCandidates,
 } from '@app/page/match/service/stockfish-humanizer';
+import { STOCKFISH_URL, UciEngine } from '@app/page/match/service/uci-engine';
 import { ChessFen } from '@app/util/chess/chess-fen';
 
 export const STOCKFISH_ELO_LEVELS = [
@@ -15,20 +16,20 @@ export const STOCKFISH_ELO_LEVELS = [
 ] as const;
 export type StockfishElo = (typeof STOCKFISH_ELO_LEVELS)[number];
 
-const ENGINE_URL = '/stockfish/stockfish-18-lite-single.js';
-
 @Injectable({
 	providedIn: 'root',
 })
 export class StockfishOpponentService {
-	private worker: Worker | undefined;
+	private readonly engine = new UciEngine(STOCKFISH_URL);
 
 	private ready: Promise<void> | undefined;
 
 	private setup: string | undefined;
 
 	constructor() {
-		inject(DestroyRef).onDestroy(() => this.worker?.terminate());
+		inject(DestroyRef).onDestroy(() => {
+			this.engine.terminate();
+		});
 	}
 
 	chooseNotation(position: ChessPosition, elo: StockfishElo): Promise<string | undefined> {
@@ -59,7 +60,7 @@ export class StockfishOpponentService {
 	}
 
 	private configure(setup: string, commands: readonly string[]): Promise<void> {
-		this.ready ??= this.send('uci').then(() => undefined);
+		this.ready ??= this.engine.send('uci').then(() => undefined);
 
 		return this.ready.then(() => {
 			if (this.setup === setup) {
@@ -70,70 +71,18 @@ export class StockfishOpponentService {
 
 			return commands
 				.reduce<Promise<unknown>>(
-					(chain, command) => chain.then(() => this.send(command)),
+					(chain, command) => chain.then(() => this.engine.send(command)),
 					Promise.resolve(),
 				)
-				.then(() => this.send('isready'))
+				.then(() => this.engine.send('isready'))
 				.then(() => undefined);
 		});
 	}
 
 	private search(position: ChessPosition, command: string): Promise<string[]> {
-		return this.send(`position fen ${ChessFen.serialize(position)}`).then(() => this.send(command));
-	}
-
-	private send(command: string): Promise<string[]> {
-		const worker = (this.worker ??= new Worker(ENGINE_URL));
-
-		return new Promise((resolve, reject) => {
-			const lines: string[] = [];
-			const onMessage = (event: MessageEvent<string>): void => {
-				const line = event.data.trim();
-
-				lines.push(line);
-
-				if (!this.isAnswer(command, line)) {
-					return;
-				}
-
-				this.removeListeners(worker, onMessage, onError);
-				resolve(lines);
-			};
-			const onError = (event: ErrorEvent): void => {
-				this.removeListeners(worker, onMessage, onError);
-				reject(event.error instanceof Error ? event.error : new Error(event.message));
-			};
-
-			worker.addEventListener('message', onMessage);
-			worker.addEventListener('error', onError);
-			worker.postMessage(command);
-
-			if (command.startsWith('setoption') || command.startsWith('position')) {
-				this.removeListeners(worker, onMessage, onError);
-				resolve([]);
-			}
-		});
-	}
-
-	private isAnswer(command: string, line: string): boolean {
-		if ('uci' === command) {
-			return 'uciok' === line;
-		}
-
-		if ('isready' === command) {
-			return 'readyok' === line;
-		}
-
-		return !command.startsWith('go ') || line.startsWith('bestmove ');
-	}
-
-	private removeListeners(
-		worker: Worker,
-		onMessage: (event: MessageEvent<string>) => void,
-		onError: (event: ErrorEvent) => void,
-	): void {
-		worker.removeEventListener('message', onMessage);
-		worker.removeEventListener('error', onError);
+		return this.engine
+			.send(`position fen ${ChessFen.serialize(position)}`)
+			.then(() => this.engine.send(command));
 	}
 
 	private bestMove(lines: readonly string[]): string | undefined {

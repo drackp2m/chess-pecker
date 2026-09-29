@@ -30,6 +30,13 @@ app-chess-board {
 	}
 }
 
+app-match-analysis {
+	@include mix.media($until: lg) {
+		width: calc(100% + var(--page-padding) * 2);
+		margin-inline: calc(var(--page-padding) * -1);
+	}
+}
+
 .controls {
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;

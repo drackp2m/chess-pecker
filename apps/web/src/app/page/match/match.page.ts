@@ -2,19 +2,22 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 
 import { ChessBoardComponent } from '@app/component/chess-board/chess-board.component';
 import { ChessPieceComponent } from '@app/component/chess-piece/chess-piece.component';
-import { MoveHistoryComponent } from '@app/component/move-history/move-history.component';
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { PieceColor } from '@app/definition/chess.type';
 import { MatchOpponentModel } from '@app/definition/match.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
+import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
 import { SelectDirective } from '@app/directive/select/select.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
+import { MatchAnalysisComponent } from '@app/page/match/component/match-analysis/match-analysis.component';
 import { MatchPersistenceService } from '@app/page/match/service/match-persistence.service';
+import { PositionAnalysisService } from '@app/page/match/service/position-analysis.service';
 import { STOCKFISH_ELO_LEVELS } from '@app/page/match/service/stockfish-opponent.service';
 import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
 import { MatchStore } from '@app/page/match/store/match.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { AnalysisPreferenceService } from '@app/service/analysis-preference.service';
 
 @Component({
 	templateUrl: './match.page.html',
@@ -22,9 +25,10 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 	imports: [
 		ChessBoardComponent,
 		ChessPieceComponent,
-		MoveHistoryComponent,
+		MatchAnalysisComponent,
 		ButtonDirective,
 		InputDirective,
+		RadioCheckboxDirective,
 		SelectDirective,
 		I18nPipe,
 	],
@@ -32,6 +36,7 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 		provideI18nScope('match'),
 		MatchStore,
 		MatchPersistenceService,
+		PositionAnalysisService,
 		{ provide: BOARD_PRESENTER, useExisting: MatchStore },
 	],
 })
@@ -41,6 +46,8 @@ export class MatchPage implements OnInit {
 	readonly store = inject(MatchStore);
 	readonly persistence = inject(MatchPersistenceService);
 	readonly stockfishEloLevels = STOCKFISH_ELO_LEVELS;
+
+	private readonly analysisPreference = inject(AnalysisPreferenceService);
 
 	readonly fenDraft = signal('');
 
@@ -75,15 +82,22 @@ export class MatchPage implements OnInit {
 
 	readonly isCheck = computed(() => undefined !== this.store.checkedSquare());
 
+	readonly isAnalysisShown = computed(
+		() => this.store.showAnalysis() ?? this.analysisPreference.isBarShown(),
+	);
+
 	ngOnInit(): void {
 		void this.persistence.open();
 	}
 
 	playAs(color: PieceColor): void {
+		this.store.setShowAnalysis(this.isAnalysisShown());
 		this.store.startMatch(color);
 	}
 
 	loadFen(): void {
+		this.store.setShowAnalysis(this.isAnalysisShown());
+
 		if (this.store.loadPosition(this.fenDraft().trim())) {
 			this.fenDraft.set('');
 		}
@@ -99,6 +113,10 @@ export class MatchPage implements OnInit {
 
 	selectElo(event: Event): void {
 		this.store.setStockfishElo(Number((event.target as HTMLSelectElement).value) as StockfishElo);
+	}
+
+	toggleAnalysis(event: Event): void {
+		this.store.setShowAnalysis((event.target as HTMLInputElement).checked);
 	}
 
 	private describePlaying(): string {

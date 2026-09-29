@@ -1,4 +1,6 @@
 :host {
+	--move-history-inset: 0;
+
 	display: flex;
 	gap: var(--spacing-2);
 	align-items: baseline;
@@ -10,12 +12,14 @@ h5 {
 }
 
 .line {
-	scrollbar-width: thin;
+	scrollbar-width: none;
+	scroll-padding-inline: var(--move-history-inset);
 
 	overflow-x: auto;
 	flex: 1;
 
 	min-width: 0;
+	padding-inline: var(--move-history-inset);
 
 	list-style: none;
 }

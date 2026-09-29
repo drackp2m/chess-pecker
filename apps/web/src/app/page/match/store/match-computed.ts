@@ -147,6 +147,7 @@ function matchComputed(store: MatchState) {
 				playerColor: store.playerColor(),
 				opponentModel: store.opponentModel(),
 				stockfishElo: store.stockfishElo(),
+				showAnalysis: store.showAnalysis(),
 				orientation: store.orientation(),
 				status: store.status(),
 			}),

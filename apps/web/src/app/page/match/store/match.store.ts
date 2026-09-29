@@ -14,6 +14,7 @@ import { ANNOUNCE_DELAY, THINK_DELAY, scaleForSpeed } from '@app/definition/move
 import { I18n, i18nRef } from '@app/i18n';
 import { ChessOpponentService } from '@app/page/match/service/chess-opponent.service';
 import { acceptsDraw } from '@app/page/match/service/draw-offer';
+import { PositionAnalysisService } from '@app/page/match/service/position-analysis.service';
 import { StockfishOpponentService } from '@app/page/match/service/stockfish-opponent.service';
 import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
 import { withMatchComputed } from '@app/page/match/store/match-computed';
@@ -40,6 +41,8 @@ export class MatchStore
 
 	private readonly stockfish = inject(StockfishOpponentService);
 
+	private readonly analysis = inject(PositionAnalysisService, { optional: true });
+
 	private readonly speed = inject(BoardPreferenceService).moveSpeed;
 
 	private readonly scheduled = new ScheduledAction();
@@ -55,13 +58,13 @@ export class MatchStore
 	}
 
 	startMatch(playerColor: PieceColor): void {
-		this.reset(playerColor);
+		this.reset(playerColor, this.showAnalysis());
 		patchState(this, { status: 'playing' });
 		this.scheduleOpponentMove();
 	}
 
 	newMatch(): void {
-		this.reset(this.playerColor());
+		this.reset(this.playerColor(), undefined);
 	}
 
 	restore(snapshot: MatchSnapshot): void {
@@ -76,6 +79,10 @@ export class MatchStore
 
 	setStockfishElo(stockfishElo: StockfishElo): void {
 		patchState(this, { stockfishElo });
+	}
+
+	setShowAnalysis(showAnalysis: boolean): void {
+		patchState(this, { showAnalysis });
 	}
 
 	/** Loads an exercise position; the side to move in the FEN becomes the player. */
@@ -93,6 +100,7 @@ export class MatchStore
 			...buildInitialState(position.turn, position),
 			opponentModel: this.opponentModel(),
 			stockfishElo: this.stockfishElo(),
+			showAnalysis: this.showAnalysis(),
 			status: lineStatus([position]),
 		});
 
@@ -226,13 +234,14 @@ export class MatchStore
 		patchState(this, { notationError: undefined });
 	}
 
-	private reset(playerColor: PieceColor): void {
+	private reset(playerColor: PieceColor, showAnalysis: boolean | undefined): void {
 		this.scheduled.cancel();
 		this.opponentRequest += 1;
 		patchState(this, {
 			...buildInitialState(playerColor),
 			opponentModel: this.opponentModel(),
 			stockfishElo: this.stockfishElo(),
+			showAnalysis,
 		});
 	}
 
@@ -341,10 +350,26 @@ export class MatchStore
 		patchState(this, { isOpponentThinking: true });
 		this.scheduled.run(
 			() => {
-				this.announceOpponentMove(request);
+				this.awaitAnalysis(request);
 			},
 			scaleForSpeed(THINK_DELAY, this.speed()),
 		);
+	}
+
+	private awaitAnalysis(request: number): void {
+		const settled = this.analysis?.whenSettled(this.livePosition());
+
+		if (undefined === settled) {
+			this.announceOpponentMove(request);
+
+			return;
+		}
+
+		void settled.then(() => {
+			if (request === this.opponentRequest) {
+				this.announceOpponentMove(request);
+			}
+		});
 	}
 
 	/**

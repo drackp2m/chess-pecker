@@ -34,6 +34,7 @@ export interface MatchStoreProps {
 	playerColor: PieceColor;
 	opponentModel: MatchOpponentModel;
 	stockfishElo: StockfishElo;
+	showAnalysis: boolean | undefined;
 	orientation: PieceColor;
 	selected: Square | undefined;
 	pendingPromotion: PendingPromotion | undefined;
@@ -59,6 +60,7 @@ export function buildInitialState(
 		playerColor,
 		opponentModel: 'legacy',
 		stockfishElo: DEFAULT_ELO,
+		showAnalysis: undefined,
 		orientation: playerColor,
 		selected: undefined,
 		pendingPromotion: undefined,
@@ -126,6 +128,7 @@ export function restoredState(snapshot: MatchSnapshot): MatchStoreProps {
 		cursor: line.moves.length,
 		opponentModel: snapshot.opponentModel,
 		stockfishElo: normalizeElo(snapshot.stockfishElo),
+		showAnalysis: snapshot.showAnalysis,
 		orientation: snapshot.orientation,
 		status: isSettled ? snapshot.status : lineStatus(line.positions),
 	};
@@ -137,6 +140,7 @@ export function snapshotOf(state: {
 	readonly playerColor: PieceColor;
 	readonly opponentModel: MatchOpponentModel;
 	readonly stockfishElo: StockfishElo;
+	readonly showAnalysis: boolean | undefined;
 	readonly orientation: PieceColor;
 	readonly status: MatchPhase;
 }): MatchSnapshot {
@@ -146,6 +150,7 @@ export function snapshotOf(state: {
 		playerColor: state.playerColor,
 		opponentModel: state.opponentModel,
 		stockfishElo: state.stockfishElo,
+		showAnalysis: state.showAnalysis,
 		orientation: state.orientation,
 		status: state.status,
 	};
