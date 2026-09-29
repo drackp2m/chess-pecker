@@ -3,81 +3,163 @@ import {
 	ChessMove,
 	ChessMoveRecord,
 	ChessPosition,
-	MatchStatus,
 	PieceColor,
 	Square,
 } from '@app/definition/chess.type';
 import type { TranslationRef } from '@app/definition/i18n.type';
+import { MatchOpponentModel, MatchPhase, MatchSnapshot } from '@app/definition/match.type';
+import { STOCKFISH_ELO_LEVELS } from '@app/page/match/service/stockfish-opponent.service';
 import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
+import { ChessBoard } from '@app/util/chess/chess-board';
 import { ChessFen } from '@app/util/chess/chess-fen';
+import { ChessMoveGenerator } from '@app/util/chess/chess-move-generator';
+import { ChessNotation } from '@app/util/chess/chess-notation';
 
 export interface PendingPromotion {
 	readonly from: Square;
 	readonly to: Square;
 }
 
+export interface MatchLine {
+	readonly positions: readonly ChessPosition[];
+	readonly moves: readonly ChessMoveRecord[];
+	readonly cursor: number;
+}
+
 export interface MatchStoreProps {
-	position: ChessPosition;
-	/** Snapshot taken *before* each played move, so undo is a plain pop. */
-	positionHistory: ChessPosition[];
-	history: ChessMoveRecord[];
+	positions: readonly ChessPosition[];
+	moves: readonly ChessMoveRecord[];
+	cursor: number;
+	exploration: MatchLine | undefined;
 	playerColor: PieceColor;
-	opponentModel: 'legacy' | 'stockfish';
+	opponentModel: MatchOpponentModel;
 	stockfishElo: StockfishElo;
+	showAnalysis: boolean | undefined;
 	orientation: PieceColor;
 	selected: Square | undefined;
 	pendingPromotion: PendingPromotion | undefined;
-	/** The machine's next move, lit up on the board before it is played. */
 	announced: ChessMove | undefined;
-	/** What the board last did, for the animation policy to judge. */
 	transition: BoardTransition | undefined;
-	status: MatchStatus;
+	status: MatchPhase;
+	drawOfferedAt: number | undefined;
 	isOpponentThinking: boolean;
 	notationError: TranslationRef | undefined;
 }
 
-export interface Rewind {
-	readonly position: ChessPosition;
-	readonly positionHistory: ChessPosition[];
-	readonly history: ChessMoveRecord[];
-}
+const DEFAULT_ELO: StockfishElo = 2300;
 
-export function buildInitialState(playerColor: PieceColor = 'white'): MatchStoreProps {
+export function buildInitialState(
+	playerColor: PieceColor = 'white',
+	start: ChessPosition = ChessFen.initial(),
+): MatchStoreProps {
 	return {
-		position: ChessFen.initial(),
-		positionHistory: [],
-		history: [],
+		positions: [start],
+		moves: [],
+		cursor: 0,
+		exploration: undefined,
 		playerColor,
 		opponentModel: 'legacy',
-		stockfishElo: 2300,
+		stockfishElo: DEFAULT_ELO,
+		showAnalysis: undefined,
 		orientation: playerColor,
 		selected: undefined,
 		pendingPromotion: undefined,
 		announced: undefined,
 		transition: undefined,
-		status: 'playing',
+		status: 'idle',
+		drawOfferedAt: undefined,
 		isOpponentThinking: false,
 		notationError: undefined,
 	};
 }
 
-/**
- * Walks the snapshots back until it is the player's turn again, which undoes the
- * machine's reply together with the player's own move.
- */
-export function rewindToPlayerTurn(current: Rewind, playerColor: PieceColor): Rewind {
-	const positionHistory = [...current.positionHistory];
-	let history = [...current.history];
-	let position = current.position;
+export function positionAt(line: MatchLine): ChessPosition {
+	return line.positions[line.cursor] ?? line.positions.at(-1) ?? ChessFen.initial();
+}
 
-	while (0 < positionHistory.length) {
-		position = positionHistory.pop() ?? position;
-		history = history.slice(0, -1);
+export function playOnLine(line: MatchLine, move: ChessMove): MatchLine {
+	const position = positionAt(line);
+	const record: ChessMoveRecord = {
+		...move,
+		san: ChessNotation.describe(position, move),
+		fullmoveNumber: position.fullmoveNumber,
+	};
 
-		if (position.turn === playerColor) {
+	return {
+		positions: [...line.positions.slice(0, line.cursor + 1), ChessBoard.apply(position, move)],
+		moves: [...line.moves.slice(0, line.cursor), record],
+		cursor: line.cursor + 1,
+	};
+}
+
+export function lineStatus(positions: readonly ChessPosition[]): MatchPhase {
+	const position = positions.at(-1) ?? ChessFen.initial();
+
+	return ChessMoveGenerator.status(position, positions.slice(0, -1));
+}
+
+export function replayLine(start: ChessPosition, notations: readonly string[]): MatchLine {
+	let line: MatchLine = { positions: [start], moves: [], cursor: 0 };
+
+	for (const notation of notations) {
+		const move = ChessNotation.parse(positionAt(line), notation);
+
+		if (undefined === move) {
 			break;
 		}
+
+		line = playOnLine(line, move);
 	}
 
-	return { position, positionHistory, history };
+	return line;
+}
+
+export function restoredState(snapshot: MatchSnapshot): MatchStoreProps {
+	const start = ChessFen.isValid(snapshot.startFen)
+		? ChessFen.parse(snapshot.startFen)
+		: ChessFen.initial();
+	const line = replayLine(start, snapshot.moves);
+	const isSettled = 'idle' === snapshot.status || isAgreedEnding(snapshot.status);
+
+	return {
+		...buildInitialState(snapshot.playerColor, start),
+		positions: line.positions,
+		moves: line.moves,
+		cursor: line.moves.length,
+		opponentModel: snapshot.opponentModel,
+		stockfishElo: normalizeElo(snapshot.stockfishElo),
+		showAnalysis: snapshot.showAnalysis,
+		orientation: snapshot.orientation,
+		status: isSettled ? snapshot.status : lineStatus(line.positions),
+	};
+}
+
+export function snapshotOf(state: {
+	readonly positions: readonly ChessPosition[];
+	readonly moves: readonly ChessMoveRecord[];
+	readonly playerColor: PieceColor;
+	readonly opponentModel: MatchOpponentModel;
+	readonly stockfishElo: StockfishElo;
+	readonly showAnalysis: boolean | undefined;
+	readonly orientation: PieceColor;
+	readonly status: MatchPhase;
+}): MatchSnapshot {
+	return {
+		startFen: ChessFen.serialize(state.positions[0] ?? ChessFen.initial()),
+		moves: state.moves.map((move) => ChessNotation.describeLong(move)),
+		playerColor: state.playerColor,
+		opponentModel: state.opponentModel,
+		stockfishElo: state.stockfishElo,
+		showAnalysis: state.showAnalysis,
+		orientation: state.orientation,
+		status: state.status,
+	};
+}
+
+export function isAgreedEnding(status: MatchPhase): boolean {
+	return 'resigned' === status || 'agreed' === status;
+}
+
+function normalizeElo(elo: number): StockfishElo {
+	return STOCKFISH_ELO_LEVELS.find((level) => level === elo) ?? DEFAULT_ELO;
 }

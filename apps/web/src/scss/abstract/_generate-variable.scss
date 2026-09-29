@@ -86,6 +86,10 @@
 		}
 	}
 
+	:root[data-keyboard] {
+		--safe-area-bottom: 0px;
+	}
+
 	@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
 		:root {
 			--safe-area-top: env(safe-area-inset-top, 0px);

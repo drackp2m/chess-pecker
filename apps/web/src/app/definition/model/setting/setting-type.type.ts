@@ -1,3 +1,4 @@
+import { AnalysisDepth } from '@app/definition/analysis-preference.type';
 import { MoveAnimation } from '@app/definition/board-animation.type';
 import { MoveInputMethod } from '@app/definition/board-input.type';
 import { Language } from '@app/definition/language.type';
@@ -22,6 +23,8 @@ export interface SettingType {
 	INTRO: 'INTRO';
 	BOOKMARK_PROMPT: 'BOOKMARK_PROMPT';
 	OWNER: 'OWNER';
+	ANALYSIS_BAR: 'ANALYSIS_BAR';
+	ANALYSIS_DEPTH: 'ANALYSIS_DEPTH';
 }
 
 export interface SettingPayload {
@@ -39,4 +42,6 @@ export interface SettingPayload {
 	INTRO: IntroProgress;
 	BOOKMARK_PROMPT: boolean;
 	OWNER: LocalOwner;
+	ANALYSIS_BAR: boolean;
+	ANALYSIS_DEPTH: AnalysisDepth;
 }

@@ -72,6 +72,10 @@ Los nombres de las tablas que se sincronizan, tal como se listan en un recuento.
 
 `{version}` es el número de versión de la aplicación. La palabra va en minúscula porque se pinta al pie de la página.
 
+## ANALYSIS*
+
+El análisis del motor en las partidas contra la máquina. `ANALYSIS_BAR*` es la barra de dos colores que muestra qué bando va con ventaja; el interruptor solo decide cómo viene marcada al empezar cada partida. `ANALYSIS_DEPTH*` es la profundidad de cálculo del motor, el término del ajedrez por ordenador, no una medida de longitud; las opciones son números que no se traducen.
+
 ## BOOKMARK*
 
 La preferencia que decide si guardar un ejercicio pregunta en qué lista va. El interruptor la enuncia al revés: encendido, una pulsación lo guarda en Favoritos sin preguntar, y la pregunta vuelve manteniendo pulsado el marcador.

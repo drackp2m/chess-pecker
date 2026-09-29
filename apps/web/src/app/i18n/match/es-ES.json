@@ -1,5 +1,4 @@
 {
-	"01KZJ895MBDHHY35NSG66Z2CX2": "Jugando",
 	"01KZJ895MB287JNKG3AQK0QE05": "Jaque",
 	"01KZJ895MBCKSTCBV7GV3PTNAN": "Jaque mate: has perdido",
 	"01KZJ895MB538DDEFCNEEXPJQS": "Jaque mate: has ganado",
@@ -8,10 +7,6 @@
 	"01KZJ895MBVY40YKSMFMFPEN6Q": "Bando",
 	"01KZJ895MBBTMX8RM0R5A9PGTE": "Jugar con blancas",
 	"01KZJ895MB768FTTZ24MSP7YYG": "Jugar con negras",
-	"01KZJ895MB22G1RVE5CE1152JQ": "Elegir bando empieza una partida nueva.",
-	"01KZJ895MBXCGP8VSGTC89J2AK": "Tablero",
-	"01KZJ895MBQFFM0M25P885PECC": "Girar el tablero",
-	"01KZJ895MBE3WQTRW8GC3NAVYD": "Deshacer jugada",
 	"01KZJ895MB9V885BMCY675C79A": "Posición del ejercicio",
 	"01KZJ895MBQKSC9YNYJ0BW24Q8": "Cargar la posición",
 	"01KZJ895MBS2HDHRSR83E1EN5M": "Descartar",
@@ -19,5 +14,18 @@
 	"01KZJ93GA1JB7TQ9Z498HP9W55": "«{notation}» no es una jugada legal aquí.",
 	"01KZJB0P5J4GQ0E2H8Z3Y7QK6M": "Rival",
 	"01KZJB0P5J4GQ0E2H8Z3Y7QK6N": "Original",
-	"01KZJB0P5J4GQ0E2H8Z3Y7QK6P": "ELO"
+	"01KZJB0P5J4GQ0E2H8Z3Y7QK6P": "ELO",
+	"01M3M8Y6KFA5GVCBCEVJ6J6FHH": "Elige rival y bando",
+	"01M3M8Y6KF26442ZHY5MKAYYTG": "Repasando la partida",
+	"01M3M8Y6KFTJR90JF6ZFC94JSN": "Te has rendido",
+	"01M3M8Y6KF144DV1DHB0FFCX3M": "Tablas de mutuo acuerdo",
+	"01M3M8Y6KFF9D52WMDKVWES5JB": "La máquina rechaza las tablas",
+	"01M3M8Y6KFEM82GW4BQ1FQW80Z": "Proponer tablas",
+	"01M3M8Y6KF681R29ZFV9BVPZR3": "Ir al principio de la partida",
+	"01M3M8Y6KFRVEHASS9KE660RHW": "Nueva partida",
+	"01M3ME4YE220Z6PZXVYBAA2QPS": "Partida contra la máquina",
+	"01M3ME4YE2BSRWW0SD8JRNB6V2": "Partida contra {opponent}",
+	"01M3MF6N5HFA8D2MC5NABY4451": "Evaluación de la posición",
+	"01M3MF6N5HEBYE55BXKCKF9NJ7": "Piezas capturadas",
+	"01M3MMHFT3DPXH4KE1G00KPJGD": "Mostrar la barra de evaluación"
 }

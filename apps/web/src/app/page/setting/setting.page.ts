@@ -3,6 +3,7 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 
 import { BoardDemoComponent } from '@app/component/board-demo/board-demo.component';
 import { SyncStatusComponent } from '@app/component/sync-status/sync-status.component';
+import { ANALYSIS_DEPTHS, normalizeAnalysisDepth } from '@app/definition/analysis-preference.type';
 import {
 	MOVE_ANIMATIONS,
 	MOVE_ANIMATION_LABEL,
@@ -23,6 +24,7 @@ import { SelectDirective } from '@app/directive/select/select.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { version } from '@app/package';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { AnalysisPreferenceService } from '@app/service/analysis-preference.service';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { BookmarkPreferenceService } from '@app/service/bookmark-preference.service';
 import { GenderService } from '@app/service/gender.service';
@@ -61,9 +63,11 @@ export class SettingPage {
 	readonly languageFlag = LANGUAGE_FLAG;
 	readonly genders = GENDERS;
 	readonly genderLabel = GENDER_LABEL;
+	readonly analysisDepths = ANALYSIS_DEPTHS;
 
 	private readonly themeService = inject(ThemeService);
 	private readonly boardPreference = inject(BoardPreferenceService);
+	private readonly analysisPreference = inject(AnalysisPreferenceService);
 	private readonly bookmarkPreference = inject(BookmarkPreferenceService);
 	private readonly sound = inject(SoundService);
 	private readonly languageService = inject(LanguageService);
@@ -73,6 +77,8 @@ export class SettingPage {
 	private readonly isBookmarkAlwaysFavorite = computed(
 		() => !this.bookmarkPreference.isPromptEnabled(),
 	);
+
+	private readonly analysisDepth = computed(() => String(this.analysisPreference.depth()));
 
 	readonly form = new FormGroup({
 		language: new FormControl<Language>(this.languageService.selectedLanguage(), {
@@ -105,6 +111,10 @@ export class SettingPage {
 		}),
 		moveLift: new FormControl<boolean>(this.boardPreference.moveLift(), { nonNullable: true }),
 		sound: new FormControl<boolean>(this.sound.isEnabled(), { nonNullable: true }),
+		analysisBar: new FormControl<boolean>(this.analysisPreference.isBarShown(), {
+			nonNullable: true,
+		}),
+		analysisDepth: new FormControl<string>(this.analysisDepth(), { nonNullable: true }),
 		bookmarkAlwaysFavorite: new FormControl<boolean>(this.isBookmarkAlwaysFavorite(), {
 			nonNullable: true,
 		}),
@@ -120,6 +130,7 @@ export class SettingPage {
 	constructor() {
 		this.bindApp();
 		this.bindBoard();
+		this.bindAnalysis();
 	}
 
 	private bindApp(): void {
@@ -171,6 +182,16 @@ export class SettingPage {
 
 		bindSetting(this.form.controls.moveLift, this.boardPreference.moveLift, (isEnabled) => {
 			this.boardPreference.updateMoveLift(isEnabled);
+		});
+	}
+
+	private bindAnalysis(): void {
+		bindSetting(this.form.controls.analysisBar, this.analysisPreference.isBarShown, (isShown) => {
+			this.analysisPreference.updateBar(isShown);
+		});
+
+		bindSetting(this.form.controls.analysisDepth, this.analysisDepth, (depth) => {
+			this.analysisPreference.updateDepth(normalizeAnalysisDepth(Number(depth)));
 		});
 	}
 

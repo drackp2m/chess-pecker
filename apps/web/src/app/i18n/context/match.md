@@ -4,9 +4,9 @@ Una partida de ajedrez normal contra el motor de la máquina, sin ejercicios de 
 
 Los textos son etiquetas de controles junto al tablero y avisos de estado de una línea.
 
-## PLAYING
+## AGAINST_*
 
-Estado: hay una partida en marcha. Una sola palabra.
+El título de la página. `AGAINST_MACHINE` se ve mientras se elige rival y bando; `AGAINST_OPPONENT` una vez empezada, con `{opponent}` como nombre del rival elegido (por ejemplo «Stockfish 18 Lite» o el de `LEGACY_ENGINE`), que se copia tal cual.
 
 ## CHECK
 
@@ -26,7 +26,11 @@ El motor está calculando su jugada. «La máquina» es el rival de silicio: se 
 
 ## SIDE*
 
-El bando con el que se juega: blancas o negras. `SIDE` es la etiqueta del control y `SIDE_HINT` avisa de que cambiar de bando empieza una partida nueva, o sea que se pierde la que hay.
+El bando con el que se juega: blancas o negras. `SIDE` es la etiqueta del grupo de botones que empieza la partida con ese bando.
+
+## CHOOSE_SIDE
+
+Estado antes de empezar: el jugador tiene que elegir el rival y con qué bando juega. Muy corto, cabe en una tira estrecha.
 
 ## OPPONENT
 
@@ -40,13 +44,41 @@ El nombre visible del rival original, conservado como alternativa al motor Stock
 
 La etiqueta de la fuerza configurada para Stockfish. Se mantiene como «ELO».
 
-## UNDO_MOVE
+## REVIEWING
 
-Deshacer la última jugada de la partida. No es reiniciar ni empezar de nuevo.
+Estado: el jugador ha retrocedido para volver a ver jugadas ya hechas. Si en esa posición le toca a él, puede mover y la partida sigue desde ahí. Muy corto.
 
-## FLIP_BOARD
+## RESIGNED
 
-Girar el tablero para verlo desde el otro lado. Cambia sólo el punto de vista, no de bando.
+La partida ha terminado porque el jugador se ha rendido. Mismo tono seco que `CHECKMATE_*`.
+
+## DRAW_*
+
+`DRAW_AGREED` es el final en tablas aceptadas por los dos bandos. `DRAW_DECLINED` avisa de que la máquina no ha aceptado las tablas que le ha propuesto el jugador y la partida sigue.
+
+## OFFER_DRAW
+
+Botón con el que el jugador propone tablas a su rival. Es la etiqueta accesible de un botón con icono.
+
+## GO_TO_START
+
+Llevar el tablero a la posición inicial de la partida para repasarla. No deshace ninguna jugada ni empieza otra partida.
+
+## NEW_MATCH
+
+Volver a elegir rival y bando para empezar otra partida. Sólo se puede cuando la actual ha terminado o el jugador todavía no ha movido.
+
+## EVALUATION
+
+La etiqueta accesible de la barra de dos colores que muestra qué bando va con ventaja según el motor. Se lee seguida de la cifra, por ejemplo «+1.3» o «M3», que no se traduce.
+
+## CAPTURED_PIECES
+
+La etiqueta accesible de la fila de piezas que un bando le ha comido al otro. «Capturadas» en el sentido del ajedrez.
+
+## SHOW_ANALYSIS
+
+Casilla que se marca al elegir rival y bando: si esa partida lleva encima del tablero la barra de evaluación del motor. Viene marcada según el ajuste del mismo nombre, y cambiarla aquí solo afecta a la partida que empieza.
 
 ## EXERCISE_POSITION
 

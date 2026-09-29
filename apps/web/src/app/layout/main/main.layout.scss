@@ -1,6 +1,6 @@
 main {
 	position: relative;
-	height: 100dvh;
+	height: calc(100dvh - var(--keyboard-inset, 0px));
 
 	// Its own stacking context, so whatever a screen stacks inside itself is settled here
 	// and never reaches the navbar above it.

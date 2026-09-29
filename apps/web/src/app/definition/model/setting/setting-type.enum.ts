@@ -13,6 +13,8 @@ export enum SettingType {
 	INTRO = 'intro',
 	BOOKMARK_PROMPT = 'bookmark-prompt',
 	OWNER = 'owner',
+	ANALYSIS_BAR = 'analysis-bar',
+	ANALYSIS_DEPTH = 'analysis-depth',
 }
 
 export type SettingTypeKey = keyof typeof SettingType;

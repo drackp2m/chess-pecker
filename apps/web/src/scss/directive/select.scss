@@ -27,6 +27,22 @@
 			padding: 0;
 		}
 
+		span.search-input {
+			overflow: hidden;
+			display: block;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+
+			&.placeholder {
+				color: transparent;
+				transition: color field.$transition-duration ease-in-out;
+			}
+		}
+
+		&.focused span.search-input.placeholder {
+			color: var(--color-contrast-mid);
+		}
+
 		&.multiple {
 			&:not(.wrap) .value-area {
 				overflow: hidden;

@@ -11,7 +11,7 @@ import { BoardPreferenceService } from '@app/service/board-preference.service';
 const OPPONENT_DELAY = 1500;
 
 /** The board preference is stubbed whole, so no test reaches IndexedDB for a delay. */
-function createStore(): MatchStore {
+function createIdleStore(): MatchStore {
 	TestBed.configureTestingModule({
 		providers: [
 			MatchStore,
@@ -20,6 +20,14 @@ function createStore(): MatchStore {
 	});
 
 	return TestBed.inject(MatchStore);
+}
+
+function createStore(): MatchStore {
+	const store = createIdleStore();
+
+	store.startMatch('white');
+
+	return store;
 }
 
 /** Lets the machine's scheduled reply fire. */
@@ -35,6 +43,19 @@ describe('MatchStore', () => {
 	afterEach(() => {
 		vi.useRealTimers();
 		TestBed.resetTestingModule();
+	});
+
+	it('waits for a side to be chosen before the game starts', () => {
+		const store = createIdleStore();
+
+		expect(store.status()).toBe('idle');
+		expect(store.isStarted()).toBe(false);
+		expect(store.isPlayerTurn()).toBe(false);
+		expect(store.isLocked()).toBe(true);
+
+		store.selectSquare('e2');
+
+		expect(store.selected()).toBeUndefined();
 	});
 
 	it('starts the player as white with an untouched board', () => {
@@ -99,7 +120,7 @@ describe('MatchStore', () => {
 		expect(store.isPlayerTurn()).toBe(true);
 	});
 
-	it('reports a played move as a transition, and none after an undo', () => {
+	it('reports a played move as a transition, and none after going back to the start', () => {
 		const store = createStore();
 
 		store.playNotation('e4');
@@ -108,9 +129,8 @@ describe('MatchStore', () => {
 		expect(store.transition()?.stages[0]?.slides).toEqual([{ from: 'e2', to: 'e4' }]);
 
 		vi.advanceTimersByTime(OPPONENT_DELAY);
-		store.undoLastMove();
+		store.rewind();
 
-		// Undo rewinds two plies at once, so there is no single slide to show.
 		expect(store.transition()).toBeUndefined();
 	});
 
@@ -160,19 +180,43 @@ describe('MatchStore', () => {
 		expect(store.position().board[0]).toEqual({ type: 'rook', color: 'white' });
 	});
 
-	it('undoes the player move together with the machine reply', () => {
+	it('lets the player move again from an earlier turn and drops what followed', () => {
 		const store = createStore();
 
 		store.playNotation('e4');
 		letMachineMove();
+		store.stepBackward();
+		store.stepBackward();
 
-		expect(store.history()).toHaveLength(2);
-
-		store.undoLastMove();
-
-		expect(store.history()).toHaveLength(0);
-		expect(store.isPlayerTurn()).toBe(true);
+		expect(store.isLocked()).toBe(false);
 		expect(store.fen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+
+		store.selectSquare('d2');
+		store.selectSquare('d4');
+
+		expect(store.moves().map((move) => move.san)).toEqual(['d4']);
+		expect(store.isLive()).toBe(true);
+		expect(store.isOpponentThinking()).toBe(true);
+
+		letMachineMove();
+
+		expect(store.moves()).toHaveLength(2);
+		expect(store.isPlayerTurn()).toBe(true);
+	});
+
+	it('keeps the board locked on a past turn that belongs to the machine', () => {
+		const store = createStore();
+
+		store.playNotation('e4');
+		letMachineMove();
+		store.stepBackward();
+
+		expect(store.canMove()).toBe(false);
+		expect(store.isLocked()).toBe(true);
+
+		store.selectSquare('e7');
+
+		expect(store.selected()).toBeUndefined();
 	});
 
 	it('loads an exercise position and hands the side to move to the player', () => {
@@ -205,5 +249,109 @@ describe('MatchStore', () => {
 		letMachineMove();
 
 		expect(store.history()).toHaveLength(1);
+	});
+
+	it('steps back through the game without undoing it', () => {
+		const store = createStore();
+
+		store.playNotation('e4');
+		letMachineMove();
+		store.stepBackward();
+
+		expect(store.history()).toHaveLength(1);
+		expect(store.moves()).toHaveLength(2);
+		expect(store.isLocked()).toBe(true);
+		expect(store.transition()?.kind).toBe('backward');
+
+		store.stepForward();
+
+		expect(store.history()).toHaveLength(2);
+		expect(store.isPlayerTurn()).toBe(true);
+
+		store.rewind();
+
+		expect(store.history()).toHaveLength(0);
+		expect(store.canStepBackward()).toBe(false);
+		expect(store.moves()).toHaveLength(2);
+	});
+
+	it('explores both sides without touching the game', () => {
+		const store = createStore();
+
+		store.toggleExploration();
+		store.selectSquare('e2');
+		store.selectSquare('e4');
+		store.selectSquare('e7');
+		store.selectSquare('e5');
+
+		expect(store.history().map((move) => move.san)).toEqual(['e4', 'e5']);
+		expect(store.moves()).toHaveLength(0);
+		expect(store.isOpponentThinking()).toBe(false);
+
+		store.toggleExploration();
+
+		expect(store.history()).toHaveLength(0);
+		expect(store.fen()).toBe('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+	});
+
+	it('ends the game on resignation and only then offers a new one', () => {
+		const store = createStore();
+
+		store.playNotation('e4');
+
+		expect(store.canStartOver()).toBe(false);
+
+		store.resign();
+
+		expect(store.status()).toBe('resigned');
+		expect(store.isFinished()).toBe(true);
+		expect(store.canStartOver()).toBe(true);
+
+		letMachineMove();
+
+		expect(store.moves()).toHaveLength(1);
+
+		store.newMatch();
+
+		expect(store.status()).toBe('idle');
+		expect(store.moves()).toHaveLength(0);
+	});
+
+	it('declines a draw on an even board and takes no second offer on the same move', () => {
+		const store = createStore();
+
+		store.offerDraw();
+
+		expect(store.status()).toBe('playing');
+		expect(store.isDrawDeclined()).toBe(true);
+		expect(store.canOfferDraw()).toBe(false);
+	});
+
+	it('accepts a draw when the machine is behind on material', () => {
+		const store = createStore();
+
+		store.loadPosition('4k3/8/8/8/8/8/8/Q3K3 w - - 0 1');
+		store.offerDraw();
+
+		expect(store.status()).toBe('agreed');
+		expect(store.isFinished()).toBe(true);
+	});
+
+	it('puts a saved game back from its snapshot', () => {
+		const store = createStore();
+
+		store.playNotation('e4');
+		letMachineMove();
+
+		const snapshot = store.snapshot();
+		const fen = store.fen();
+
+		store.newMatch();
+		store.restore(snapshot);
+
+		expect(store.moves()).toHaveLength(2);
+		expect(store.status()).toBe('playing');
+		expect(store.isPlayerTurn()).toBe(true);
+		expect(store.fen()).toBe(fen);
 	});
 });

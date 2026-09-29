@@ -216,6 +216,7 @@ const userStores: StoreNames<AppSchema>[] = [
 	'calibrationRound',
 	'cycle',
 	'cycleItem',
+	'match',
 	'puzzleSet',
 	'share',
 	'training',
