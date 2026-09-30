@@ -23,6 +23,7 @@ import { UpsertPuzzleBookmarkUseCase } from './upsert-puzzle-bookmark.use-case';
 
 const OLD = new Date('2026-08-01T10:00:00.000Z');
 const NEW = new Date('2026-08-02T10:00:00.000Z');
+const FUTURE = new Date('2099-01-01T00:00:00.000Z');
 
 describe('UpsertPuzzleBookmarkUseCase', () => {
 	let module: TestingModule;
@@ -93,6 +94,16 @@ describe('UpsertPuzzleBookmarkUseCase', () => {
 			expect(bookmarks[0]).toMatchObject({ type: 'hard', updatedAt: NEW.toISOString() });
 		});
 
+		it('lets a filing at the same instant as the stored one take over', async () => {
+			await useCase.execute(user, SET_PUZZLE, { type: 'hard', updatedAt: NEW });
+			await useCase.execute(user, SET_PUZZLE, { type: 'easy', updatedAt: NEW });
+
+			const bookmarks = await listUseCase.execute(user);
+
+			expect(bookmarks).toHaveLength(1);
+			expect(bookmarks[0]).toMatchObject({ type: 'easy', updatedAt: NEW.toISOString() });
+		});
+
 		it('keeps the attempt of the filing that won', async () => {
 			const winner = uuid();
 
@@ -117,6 +128,25 @@ describe('UpsertPuzzleBookmarkUseCase', () => {
 
 			expect(new Date(filed.updatedAt).getTime()).toBeGreaterThanOrEqual(before);
 			expect(new Date(filed.updatedAt).getTime()).toBeLessThanOrEqual(Date.now());
+		});
+
+		it('stamps a filing dated in the future with the server clock instead', async () => {
+			const before = Date.now();
+
+			const filed = await useCase.execute(user, SET_PUZZLE, { type: 'hard', updatedAt: FUTURE });
+
+			expect(new Date(filed.updatedAt).getTime()).toBeGreaterThanOrEqual(before);
+			expect(new Date(filed.updatedAt).getTime()).toBeLessThanOrEqual(Date.now());
+		});
+
+		it('does not let a device running ahead outrank a later filing', async () => {
+			await useCase.execute(user, SET_PUZZLE, { type: 'hard', updatedAt: FUTURE });
+			await useCase.execute(user, SET_PUZZLE, { type: 'easy', updatedAt: new Date() });
+
+			const bookmarks = await listUseCase.execute(user);
+
+			expect(bookmarks).toHaveLength(1);
+			expect(bookmarks[0]?.type).toBe('easy');
 		});
 
 		it('answers 404 for an exercise outside the catalogue and stores nothing', async () => {
@@ -172,6 +202,21 @@ describe('UpsertPuzzleBookmarkUseCase', () => {
 
 			expect(history).toHaveLength(1);
 			expect(history[0]).toMatchObject({ lichessId: SET_PUZZLE, type: 'favorite' });
+		});
+
+		it('records a filing dated in the future at the server clock', async () => {
+			const before = Date.now();
+
+			await useCase.execute(user, SET_PUZZLE, {
+				type: 'hard',
+				eventUuid: uuid(),
+				updatedAt: FUTURE,
+			});
+
+			const [filing] = await historyUseCase.execute(user);
+
+			expect(new Date(filing?.createdAt ?? 0).getTime()).toBeGreaterThanOrEqual(before);
+			expect(new Date(filing?.createdAt ?? 0).getTime()).toBeLessThanOrEqual(Date.now());
 		});
 
 		it('records the same event only once when it is sent again', async () => {

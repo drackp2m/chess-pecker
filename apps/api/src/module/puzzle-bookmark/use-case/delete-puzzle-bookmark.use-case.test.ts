@@ -22,6 +22,7 @@ import { UpsertPuzzleBookmarkUseCase } from './upsert-puzzle-bookmark.use-case';
 
 const OLD = new Date('2026-08-01T10:00:00.000Z');
 const NEW = new Date('2026-08-02T10:00:00.000Z');
+const FUTURE = new Date('2099-01-01T00:00:00.000Z');
 
 describe('DeletePuzzleBookmarkUseCase', () => {
 	let module: TestingModule;
@@ -73,6 +74,30 @@ describe('DeletePuzzleBookmarkUseCase', () => {
 
 			expect(bookmarks).toHaveLength(1);
 			expect(bookmarks[0]).toMatchObject({ type: 'hard', updatedAt: NEW.toISOString() });
+		});
+
+		it('takes out a filing made at the same instant as the removal', async () => {
+			await upsertUseCase.execute(user, SET_PUZZLE, { type: 'hard', updatedAt: NEW });
+
+			await useCase.execute(user, SET_PUZZLE, { updatedAt: NEW });
+
+			expect(await listUseCase.execute(user)).toStrictEqual([]);
+		});
+
+		it('unfiles at the server clock when the device sends no date', async () => {
+			await upsertUseCase.execute(user, SET_PUZZLE, { type: 'hard', updatedAt: OLD });
+
+			await useCase.execute(user, SET_PUZZLE, {});
+
+			expect(await listUseCase.execute(user)).toStrictEqual([]);
+		});
+
+		it('does not let a filing from a device running ahead survive a later removal', async () => {
+			await upsertUseCase.execute(user, SET_PUZZLE, { type: 'hard', updatedAt: FUTURE });
+
+			await useCase.execute(user, SET_PUZZLE, { updatedAt: new Date() });
+
+			expect(await listUseCase.execute(user)).toStrictEqual([]);
 		});
 
 		it('leaves the other exercises of the list alone', async () => {
@@ -142,6 +167,51 @@ describe('DeletePuzzleBookmarkUseCase', () => {
 				[filing, 'hard'],
 				[removal, null],
 			]);
+		});
+
+		it('records a removal with no date at the server clock', async () => {
+			const before = Date.now();
+
+			await useCase.execute(user, SET_PUZZLE, { eventUuid: uuid() });
+
+			const [removal] = await historyUseCase.execute(user);
+
+			expect(removal?.type).toBeNull();
+			expect(new Date(removal?.createdAt ?? 0).getTime()).toBeGreaterThanOrEqual(before);
+			expect(new Date(removal?.createdAt ?? 0).getTime()).toBeLessThanOrEqual(Date.now());
+		});
+
+		it('records a removal dated in the future at the server clock', async () => {
+			const before = Date.now();
+
+			await useCase.execute(user, SET_PUZZLE, { eventUuid: uuid(), updatedAt: FUTURE });
+
+			const [removal] = await historyUseCase.execute(user);
+
+			expect(new Date(removal?.createdAt ?? 0).getTime()).toBeGreaterThanOrEqual(before);
+			expect(new Date(removal?.createdAt ?? 0).getTime()).toBeLessThanOrEqual(Date.now());
+		});
+
+		it('keeps a removal from a device running ahead before a later filing', async () => {
+			const removal = uuid();
+			const filing = uuid();
+
+			await useCase.execute(user, SET_PUZZLE, { eventUuid: removal, updatedAt: FUTURE });
+			await upsertUseCase.execute(user, SET_PUZZLE, {
+				type: 'hard',
+				eventUuid: filing,
+				updatedAt: new Date(),
+			});
+
+			const recorded = new Map(
+				(await historyUseCase.execute(user)).map((event) => [
+					event.uuid,
+					new Date(event.createdAt).getTime(),
+				]),
+			);
+
+			expect(recorded.get(removal)).toBeLessThanOrEqual(recorded.get(filing) ?? 0);
+			expect(await listUseCase.execute(user)).toHaveLength(1);
 		});
 
 		it('records the same removal only once when it is sent again', async () => {

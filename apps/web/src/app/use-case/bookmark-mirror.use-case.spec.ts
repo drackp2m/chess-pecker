@@ -123,7 +123,14 @@ function configure(options: Options = {}) {
 		],
 	});
 
-	return { stored, local, remote, attempts, mirror: TestBed.inject(BookmarkMirrorUseCase) };
+	return {
+		stored,
+		local,
+		remote,
+		attempts,
+		session: isAuthenticated,
+		mirror: TestBed.inject(BookmarkMirrorUseCase),
+	};
 }
 
 describe('BookmarkMirrorUseCase', () => {
@@ -233,6 +240,100 @@ describe('BookmarkMirrorUseCase', () => {
 			expect(stored.get(LICHESS_ID)).toMatchObject({ removedAt: NOW, syncedAt: OLD });
 			expect(remote.remove).not.toHaveBeenCalled();
 			expect(await mirror.hasPending()).toBe(true);
+		});
+
+		it('keeps the tombstone pending when the trip fails', async () => {
+			const current = settled();
+			const { stored, remote, mirror } = configure({ rows: [current] });
+
+			remote.remove.mockRejectedValueOnce(new Error('offline'));
+
+			await mirror.unfile(current);
+
+			const tombstone = stored.get(LICHESS_ID);
+
+			expect(tombstone).toMatchObject({ removedAt: NOW, syncedAt: OLD });
+			expect(tombstone?.history?.at(-1)?.syncedAt).toBeUndefined();
+			expect(await mirror.hasPending()).toBe(true);
+		});
+
+		it('keeps a row the account never saw as a tombstone and sends its filing first', async () => {
+			const current = row({ history: [event()] });
+			const { stored, local, remote, mirror } = configure({ rows: [current] });
+
+			await mirror.unfile(current, ATTEMPT);
+
+			const tombstone = stored.get(LICHESS_ID);
+			const removal = tombstone?.history?.at(-1);
+
+			expect(local.remove).not.toHaveBeenCalled();
+			expect(tombstone).toMatchObject({ removedAt: NOW, updatedAt: NOW, syncedAt: NOW });
+			expect(remote.upsert).toHaveBeenCalledWith(LICHESS_ID, 'favorite', OLD, 'event-1', undefined);
+			expect(remote.remove).toHaveBeenCalledWith(LICHESS_ID, removal?.uuid, ATTEMPT, NOW);
+			expect(remote.upsert.mock.invocationCallOrder[0]).toBeLessThan(
+				remote.remove.mock.invocationCallOrder[0] ?? 0,
+			);
+			expect(await mirror.hasPending()).toBe(false);
+		});
+
+		it('keeps a row the account never saw as a pending tombstone while logged out', async () => {
+			const current = row({ history: [event()] });
+			const { stored, local, remote, mirror } = configure({
+				rows: [current],
+				authenticated: false,
+			});
+
+			await mirror.unfile(current);
+
+			const tombstone = stored.get(LICHESS_ID);
+
+			expect(local.remove).not.toHaveBeenCalled();
+			expect(tombstone).toMatchObject({ removedAt: NOW, updatedAt: NOW });
+			expect(tombstone?.syncedAt).toBeUndefined();
+			expect(tombstone?.history?.at(-1)).toEqual({
+				uuid: expect.any(String),
+				type: null,
+				createdAt: NOW,
+			});
+			expect(remote.upsert).not.toHaveBeenCalled();
+			expect(remote.remove).not.toHaveBeenCalled();
+			expect(await mirror.hasPending()).toBe(true);
+		});
+
+		it('starts a history for a row saved before there was one', async () => {
+			const current = row();
+			const { stored, remote, mirror } = configure({ rows: [current] });
+
+			await mirror.unfile(current);
+
+			const history = stored.get(LICHESS_ID)?.history;
+
+			expect(history).toHaveLength(1);
+			expect(history?.[0]).toMatchObject({ type: null, createdAt: NOW, syncedAt: NOW });
+			expect(remote.upsert).not.toHaveBeenCalled();
+			expect(remote.remove).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not let a pull file again what was unfiled before the account saw it', async () => {
+			const current = row({ history: [event()] });
+			const { stored, remote, session, mirror } = configure({
+				rows: [current],
+				remote: [remoteBookmark({ type: 'hard' })],
+				authenticated: false,
+			});
+
+			await mirror.unfile(current);
+			session.set(true);
+			const rows = await mirror.pull();
+
+			expect(remote.remove).toHaveBeenCalledTimes(1);
+			expect(rows).toHaveLength(1);
+			expect(stored.get(LICHESS_ID)).toMatchObject({
+				type: 'favorite',
+				removedAt: NOW,
+				syncedAt: NOW,
+			});
+			expect(await mirror.hasPending()).toBe(false);
 		});
 	});
 
@@ -445,6 +546,18 @@ describe('BookmarkMirrorUseCase', () => {
 			expect(current?.removedAt).toBeUndefined();
 		});
 
+		it('leaves this device untouched when the account cannot be reached', async () => {
+			const current = row({ history: [event()] });
+			const { stored, local, remote, mirror } = configure({ rows: [current] });
+
+			remote.list.mockRejectedValueOnce(new Error('offline'));
+
+			await expect(mirror.pull()).rejects.toThrow('offline');
+			expect(local.saveAll).not.toHaveBeenCalled();
+			expect(local.save).not.toHaveBeenCalled();
+			expect(stored.get(LICHESS_ID)).toEqual(current);
+		});
+
 		it('hands back every row, the ones nothing had to be done to included', async () => {
 			const current = settled({ type: 'hard' });
 			const { mirror } = configure({ rows: [current], remote: [remoteBookmark()] });
@@ -468,6 +581,15 @@ describe('BookmarkMirrorUseCase', () => {
 				{ uuid: expect.any(String), type: 'hard', createdAt: NEW, attemptUuid: ATTEMPT },
 			]);
 			expect(stored.get(LICHESS_ID)).toEqual(read);
+		});
+
+		it('gives a history with no attempt to a row no attempt came before', async () => {
+			const legacy = row({ type: 'hard', updatedAt: NEW });
+			const { mirror } = configure({ rows: [legacy] });
+
+			const [read] = await mirror.read();
+
+			expect(read?.history).toEqual([{ uuid: expect.any(String), type: 'hard', createdAt: NEW }]);
 		});
 
 		it('leaves alone a row that already has a history', async () => {
