@@ -9,7 +9,15 @@ export const TIMEZONES = [
 ] as const;
 
 export function normalizeTimezone(value: unknown): string {
-	return 'string' === typeof value && TIMEZONES.includes(value) ? value : DEFAULT_TIMEZONE;
+	if ('string' !== typeof value) {
+		return DEFAULT_TIMEZONE;
+	}
+
+	try {
+		return new Intl.DateTimeFormat('en', { timeZone: value }).resolvedOptions().timeZone;
+	} catch {
+		return DEFAULT_TIMEZONE;
+	}
 }
 
 @Injectable({

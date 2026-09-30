@@ -1,12 +1,24 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
+const dayFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function dayFormatter(timeZone: string): Intl.DateTimeFormat {
+	let formatter = dayFormatters.get(timeZone);
+
+	if (undefined === formatter) {
+		formatter = new Intl.DateTimeFormat('en', {
+			timeZone,
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+		});
+		dayFormatters.set(timeZone, formatter);
+	}
+
+	return formatter;
+}
 
 export function zoneDayLabel(date: Date, timeZone: string): string {
-	const parts = new Intl.DateTimeFormat('en', {
-		timeZone,
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit',
-	}).formatToParts(date);
+	const parts = dayFormatter(timeZone).formatToParts(date);
 
 	const year = parts.find((part) => 'year' === part.type)?.value;
 	const month = parts.find((part) => 'month' === part.type)?.value;
