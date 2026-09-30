@@ -4,13 +4,12 @@ import type {
 } from '@chesspecker/api-definitions';
 import { Inject, Injectable } from '@nestjs/common';
 
-import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { User } from '../../user/user.entity';
 import { PuzzleBookmarkType } from '../definition/puzzle-bookmark-type.enum';
 import { PuzzleBookmark } from '../puzzle-bookmark.entity';
 import { PuzzleBookmarkRepository } from '../puzzle-bookmark.repository';
-import { presentBookmark } from '../util/puzzle-bookmark.util';
+import { clampToNow, presentBookmark } from '../util/puzzle-bookmark.util';
 
 @Injectable()
 export class UpsertPuzzleBookmarkUseCase {
@@ -31,7 +30,7 @@ export class UpsertPuzzleBookmarkUseCase {
 		upsertRequest: UpsertPuzzleBookmarkRequestParsed,
 	): Promise<PuzzleBookmarkResponse> {
 		const puzzle = await this.puzzleRepository.getOne({ lichessId });
-		const updatedAt = upsertRequest.updatedAt ?? new GenerateNowDateUseCase().execute();
+		const updatedAt = clampToNow(upsertRequest.updatedAt);
 
 		const stored = await this.puzzleBookmarkRepository.upsertByPuzzle(
 			new PuzzleBookmark({

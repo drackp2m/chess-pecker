@@ -70,25 +70,11 @@ export class BookmarkMirrorUseCase {
 	}
 
 	/**
-	 * A row the account never saw simply leaves. One it acknowledged stays behind as a
-	 * tombstone until the removal has travelled, or the next pull would file it again.
+	 * Always a tombstone, synced or not: the removal is an event the account has to record,
+	 * and another device may have filed the exercise already, so the next pull would bring
+	 * it back if the row simply left.
 	 */
 	async unfile(current: BookmarkRow, attemptUuid?: string): Promise<void> {
-		if (undefined === current.syncedAt) {
-			const now = new Date();
-			const tombstone: BookmarkRow = {
-				...current,
-				updatedAt: now,
-				history: [...(current.history ?? []), this.event(null, now, attemptUuid)],
-				removedAt: now,
-			};
-			await this.localRepository.save(tombstone);
-
-			await this.pushRow(tombstone);
-
-			return;
-		}
-
 		const now = new Date();
 		const tombstone: BookmarkRow = {
 			...current,
