@@ -69,6 +69,7 @@ export class MatchStore
 
 	restore(snapshot: MatchSnapshot): void {
 		this.scheduled.cancel();
+		this.stockfish.newGame();
 		patchState(this, restoredState(snapshot));
 		this.scheduleOpponentMove();
 	}
@@ -96,6 +97,8 @@ export class MatchStore
 		const position = ChessFen.parse(fen);
 
 		this.scheduled.cancel();
+		this.opponentRequest += 1;
+		this.stockfish.newGame();
 		patchState(this, {
 			...buildInitialState(position.turn, position),
 			opponentModel: this.opponentModel(),
@@ -237,6 +240,7 @@ export class MatchStore
 	private reset(playerColor: PieceColor, showAnalysis: boolean | undefined): void {
 		this.scheduled.cancel();
 		this.opponentRequest += 1;
+		this.stockfish.newGame();
 		patchState(this, {
 			...buildInitialState(playerColor),
 			opponentModel: this.opponentModel(),
@@ -378,23 +382,22 @@ export class MatchStore
 	 */
 	private announceOpponentMove(request: number): void {
 		const position = this.livePosition();
-		const notation = this.chooseOpponentNotation(position);
 
-		if (notation instanceof Promise) {
-			void notation
-				.then((move) => {
-					this.finishOpponentMove(position, request, move);
-				})
-				.catch(() => {
-					if (request === this.opponentRequest) {
-						patchState(this, { isOpponentThinking: false });
-					}
-				});
+		if ('stockfish' !== this.opponentModel()) {
+			this.finishOpponentMove(position, request, this.opponent.chooseNotation(position));
 
 			return;
 		}
 
-		this.finishOpponentMove(position, request, notation);
+		void this.chooseStockfishNotation(position)
+			.then((move) => {
+				this.finishOpponentMove(position, request, move);
+			})
+			.catch(() => {
+				if (request === this.opponentRequest) {
+					patchState(this, { isOpponentThinking: false });
+				}
+			});
 	}
 
 	private finishOpponentMove(
@@ -428,11 +431,9 @@ export class MatchStore
 		);
 	}
 
-	private chooseOpponentNotation(
-		position: ChessPosition,
-	): string | undefined | Promise<string | undefined> {
-		return 'stockfish' === this.opponentModel()
-			? this.stockfish.chooseNotation(position, this.stockfishElo())
-			: this.opponent.chooseNotation(position);
+	private chooseStockfishNotation(position: ChessPosition): Promise<string | undefined> {
+		const game = { start: this.positions()[0] ?? position, moves: this.moves() };
+
+		return this.stockfish.chooseNotation(game, position, this.stockfishElo());
 	}
 }
