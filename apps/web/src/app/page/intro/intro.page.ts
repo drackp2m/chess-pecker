@@ -5,6 +5,7 @@ import { StepIndicatorComponent } from '@app/component/step-indicator/step-indic
 import { INTRO_STEPS, IntroStep } from '@app/definition/intro-step.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
+import { HeaderComponent } from '@app/layout/main/component/header.component';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { IntroStore } from '@app/store/intro.store';
 import { TrainingStore } from '@app/store/training.store';
@@ -19,7 +20,7 @@ const ENTER_DURATION_MS = 200;
 @Component({
 	templateUrl: './intro.page.html',
 	styleUrl: './intro.page.scss',
-	imports: [StepIndicatorComponent, ButtonDirective, I18nPipe],
+	imports: [HeaderComponent, StepIndicatorComponent, ButtonDirective, I18nPipe],
 	providers: [provideI18nScope('intro')],
 })
 export class IntroPage {

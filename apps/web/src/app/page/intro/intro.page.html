@@ -1,13 +1,9 @@
 <main class="intro flex-col">
-	<header
-		class="intro-header force-light px-4 pb-2 surface-contrast color-primary flex-row align-center justify-between gap-4"
-	>
-		<h3 class="logo">Chess Pecker</h3>
-
+	<app-header>
 		<button class="leave fs-md color-primary" (click)="leave()">
 			{{ leaveLabel() | i18n }}
 		</button>
-	</header>
+	</app-header>
 
 	<div class="body flex-col gap-6">
 		<app-step-indicator

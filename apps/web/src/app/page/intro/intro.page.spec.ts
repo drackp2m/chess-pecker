@@ -1,9 +1,10 @@
-import { WritableSignal, signal } from '@angular/core';
+import { Component, WritableSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { INTRO_STEPS } from '@app/definition/intro-step.type';
+import { HeaderComponent } from '@app/layout/main/component/header.component';
 import { IntroPage } from '@app/page/intro/intro.page';
 import { TrainingRow } from '@app/repository/definition/training-schema.interface';
 import { IntroStore } from '@app/store/intro.store';
@@ -25,6 +26,12 @@ interface Options {
 	readonly active?: TrainingRow | null;
 	readonly canSolve?: boolean;
 }
+
+@Component({
+	selector: 'app-header',
+	template: '<ng-content />',
+})
+class HeaderStubComponent {}
 
 async function settle(): Promise<void> {
 	await new Promise((resolve) => setTimeout(resolve, 0));
@@ -83,6 +90,11 @@ function configure(options: Options = {}) {
 			{ provide: TrainingStore, useValue: training },
 			{ provide: Router, useValue: router },
 		],
+	});
+
+	TestBed.overrideComponent(IntroPage, {
+		remove: { imports: [HeaderComponent] },
+		add: { imports: [HeaderStubComponent] },
 	});
 
 	return { intro, training, router, page: TestBed.createComponent(IntroPage).componentInstance };

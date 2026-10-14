@@ -7,21 +7,10 @@
 	height: 100dvh;
 	background-color: var(--color-primary);
 
-	.intro-header {
-		position: sticky;
-		top: 0;
-		padding-top: var(--safe-padding-top);
-		border-bottom: solid 1.5px var(--color-primary);
-
-		.logo {
-			height: 24px;
-		}
-
-		.leave {
-			flex-shrink: 0;
-			text-decoration: underline;
-			text-underline-offset: 3px;
-		}
+	.leave {
+		flex-shrink: 0;
+		text-decoration: underline;
+		text-underline-offset: 3px;
 	}
 
 	.body {
