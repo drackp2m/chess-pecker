@@ -1,7 +1,11 @@
+<div #stage>
+	@if (!loading()) {
+		<router-outlet />
+	}
+</div>
+
 @if (loading()) {
-	<app-sync-splash />
-} @else {
-	<router-outlet />
+	<app-sync-splash (animate.leave)="reveal($event)" />
 }
 
 <app-modal-outlet />

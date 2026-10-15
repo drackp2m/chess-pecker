@@ -1,6 +1,15 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import {
+	Component,
+	ElementRef,
+	OnDestroy,
+	afterNextRender,
+	computed,
+	inject,
+	signal,
+	viewChild,
+} from '@angular/core';
 
-import { SvgComponent } from '@app/component/svg/svg.component';
+import { traceKingOutline } from '@app/component/sync-splash/king-outline';
 import { SYNC_PHASE_LABEL } from '@app/definition/sync-phase.type';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { I18n } from '@app/i18n';
@@ -16,7 +25,7 @@ import { WatchedDelay } from '@app/util/watched-delay';
 	selector: 'app-sync-splash',
 	templateUrl: './sync-splash.component.html',
 	styleUrl: './sync-splash.component.scss',
-	imports: [I18nPipe, SvgComponent],
+	imports: [I18nPipe],
 })
 export class SyncSplashComponent implements OnDestroy {
 	protected readonly I18n = I18n;
@@ -39,6 +48,8 @@ export class SyncSplashComponent implements OnDestroy {
 
 	private readonly waited = signal(false);
 
+	private readonly face = viewChild.required<ElementRef<HTMLElement>>('face');
+
 	// The delay counts only the time the tab is visible, which is the only time the user has
 	// spent waiting.
 	private readonly delay = new WatchedDelay();
@@ -49,6 +60,10 @@ export class SyncSplashComponent implements OnDestroy {
 		});
 
 		document.addEventListener('visibilitychange', this.onVisibilityChange);
+
+		afterNextRender(() => {
+			traceKingOutline(this.face().nativeElement);
+		});
 	}
 
 	ngOnDestroy(): void {
