@@ -39,7 +39,7 @@
 					<div class="actions flex-row gap-3 justify-center">
 						<button
 							appThemed
-							icon="flag"
+							icon="resign"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_GIVE_UP | i18n"
 							[class.active]="'resigned' === store.status()"
@@ -49,7 +49,7 @@
 
 						<button
 							appThemed
-							icon="rotate"
+							icon="flip-board"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_FLIP | i18n"
 							[class.active]="store.isBoardFlipped()"
@@ -58,7 +58,7 @@
 
 						<button
 							appThemed
-							icon="backward-fast"
+							icon="restart"
 							iconSquared
 							[attr.aria-label]="I18n.match.GO_TO_START | i18n"
 							[disabled]="!store.canStepBackward()"
@@ -67,7 +67,7 @@
 
 						<button
 							appThemed
-							icon="backward-step"
+							icon="step-back"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_STEP_BACKWARD | i18n"
 							[disabled]="!store.canStepBackward()"
@@ -76,7 +76,7 @@
 
 						<button
 							appThemed
-							icon="forward-step"
+							icon="step-forward"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_STEP_FORWARD | i18n"
 							[disabled]="!store.canStepForward()"
@@ -85,7 +85,7 @@
 
 						<button
 							appThemed
-							icon="magnifying-glass"
+							icon="free-play"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_FREE_PLAY | i18n"
 							[class.active]="store.isExploring()"
@@ -94,7 +94,7 @@
 
 						<button
 							appThemed
-							icon="one-half"
+							icon="draw-offer"
 							iconSquared
 							[attr.aria-label]="I18n.match.OFFER_DRAW | i18n"
 							[class.active]="'agreed' === store.status()"
@@ -105,7 +105,7 @@
 
 					<button
 						appThemed
-						icon="swords"
+						icon="new-match"
 						iconSquared
 						[attr.aria-label]="I18n.match.NEW_MATCH | i18n"
 						[disabled]="!store.canStartOver()"

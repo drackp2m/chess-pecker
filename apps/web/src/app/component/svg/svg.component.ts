@@ -5,25 +5,19 @@ import { Check } from '@app/util/check';
 const ASPECT_RATIOS: [[number, number], string[]][] = [
 	[
 		[320, 512],
-		['backward-step', 'chevron-left', 'chevron-right', 'forward-step', 'pause'],
+		['chevron-left', 'chevron-right', 'step-back', 'step-forward'],
 	],
 	[
 		[384, 512],
-		['bookmark', 'ghost', 'play', 'stop', 'xmark'],
+		['bookmark', 'close'],
 	],
 	[
 		[448, 512],
-		['chess-board', 'flag', 'flag-hollow', 'rabbit', 'share-nodes', 'trash'],
-	],
-	[[512, 255], ['flashlight']],
-	[[512, 398], ['turtle']],
-	[
-		[576, 512],
-		['delete-left', 'map-location-dot.svg'],
+		['match', 'resign', 'share'],
 	],
 	[
 		[640, 512],
-		['cloud', 'cloud-hollow', 'cloud-arrow-down', 'cloud-arrow-up', 'dice', 'user-plus'],
+		['offline', 'sync'],
 	],
 ];
 

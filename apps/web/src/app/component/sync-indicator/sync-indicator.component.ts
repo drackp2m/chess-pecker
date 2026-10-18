@@ -34,7 +34,7 @@ export class SyncIndicatorComponent {
 		() => 'idle' !== this.phase() || this.showUp() || this.showDown(),
 	);
 
-	protected readonly icon = computed(() => (this.isOffline() ? 'cloud-slash' : 'cloud'));
+	protected readonly icon = computed(() => (this.isOffline() ? 'offline' : 'sync'));
 	protected readonly detail = computed(() => PHASE_DETAILS[this.phase()]);
 
 	protected readonly label = computed(() => {

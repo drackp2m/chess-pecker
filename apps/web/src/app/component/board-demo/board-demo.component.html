@@ -69,7 +69,7 @@
 <div class="flex-row gap-2 justify-center">
 	<button
 		appThemed
-		icon="backward-fast"
+		icon="restart"
 		iconSquared
 		[attr.aria-label]="I18n.common.BOARD_DEMO_RESTART | i18n"
 		(click)="reset()"
@@ -78,7 +78,7 @@
 
 	<button
 		appThemed
-		icon="backward-step"
+		icon="step-back"
 		iconSquared
 		[attr.aria-label]="I18n.common.BOARD_STEP_BACKWARD | i18n"
 		[disabled]="store.isBusy() || !store.canStepBackward()"
@@ -88,7 +88,7 @@
 
 	<button
 		appThemed
-		icon="forward-step"
+		icon="step-forward"
 		iconSquared
 		[attr.aria-label]="I18n.common.BOARD_STEP_FORWARD | i18n"
 		[disabled]="store.isBusy() || !store.canStepForward()"
