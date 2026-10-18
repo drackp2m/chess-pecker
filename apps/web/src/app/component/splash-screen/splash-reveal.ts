@@ -1,6 +1,9 @@
-import { kingOutline, kingPose } from '@app/component/sync-splash/king-outline';
+import type { Box, Point } from '@app/component/splash-screen/geometry';
+import { kingPose } from '@app/component/splash-screen/king-motion';
+import { kingOutline } from '@app/component/splash-screen/king-outline';
 
 const STATUS_MS = 200;
+const HALO_MS = 400;
 const FADE_MS = 1200;
 const ZOOM_MS = 1300;
 const QUIET_MS = 300;
@@ -9,18 +12,9 @@ const KING_NECK = 0.13;
 const KING_WAIST = 0.125;
 const COVER_MARGIN = 1.3;
 
-interface Point {
-	readonly x: number;
-	readonly y: number;
-}
-
-interface Box extends Point {
-	readonly width: number;
-	readonly height: number;
-}
-
 interface SplashParts {
 	readonly backdrop: HTMLElement;
+	readonly halo: HTMLElement;
 	readonly king: HTMLElement;
 	readonly face: HTMLElement;
 	readonly status: HTMLElement;
@@ -48,7 +42,11 @@ export async function revealApp(splash: Element, stage: HTMLElement): Promise<vo
 	const plan = planReveal(parts, stage);
 
 	await Promise.all([
-		settled([fadeOut(parts.status, STATUS_MS), fadeOut(parts.face, FADE_MS)]),
+		settled([
+			fadeOut(parts.status, STATUS_MS),
+			fadeOut(parts.halo, HALO_MS),
+			fadeOut(parts.face, FADE_MS),
+		]),
 		fly(parts, stage, plan),
 	]);
 	stage.style.removeProperty('transform');
@@ -57,15 +55,16 @@ export async function revealApp(splash: Element, stage: HTMLElement): Promise<vo
 
 function partsOf(splash: Element): SplashParts | undefined {
 	const backdrop = splash.querySelector<HTMLElement>('.backdrop');
+	const halo = splash.querySelector<HTMLElement>('.halo');
 	const king = splash.querySelector<HTMLElement>('.king');
 	const face = splash.querySelector<HTMLElement>('.face');
 	const status = splash.querySelector<HTMLElement>('.status');
 
-	if (null === backdrop || null === king || null === face || null === status) {
+	if (null === backdrop || null === halo || null === king || null === face || null === status) {
 		return undefined;
 	}
 
-	return { backdrop, king, face, status };
+	return { backdrop, halo, king, face, status };
 }
 
 function planReveal(parts: SplashParts, stage: HTMLElement): RevealPlan {
@@ -120,6 +119,7 @@ function paint(
 ): void {
 	const drift = stageDrift(plan, progress);
 	const zoom = Math.exp(plan.span * flight(progress));
+	const flown = moved(plan.shift, drift - 1, zoom);
 	const centre = {
 		x: plan.centre.x + plan.shift.x * drift,
 		y: plan.centre.y + plan.shift.y * drift,
@@ -131,7 +131,8 @@ function paint(
 
 	stage.style.transformOrigin = `${px(plan.origin.x)} ${px(plan.origin.y)}`;
 	stage.style.transform = moved(plan.shift, drift, plan.scale ** drift);
-	parts.king.style.transform = moved(plan.shift, drift - 1, zoom);
+	parts.halo.style.transform = flown;
+	parts.king.style.transform = flown;
 	parts.backdrop.style.clipPath = `path('${frameOf(plan)} ${hole}')`;
 }
 

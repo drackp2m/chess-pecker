@@ -3,6 +3,7 @@ import {
 	Component,
 	ElementRef,
 	computed,
+	effect,
 	inject,
 	signal,
 	viewChild,
@@ -11,14 +12,15 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
 
 import { ModalOutletComponent } from '@app/component/modal-outlet/modal-outlet.component';
-import { revealApp } from '@app/component/sync-splash/splash-reveal';
-import { SyncSplashComponent } from '@app/component/sync-splash/sync-splash.component';
+import { revealApp } from '@app/component/splash-screen/splash-reveal';
+import { SplashScreenComponent } from '@app/component/splash-screen/splash-screen.component';
+import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { SyncStore } from '@app/store/sync.store';
 
 @Component({
 	selector: 'app-root',
 	templateUrl: './app.component.html',
-	imports: [RouterOutlet, ReactiveFormsModule, ModalOutletComponent, SyncSplashComponent],
+	imports: [RouterOutlet, ReactiveFormsModule, ModalOutletComponent, SplashScreenComponent],
 	providers: [],
 	host: {
 		'(click)': 'releaseSplash()',
@@ -38,6 +40,22 @@ export class AppComponent {
 	 * wrong. What is left to upload is already here, so it waits for nobody.
 	 */
 	readonly loading = computed(() => !this.sync.isReady() || this.isSplashHeld());
+
+	constructor() {
+		effect((onCleanup) => {
+			if (!this.sync.isReady()) {
+				return;
+			}
+
+			const linger = setTimeout(() => {
+				this.isSplashHeld.set(false);
+			}, SyncPolicy.splashLingerMs);
+
+			onCleanup(() => {
+				clearTimeout(linger);
+			});
+		});
+	}
 
 	protected reveal(event: AnimationCallbackEvent): void {
 		void revealApp(event.target, this.stage().nativeElement).finally(() => {

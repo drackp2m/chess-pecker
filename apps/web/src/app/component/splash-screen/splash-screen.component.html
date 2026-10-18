@@ -1,21 +1,27 @@
 <div class="backdrop"></div>
 
-<section class="sync-splash flex-col gap-6 align-center justify-center p-4" role="status">
-	<div class="king" aria-hidden="true">
-		<div #face class="face">
-			<div class="sheen"></div>
+<section class="splash-screen flex-col gap-10 align-center justify-center p-4" role="status">
+	<div class="piece" aria-hidden="true">
+		<canvas #halo class="halo"></canvas>
+
+		<div class="king">
+			<div #face class="face">
+				<div class="sheen"></div>
+
+				<canvas #shading class="shading"></canvas>
+			</div>
 		</div>
 	</div>
 
 	<div class="status flex-col gap-3 align-center">
 		<p class="fs-lg text-center">{{ message() | i18n }}</p>
 
-		@if (sync.error(); as failure) {
-			<p class="fs-sm text-center color-contrast-mid">{{ failure.key | i18n: failure.params }}</p>
-		}
+		<ul class="notes flex-col gap-1 fs-sm text-center color-contrast-mid">
+			@if (sync.error(); as failure) {
+				<li>{{ failure.key | i18n: failure.params }}</li>
+			}
 
-		@if (showDetail()) {
-			<ul class="detail flex-col gap-1 fs-sm text-center color-contrast-mid">
+			@if (showDetail()) {
 				@if (sync.hasPending()) {
 					<li>{{ I18n.common.SYNC_UPLOADING | i18n: { pending: sync.pending() } }}</li>
 				}
@@ -32,7 +38,7 @@
 						}}
 					</li>
 				}
-			</ul>
-		}
+			}
+		</ul>
 	</div>
 </section>

@@ -9,7 +9,10 @@ import {
 	viewChild,
 } from '@angular/core';
 
-import { traceKingOutline } from '@app/component/sync-splash/king-outline';
+import { kingHalo } from '@app/component/splash-screen/king-halo';
+import { animateKing } from '@app/component/splash-screen/king-motion';
+import { kingClip } from '@app/component/splash-screen/king-outline';
+import { kingShadow } from '@app/component/splash-screen/king-shadow';
 import { SYNC_PHASE_LABEL } from '@app/definition/sync-phase.type';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { I18n } from '@app/i18n';
@@ -22,12 +25,12 @@ import { WatchedDelay } from '@app/util/watched-delay';
  * long enough not to be a flicker: the normal case, nothing pending, shows nothing.
  */
 @Component({
-	selector: 'app-sync-splash',
-	templateUrl: './sync-splash.component.html',
-	styleUrl: './sync-splash.component.scss',
+	selector: 'app-splash-screen',
+	templateUrl: './splash-screen.component.html',
+	styleUrl: './splash-screen.component.scss',
 	imports: [I18nPipe],
 })
-export class SyncSplashComponent implements OnDestroy {
+export class SplashScreenComponent implements OnDestroy {
 	protected readonly I18n = I18n;
 
 	protected readonly sync = inject(SyncStore);
@@ -50,6 +53,10 @@ export class SyncSplashComponent implements OnDestroy {
 
 	private readonly face = viewChild.required<ElementRef<HTMLElement>>('face');
 
+	private readonly halo = viewChild.required<ElementRef<HTMLCanvasElement>>('halo');
+
+	private readonly shading = viewChild.required<ElementRef<HTMLCanvasElement>>('shading');
+
 	// The delay counts only the time the tab is visible, which is the only time the user has
 	// spent waiting.
 	private readonly delay = new WatchedDelay();
@@ -62,7 +69,13 @@ export class SyncSplashComponent implements OnDestroy {
 		document.addEventListener('visibilitychange', this.onVisibilityChange);
 
 		afterNextRender(() => {
-			traceKingOutline(this.face().nativeElement);
+			const face = this.face().nativeElement;
+
+			animateKing(face, [
+				kingClip(face),
+				kingHalo(this.halo().nativeElement),
+				kingShadow(this.shading().nativeElement),
+			]);
 		});
 	}
 

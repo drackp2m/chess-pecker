@@ -1,31 +1,24 @@
+import type { Point } from '@app/component/splash-screen/geometry';
+import { bodyWeight, crossEdge, crossSection } from '@app/component/splash-screen/king-cross';
+import { whenChanged } from '@app/component/splash-screen/king-motion';
+import type { KingFrame, KingPainter, KingPose } from '@app/component/splash-screen/king-motion';
+
 const KING_WIDTH = 268;
-const KING_HEIGHT = 666;
+export const KING_HEIGHT = 666;
 const KING_AXIS = KING_WIDTH / 2;
 const KING_MIDDLE = KING_HEIGHT / 2;
 const KING_PROFILE =
 	'M134 0C138.4 0.5 145.3 1 147.2 1.5C151 2.5 152.3 3.5 153.8 4.5C156.2 6.2 156.6 7.8 159 9.5C160.5 10.5 164.8 11.5 165.9 12.5C168 14.5 169.8 16.5 169.8 18.5C169.8 20.2 169.1 21.8 168.6 23.5C167.9 25.8 164.8 28.2 164.8 30.5C164.8 31.2 165.2 31.8 165.6 32.5C166.5 34.2 171.1 35.8 174.9 37.5C177.9 38.8 184.6 40.2 186.4 41.5C188.1 42.8 189.7 44.2 189.8 45.5C190 54.5 190 63.5 190 72.5C190 74.2 188.4 75.8 186.9 77.5C184.4 80.5 173.8 83.5 172.5 86.5C172.2 87.2 171.9 87.8 171.9 88.5C171.9 90.5 174.3 92.5 174.3 94.5C174.3 96.2 172.1 97.8 172.1 99.5C172.1 100.2 172.3 100.8 172.5 101.5C172.8 102.5 174.3 103.5 175.8 104.5C176.8 105.2 179.4 105.8 180.2 106.5C182.8 108.5 182.6 110.5 185.1 112.5C188.1 114.8 201.7 117.2 207 119.5C213.1 122.2 217.6 124.8 221.2 127.5C223.4 129.2 225.8 130.8 226.6 132.5C227.5 134.2 228.3 135.8 228.3 137.5C228.3 138.8 228.2 140.2 228.2 141.5C228.1 143.8 226.4 146.2 225.4 148.5C214.8 172.8 194.1 197.2 187.4 221.5C187.2 222.2 186.9 222.8 186.9 223.5C186.9 225.2 188.9 226.8 188.9 228.5C188.9 230.5 184.7 232.5 184.7 234.5C184.5 238.2 184.5 241.8 184.5 245.5C184.5 247.8 184.8 250.2 186 252.5C186.3 253.2 194.5 253.8 196.6 254.5C200.9 255.8 203.4 257.2 205.2 258.5C207.5 260.2 209.1 261.8 210.1 263.5C211.4 265.5 211.4 267.5 212.9 269.5C213.9 270.8 215.1 272.2 218.8 273.5C219.8 273.8 224.9 274.2 225.7 274.5C229.9 276.2 230.9 277.8 232.1 279.5C232.7 280.5 233.5 281.5 233.5 282.5C233.5 284.2 231.8 285.8 230.2 287.5C228.6 289.2 226 290.8 221.3 292.5C219.5 293.2 216.2 293.8 211.6 294.5C206.9 295.2 188.9 295.8 187.4 296.5C184.3 297.8 183 299.2 182.8 300.5C180.5 318.8 180.1 337.2 180.1 355.5C180.1 366.2 180.6 376.8 181.1 387.5C181.7 402.8 183.8 418.2 186.1 433.5C187.5 442.8 189.8 452.2 192.2 461.5C194.6 470.8 195.8 480.2 201.1 489.5C201.9 490.8 203.6 492.2 205.5 493.5C207.3 494.8 212.1 496.2 213.6 497.5C214.7 498.5 215.8 499.5 215.9 500.5C216.2 502.2 216.3 503.8 216.3 505.5C216.3 508.8 214.1 512.2 214.1 515.5C214.1 519.5 215.4 523.5 216.7 527.5C218.6 533.5 224.7 539.5 229.5 545.5C238.1 556.2 252.5 566.8 259.8 577.5C261.9 580.5 264.2 583.5 265.1 586.5C266 589.8 267 593.2 267 596.5C267 600.2 267 603.8 266.9 607.5C266.8 609.5 264.6 611.5 264.6 613.5C264.6 616.5 268 619.5 268 622.5C268 635.2 268 647.8 268 660.5C268 661.8 267.6 663.2 266.9 664.5C266.7 665 265.6 665.5 265 666';
 const SAMPLE_PX = 4;
 const SWEEP_STEP = Math.PI / 36;
-const CROSS_DEPTH = 24;
-const CROSS_FROM = 100;
-const CROSS_TO = 112;
-const CROSS_FACING = (45 * Math.PI) / 180;
-const CROSS_ROUNDNESS = 1.2;
-const SPIN_MS = 8000;
-const WOBBLE = (10 * Math.PI) / 180;
 const EYE_DISTANCE = 2000;
 const UNTANGLE_REACH = 120;
-
-interface Point {
-	readonly x: number;
-	readonly y: number;
-}
 
 type Curve = readonly [Point, Point, Point, Point];
 
 type Weights = readonly [number, number, number, number];
 
-interface ProfilePoint {
+export interface ProfilePoint {
 	readonly r: number;
 	readonly y: number;
 	readonly nr: number;
@@ -39,9 +32,9 @@ interface Rim {
 	readonly body: number;
 }
 
-interface Solid {
-	readonly x: number;
-	readonly z: number;
+interface Traced {
+	readonly pose: KingPose;
+	readonly points: Point[];
 }
 
 interface Crossing {
@@ -49,26 +42,12 @@ interface Crossing {
 	readonly point: Point;
 }
 
-export interface KingPose {
-	readonly turn: number;
-	readonly lean: number;
-	readonly pitch: number;
-}
+export const PROFILE = sampleProfile(KING_PROFILE);
 
-export const KING_REST: KingPose = { turn: 0, lean: 0, pitch: 0 };
-
-const PROFILE = sampleProfile(KING_PROFILE);
-
-let traced: { readonly pose: KingPose; readonly points: Point[] } | undefined;
-
-export function kingPose(now: number): KingPose {
-	const turn = ((2 * Math.PI * now) / SPIN_MS) % (2 * Math.PI);
-
-	return { turn, lean: WOBBLE * Math.cos(turn), pitch: WOBBLE * Math.sin(turn) };
-}
+let traced: Traced | undefined;
 
 export function kingContour(pose: KingPose, place: (point: Point) => Point): Point[] {
-	return outlineOf(pose).map(place);
+	return outlineOf(pose).points.map(place);
 }
 
 export function kingOutline(pose: KingPose, place: (point: Point) => Point): string {
@@ -77,41 +56,21 @@ export function kingOutline(pose: KingPose, place: (point: Point) => Point): str
 	return `M${points.join('L')}Z`;
 }
 
-export function traceKingOutline(face: HTMLElement): void {
-	const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-	let drawn = '';
+export function kingClip(face: HTMLElement): KingPainter {
+	return whenChanged(({ pose, width, height }: KingFrame) => {
+		const outline = kingOutline(pose, (point) => ({ x: point.x * width, y: point.y * height }));
 
-	const trace = (now: number): void => {
-		if (!face.isConnected) {
-			return;
-		}
-
-		const pose = still ? KING_REST : kingPose(now);
-		const { offsetWidth: width, offsetHeight: height } = face;
-		const key = [pose.turn, pose.lean, pose.pitch, width, height].join(' ');
-
-		if (key !== drawn) {
-			drawn = key;
-			face.style.clipPath = `path('${kingOutline(pose, (point) => scaled(point, width, height))}')`;
-		}
-
-		requestAnimationFrame(trace);
-	};
-
-	trace(performance.now());
+		face.style.clipPath = `path('${outline}')`;
+	});
 }
 
-function scaled(point: Point, width: number, height: number): Point {
-	return { x: point.x * width, y: point.y * height };
-}
-
-function outlineOf(pose: KingPose): Point[] {
+function outlineOf(pose: KingPose): Traced {
 	if (
 		traced?.pose.turn === pose.turn &&
 		traced.pose.lean === pose.lean &&
 		traced.pose.pitch === pose.pitch
 	) {
-		return traced.points;
+		return traced;
 	}
 
 	const rims = sweep(PROFILE.map((point) => rimOf(point, pose)));
@@ -121,7 +80,25 @@ function outlineOf(pose: KingPose): Point[] {
 
 	traced = { pose, points };
 
-	return points;
+	return traced;
+}
+
+export function profileAt(y: number): ProfilePoint {
+	const gap = (point: ProfilePoint): number => Math.abs(point.y - y);
+	const nowhere: ProfilePoint = { r: 0, y: Number.POSITIVE_INFINITY, nr: 1, ny: 0 };
+
+	return PROFILE.reduce((best, point) => (gap(point) < gap(best) ? point : best), nowhere);
+}
+
+export function surface(point: ProfilePoint, theta: number, pose: KingPose): Point {
+	const height = point.y - KING_MIDDLE;
+	const { x, z } = crossSection(point.r, point.y, theta, pose);
+	const lift = bodyWeight(point.y) * point.r * Math.sin(theta);
+
+	return {
+		x: x * perspective(height, z, pose),
+		y: (height * Math.cos(pose.pitch) + lift * Math.sin(pose.pitch)) * perspective(height, 0, pose),
+	};
 }
 
 function rimOf(point: ProfilePoint, pose: KingPose): Rim {
@@ -130,13 +107,7 @@ function rimOf(point: ProfilePoint, pose: KingPose): Rim {
 	return { r: point.r, y: point.y, phi: body * contour(point, pose.pitch), body };
 }
 
-function bodyWeight(y: number): number {
-	const t = Math.min(1, Math.max(0, (y - CROSS_FROM) / (CROSS_TO - CROSS_FROM)));
-
-	return t * t * (3 - 2 * t);
-}
-
-function contour(point: ProfilePoint, pitch: number): number {
+export function contour(point: ProfilePoint, pitch: number): number {
 	const lift = Math.tan(pitch);
 
 	if (0 === lift) {
@@ -172,7 +143,7 @@ function sweep(rims: Rim[]): Rim[] {
 function project(rim: Rim, pose: KingPose, side: number): Point {
 	const height = rim.y - KING_MIDDLE;
 	const body = { x: side * rim.r * Math.cos(rim.phi), z: rim.r * Math.sin(rim.phi) };
-	const cross = crossEdge(rim, pose, side);
+	const cross = crossEdge(rim.r, pose, side);
 	const x = rim.body * body.x + (1 - rim.body) * cross.x;
 	const z = rim.body * body.z + (1 - rim.body) * cross.z;
 	const lift = rim.body * body.z * Math.sin(pose.pitch);
@@ -183,28 +154,13 @@ function project(rim: Rim, pose: KingPose, side: number): Point {
 	};
 }
 
-function crossEdge(rim: Rim, pose: KingPose, side: number): Solid {
-	const turn = pose.turn - CROSS_FACING;
-	const cos = Math.cos(turn);
-	const sin = Math.sin(turn);
-	const depth = Math.min(rim.r, CROSS_DEPTH);
-	const across = Math.abs(rim.r * cos) ** CROSS_ROUNDNESS;
-	const deep = Math.abs(depth * sin) ** CROSS_ROUNDNESS;
-	const ellipse = Math.hypot(rim.r * cos, depth * sin);
-
-	return {
-		x: side * (across + deep) ** (1 / CROSS_ROUNDNESS),
-		z: 0 < ellipse ? (side * (rim.r ** 2 - depth ** 2) * sin * cos) / ellipse : 0,
-	};
-}
-
 function perspective(height: number, z: number, pose: KingPose): number {
 	const depth = z * Math.cos(pose.pitch) - height * Math.sin(pose.pitch);
 
 	return EYE_DISTANCE / (EYE_DISTANCE - depth);
 }
 
-function lean(point: Point, pose: KingPose): Point {
+export function lean(point: Point, pose: KingPose): Point {
 	const cos = Math.cos(pose.lean);
 	const sin = Math.sin(pose.lean);
 
