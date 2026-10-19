@@ -1,6 +1,7 @@
-import type { UpsertUserSettingRequest } from '@chesspecker/api-definitions';
+import type { UpsertUserSettingRequestParsed } from '@chesspecker/api-definitions';
 import { Inject, Injectable } from '@nestjs/common';
 
+import { clampToNow } from '../../../shared/util/clamp-to-now';
 import { User } from '../../user/user.entity';
 import { UserSetting } from '../user-setting.entity';
 import { UserSettingRepository } from '../user-setting.repository';
@@ -15,10 +16,15 @@ export class UpsertUserSettingUseCase {
 	async execute(
 		user: User,
 		key: string,
-		upsertRequest: UpsertUserSettingRequest,
+		upsertRequest: UpsertUserSettingRequestParsed,
 	): Promise<UserSetting> {
 		return this.userSettingRepository.upsertByKey(
-			new UserSetting({ user, key, value: { value: upsertRequest.value } }),
+			new UserSetting({
+				user,
+				key,
+				value: { value: upsertRequest.value },
+				updatedAt: clampToNow(upsertRequest.updatedAt),
+			}),
 		);
 	}
 }

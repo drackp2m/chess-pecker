@@ -30,17 +30,16 @@ export class TimezoneService {
 	readonly selectedTimezone = this.timezone.asReadonly();
 
 	constructor() {
-		const waitForSetting = effect(() => {
-			const settings = this.settingStore.settingEntities();
+		effect(() => {
+			const settings = this.settingStore.arrived();
 
-			if (this.settingStore.isLoading()) {
+			if (null === settings) {
 				return;
 			}
 
 			const setting = settings.find((item) => 'TIMEZONE' === item.type);
 
 			this.timezone.set(normalizeTimezone(setting?.payload));
-			waitForSetting.destroy();
 		});
 	}
 

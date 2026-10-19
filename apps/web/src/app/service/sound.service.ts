@@ -52,15 +52,14 @@ export class SoundService {
 	private lastVariant: number | undefined = undefined;
 
 	constructor() {
-		const waitForSetting = effect(() => {
-			const settings = this.settingStore.settingEntities();
+		effect(() => {
+			const settings = this.settingStore.arrived();
 
-			if (this.settingStore.isLoading()) {
+			if (null === settings) {
 				return;
 			}
 
 			this.current.set(normalizeSoundEnabled(this.stored(settings)?.payload));
-			waitForSetting.destroy();
 		});
 
 		this.preload();

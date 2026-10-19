@@ -1,5 +1,5 @@
 import { upsertUserSettingRequestSchema } from '@chesspecker/api-definitions';
-import type { UpsertUserSettingRequest } from '@chesspecker/api-definitions';
+import type { UpsertUserSettingRequestParsed } from '@chesspecker/api-definitions';
 import {
 	Body,
 	Controller,
@@ -40,7 +40,8 @@ export class UserSettingController {
 	async upsert(
 		@CurrentUser() user: User,
 		@Param('key') key: string,
-		@Body({ schema: upsertUserSettingRequestSchema }) upsertRequest: UpsertUserSettingRequest,
+		@Body({ schema: upsertUserSettingRequestSchema })
+		upsertRequest: UpsertUserSettingRequestParsed,
 	): Promise<UserSetting> {
 		return this.upsertUserSettingUseCase.execute(user, key, upsertRequest);
 	}

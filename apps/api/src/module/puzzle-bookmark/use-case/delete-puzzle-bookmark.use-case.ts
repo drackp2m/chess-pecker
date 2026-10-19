@@ -1,10 +1,10 @@
 import type { DeletePuzzleBookmarkRequestParsed } from '@chesspecker/api-definitions';
 import { Inject, Injectable } from '@nestjs/common';
 
+import { clampToNow } from '../../../shared/util/clamp-to-now';
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { User } from '../../user/user.entity';
 import { PuzzleBookmarkRepository } from '../puzzle-bookmark.repository';
-import { clampToNow } from '../util/puzzle-bookmark.util';
 
 @Injectable()
 export class DeletePuzzleBookmarkUseCase {

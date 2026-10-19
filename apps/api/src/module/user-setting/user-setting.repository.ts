@@ -10,9 +10,7 @@ export class UserSettingRepository extends CustomRepository<UserSetting> {
 	async upsertByKey(setting: UserSetting): Promise<UserSetting> {
 		// The data goes in explicitly and not as an instance: from an entity the EntityManager
 		// has never seen, `upsert` reads no fields and sends an empty insert.
-		const entityManager = this.entityManager.fork();
-
-		await entityManager.upsert(
+		await this.entityManager.fork().upsert(
 			UserSetting,
 			{
 				uuid: setting.uuid,
@@ -25,10 +23,11 @@ export class UserSettingRepository extends CustomRepository<UserSetting> {
 			{
 				onConflictFields: ['user', 'key'],
 				onConflictMergeFields: ['value', 'updatedAt'],
+				onConflictWhere: { updatedAt: { $lte: setting.updatedAt } },
 			},
 		);
 
-		return entityManager.findOneOrFail(UserSetting, {
+		return this.entityManager.fork().findOneOrFail(UserSetting, {
 			user: setting.user,
 			key: setting.key,
 		});

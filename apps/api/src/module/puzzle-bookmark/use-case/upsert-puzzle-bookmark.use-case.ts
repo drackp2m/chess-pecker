@@ -4,12 +4,13 @@ import type {
 } from '@chesspecker/api-definitions';
 import { Inject, Injectable } from '@nestjs/common';
 
+import { clampToNow } from '../../../shared/util/clamp-to-now';
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { User } from '../../user/user.entity';
 import { PuzzleBookmarkType } from '../definition/puzzle-bookmark-type.enum';
 import { PuzzleBookmark } from '../puzzle-bookmark.entity';
 import { PuzzleBookmarkRepository } from '../puzzle-bookmark.repository';
-import { clampToNow, presentBookmark } from '../util/puzzle-bookmark.util';
+import { presentBookmark } from '../util/puzzle-bookmark.util';
 
 @Injectable()
 export class UpsertPuzzleBookmarkUseCase {

@@ -1,4 +1,4 @@
-import { clampToNow } from './puzzle-bookmark.util';
+import { clampToNow } from './clamp-to-now';
 
 const NOW = new Date('2026-08-03T10:00:00.000Z');
 

@@ -1,6 +1,5 @@
 import type { PuzzleBookmark as PuzzleBookmarkResponse } from '@chesspecker/api-definitions';
 
-import { GenerateNowDateUseCase } from '../../../shared/use-case/generate-now-date.use-case';
 import { toIsoDate } from '../../../shared/util/to-iso-date';
 import { PuzzleBookmark } from '../puzzle-bookmark.entity';
 
@@ -21,10 +20,4 @@ export function presentBookmark(
 		createdAt: toIsoDate(bookmark.createdAt),
 		updatedAt: toIsoDate(bookmark.updatedAt),
 	};
-}
-
-export function clampToNow(updatedAt?: Date): Date {
-	const now = new GenerateNowDateUseCase().execute();
-
-	return undefined === updatedAt || updatedAt > now ? now : updatedAt;
 }

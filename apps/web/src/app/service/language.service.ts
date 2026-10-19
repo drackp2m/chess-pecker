@@ -1,4 +1,4 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { TranslocoService } from '@jsverse/transloco';
 import { firstValueFrom, forkJoin } from 'rxjs';
 
@@ -19,6 +19,8 @@ export class LanguageService {
 
 	private requestedLanguage: Language = DEFAULT_LANGUAGE;
 
+	private isSettled = false;
+
 	readonly selectedLanguage = computed(() => this.language());
 
 	/** Resolves once the stored setting decided the language the user actually reads in. */
@@ -29,15 +31,16 @@ export class LanguageService {
 	constructor() {
 		this.applyLanguage();
 
-		const waitForSetting = effect(() => {
-			if (this.settingStore.isLoading()) {
+		effect(() => {
+			const settings = this.settingStore.arrived();
+
+			if (null === settings) {
 				return;
 			}
 
-			this.setLanguageFromSettings();
-			this.settle();
-
-			waitForSetting.destroy();
+			untracked(() => {
+				this.restoreLanguage(settings);
+			});
 		});
 	}
 
@@ -96,15 +99,27 @@ export class LanguageService {
 		}
 	}
 
-	private setLanguageFromSettings(): void {
-		const setting = this.settingStore
-			.settingEntities()
-			.find((setting) => 'LANGUAGE' === setting.type);
+	private restoreLanguage(settings: readonly Setting[]): void {
+		const language = this.readLanguage(settings);
 
-		this.setLanguage(
-			undefined === setting?.payload
-				? normalizeLanguage(navigator.language)
-				: normalizeLanguage(setting.payload),
-		);
+		if (!this.isSettled) {
+			this.setLanguage(language);
+			this.isSettled = true;
+			this.settle();
+
+			return;
+		}
+
+		if (language !== this.language()) {
+			void this.updateSelectedLanguage(language, false);
+		}
+	}
+
+	private readLanguage(settings: readonly Setting[]): Language {
+		const setting = settings.find((setting) => 'LANGUAGE' === setting.type);
+
+		return undefined === setting?.payload
+			? normalizeLanguage(navigator.language)
+			: normalizeLanguage(setting.payload);
 	}
 }

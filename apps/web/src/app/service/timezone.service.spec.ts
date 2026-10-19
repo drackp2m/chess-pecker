@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,9 +20,12 @@ function timezoneSetting(payload: unknown): Setting {
 }
 
 function configure(settings: readonly Setting[] = [], isLoading = false) {
+	const settingEntities = signal(settings);
+	const loading = signal(isLoading);
 	const store = {
-		settingEntities: signal(settings),
-		isLoading: signal(isLoading),
+		settingEntities,
+		isLoading: loading,
+		arrived: computed(() => (loading() ? null : settingEntities())),
 		save: vi.fn<(item: Setting) => void>(),
 	};
 

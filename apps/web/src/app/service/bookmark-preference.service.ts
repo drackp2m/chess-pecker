@@ -22,17 +22,16 @@ export class BookmarkPreferenceService {
 	readonly isPromptEnabled = this.prompt.asReadonly();
 
 	constructor() {
-		const waitForSetting = effect(() => {
-			const settings = this.settingStore.settingEntities();
+		effect(() => {
+			const settings = this.settingStore.arrived();
 
-			if (this.settingStore.isLoading()) {
+			if (null === settings) {
 				return;
 			}
 
 			const stored = settings.find((setting) => 'BOOKMARK_PROMPT' === setting.type)?.payload;
 
 			this.prompt.set(normalizeBookmarkPrompt(stored));
-			waitForSetting.destroy();
 		});
 	}
 

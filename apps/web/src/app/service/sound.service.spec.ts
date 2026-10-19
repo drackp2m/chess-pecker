@@ -108,7 +108,11 @@ describe('SoundService', () => {
 			providers: [
 				{
 					provide: SettingStore,
-					useValue: { settingEntities: signal([]), isLoading: signal(false) },
+					useValue: {
+						settingEntities: signal([]),
+						isLoading: signal(false),
+						arrived: signal([]),
+					},
 				},
 			],
 		});
