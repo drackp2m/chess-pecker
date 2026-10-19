@@ -18,6 +18,7 @@ import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.se
 import { MatchStore } from '@app/page/match/store/match.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { AnalysisPreferenceService } from '@app/service/analysis-preference.service';
+import { PageLoadStore } from '@app/store/page-load.store';
 
 @Component({
 	templateUrl: './match.page.html',
@@ -48,6 +49,7 @@ export class MatchPage implements OnInit {
 	readonly stockfishEloLevels = STOCKFISH_ELO_LEVELS;
 
 	private readonly analysisPreference = inject(AnalysisPreferenceService);
+	private readonly pageLoad = inject(PageLoadStore);
 
 	readonly fenDraft = signal('');
 
@@ -87,7 +89,7 @@ export class MatchPage implements OnInit {
 	);
 
 	ngOnInit(): void {
-		void this.persistence.open();
+		void this.pageLoad.track(this.persistence.open());
 	}
 
 	playAs(color: PieceColor): void {

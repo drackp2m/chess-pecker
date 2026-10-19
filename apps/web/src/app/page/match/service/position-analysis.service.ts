@@ -2,12 +2,13 @@ import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 
 import { ChessPosition } from '@app/definition/chess.type';
 import { EngineEvaluation, readEvaluation } from '@app/page/match/service/engine-evaluation';
-import { STOCKFISH_URL, UciEngine } from '@app/page/match/service/uci-engine';
+import { STOCKFISH_URL, UciEngine, UciGame, uciPosition } from '@app/page/match/service/uci-engine';
 import { ChessFen } from '@app/util/chess/chess-fen';
 
 interface AnalysisRequest {
 	readonly position: ChessPosition;
 	readonly fen: string;
+	readonly command: string;
 	readonly depth: number;
 	readonly key: string;
 }
@@ -46,9 +47,16 @@ export class PositionAnalysisService {
 		});
 	}
 
-	analyse(position: ChessPosition, depth: number): void {
+	analyse(game: UciGame, position: ChessPosition, depth: number): void {
 		const fen = ChessFen.serialize(position);
-		const request: AnalysisRequest = { position, fen, depth, key: `${String(depth)} ${fen}` };
+		const command = uciPosition(game);
+		const request: AnalysisRequest = {
+			position,
+			fen,
+			command,
+			depth,
+			key: `${String(depth)} ${command}`,
+		};
 
 		if (request.key === this.wanted) {
 			return;
@@ -128,6 +136,7 @@ export class PositionAnalysisService {
 	private take(): AnalysisRequest | undefined {
 		this.current = this.queued;
 		this.queued = undefined;
+		this.wasStopped = false;
 		this.release();
 
 		return this.current;
@@ -137,12 +146,11 @@ export class PositionAnalysisService {
 		this.ready ??= this.engine.send('uci').then(() => this.engine.send('isready'));
 		await this.ready;
 
-		if (request.key !== this.wanted) {
+		await this.engine.send(request.command);
+
+		if (this.isStopped() || request.key !== this.wanted) {
 			return;
 		}
-
-		this.wasStopped = false;
-		await this.engine.send(`position fen ${request.fen}`);
 
 		const lines = await this.engine.send(`go depth ${String(request.depth)}`, (info) => {
 			this.publish(request, info);
@@ -152,9 +160,13 @@ export class PositionAnalysisService {
 			undefined,
 		);
 
-		if (undefined !== deepest) {
+		if (undefined !== deepest && !this.isStopped()) {
 			this.results.set(request.key, deepest);
 		}
+	}
+
+	private isStopped(): boolean {
+		return this.wasStopped;
 	}
 
 	private publish(request: AnalysisRequest, info: string): void {

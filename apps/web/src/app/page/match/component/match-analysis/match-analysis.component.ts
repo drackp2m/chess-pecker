@@ -101,7 +101,14 @@ export class MatchAnalysisComponent {
 	constructor() {
 		effect(() => {
 			if (this.isGaugeShown() && 'playing' === this.status()) {
-				this.analysis.analyse(this.store.position(), this.preference.depth());
+				const line = this.store.line();
+				const position = this.store.position();
+				const game = {
+					start: line.positions[0] ?? position,
+					moves: line.moves.slice(0, line.cursor),
+				};
+
+				this.analysis.analyse(game, position, this.preference.depth());
 			} else {
 				this.analysis.halt();
 			}

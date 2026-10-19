@@ -2,10 +2,16 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ChessPosition } from '@app/definition/chess.type';
 import { DEFAULT_MOVE_SPEED } from '@app/definition/move-speed.type';
 import { I18n } from '@app/i18n';
+import { StockfishOpponentService } from '@app/page/match/service/stockfish-opponent.service';
+import type { StockfishElo } from '@app/page/match/service/stockfish-opponent.service';
+import { UciGame } from '@app/page/match/service/uci-engine';
 import { MatchStore } from '@app/page/match/store/match.store';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
+import { ChessFen } from '@app/util/chess/chess-fen';
+import { ChessNotation } from '@app/util/chess/chess-notation';
 
 /** Long enough for both beats: the machine thinks, lights its piece up, then moves. */
 const OPPONENT_DELAY = 1500;
@@ -353,5 +359,138 @@ describe('MatchStore', () => {
 		expect(store.status()).toBe('playing');
 		expect(store.isPlayerTurn()).toBe(true);
 		expect(store.fen()).toBe(fen);
+	});
+});
+
+describe('MatchStore against Stockfish', () => {
+	const AFTER_E4 = 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1';
+
+	function createStockfishStore() {
+		const stockfish = {
+			newGame: vi.fn(),
+			chooseNotation: vi.fn((_game: UciGame, _position: ChessPosition, _elo: StockfishElo) =>
+				Promise.resolve<string | undefined>('e7e5'),
+			),
+		};
+
+		TestBed.configureTestingModule({
+			providers: [
+				MatchStore,
+				{ provide: BoardPreferenceService, useValue: { moveSpeed: signal(DEFAULT_MOVE_SPEED) } },
+				{ provide: StockfishOpponentService, useValue: stockfish },
+			],
+		});
+
+		const store = TestBed.inject(MatchStore);
+
+		store.setOpponentModel('stockfish');
+
+		return { store, stockfish };
+	}
+
+	function sentMoves(stockfish: ReturnType<typeof createStockfishStore>['stockfish']): string[] {
+		const game = stockfish.chooseNotation.mock.calls.at(-1)?.[0];
+
+		return (game?.moves ?? []).map((move) => ChessNotation.describeLong(move));
+	}
+
+	beforeEach(() => {
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		TestBed.resetTestingModule();
+	});
+
+	it('asks for a reply with every move played since the game started', async () => {
+		const { store, stockfish } = createStockfishStore();
+
+		store.startMatch('white');
+		store.playNotation('e4');
+		await vi.advanceTimersByTimeAsync(OPPONENT_DELAY);
+
+		expect(stockfish.chooseNotation).toHaveBeenCalledTimes(1);
+		expect(stockfish.chooseNotation.mock.calls[0]?.[0].start).toEqual(ChessFen.initial());
+		expect(sentMoves(stockfish)).toEqual(['e2e4']);
+		expect(store.moves().map((move) => move.san)).toEqual(['e4', 'e5']);
+
+		store.playNotation('Nf3');
+		await vi.advanceTimersByTimeAsync(OPPONENT_DELAY);
+
+		expect(sentMoves(stockfish)).toEqual(['e2e4', 'e7e5', 'g1f3']);
+	});
+
+	it('leaves out the moves a takeback dropped', async () => {
+		const { store, stockfish } = createStockfishStore();
+
+		store.startMatch('white');
+		store.playNotation('e4');
+		await vi.advanceTimersByTimeAsync(OPPONENT_DELAY);
+		store.stepBackward();
+		store.stepBackward();
+		store.selectSquare('d2');
+		store.selectSquare('d4');
+		await vi.advanceTimersByTimeAsync(OPPONENT_DELAY);
+
+		expect(sentMoves(stockfish)).toEqual(['d2d4']);
+	});
+
+	it('starts from the loaded position, not from the usual one', async () => {
+		const { store, stockfish } = createStockfishStore();
+
+		store.loadPosition(AFTER_E4);
+		store.playNotation('e5');
+		await vi.advanceTimersByTimeAsync(OPPONENT_DELAY);
+
+		const start = stockfish.chooseNotation.mock.calls[0]?.[0].start;
+
+		expect(undefined === start ? undefined : ChessFen.serialize(start)).toBe(AFTER_E4);
+		expect(sentMoves(stockfish)).toEqual(['e7e5']);
+	});
+
+	it('tells the engine whenever a different game begins', () => {
+		const { store, stockfish } = createStockfishStore();
+
+		store.startMatch('white');
+
+		expect(stockfish.newGame).toHaveBeenCalledTimes(1);
+
+		store.playNotation('e4');
+		const snapshot = store.snapshot();
+
+		store.newMatch();
+
+		expect(stockfish.newGame).toHaveBeenCalledTimes(2);
+
+		store.loadPosition(AFTER_E4);
+
+		expect(stockfish.newGame).toHaveBeenCalledTimes(3);
+
+		store.restore(snapshot);
+
+		expect(stockfish.newGame).toHaveBeenCalledTimes(4);
+	});
+
+	it('drops a reply that arrives for a game that is already over', async () => {
+		const answers: ((move: string | undefined) => void)[] = [];
+		const { store, stockfish } = createStockfishStore();
+
+		stockfish.chooseNotation.mockImplementationOnce(
+			() =>
+				new Promise<string | undefined>((resolve) => {
+					answers.push(resolve);
+				}),
+		);
+
+		store.startMatch('white');
+		store.playNotation('e4');
+		await vi.advanceTimersByTimeAsync(OPPONENT_DELAY);
+		store.newMatch();
+		answers[0]?.('e7e5');
+		await vi.advanceTimersByTimeAsync(OPPONENT_DELAY);
+
+		expect(store.moves()).toHaveLength(0);
+		expect(store.notationError()).toBeUndefined();
 	});
 });

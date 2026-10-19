@@ -1,0 +1,204 @@
+@use 'sass:list';
+@use 'sass:math';
+
+$king-red: rgb(238 8 48);
+$king-purple: rgb(137 21 223);
+$king-aspect: math.div(268, 666);
+$king-wobble-room: 0.12;
+
+$light-amber: rgb(214 130 0);
+$light-gold: rgb(255 190 60);
+$light-pale: rgb(255 234 160);
+
+$sheen-spin: 12s;
+$sheen-from: 5%;
+$sheen-to: 95%;
+$sheen-origin: 45deg;
+$sheen-size: 3;
+
+$shade-color: rgb(40 0 60);
+$shade-opacity: 0.15;
+$shade-room: 0.15;
+
+$status-notes: 4;
+
+$halo-settings: (
+	rays: '<integer>' 96,
+	ray-width: '<number>' 0.012,
+	start: '<number>' 0,
+	reach-min: '<number>' 0,
+	reach-max: '<number>' 0.15,
+	smoothing: '<number>' 0.2,
+	intensity: '<number>' 0.3,
+	glow-layers: '*'
+		(
+			0.012 0.7,
+			0.035 0.35,
+			0.08 0.15,
+		),
+	flicker: '<number>' 0.5,
+	spin: '<time>' $sheen-spin * 10,
+	beat: '<time>' 3s,
+	sway: '<angle>' 2deg,
+	flare: '<number>' 0.35,
+	flare-snap: '<number>' 4,
+	flare-blink: '<number>' 1,
+	warm: '<color>' $light-amber,
+	cool: '<color>' $light-gold,
+	blur: '<length>' 4px,
+);
+
+$halo-dark-settings: (
+	intensity: 0.18,
+	glow-layers: (
+		0.012 0.45,
+		0.035 0.25,
+		0.08 0.1,
+	),
+	warm: $light-gold,
+	cool: $light-pale,
+);
+
+$king-reach: math.hypot(0.5, math.div(0.5, $king-aspect));
+$sheen-reach: math.div($king-reach, $sheen-size);
+$sheen-radius: math.percentage(math.div(2 * $sheen-reach * 100%, $sheen-to - $sheen-from));
+$sheen-distance: math.div($sheen-reach * ($sheen-to + $sheen-from), $sheen-to - $sheen-from);
+$sheen-centre-x: 50% + math.percentage($sheen-distance * math.sin($sheen-origin));
+$sheen-centre-y: 50% - math.percentage($sheen-distance * math.cos($sheen-origin));
+
+@mixin dark-theme {
+	:host-context([data-theme='dark']) & {
+		@content;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:host-context(:root:not([data-theme])) & {
+			@content;
+		}
+	}
+}
+
+@each $name, $setting in $halo-settings {
+	@property --halo-#{$name} {
+		inherits: true;
+		initial-value: list.nth($setting, 2);
+		syntax: list.nth($setting, 1);
+	}
+}
+
+:host {
+	position: fixed;
+	z-index: var(--elevation-splash);
+	inset: 0;
+
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.backdrop {
+	position: absolute;
+	inset: 0;
+	background-color: var(--color-primary);
+}
+
+.splash-screen {
+	position: relative;
+}
+
+.piece {
+	--king-height: min(50dvh, 340px);
+
+	position: relative;
+}
+
+.halo {
+	@each $name, $setting in $halo-settings {
+		--halo-#{$name}: #{list.nth($setting, 2)};
+	}
+
+	--halo-room: calc((var(--halo-reach-max) + #{$king-wobble-room}) * var(--king-height));
+
+	position: absolute;
+	inset: calc(-1 * var(--halo-room));
+
+	width: calc(100% + 2 * var(--halo-room));
+	height: calc(100% + 2 * var(--halo-room));
+
+	filter: blur(var(--halo-blur));
+
+	@include dark-theme {
+		@each $name, $value in $halo-dark-settings {
+			--halo-#{$name}: #{$value};
+		}
+	}
+}
+
+.king {
+	position: relative;
+	aspect-ratio: $king-aspect;
+	height: var(--king-height);
+}
+
+.face {
+	position: relative;
+	height: 100%;
+}
+
+.sheen {
+	position: absolute;
+	top: 50%;
+	left: math.percentage(math.div(1 - $sheen-size, 2));
+	translate: 0 -50%;
+
+	aspect-ratio: 1;
+	width: math.percentage($sheen-size);
+
+	background-image: radial-gradient(
+		$sheen-radius $sheen-radius at $sheen-centre-x $sheen-centre-y,
+		$king-red,
+		$king-purple
+	);
+
+	animation: king-sheen $sheen-spin linear infinite;
+}
+
+.shading {
+	--shade-room: calc(#{$shade-room} * var(--king-height));
+
+	position: absolute;
+	inset: calc(-1 * var(--shade-room));
+
+	width: calc(100% + 2 * var(--shade-room));
+	height: calc(100% + 2 * var(--shade-room));
+
+	color: $shade-color;
+
+	opacity: $shade-opacity;
+}
+
+.status {
+	position: relative;
+}
+
+.notes {
+	min-height: calc(#{$status-notes} * 1lh + #{$status-notes - 1} * var(--spacing-1));
+	list-style: none;
+}
+
+@keyframes king-sheen {
+	from {
+		rotate: 0deg;
+	}
+
+	to {
+		rotate: 360deg;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.sheen {
+		animation: none;
+	}
+}

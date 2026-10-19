@@ -9,7 +9,15 @@ export const TIMEZONES = [
 ] as const;
 
 export function normalizeTimezone(value: unknown): string {
-	return 'string' === typeof value && TIMEZONES.includes(value) ? value : DEFAULT_TIMEZONE;
+	if ('string' !== typeof value) {
+		return DEFAULT_TIMEZONE;
+	}
+
+	try {
+		return new Intl.DateTimeFormat('en', { timeZone: value }).resolvedOptions().timeZone;
+	} catch {
+		return DEFAULT_TIMEZONE;
+	}
 }
 
 @Injectable({
@@ -22,17 +30,16 @@ export class TimezoneService {
 	readonly selectedTimezone = this.timezone.asReadonly();
 
 	constructor() {
-		const waitForSetting = effect(() => {
-			const settings = this.settingStore.settingEntities();
+		effect(() => {
+			const settings = this.settingStore.arrived();
 
-			if (this.settingStore.isLoading()) {
+			if (null === settings) {
 				return;
 			}
 
 			const setting = settings.find((item) => 'TIMEZONE' === item.type);
 
 			this.timezone.set(normalizeTimezone(setting?.payload));
-			waitForSetting.destroy();
 		});
 	}
 

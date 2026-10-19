@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -13,6 +13,7 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BookmarkPreferenceService } from '@app/service/bookmark-preference.service';
 import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 
 /**
  * Files a finished exercise under one of the lists. A press either asks where it goes or
@@ -25,7 +26,7 @@ import { ModalStore } from '@app/store/modal.store';
 	styleUrl: './bookmark-button.component.scss',
 	imports: [ButtonDirective, LongPressDirective, I18nPipe],
 })
-export class BookmarkButtonComponent {
+export class BookmarkButtonComponent implements OnInit {
 	protected readonly I18n = I18n;
 
 	readonly lichessId = input.required<string>();
@@ -35,6 +36,7 @@ export class BookmarkButtonComponent {
 	private readonly store = inject(BookmarkStore);
 	private readonly preference = inject(BookmarkPreferenceService);
 	private readonly modalStore = inject(ModalStore);
+	private readonly pageLoad = inject(PageLoadStore);
 
 	readonly filedAs = computed(() => this.store.typeOf(this.lichessId()));
 
@@ -45,6 +47,10 @@ export class BookmarkButtonComponent {
 	readonly label = computed(() =>
 		this.isFiled() ? I18n.common.BOOKMARK_EDIT : I18n.common.BOOKMARK_ADD,
 	);
+
+	ngOnInit(): void {
+		void this.pageLoad.track(this.store.ready());
+	}
 
 	/** A press asks unless the question has been turned off, and then it files a favorite. */
 	async onPress(): Promise<void> {

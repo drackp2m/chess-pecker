@@ -86,6 +86,10 @@ export class ShareStore
 		}
 	}
 
+	async ready(): Promise<void> {
+		await this.loaded;
+	}
+
 	reset(): void {
 		patchState(this, initialState, removeAllEntities(shareConfig));
 	}

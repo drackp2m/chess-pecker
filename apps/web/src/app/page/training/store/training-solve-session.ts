@@ -12,6 +12,7 @@ import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import { ActivityStore } from '@app/store/activity.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 import {
@@ -36,6 +37,7 @@ export class TrainingSolveSession {
 	private readonly drafts = inject(AttemptDraftUseCase);
 	private readonly activity = inject(ActivityStore);
 	private readonly sync = inject(SyncStore);
+	private readonly pageLoad = inject(PageLoadStore);
 	private readonly timer = new SolveTimer(() => {
 		void this.flush();
 	});
@@ -203,7 +205,7 @@ export class TrainingSolveSession {
 		this.board.setPuzzles([PuzzleMapper.toPuzzle(slot.puzzle)]);
 		this.timer.start();
 
-		void this.openDraft(slot, this.identify(slot));
+		void this.pageLoad.track(this.openDraft(slot, this.identify(slot)));
 	}
 
 	/**

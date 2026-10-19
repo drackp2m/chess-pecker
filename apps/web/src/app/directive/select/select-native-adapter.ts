@@ -4,6 +4,7 @@
  */
 export class SelectNativeAdapter {
 	private optionsObserver: MutationObserver | null = null;
+	private placeholderOption: HTMLOptionElement | null = null;
 
 	constructor(private readonly selectElement: HTMLSelectElement) {}
 
@@ -51,10 +52,17 @@ export class SelectNativeAdapter {
 		const hasPreselection =
 			0 < this.selectElement.selectedIndex || (options[0]?.defaultSelected ?? false);
 
-		this.selectElement.prepend(new Option(text, ''));
+		this.placeholderOption = new Option(text, '');
+		this.selectElement.prepend(this.placeholderOption);
 
 		if (!hasPreselection) {
 			this.selectElement.value = '';
+		}
+	}
+
+	relabelPlaceholder(text: string): void {
+		if (null !== this.placeholderOption && text !== this.placeholderOption.text) {
+			this.placeholderOption.text = text;
 		}
 	}
 

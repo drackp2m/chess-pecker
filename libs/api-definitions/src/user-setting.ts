@@ -16,10 +16,17 @@ export interface UserSetting {
 	readonly updatedAt: string;
 }
 
-export interface UpsertUserSettingRequest {
+export interface UpsertUserSettingRequest<TDate = string> {
 	value: unknown;
+	updatedAt?: TDate;
 }
 
 export const upsertUserSettingRequestSchema = z.object({
 	value: z.unknown(),
+	updatedAt: z.iso
+		.datetime()
+		.transform((value) => new Date(value))
+		.optional(),
 });
+
+export type UpsertUserSettingRequestParsed = z.output<typeof upsertUserSettingRequestSchema>;

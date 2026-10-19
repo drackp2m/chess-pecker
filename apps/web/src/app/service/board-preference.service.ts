@@ -19,7 +19,7 @@ import { SettingStore } from '@app/store/setting.store';
 
 /**
  * Board preferences that outlive a game, through the same setting store the theme uses:
- * read once the settings have loaded, written back on every change.
+ * read whenever the settings arrive, written back on every change.
  */
 @Injectable({
 	providedIn: 'root',
@@ -39,10 +39,10 @@ export class BoardPreferenceService {
 	readonly moveLift = this.lift.asReadonly();
 
 	constructor() {
-		const waitForSetting = effect(() => {
-			const settings = this.settingStore.settingEntities();
+		effect(() => {
+			const settings = this.settingStore.arrived();
 
-			if (this.settingStore.isLoading()) {
+			if (null === settings) {
 				return;
 			}
 
@@ -50,7 +50,6 @@ export class BoardPreferenceService {
 			this.inputMethods.set(this.readInputMethods(settings));
 			this.speed.set(normalizeMoveSpeed(this.read('MOVE_SPEED', settings)));
 			this.lift.set(normalizeMoveLift(this.read('MOVE_LIFT', settings)));
-			waitForSetting.destroy();
 		});
 	}
 

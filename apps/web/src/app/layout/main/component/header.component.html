@@ -12,14 +12,16 @@
 	<span class="session flex-row gap-2 align-center">
 		<app-sync-indicator />
 
-		@if (hasNotice()) {
-			<app-connection-indicator />
-		} @else if (session.isAuthenticated()) {
-			<span class="fs-md">{{ session.username() }}</span>
-		} @else if (session.isAnonymous()) {
-			<button appRouterLink="/login" class="log-in fs-md color-primary">
-				{{ I18n.common.LOG_IN | i18n }}
-			</button>
-		}
+		<ng-content>
+			@if (hasNotice()) {
+				<app-connection-indicator />
+			} @else if (session.isAuthenticated()) {
+				<span class="fs-md">{{ session.username() }}</span>
+			} @else if (session.isAnonymous()) {
+				<button appRouterLink="/login" class="log-in fs-md color-primary">
+					{{ I18n.common.LOG_IN | i18n }}
+				</button>
+			}
+		</ng-content>
 	</span>
 </section>

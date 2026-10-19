@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { Injectable, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 
 import { Theme } from '@app/definition/service/theme.type';
 import { Setting } from '@app/model/setting.model';
@@ -31,14 +31,16 @@ export class ThemeService implements OnDestroy {
 		this.addMediaQueryEventListener();
 		this.applyActiveTheme();
 
-		const waitForSetting = effect(() => {
-			if (this.settingStore.isLoading()) {
+		effect(() => {
+			const settings = this.settingStore.arrived();
+
+			if (null === settings) {
 				return;
 			}
 
-			this.setThemeFromSettings();
-
-			waitForSetting.destroy();
+			untracked(() => {
+				this.setThemeFromSettings(settings);
+			});
 		});
 	}
 
@@ -78,8 +80,8 @@ export class ThemeService implements OnDestroy {
 		this.mediaQuery.addEventListener('change', this.updateTheme);
 	}
 
-	private setThemeFromSettings() {
-		const setting = this.settingStore.settingEntities().find((setting) => 'THEME' === setting.type);
+	private setThemeFromSettings(settings: readonly Setting[]) {
+		const setting = settings.find((setting) => 'THEME' === setting.type);
 
 		this.updateSelectedTheme((setting?.payload as Theme | 'system' | undefined) ?? 'system', false);
 	}

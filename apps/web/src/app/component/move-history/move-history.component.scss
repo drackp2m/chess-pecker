@@ -11,6 +11,10 @@ h5 {
 	flex: none;
 }
 
+.empty {
+	padding-inline: var(--move-history-inset);
+}
+
 .line {
 	scrollbar-width: none;
 	scroll-padding-inline: var(--move-history-inset);
@@ -21,6 +25,7 @@ h5 {
 	min-width: 0;
 	padding-inline: var(--move-history-inset);
 
+	line-height: var(--spacing-3);
 	list-style: none;
 }
 
@@ -34,19 +39,29 @@ h5 {
 }
 
 .moves {
+	position: relative;
 	overflow: hidden;
+
+	&::after {
+		pointer-events: none;
+		content: '';
+
+		position: absolute;
+		inset: 0;
+
+		border: 1px solid color-mix(in oklab, var(--board-piece-contrast) 20%, transparent);
+		border-radius: inherit;
+	}
 }
 
-// White keeps its square's colour in either theme; black takes the muted contrast fill,
-// since the dark square would sink into the background.
 .move {
 	&.white {
-		color: var(--color-contrast-light);
-		background-color: var(--color-primary-mid-light);
+		color: var(--board-piece-white-outline);
+		background-color: var(--board-piece-white);
 	}
 
 	&.black {
-		color: var(--color-primary-light);
-		background-color: var(--color-contrast-mid-light);
+		color: var(--board-piece-black-outline);
+		background-color: var(--board-piece-black);
 	}
 }

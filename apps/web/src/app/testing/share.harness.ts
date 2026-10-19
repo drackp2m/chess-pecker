@@ -9,6 +9,7 @@ export const provideTestingShares = (): Provider => {
 	return {
 		provide: ShareStore,
 		useValue: {
+			ready: (): Promise<void> => Promise.resolve(),
 			sharesOf: (lichessId: string): readonly PuzzleShare[] => shared.get(lichessId) ?? [],
 			hasShared: (lichessId: string): boolean => shared.has(lichessId),
 			record: (share: PuzzleShare): Promise<void> => {

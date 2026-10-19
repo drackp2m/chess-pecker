@@ -37,6 +37,26 @@ export function fromRemote(bookmark: PuzzleBookmark): BookmarkRow {
 	};
 }
 
+export function markSynced(row: BookmarkRow, event: BookmarkHistoryRow): BookmarkRow {
+	return {
+		...row,
+		history: (row.history ?? []).map((candidate) =>
+			candidate.uuid === event.uuid ? { ...candidate, syncedAt: event.createdAt } : candidate,
+		),
+	};
+}
+
+export function adoptRemote(row: BookmarkRow, stored: PuzzleBookmark | null): BookmarkRow {
+	if (null === stored || new Date(stored.updatedAt).getTime() <= row.updatedAt.getTime()) {
+		return row;
+	}
+
+	return {
+		...fromRemote(stored),
+		...(undefined === row.history ? {} : { history: row.history }),
+	};
+}
+
 /**
  * Newest write wins, exercise by exercise. A tombstone is a write like any other, which is
  * what stops the server from filing again what was unfiled here while offline.

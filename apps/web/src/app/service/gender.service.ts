@@ -15,18 +15,16 @@ export class GenderService {
 	readonly selectedGender = this.gender.asReadonly();
 
 	constructor() {
-		const waitForSetting = effect(() => {
-			const settingStore = this.injector.get(SettingStore);
-			const settings = settingStore.settingEntities();
+		effect(() => {
+			const settings = this.injector.get(SettingStore).arrived();
 
-			if (settingStore.isLoading()) {
+			if (null === settings) {
 				return;
 			}
 
 			const stored = settings.find((setting) => 'GENDER' === setting.type)?.payload;
 
 			this.gender.set(normalizeGender(stored));
-			waitForSetting.destroy();
 		});
 	}
 

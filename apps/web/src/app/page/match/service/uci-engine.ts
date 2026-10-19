@@ -1,6 +1,25 @@
+import { ChessMove, ChessPosition } from '@app/definition/chess.type';
+import { ChessFen } from '@app/util/chess/chess-fen';
+import { ChessNotation } from '@app/util/chess/chess-notation';
+
 export const STOCKFISH_URL = '/stockfish/stockfish-18-lite-single.js';
 
 export type UciLineListener = (line: string) => void;
+
+export interface UciGame {
+	readonly start: ChessPosition;
+	readonly moves: readonly ChessMove[];
+}
+
+export function uciPosition(game: UciGame): string {
+	const start = `position fen ${ChessFen.serialize(game.start)}`;
+
+	if (0 === game.moves.length) {
+		return start;
+	}
+
+	return `${start} moves ${game.moves.map((move) => ChessNotation.describeLong(move)).join(' ')}`;
+}
 
 export class UciEngine {
 	private worker: Worker | undefined;

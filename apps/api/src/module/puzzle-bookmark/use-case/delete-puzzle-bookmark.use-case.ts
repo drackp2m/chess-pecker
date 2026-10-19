@@ -1,6 +1,7 @@
 import type { DeletePuzzleBookmarkRequestParsed } from '@chesspecker/api-definitions';
 import { Inject, Injectable } from '@nestjs/common';
 
+import { clampToNow } from '../../../shared/util/clamp-to-now';
 import { PuzzleRepository } from '../../puzzle/puzzle.repository';
 import { User } from '../../user/user.entity';
 import { PuzzleBookmarkRepository } from '../puzzle-bookmark.repository';
@@ -25,9 +26,9 @@ export class DeletePuzzleBookmarkUseCase {
 		await this.puzzleBookmarkRepository.deleteByPuzzle(
 			user.uuid,
 			puzzle.uuid,
-			request.attemptUuid,
-			request.updatedAt,
+			clampToNow(request.updatedAt),
 			request.eventUuid,
+			request.attemptUuid,
 		);
 	}
 }

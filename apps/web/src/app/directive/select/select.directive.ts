@@ -9,6 +9,7 @@ import {
 	TemplateRef,
 	ViewContainerRef,
 	booleanAttribute,
+	computed,
 	effect,
 	inject,
 	input,
@@ -20,6 +21,7 @@ import { SelectNativeAdapter } from '@app/directive/select/select-native-adapter
 import { SelectOutsideDismissal } from '@app/directive/select/select-outside-dismissal';
 import { SelectOptionViewModel, SelectStore } from '@app/directive/select/select.store';
 import { I18n } from '@app/i18n';
+import { I18nService } from '@app/service/i18n.service';
 
 let nextSelectId = 0;
 
@@ -44,7 +46,9 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 	private readonly viewContainerRef = inject(ViewContainerRef);
 	private readonly injector = inject(Injector);
 	private readonly store = inject(SelectStore);
+	private readonly i18n = inject(I18nService);
 	private readonly nativeAdapter = new SelectNativeAdapter(this.elementRef.nativeElement);
+	private readonly placeholderText = computed(() => this.i18n.translate(this.placeholder()));
 
 	private readonly interaction = new SelectInteractionHandler(this.store, {
 		openDropdown: () => {
@@ -78,6 +82,10 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 				this.applyShellInputs(this.shellRef, inputs);
 			}
 		});
+
+		effect(() => {
+			this.nativeAdapter.relabelPlaceholder(this.placeholderText());
+		});
 	}
 
 	@HostListener('input')
@@ -109,7 +117,7 @@ export class SelectDirective implements AfterViewInit, OnDestroy {
 		const disabled = this.nativeAdapter.isDisabled();
 
 		this.store.setMultiple(this.nativeAdapter.isMultiple());
-		this.nativeAdapter.ensurePlaceholder(this.placeholder());
+		this.nativeAdapter.ensurePlaceholder(this.placeholderText());
 		this.store.setOptionsFromSelect(this.elementRef.nativeElement);
 		this.store.setDisabled(disabled);
 		this.onNativeValueChange();

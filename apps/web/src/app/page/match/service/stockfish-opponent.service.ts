@@ -7,8 +7,7 @@ import {
 	pickHumanizedMove,
 	readCandidates,
 } from '@app/page/match/service/stockfish-humanizer';
-import { STOCKFISH_URL, UciEngine } from '@app/page/match/service/uci-engine';
-import { ChessFen } from '@app/util/chess/chess-fen';
+import { STOCKFISH_URL, UciEngine, UciGame, uciPosition } from '@app/page/match/service/uci-engine';
 
 export const STOCKFISH_ELO_LEVELS = [
 	500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900, 2000, 2100,
@@ -26,68 +25,157 @@ export class StockfishOpponentService {
 
 	private setup: string | undefined;
 
+	private isNewGame = true;
+
+	private isSearching = false;
+
+	private latest = 0;
+
+	private queue: Promise<unknown> = Promise.resolve();
+
 	constructor() {
 		inject(DestroyRef).onDestroy(() => {
 			this.engine.terminate();
 		});
 	}
 
-	chooseNotation(position: ChessPosition, elo: StockfishElo): Promise<string | undefined> {
-		return elo < NATIVE_ELO_FLOOR
-			? this.chooseHumanized(position, elo)
-			: this.chooseNative(position, elo);
+	newGame(): void {
+		this.latest += 1;
+		this.isNewGame = true;
+		this.interrupt();
 	}
 
-	private chooseNative(position: ChessPosition, elo: StockfishElo): Promise<string | undefined> {
-		return this.configure(`native:${String(elo)}`, [
+	chooseNotation(
+		game: UciGame,
+		position: ChessPosition,
+		elo: StockfishElo,
+	): Promise<string | undefined> {
+		const ticket = ++this.latest;
+
+		this.interrupt();
+
+		const answer = this.queue.then(() =>
+			this.isCurrent(ticket) ? this.choose(ticket, game, position, elo) : undefined,
+		);
+
+		this.queue = answer.catch(() => undefined);
+
+		return answer;
+	}
+
+	private async choose(
+		ticket: number,
+		game: UciGame,
+		position: ChessPosition,
+		elo: StockfishElo,
+	): Promise<string | undefined> {
+		try {
+			return elo < NATIVE_ELO_FLOOR
+				? await this.chooseHumanized(ticket, game, position, elo)
+				: await this.chooseNative(ticket, game, elo);
+		} catch (error: unknown) {
+			this.discardEngine();
+
+			throw error;
+		}
+	}
+
+	private async chooseNative(
+		ticket: number,
+		game: UciGame,
+		elo: StockfishElo,
+	): Promise<string | undefined> {
+		await this.configure(`native:${String(elo)}`, [
 			'setoption name MultiPV value 1',
 			'setoption name UCI_LimitStrength value true',
 			`setoption name UCI_Elo value ${String(elo)}`,
-		])
-			.then(() => this.search(position, 'go movetime 1000'))
-			.then((lines) => this.bestMove(lines));
+		]);
+
+		const lines = await this.search(ticket, game, 'go movetime 1000');
+
+		return this.isCurrent(ticket) ? bestMove(lines) : undefined;
 	}
 
-	private chooseHumanized(position: ChessPosition, elo: StockfishElo): Promise<string | undefined> {
+	private async chooseHumanized(
+		ticket: number,
+		game: UciGame,
+		position: ChessPosition,
+		elo: StockfishElo,
+	): Promise<string | undefined> {
 		const profile = humanizedProfile(elo);
 
-		return this.configure(`humanized:${String(elo)}`, [
+		await this.configure(`humanized:${String(elo)}`, [
 			'setoption name UCI_LimitStrength value false',
 			`setoption name MultiPV value ${String(profile.candidates)}`,
-		])
-			.then(() => this.search(position, `go depth ${String(profile.depth)}`))
-			.then((lines) => pickHumanizedMove(position, readCandidates(lines), profile));
+		]);
+
+		const lines = await this.search(ticket, game, `go depth ${String(profile.depth)}`);
+
+		return this.isCurrent(ticket)
+			? pickHumanizedMove(position, readCandidates(lines), profile)
+			: undefined;
 	}
 
-	private configure(setup: string, commands: readonly string[]): Promise<void> {
+	private async configure(setup: string, commands: readonly string[]): Promise<void> {
 		this.ready ??= this.engine.send('uci').then(() => undefined);
+		await this.ready;
 
-		return this.ready.then(() => {
-			if (this.setup === setup) {
-				return;
-			}
+		const pending = [
+			...(this.setup === setup ? [] : commands),
+			...(this.isNewGame ? ['ucinewgame'] : []),
+		];
 
-			this.setup = setup;
+		this.setup = setup;
+		this.isNewGame = false;
 
-			return commands
-				.reduce<Promise<unknown>>(
-					(chain, command) => chain.then(() => this.engine.send(command)),
-					Promise.resolve(),
-				)
-				.then(() => this.engine.send('isready'))
-				.then(() => undefined);
-		});
+		if (0 === pending.length) {
+			return;
+		}
+
+		for (const command of pending) {
+			await this.engine.send(command);
+		}
+
+		await this.engine.send('isready');
 	}
 
-	private search(position: ChessPosition, command: string): Promise<string[]> {
-		return this.engine
-			.send(`position fen ${ChessFen.serialize(position)}`)
-			.then(() => this.engine.send(command));
+	private async search(ticket: number, game: UciGame, command: string): Promise<string[]> {
+		await this.engine.send(uciPosition(game));
+
+		if (!this.isCurrent(ticket)) {
+			return [];
+		}
+
+		this.isSearching = true;
+
+		try {
+			return await this.engine.send(command);
+		} finally {
+			this.isSearching = false;
+		}
 	}
 
-	private bestMove(lines: readonly string[]): string | undefined {
-		const move = lines.at(-1)?.split(' ')[1];
-
-		return undefined === move || '0000' === move || '(none)' === move ? undefined : move;
+	private interrupt(): void {
+		if (this.isSearching) {
+			void this.engine.send('stop');
+		}
 	}
+
+	private isCurrent(ticket: number): boolean {
+		return ticket === this.latest;
+	}
+
+	private discardEngine(): void {
+		this.engine.terminate();
+		this.ready = undefined;
+		this.setup = undefined;
+		this.isNewGame = true;
+		this.isSearching = false;
+	}
+}
+
+function bestMove(lines: readonly string[]): string | undefined {
+	const move = lines.at(-1)?.split(' ')[1];
+
+	return undefined === move || '0000' === move || '(none)' === move ? undefined : move;
 }

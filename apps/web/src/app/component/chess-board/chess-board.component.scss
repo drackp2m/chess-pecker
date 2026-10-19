@@ -49,11 +49,7 @@
 	// Dragging a piece must not scroll the page under it.
 	touch-action: none;
 	cursor: pointer;
-
 	position: relative;
-
-	aspect-ratio: 1;
-
 	transition: background-color 120ms ease-in-out;
 
 	&.light {

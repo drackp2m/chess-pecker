@@ -10,13 +10,15 @@
 					<button
 						appThemed
 						color="contrast-mid"
-						icon="xmark"
+						icon="close"
 						[iconSize]="22"
 						(click)="close()"
 					></button>
 				</div>
 
-				<ng-container #modalContent />
+				<div class="content">
+					<ng-container #modalContent />
+				</div>
 			</div>
 		}
 	</div>

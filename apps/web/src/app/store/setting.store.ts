@@ -7,15 +7,19 @@ import { I18n, i18nRef } from '@app/i18n';
 import { Setting } from '@app/model/setting.model';
 import { SettingRepository } from '@app/repository/setting.repository';
 import { NotificationService } from '@app/service/notification.service';
+import { SessionStore } from '@app/store/session.store';
+import { SettingMirrorUseCase } from '@app/use-case/setting-mirror.use-case';
 
 interface SettingStoreProps {
 	isLoading: boolean;
 	error: TranslationRef | null;
+	arrived: readonly Setting[] | null;
 }
 
 const initialState: SettingStoreProps = {
 	isLoading: false,
 	error: null,
+	arrived: null,
 };
 
 const LOAD_ERROR_MESSAGE = i18nRef(I18n.common.SETTINGS_LOAD_ERROR);
@@ -38,12 +42,17 @@ export class SettingStore extends signalStore(
 ) {
 	private readonly settingRepository = inject(SettingRepository);
 	private readonly notificationService = inject(NotificationService);
+	private readonly sessionStore = inject(SessionStore);
+	private readonly mirror = inject(SettingMirrorUseCase);
+
+	private loaded: Promise<void> = Promise.resolve();
 
 	constructor() {
 		super();
 
 		this.watchBlockedUpgrade();
 		this.fetchData();
+		this.watchSession();
 	}
 
 	/**
@@ -55,6 +64,8 @@ export class SettingStore extends signalStore(
 			.insert('setting', item)
 			.then((saved) => {
 				patchState(this, setEntity(saved, settingConfig), { error: null });
+
+				void this.push(saved);
 			})
 			.catch((error: unknown) => {
 				console.error(`Could not save the \`${item.type}\` setting`, error);
@@ -62,6 +73,54 @@ export class SettingStore extends signalStore(
 				this.notificationService.notify(SAVE_ERROR_MESSAGE);
 				patchState(this, { error: SAVE_ERROR_MESSAGE });
 			});
+	}
+
+	private async push(setting: Setting): Promise<void> {
+		const stored = await this.mirror.push(setting);
+
+		if (null === stored) {
+			return;
+		}
+
+		patchState(this, setEntity(stored, settingConfig));
+
+		if (stored.updatedAt.getTime() > setting.updatedAt.getTime()) {
+			patchState(this, { arrived: this.settingEntities() });
+		}
+	}
+
+	private watchSession(): void {
+		let isMirrored = false;
+
+		effect(() => {
+			if (!this.sessionStore.isAuthenticated()) {
+				isMirrored = false;
+
+				return;
+			}
+
+			if (!isMirrored) {
+				isMirrored = true;
+
+				void this.pull();
+			}
+		});
+	}
+
+	private async pull(): Promise<void> {
+		try {
+			await this.loaded;
+
+			const { rows, isChanged } = await this.mirror.pull();
+
+			patchState(
+				this,
+				setAllEntities([...rows], settingConfig),
+				isChanged ? { arrived: rows } : {},
+			);
+		} catch (error: unknown) {
+			console.error('Could not mirror the stored settings', error);
+		}
 	}
 
 	private watchBlockedUpgrade(): void {
@@ -87,16 +146,16 @@ export class SettingStore extends signalStore(
 	private fetchData(): void {
 		patchState(this, { isLoading: true });
 
-		void this.settingRepository
+		this.loaded = this.settingRepository
 			.findAll('setting')
 			.then((items) => {
-				patchState(this, setAllEntities(items, settingConfig));
+				patchState(this, setAllEntities(items, settingConfig), { arrived: items });
 			})
 			.catch((error: unknown) => {
 				console.error('Could not load the stored settings', error);
 
 				this.notificationService.notify(LOAD_ERROR_MESSAGE);
-				patchState(this, { error: LOAD_ERROR_MESSAGE });
+				patchState(this, { error: LOAD_ERROR_MESSAGE, arrived: [] });
 			})
 			.finally(() => {
 				patchState(this, { isLoading: false });

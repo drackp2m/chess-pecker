@@ -1,6 +1,7 @@
 <div
 	#board
 	class="board"
+	[appPixelGrid]="BOARD_SIZE"
 	[class.waiting]="store.isBusy()"
 	[class.locked]="store.isLocked()"
 	[class.dragging]="undefined !== draggingFrom()"

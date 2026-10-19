@@ -4,8 +4,18 @@ import { CustomRepository } from '../../shared/util/custom-entity.repository';
 import { Puzzle } from '../puzzle/puzzle.entity';
 import { User } from '../user/user.entity';
 
+import { PuzzleBookmarkType } from './definition/puzzle-bookmark-type.enum';
 import { PuzzleBookmarkHistory } from './puzzle-bookmark-history.entity';
 import { PuzzleBookmark } from './puzzle-bookmark.entity';
+
+interface BookmarkEvent {
+	readonly user: User;
+	readonly puzzle: Puzzle;
+	readonly createdAt: Date;
+	readonly type?: PuzzleBookmarkType;
+	readonly eventUuid?: string;
+	readonly attemptUuid?: string;
+}
 
 export class PuzzleBookmarkRepository extends CustomRepository<PuzzleBookmark> {
 	/**
@@ -16,11 +26,60 @@ export class PuzzleBookmarkRepository extends CustomRepository<PuzzleBookmark> {
 		bookmark: PuzzleBookmark,
 		eventUuid?: string,
 		attemptUuid?: string,
-		eventCreatedAt?: Date,
 	): Promise<PuzzleBookmark> {
-		const entityManager = this.entityManager.fork();
-		await this.recordEvent(entityManager, bookmark, eventUuid, attemptUuid, eventCreatedAt);
+		return this.entityManager.transactional(async (entityManager) => {
+			await this.recordEvent(entityManager, {
+				user: bookmark.user,
+				puzzle: bookmark.puzzle,
+				type: bookmark.type,
+				createdAt: bookmark.updatedAt,
+				...(undefined === eventUuid ? {} : { eventUuid }),
+				...(undefined === attemptUuid ? {} : { attemptUuid }),
+			});
 
+			return this.writeCurrent(entityManager, bookmark, attemptUuid);
+		});
+	}
+
+	async deleteByPuzzle(
+		userUuid: string,
+		puzzleUuid: string,
+		removedAt: Date,
+		eventUuid?: string,
+		attemptUuid?: string,
+	): Promise<void> {
+		await this.entityManager.transactional(async (entityManager) => {
+			await this.recordEvent(entityManager, {
+				user: entityManager.getReference(User, userUuid),
+				puzzle: entityManager.getReference(Puzzle, puzzleUuid),
+				createdAt: removedAt,
+				...(undefined === eventUuid ? {} : { eventUuid }),
+				...(undefined === attemptUuid ? {} : { attemptUuid }),
+			});
+
+			await entityManager.nativeDelete(PuzzleBookmark, {
+				user: userUuid,
+				puzzle: puzzleUuid,
+				updatedAt: { $lte: removedAt },
+			});
+		});
+	}
+
+	getHistory(userUuid: string): Promise<PuzzleBookmarkHistory[]> {
+		return this.entityManager
+			.fork()
+			.find(
+				PuzzleBookmarkHistory,
+				{ user: userUuid },
+				{ populate: ['puzzle'], orderBy: { createdAt: 'asc', uuid: 'asc' } },
+			);
+	}
+
+	private async writeCurrent(
+		entityManager: EntityManager,
+		bookmark: PuzzleBookmark,
+		attemptUuid?: string,
+	): Promise<PuzzleBookmark> {
 		await entityManager.upsert(
 			PuzzleBookmark,
 			{
@@ -35,6 +94,7 @@ export class PuzzleBookmarkRepository extends CustomRepository<PuzzleBookmark> {
 			{
 				onConflictFields: ['user', 'puzzle'],
 				onConflictMergeFields: ['type', 'attemptUuid', 'updatedAt'],
+				onConflictWhere: { updatedAt: { $lte: bookmark.updatedAt } },
 			},
 		);
 
@@ -44,63 +104,9 @@ export class PuzzleBookmarkRepository extends CustomRepository<PuzzleBookmark> {
 		});
 	}
 
-	async deleteByPuzzle(
-		userUuid: string,
-		puzzleUuid: string,
-		attemptUuid?: string,
-		createdAt?: Date,
-		eventUuid?: string,
-	): Promise<void> {
-		const entityManager = this.entityManager.fork();
-		const puzzle = entityManager.getReference(Puzzle, puzzleUuid);
-		const user = entityManager.getReference(User, userUuid);
+	private async recordEvent(entityManager: EntityManager, event: BookmarkEvent): Promise<void> {
+		const { eventUuid, ...fields } = event;
 
-		await this.recordDeleteEvent(entityManager, user, puzzle, eventUuid, attemptUuid, createdAt);
-		await entityManager.nativeDelete(PuzzleBookmark, { user: userUuid, puzzle: puzzleUuid });
-	}
-
-	getHistory(userUuid: string): Promise<PuzzleBookmarkHistory[]> {
-		return this.entityManager.find(
-			PuzzleBookmarkHistory,
-			{ user: userUuid },
-			{ populate: ['puzzle'], orderBy: { createdAt: 'asc', uuid: 'asc' } },
-		);
-	}
-
-	private async recordEvent(
-		entityManager: EntityManager,
-		bookmark: PuzzleBookmark,
-		eventUuid?: string,
-		attemptUuid?: string,
-		eventCreatedAt?: Date,
-	): Promise<void> {
-		if (
-			undefined !== eventUuid &&
-			null !== (await entityManager.findOne(PuzzleBookmarkHistory, { uuid: eventUuid }))
-		) {
-			return;
-		}
-
-		entityManager.persist(
-			new PuzzleBookmarkHistory({
-				...(undefined === eventUuid ? {} : { uuid: eventUuid }),
-				user: bookmark.user,
-				puzzle: bookmark.puzzle,
-				type: bookmark.type,
-				...(undefined === eventCreatedAt ? {} : { createdAt: eventCreatedAt }),
-				...(undefined === attemptUuid ? {} : { attemptUuid }),
-			}),
-		);
-	}
-
-	private async recordDeleteEvent(
-		entityManager: EntityManager,
-		user: User,
-		puzzle: Puzzle,
-		eventUuid?: string,
-		attemptUuid?: string,
-		createdAt?: Date,
-	): Promise<void> {
 		if (
 			undefined !== eventUuid &&
 			null !== (await entityManager.findOne(PuzzleBookmarkHistory, { uuid: eventUuid }))
@@ -111,11 +117,8 @@ export class PuzzleBookmarkRepository extends CustomRepository<PuzzleBookmark> {
 		await entityManager
 			.persist(
 				new PuzzleBookmarkHistory({
+					...fields,
 					...(undefined === eventUuid ? {} : { uuid: eventUuid }),
-					user,
-					puzzle,
-					...(undefined === createdAt ? {} : { createdAt }),
-					...(undefined === attemptUuid ? {} : { attemptUuid }),
 				}),
 			)
 			.flush();

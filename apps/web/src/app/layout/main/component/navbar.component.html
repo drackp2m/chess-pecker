@@ -1,15 +1,17 @@
-<nav class="navbar force-light px-4 flex-row" [attr.aria-label]="I18n.common.NAV_MAIN | i18n">
+<nav class="navbar force-light" [attr.aria-label]="I18n.common.NAV_MAIN | i18n">
 	<span class="indicator" aria-hidden="true"></span>
 
-	<span class="glass" style="--index: 0" aria-hidden="true"></span>
-	<span class="glass" style="--index: 1" aria-hidden="true"></span>
-	<span class="glass" style="--index: 2" aria-hidden="true"></span>
-	<span class="glass" style="--index: 3" aria-hidden="true"></span>
-	<span class="glass" style="--index: 4" aria-hidden="true"></span>
+	<span class="track" aria-hidden="true">
+		<span class="glass"></span>
+		<span class="glass"></span>
+		<span class="glass"></span>
+		<span class="glass"></span>
+		<span class="glass"></span>
+	</span>
 
 	<button
 		class="item"
-		style="--icon: url('/svg/icon/house.svg')"
+		style="--icon: url('/svg/icon/home.svg')"
 		appRouterLink="/"
 		[attr.aria-label]="I18n.common.HOME | i18n"
 	>
@@ -18,7 +20,7 @@
 
 	<button
 		class="item"
-		style="--icon: url('/svg/icon/chess-board.svg')"
+		style="--icon: url('/svg/icon/match.svg')"
 		appRouterLink="/match"
 		[attr.aria-label]="I18n.common.PLAY | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"
@@ -28,7 +30,7 @@
 
 	<button
 		class="item"
-		style="--icon: url('/svg/icon/logo.svg')"
+		style="--icon: url('/svg/icon/training.svg')"
 		appRouterLink="/training"
 		[attr.aria-label]="I18n.common.TRAINING | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"
@@ -38,7 +40,7 @@
 
 	<button
 		class="item"
-		style="--icon: url('/svg/icon/circle-user.svg')"
+		style="--icon: url('/svg/icon/profile.svg')"
 		appRouterLink="/profile"
 		[attr.aria-label]="I18n.common.PROFILE | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"
@@ -48,7 +50,7 @@
 
 	<button
 		class="item"
-		style="--icon: url('/svg/icon/gear.svg')"
+		style="--icon: url('/svg/icon/settings.svg')"
 		appRouterLink="/settings"
 		[attr.aria-label]="I18n.common.SETTINGS | i18n"
 		[routerLinkActiveOptions]="{ exact: false }"

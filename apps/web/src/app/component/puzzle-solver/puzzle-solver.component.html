@@ -19,7 +19,7 @@
 					<div class="actions flex-row gap-3 justify-center">
 						<button
 							appThemed
-							icon="flag"
+							icon="resign"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_GIVE_UP | i18n"
 							[class.active]="'revealed' === store.closure()"
@@ -29,7 +29,7 @@
 
 						<button
 							appThemed
-							icon="rotate"
+							icon="flip-board"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_FLIP | i18n"
 							[class.active]="store.isBoardFlipped()"
@@ -38,7 +38,7 @@
 
 						<button
 							appThemed
-							icon="backward-fast"
+							icon="restart"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_RESTART | i18n"
 							[disabled]="0 === store.cursor() && !store.canStepBackward()"
@@ -47,7 +47,7 @@
 
 						<button
 							appThemed
-							icon="backward-step"
+							icon="step-back"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_STEP_BACKWARD | i18n"
 							[disabled]="store.isBusy() || !store.canStepBackward()"
@@ -56,7 +56,7 @@
 
 						<button
 							appThemed
-							icon="forward-step"
+							icon="step-forward"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_STEP_FORWARD | i18n"
 							[disabled]="store.isBusy() || !store.canStepForward()"
@@ -65,7 +65,7 @@
 
 						<button
 							appThemed
-							icon="magnifying-glass"
+							icon="free-play"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_FREE_PLAY | i18n"
 							[class.active]="store.isFreePlay()"
@@ -74,7 +74,7 @@
 
 						<button
 							appThemed
-							icon="circle-info"
+							icon="hint"
 							iconSquared
 							[attr.aria-label]="I18n.common.BOARD_HINT | i18n"
 							[class.active]="store.hintUsed()"

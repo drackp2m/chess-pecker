@@ -25,16 +25,15 @@ export class AnalysisPreferenceService {
 	readonly depth = this.searchDepth.asReadonly();
 
 	constructor() {
-		const waitForSetting = effect(() => {
-			const settings = this.settingStore.settingEntities();
+		effect(() => {
+			const settings = this.settingStore.arrived();
 
-			if (this.settingStore.isLoading()) {
+			if (null === settings) {
 				return;
 			}
 
 			this.bar.set(normalizeAnalysisBar(this.read('ANALYSIS_BAR', settings)));
 			this.searchDepth.set(normalizeAnalysisDepth(this.read('ANALYSIS_DEPTH', settings)));
-			waitForSetting.destroy();
 		});
 	}
 

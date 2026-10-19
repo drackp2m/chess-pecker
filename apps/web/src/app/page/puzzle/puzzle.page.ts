@@ -9,6 +9,7 @@ import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { PageLoadStore } from '@app/store/page-load.store';
 
 const SAMPLE_CSV =
 	'PuzzleId,FEN,Moves,Rating,Popularity,NbPlays,Themes,GameUrl,SelectedFor\n' +
@@ -43,6 +44,7 @@ export class PuzzlePage implements OnInit {
 	});
 
 	private readonly isSample = true === inject(ActivatedRoute).snapshot.data['sample'];
+	private readonly pageLoad = inject(PageLoadStore);
 
 	/**
 	 * A backgrounded tab is not an exercise being looked at, so the hint's clock stops
@@ -67,7 +69,7 @@ export class PuzzlePage implements OnInit {
 		if (this.isSample) {
 			this.loadSample();
 		} else {
-			void this.store.restore();
+			void this.pageLoad.track(this.store.restore());
 		}
 	}
 

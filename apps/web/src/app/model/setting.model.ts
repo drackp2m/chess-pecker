@@ -6,6 +6,7 @@ import { UpdatableModel } from '@app/model/updatable.model';
 export class Setting<T extends SettingTypeKey = SettingTypeKey> extends UpdatableModel<Setting<T>> {
 	type!: T;
 	payload!: SettingPayload[T];
+	syncedAt?: Date;
 
 	constructor(model: ModelConstructorOmit<Setting>) {
 		super();
