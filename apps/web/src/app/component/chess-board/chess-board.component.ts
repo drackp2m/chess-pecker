@@ -31,6 +31,7 @@ import {
 	SQUARE_COUNT,
 } from '@app/definition/chess.constant';
 import { Piece, PromotionPieceType, Square } from '@app/definition/chess.type';
+import { PixelGridDirective } from '@app/directive/pixel-grid.directive';
 import { I18n } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BoardPreferenceService } from '@app/service/board-preference.service';
@@ -70,10 +71,11 @@ interface BoardSquare {
 	selector: 'app-chess-board',
 	templateUrl: './chess-board.component.html',
 	styleUrl: './chess-board.component.scss',
-	imports: [ChessPieceComponent, I18nPipe],
+	imports: [ChessPieceComponent, PixelGridDirective, I18nPipe],
 })
 export class ChessBoardComponent {
 	protected readonly I18n = I18n;
+	protected readonly BOARD_SIZE = BOARD_SIZE;
 
 	readonly store = inject(BOARD_PRESENTER);
 
