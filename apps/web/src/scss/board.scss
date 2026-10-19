@@ -12,6 +12,7 @@
 		--board-piece-white-outline: rgb(38 34 30);
 		--board-piece-black: rgb(52 33 14);
 		--board-piece-black-outline: rgb(250 248 242);
+		--board-piece-contrast: var(--board-piece-black);
 		--board-piece-outline-width: 1.6;
 	}
 
@@ -28,6 +29,7 @@
 		--board-piece-white-outline: rgb(24 22 19);
 		--board-piece-black: rgb(26 24 21);
 		--board-piece-black-outline: rgb(214 205 191);
+		--board-piece-contrast: var(--board-piece-white);
 	}
 
 	@media (prefers-color-scheme: dark) {
@@ -44,6 +46,7 @@
 			--board-piece-white-outline: rgb(24 22 19);
 			--board-piece-black: rgb(26 24 21);
 			--board-piece-black-outline: rgb(214 205 191);
+			--board-piece-contrast: var(--board-piece-white);
 		}
 	}
 }

@@ -14,7 +14,7 @@
 }
 
 app-move-history {
-	--move-history-inset: var(--spacing-3);
+	--move-history-inset: var(--page-padding);
 
 	margin-inline: calc(var(--spacing-3) * -1);
 }
@@ -52,7 +52,7 @@ app-move-history {
 
 .advantage {
 	flex: none;
-	margin-inline: var(--spacing-2);
+	margin-inline: var(--spacing-1);
 	font-variant-numeric: tabular-nums;
 }
 
