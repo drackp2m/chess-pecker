@@ -1,3 +1,38 @@
+# v1.33.0 (2026-10-19)
+
+## What's Changed
+
+### ✨ Features
+
+- add a parametric generator for the svg icons ([2f120e2](https://github.com/drackp2m/chess-pecker/commit/2f120e21d6fc4807f3b078d577fe3e23c0553ea7)) by Marc Jovaní González
+- add shading, glow layers and auto reveal to the splash screen ([b001707](https://github.com/drackp2m/chess-pecker/commit/b0017072e2b31d656c50b56c6df87a8d6242ba33)) by Marc Jovaní González
+- hold the splash screen until the page has loaded its data ([2a20a78](https://github.com/drackp2m/chess-pecker/commit/2a20a787771ad71bcfdc7113a2bcaf5710f4f40e)) by Marc Jovaní González
+- new loading animation ([f85f9a7](https://github.com/drackp2m/chess-pecker/commit/f85f9a70a107b9bbb3a4a2aff7e3facb7d0fed94)) by Marc Jovaní González
+
+### 🎨 Styles
+
+- drop the vertical padding of the check badge ([60c9f95](https://github.com/drackp2m/chess-pecker/commit/60c9f95e11842678aa3cc381175f0ae38cb2b9e1)) by Marc Jovaní González
+- inset the empty move history and paint moves with piece colours ([909336c](https://github.com/drackp2m/chess-pecker/commit/909336c3206f3b68a2114dd055689b904ca586c9)) by Marc Jovaní González
+- redraw the icon set and name icons after what they do ([367a85f](https://github.com/drackp2m/chess-pecker/commit/367a85f94339af5f9d0cd58333537c9275ba2f46)) by Marc Jovaní González
+
+### 🧪 Tests
+
+- cover clock skew, ties and unsynced unfiling in bookmarks ([131a1b8](https://github.com/drackp2m/chess-pecker/commit/131a1b8936e520d5d2b07c26b73c5272c827c5f9)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- cache zone formatters and keep renamed stored timezones ([5eb6684](https://github.com/drackp2m/chess-pecker/commit/5eb6684b54922edac98122543ff6268346609a55)) by Marc Jovaní González
+- clamp bookmark write times to the server clock ([7172f88](https://github.com/drackp2m/chess-pecker/commit/7172f880ee5c617efe6e2b555f363d57b56a9b12)) by Marc Jovaní González
+- keep board squares on whole device pixels so pieces never shift ([bca2f17](https://github.com/drackp2m/chess-pecker/commit/bca2f170562e7f840ed57eb64b3614a1b23554a8)) by Marc Jovaní González
+- let safe areas replace edge spacing in header, navbar and modals ([88056b3](https://github.com/drackp2m/chess-pecker/commit/88056b37340239bfa1739bf79c71a980642461fb)) by Marc Jovaní González
+- let the newest bookmark write win and record every event ([cedc416](https://github.com/drackp2m/chess-pecker/commit/cedc4161830fc4fa74f5bc9f6ee1edbe61ddd556)) by Marc Jovaní González
+- reuse the main header on the intro page ([6693f5e](https://github.com/drackp2m/chess-pecker/commit/6693f5e6bc79836b91cebccbdd583156d9be924e)) by Marc Jovaní González
+- serialize Stockfish searches and send the game history ([6713b75](https://github.com/drackp2m/chess-pecker/commit/6713b75c690874bb19ec8a381808432e602ec37e)) by Marc Jovaní González
+- sync settings with the account so they survive a lost session ([9537237](https://github.com/drackp2m/chess-pecker/commit/953723729181502347b2dc2b3522004dca94fb39)) by Marc Jovaní González
+- translate the select placeholder option instead of showing its key ([0194fe7](https://github.com/drackp2m/chess-pecker/commit/0194fe7ec6f5fe16877ffb01d597a6b50069a6d3)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.32.0...v1.33.0
+
 # v1.32.0 (2026-09-29)
 
 ## What's Changed
