@@ -1,11 +1,13 @@
-<nav class="navbar force-light px-4 flex-row" [attr.aria-label]="I18n.common.NAV_MAIN | i18n">
+<nav class="navbar force-light" [attr.aria-label]="I18n.common.NAV_MAIN | i18n">
 	<span class="indicator" aria-hidden="true"></span>
 
-	<span class="glass" style="--index: 0" aria-hidden="true"></span>
-	<span class="glass" style="--index: 1" aria-hidden="true"></span>
-	<span class="glass" style="--index: 2" aria-hidden="true"></span>
-	<span class="glass" style="--index: 3" aria-hidden="true"></span>
-	<span class="glass" style="--index: 4" aria-hidden="true"></span>
+	<span class="track" aria-hidden="true">
+		<span class="glass"></span>
+		<span class="glass"></span>
+		<span class="glass"></span>
+		<span class="glass"></span>
+		<span class="glass"></span>
+	</span>
 
 	<button
 		class="item"
