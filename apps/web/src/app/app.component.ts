@@ -14,7 +14,7 @@ import { RouterOutlet } from '@angular/router';
 import { ModalOutletComponent } from '@app/component/modal-outlet/modal-outlet.component';
 import { revealApp } from '@app/component/splash-screen/splash-reveal';
 import { SplashScreenComponent } from '@app/component/splash-screen/splash-screen.component';
-import { SyncPolicy } from '@app/definition/sync-policy.constant';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { SyncStore } from '@app/store/sync.store';
 
 @Component({
@@ -22,38 +22,27 @@ import { SyncStore } from '@app/store/sync.store';
 	templateUrl: './app.component.html',
 	imports: [RouterOutlet, ReactiveFormsModule, ModalOutletComponent, SplashScreenComponent],
 	providers: [],
-	host: {
-		'(click)': 'releaseSplash()',
-	},
 })
 export class AppComponent {
 	title = 'chesspecker';
+
+	protected readonly pageLoad = inject(PageLoadStore);
 
 	private readonly sync = inject(SyncStore);
 
 	private readonly stage = viewChild.required<ElementRef<HTMLElement>>('stage');
 
-	private readonly isSplashHeld = signal(!this.sync.isReady());
+	private readonly isRevealed = signal(false);
 
-	/**
-	 * The boot gate, closed only by a download: anything painted over a half-replica would be
-	 * wrong. What is left to upload is already here, so it waits for nobody.
-	 */
-	readonly loading = computed(() => !this.sync.isReady() || this.isSplashHeld());
+	readonly loading = computed(() => !this.isRevealed());
 
 	constructor() {
-		effect((onCleanup) => {
-			if (!this.sync.isReady()) {
-				return;
+		this.openPagesOnSync();
+
+		effect(() => {
+			if (this.pageLoad.isReady()) {
+				this.isRevealed.set(true);
 			}
-
-			const linger = setTimeout(() => {
-				this.isSplashHeld.set(false);
-			}, SyncPolicy.splashLingerMs);
-
-			onCleanup(() => {
-				clearTimeout(linger);
-			});
 		});
 	}
 
@@ -63,9 +52,15 @@ export class AppComponent {
 		});
 	}
 
-	protected releaseSplash(): void {
-		if (this.sync.isReady()) {
-			this.isSplashHeld.set(false);
-		}
+	/**
+	 * The boot gate, closed only by a download: anything painted over a half-replica would be
+	 * wrong. What is left to upload is already here, so it waits for nobody.
+	 */
+	private openPagesOnSync(): void {
+		effect(() => {
+			if (this.sync.isReady()) {
+				this.pageLoad.open();
+			}
+		});
 	}
 }

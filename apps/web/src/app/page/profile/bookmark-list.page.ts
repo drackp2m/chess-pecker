@@ -11,6 +11,7 @@ import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { PuzzleRemoteRepository } from '@app/repository/puzzle-remote.repository';
 import { BookmarkStore } from '@app/store/bookmark.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
 
 @Component({
@@ -41,9 +42,10 @@ export class BookmarkListPage implements OnInit {
 	private readonly route = inject(ActivatedRoute);
 	private readonly bookmarks = inject(BookmarkStore);
 	private readonly puzzles = inject(PuzzleRemoteRepository);
+	private readonly pageLoad = inject(PageLoadStore);
 
 	ngOnInit(): void {
-		void this.load();
+		void this.pageLoad.track(this.load());
 	}
 
 	private async load(): Promise<void> {

@@ -9,6 +9,7 @@ import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BookmarkStore } from '@app/store/bookmark.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { ProfileStore } from '@app/store/profile.store';
 import { SessionStore } from '@app/store/session.store';
 import { LogOutUseCase } from '@app/use-case/log-out.use-case';
@@ -29,6 +30,7 @@ export class ProfilePage implements OnInit {
 	readonly bookmarkLabels = PUZZLE_BOOKMARK_LABEL;
 
 	private readonly logOutUseCase = inject(LogOutUseCase);
+	private readonly pageLoad = inject(PageLoadStore);
 
 	readonly form = new FormGroup({
 		username: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -37,7 +39,8 @@ export class ProfilePage implements OnInit {
 	ngOnInit(): void {
 		this.store.clearFeedback();
 		this.store.clearSearch();
-		void this.store.load();
+		void this.pageLoad.track(this.store.load());
+		void this.pageLoad.track(this.bookmarks.ready());
 	}
 
 	logOut(): void {

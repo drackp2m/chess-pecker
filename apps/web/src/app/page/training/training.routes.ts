@@ -28,6 +28,7 @@ export default [
 			{
 				path: '',
 				title: I18n.common.TRAINING,
+				resolve: { i18n: resolveI18n('dashboard') },
 				loadComponent: () => import('./training.page').then(({ TrainingPage }) => TrainingPage),
 			},
 			{

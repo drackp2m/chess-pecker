@@ -24,8 +24,6 @@ export const SyncPolicy = {
 	 */
 	splashDetailMs: 600,
 
-	splashLingerMs: 1000,
-
 	/**
 	 * How often it re-syncs on coming back to the app or regaining the network. Without this
 	 * floor, switching tabs would fire a pass per switch.

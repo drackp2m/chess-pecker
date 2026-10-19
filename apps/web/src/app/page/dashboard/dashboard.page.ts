@@ -14,6 +14,7 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { I18nService } from '@app/service/i18n.service';
 import { TimezoneService } from '@app/service/timezone.service';
 import { ActivityStore } from '@app/store/activity.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { SessionStore } from '@app/store/session.store';
 import { TrainingStore } from '@app/store/training.store';
 import {
@@ -73,6 +74,7 @@ export class DashboardPage {
 	);
 
 	private readonly i18n = inject(I18nService);
+	private readonly pageLoad = inject(PageLoadStore);
 
 	private readonly dailyBreakdown = computed(() =>
 		activityDaySeries(
@@ -124,9 +126,11 @@ export class DashboardPage {
 
 			this.loadedFor = pass;
 
-			void this.training.load();
+			void this.pageLoad.track(this.training.load());
 
-			void this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS, timeZone));
+			void this.pageLoad.track(
+				this.activity.load(activityRangeDays(MAX_ACTIVITY_MONTHS, timeZone)),
+			);
 		});
 	}
 

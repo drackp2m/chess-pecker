@@ -1,4 +1,4 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, inject, input } from '@angular/core';
 import type { PuzzleShareResultRequest } from '@chesspecker/api-definitions';
 import { firstValueFrom } from 'rxjs';
 
@@ -10,6 +10,7 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { PuzzleShareRepository } from '@app/repository/puzzle-share.repository';
 import { NotificationService } from '@app/service/notification.service';
 import { ModalStore } from '@app/store/modal.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { ShareStore } from '@app/store/share.store';
 
 /**
@@ -23,7 +24,7 @@ import { ShareStore } from '@app/store/share.store';
 	styleUrl: './share-button.component.scss',
 	imports: [ButtonDirective, I18nPipe],
 })
-export class ShareButtonComponent {
+export class ShareButtonComponent implements OnInit {
 	protected readonly I18n = I18n;
 
 	private readonly store = inject(PuzzleStore);
@@ -31,6 +32,7 @@ export class ShareButtonComponent {
 	private readonly notificationService = inject(NotificationService);
 	private readonly modalStore = inject(ModalStore);
 	private readonly shareStore = inject(ShareStore);
+	private readonly pageLoad = inject(PageLoadStore);
 
 	/** Only a finished exercise is worth sending: there is nothing to compare until it is. */
 	readonly allowWhileOpen = input(false);
@@ -49,6 +51,10 @@ export class ShareButtonComponent {
 	 * an exercise still open would give away that it is one worth sending.
 	 */
 	readonly isHighlighted = computed(() => this.isShared() && !this.isDisabled());
+
+	ngOnInit(): void {
+		void this.pageLoad.track(this.shareStore.ready());
+	}
 
 	async onClick(): Promise<void> {
 		if (this.isDisabled()) {

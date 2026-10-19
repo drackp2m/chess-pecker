@@ -6,7 +6,7 @@ export default [
 	{
 		path: '',
 		title: '',
-		resolve: { i18n: resolveI18n('dashboard') },
+		resolve: { i18n: resolveI18n('dashboard', 'training') },
 		loadComponent: () => import('./dashboard.page').then(({ DashboardPage }) => DashboardPage),
 	},
 ] satisfies Routes;

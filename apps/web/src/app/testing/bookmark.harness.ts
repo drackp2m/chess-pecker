@@ -10,6 +10,7 @@ const provideTestingBookmarkStore = (): Provider => {
 	return {
 		provide: BookmarkStore,
 		useValue: {
+			ready: (): Promise<void> => Promise.resolve(),
 			typeOf: (lichessId: string): PuzzleBookmarkType | undefined => filed().get(lichessId),
 			file: (lichessId: string, type: PuzzleBookmarkType): Promise<void> => {
 				filed.update((current) => new Map(current).set(lichessId, type));

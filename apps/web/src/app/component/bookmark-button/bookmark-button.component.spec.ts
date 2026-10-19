@@ -33,6 +33,7 @@ function createButton({ filedAs, isPromptEnabled = true, answer }: Options = {})
 			{
 				provide: BookmarkStore,
 				useValue: {
+					ready: (): Promise<void> => Promise.resolve(),
 					typeOf: (): PuzzleBookmarkType | undefined => filed(),
 					file: (_id: string, type: PuzzleBookmarkType): Promise<void> => {
 						filed.set(type);

@@ -10,6 +10,7 @@ import { I18n, provideI18nScope } from '@app/i18n';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { PuzzleRemoteRepository } from '@app/repository/puzzle-remote.repository';
 import { BookmarkStore } from '@app/store/bookmark.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
 
 @Component({
@@ -28,6 +29,7 @@ export class BookmarkCategoryPage implements OnInit {
 	private readonly bookmarks = inject(BookmarkStore);
 	private readonly puzzleRepository = inject(PuzzleRemoteRepository);
 	private readonly route = inject(ActivatedRoute);
+	private readonly pageLoad = inject(PageLoadStore);
 	private readonly type = this.route.snapshot.paramMap.get('type') ?? '';
 
 	readonly categoryLabel = PUZZLE_BOOKMARK_LABEL[this.type as PuzzleBookmarkType];
@@ -37,7 +39,7 @@ export class BookmarkCategoryPage implements OnInit {
 	}
 
 	ngOnInit(): void {
-		void this.load();
+		void this.pageLoad.track(this.load());
 	}
 
 	private async load(): Promise<void> {

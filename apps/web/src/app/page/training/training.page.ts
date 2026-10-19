@@ -19,6 +19,7 @@ import { I18nService } from '@app/service/i18n.service';
 import { TimezoneService } from '@app/service/timezone.service';
 import { ActivityStore } from '@app/store/activity.store';
 import { ModalStore } from '@app/store/modal.store';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { TrainingStore } from '@app/store/training.store';
 import { CyclePaceDay, cyclePaceSeries } from '@app/util/activity-grid';
 import { diffLabelDays, zoneDayLabel } from '@app/util/timezone-date';
@@ -72,6 +73,7 @@ export class TrainingPage implements OnInit {
 	private readonly activity = inject(ActivityStore);
 	private readonly i18n = inject(I18nService);
 	private readonly modalStore = inject(ModalStore);
+	private readonly pageLoad = inject(PageLoadStore);
 	private readonly timezoneService = inject(TimezoneService);
 
 	readonly phaseLabel = computed(() => {
@@ -150,7 +152,7 @@ export class TrainingPage implements OnInit {
 
 	ngOnInit(): void {
 		this.store.clearError();
-		void this.loadTraining();
+		void this.pageLoad.track(this.loadTraining());
 	}
 
 	start(): void {

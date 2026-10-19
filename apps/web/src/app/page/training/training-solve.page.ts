@@ -18,6 +18,7 @@ import { TrainingReviewStore } from '@app/page/training/store/training-review.st
 import { TrainingRunStore } from '@app/page/training/store/training-run.store';
 import { TrainingSolveSession } from '@app/page/training/store/training-solve-session';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { SolvedAttempt } from '@app/use-case/training-history.use-case';
 
 @Component({
@@ -81,6 +82,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 	});
 
 	private readonly router = inject(Router);
+	private readonly pageLoad = inject(PageLoadStore);
 
 	constructor() {
 		// The calibration is over the moment a band is accepted, and what it was for is the
@@ -113,7 +115,7 @@ export class TrainingSolvePage implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.review.leave();
-		void this.session.open();
+		void this.pageLoad.track(this.session.open());
 	}
 
 	ngOnDestroy(): void {

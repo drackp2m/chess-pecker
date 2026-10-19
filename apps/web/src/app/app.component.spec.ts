@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { AppComponent } from '@app/app.component';
+import { PageLoadStore } from '@app/store/page-load.store';
 import { SyncStore } from '@app/store/sync.store';
 import { provideTestingI18n } from '@app/testing/i18n.harness';
 
@@ -14,6 +15,10 @@ describe('AppComponent', () => {
 				// The boot gate and nothing else: the real store drags the whole cycle behind it,
 				// and the component only reads whether the gate is open.
 				{ provide: SyncStore, useValue: { isReady: signal(true) } },
+				{
+					provide: PageLoadStore,
+					useValue: { isOpen: signal(true), isReady: signal(true), open: (): void => undefined },
+				},
 			],
 		}).compileComponents();
 	});
