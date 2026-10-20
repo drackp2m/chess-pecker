@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, untracked } from '@angular/core';
 import type { PuzzleShareResultRequest } from '@chesspecker/api-definitions';
 import { firstValueFrom } from 'rxjs';
 
@@ -9,8 +9,10 @@ import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { PuzzleShareRepository } from '@app/repository/puzzle-share.repository';
 import { NotificationService } from '@app/service/notification.service';
+import { FriendStore } from '@app/store/friend.store';
 import { ModalStore } from '@app/store/modal.store';
 import { PageLoadStore } from '@app/store/page-load.store';
+import { SessionStore } from '@app/store/session.store';
 import { ShareStore } from '@app/store/share.store';
 
 /**
@@ -33,6 +35,8 @@ export class ShareButtonComponent implements OnInit {
 	private readonly modalStore = inject(ModalStore);
 	private readonly shareStore = inject(ShareStore);
 	private readonly pageLoad = inject(PageLoadStore);
+	private readonly session = inject(SessionStore);
+	private readonly friendStore = inject(FriendStore);
 
 	/** Only a finished exercise is worth sending: there is nothing to compare until it is. */
 	readonly allowWhileOpen = input(false);
@@ -51,6 +55,14 @@ export class ShareButtonComponent implements OnInit {
 	 * an exercise still open would give away that it is one worth sending.
 	 */
 	readonly isHighlighted = computed(() => this.isShared() && !this.isDisabled());
+
+	constructor() {
+		effect(() => {
+			if (this.session.isAuthenticated()) {
+				void untracked(() => this.friendStore.ensureLoaded());
+			}
+		});
+	}
 
 	ngOnInit(): void {
 		void this.pageLoad.track(this.shareStore.ready());
