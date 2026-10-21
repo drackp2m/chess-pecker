@@ -290,6 +290,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Sampling temperature (default: 0, deterministic).",
     )
 
+    parser.add_argument(
+        "--think",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help=(
+            "Let the model reason before answering, only on the last try of a unit that "
+            "keeps failing and when a form is asked again. Models whose chat template "
+            "cannot reason ignore it. --no-think turns it off."
+        ),
+    )
+
     parser.set_defaults(memory=True)
 
     return parser

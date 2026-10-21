@@ -17,6 +17,8 @@ from .environment import HostUnsupportedError
 from .memory import TranslationMemory
 from .models import TRANSLATE, profile_for, summary, table
 from .prompting import (
+    GENDER_LABEL,
+    PLURAL_LABEL,
     REVIEW_SUB_STATE,
     Batch,
     blocks_of,
@@ -30,6 +32,8 @@ from .prompting import (
 from .report import GAVE_UP, Record, Reporter, Tally, write_report
 from .validate import (
     CONFIRMABLE,
+    ECHO_ISSUE,
+    FORM_SEPARATOR,
     Form,
     Issue,
     clean,
@@ -53,6 +57,9 @@ from .xliff_io import (
 
 RETRIES = 2
 NEUTRAL_ISSUE = "forms-gender-other"
+FEW, MANY = "few", "many"
+MALE, FEMALE = "male", "female"
+TWIN = "forms"
 MAX_TOKENS_FACTOR = 4
 MAX_TOKENS_FLOOR = 48
 MAX_TOKENS_CEILING = 640
@@ -105,7 +112,8 @@ def max_tokens_for(engine, batch: Batch) -> int:
 
 
 def judge(block, unit, text: str) -> tuple[str, list]:
-    candidate = clean(text, unit.source, "last" if fenced(block, unit) else "first")
+    prefer = "last" if fenced(block, unit) else "first"
+    candidate = clean(text, unit.source, prefer, block.target_lang)
     issues = validate(
         candidate,
         unit.source,
@@ -118,21 +126,27 @@ def judge(block, unit, text: str) -> tuple[str, list]:
     return candidate, issues
 
 
-def ask(engine, batch: Batch) -> str:
-    return engine.generate(build_messages(batch), max_tokens_for(engine, batch))
+def ask(engine, batch: Batch, think: bool = False) -> str:
+    return engine.generate(build_messages(batch), max_tokens_for(engine, batch), think)
 
 
-def attempt(engine, batch: Batch, index: int, issues: list) -> tuple[str, list]:
+def attempt(
+    engine, batch: Batch, index: int, issues: list, think: bool = False
+) -> tuple[str, list]:
     batch.attempt = index
     batch.reason = reason_of(issues) if issues else ""
     batch.demand = demanded(issues)
-    batch.confirm = confirmable(issues)
+    batch.confirm = issues[0] if confirmable(issues) else None
 
-    return judge(batch.block, batch.units[0], ask(engine, batch))
+    return judge(batch.block, batch.units[0], ask(engine, batch, think))
 
 
 def confirmable(issues: list) -> bool:
     return bool(issues) and all(issue.code in CONFIRMABLE for issue in issues)
+
+
+def reasks(session: Session) -> tuple[bool, ...]:
+    return (False, True) if session.args.think else (False,)
 
 
 def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]:
@@ -144,7 +158,8 @@ def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]
     while issues and calls <= RETRIES:
         seen.extend(issue.code for issue in issues)
         previous, asked = candidate, confirmable(issues)
-        candidate, issues = attempt(session.engine, batch, calls, issues)
+        think = session.args.think and calls == RETRIES
+        candidate, issues = attempt(session.engine, batch, calls, issues, think)
         calls += 1
 
         if asked and confirmable(issues) and candidate == previous:
@@ -246,45 +261,121 @@ def neutral_issues(outcomes: list, members: list[int], lang: str) -> list:
     return [Issue(issue.code, issue.detail) for issue in found if issue.code == NEUTRAL_ISSUE]
 
 
-# The forms of a key travel in one batch, so this is the first moment the
-# unspecified one can be held against the two it has to differ from.
-def revisit(session: Session, batch: Batch, outcomes: list) -> list:
-    lang = batch.block.target_lang
+def swapped(category: str, label: str, value: str) -> str:
+    parts = category.split(FORM_SEPARATOR)
+
+    return FORM_SEPARATOR.join(
+        f"{label}:{value}" if part.partition(":")[0] == label else part for part in parts
+    )
+
+
+def sibling_text(outcomes: list, members: list[int], unit, label: str, value: str) -> str:
+    wanted = swapped(unit.category, label, value)
+
+    for index in members:
+        other, text, _, _, review = outcomes[index]
+
+        if other.category == wanted and not review:
+            return text.strip()
+
+    return ""
+
+
+def form_groups(outcomes: list) -> list[list[int]]:
     groups: dict[str, list[int]] = {}
 
     for index, outcome in enumerate(outcomes):
         if "#" in outcome[0].id:
             groups.setdefault(group_id(outcome[0]), []).append(index)
 
-    for members in groups.values():
-        issues = neutral_issues(outcomes, members, lang)
+    return list(groups.values())
 
-        if not issues:
-            continue
 
+# The forms of a key travel in one batch, so this is the first moment each one
+# can be held against its siblings: the unspecified gender against the two it
+# has to differ from, or copy when they do not, and few against many.
+def revisit(session: Session, batch: Batch, outcomes: list) -> list:
+    for members in form_groups(outcomes):
         for index in members:
-            if outcomes[index][0].neutral:
-                outcomes[index] = rethought(session, batch, outcomes, members, index, issues)
+            unit = outcomes[index][0]
+
+            if unit.neutral:
+                outcomes[index] = settled_neutral(session, batch, outcomes, members, index)
+
+            if unit.plural_key == FEW:
+                outcomes[index] = settled_few(session, batch, outcomes, members, index)
 
     return outcomes
+
+
+def settled_neutral(
+    session: Session, batch: Batch, outcomes: list, members: list[int], index: int
+) -> tuple:
+    unit, text, _, found, _ = outcomes[index]
+    lang = batch.block.target_lang
+    male = sibling_text(outcomes, members, unit, GENDER_LABEL, MALE)
+    female = sibling_text(outcomes, members, unit, GENDER_LABEL, FEMALE)
+
+    if male and male == female:
+        if male == text.strip():
+            return outcomes[index]
+
+        session.memory.remember(lang, unit.source, male, unit.category)
+
+        return (unit, male, TWIN, [], False)
+
+    issues = neutral_issues(outcomes, members, lang)
+
+    if not issues:
+        return outcomes[index]
+
+    return rethought(session, batch, outcomes, members, index, issues)
 
 
 def rethought(
     session: Session, batch: Batch, outcomes: list, members: list[int], index: int, issues: list
 ) -> tuple:
     unit, text, origin, found, _ = outcomes[index]
-    candidate, problems = attempt(session.engine, Batch(batch.block, [unit]), 1, issues)
-    trial = list(outcomes)
-    trial[index] = (unit, candidate, "model", [], False)
+    lang = batch.block.target_lang
+    single = Batch(batch.block, [unit])
 
-    if problems or neutral_issues(trial, members, batch.block.target_lang):
-        noted = found + [f"{issue.code}: {issue.detail}" for issue in issues]
+    for step, think in enumerate(reasks(session), start=1):
+        candidate, problems = attempt(session.engine, single, step, issues, think)
+        trial = list(outcomes)
+        trial[index] = (unit, candidate, "model", [], False)
 
-        return (unit, text, origin, noted, True)
+        if not problems and not neutral_issues(trial, members, lang):
+            session.memory.remember(lang, unit.source, candidate, unit.category)
 
-    session.memory.remember(batch.block.target_lang, unit.source, candidate, unit.category)
+            return trial[index]
 
-    return trial[index]
+    noted = found + [f"{issue.code}: {issue.detail}" for issue in issues]
+
+    return (unit, text, origin, noted, True)
+
+
+def settled_few(
+    session: Session, batch: Batch, outcomes: list, members: list[int], index: int
+) -> tuple:
+    unit, text, _, found, review = outcomes[index]
+    many = sibling_text(outcomes, members, unit, PLURAL_LABEL, MANY)
+
+    if review or not many or text.strip() != many:
+        return outcomes[index]
+
+    lang = batch.block.target_lang
+    issues = [Issue(ECHO_ISSUE, many)]
+    single = Batch(batch.block, [unit])
+
+    for step, think in enumerate(reasks(session), start=1):
+        candidate, problems = attempt(session.engine, single, step, issues, think)
+
+        if not problems and candidate.strip() != many:
+            session.memory.remember(lang, unit.source, candidate, unit.category)
+
+            return (unit, candidate, "model", found, False)
+
+    return outcomes[index]
 
 
 def wanted(unit, args) -> bool:

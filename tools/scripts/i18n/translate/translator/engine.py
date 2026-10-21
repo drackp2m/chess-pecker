@@ -13,6 +13,7 @@ from .validate import cut_at_stop
 
 MIN_SHARED_TOKENS = 16
 PREFILL_STEP = 512
+THINK_TOKENS = 1024
 NO_THINK = "/no_think"
 NO_TRIM = (
     "  This model keeps a recurrent cache that cannot be trimmed, so the shared "
@@ -26,12 +27,16 @@ class Usage:
     prompt_tokens: int = 0
     generation_tokens: int = 0
     seconds: float = 0.0
+    thoughts: int = 0
 
-    def record(self, prompt_tokens: int, generation_tokens: int, seconds: float) -> None:
+    def record(
+        self, prompt_tokens: int, generation_tokens: int, seconds: float, thought: bool = False
+    ) -> None:
         self.calls += 1
         self.prompt_tokens += prompt_tokens
         self.generation_tokens += generation_tokens
         self.seconds += seconds
+        self.thoughts += 1 if thought else 0
 
     @property
     def tokens_per_second(self) -> float:
@@ -121,7 +126,7 @@ class OllamaEngine:
     def start_block(self) -> None:
         return None
 
-    def generate(self, messages: list[dict], max_tokens: int) -> str:
+    def generate(self, messages: list[dict], max_tokens: int, think: bool = False) -> str:
         messages = flatten(messages)
         started = time.perf_counter()
         text = ollama_chat_messages(
@@ -175,12 +180,12 @@ class MlxEngine:
     # A hybrid Qwen3 reasons unless it is told twice not to: the template flag
     # is the clean way, the /no_think switch the one that survives an older
     # chat template shipped with the conversion.
-    def _apply(self, messages: list[dict]) -> list[int]:
+    def _apply(self, messages: list[dict], thinking: bool = False) -> list[int]:
+        extra = {key: thinking for key in self._extra}
+
         try:
             return list(
-                self._tokenizer.apply_chat_template(
-                    messages, add_generation_prompt=True, **self._extra
-                )
+                self._tokenizer.apply_chat_template(messages, add_generation_prompt=True, **extra)
             )
         except TypeError:
             if not self._extra:
@@ -188,16 +193,17 @@ class MlxEngine:
 
             self._extra = {}
 
-            return self._apply(messages)
+            return self._apply(messages, thinking)
 
     # Gemma's chat template rejects a system role outright. Falling back to a
     # single user turn keeps the prefix cache working: the system text is still
     # the head of the prompt, which is all the cache cares about.
-    def _tokens(self, messages: list[dict]) -> list[int]:
+    def _tokens(self, messages: list[dict], thinking: bool = False) -> list[int]:
         wanted = messages if self._system_role else merge_system(messages)
+        quiet = self._no_think and not thinking
 
         try:
-            return self._apply(quieted(wanted) if self._no_think else wanted)
+            return self._apply(quieted(wanted) if quiet else wanted, thinking)
         except Exception as exc:
             if not self._system_role or merge_system(messages) == messages:
                 raise RuntimeError(
@@ -207,7 +213,19 @@ class MlxEngine:
 
             self._system_role = False
 
-            return self._tokens(messages)
+            return self._tokens(messages, thinking)
+
+    @property
+    def can_think(self) -> bool:
+        return bool(getattr(self._tokenizer, "has_thinking", False))
+
+    def _spoken(self, text: str) -> str:
+        start, end = self._tokenizer.think_start, self._tokenizer.think_end
+
+        if end in text:
+            return text.rpartition(end)[2]
+
+        return "" if start in text else text
 
     def _cache_length(self) -> int:
         if not self._cache:
@@ -274,15 +292,16 @@ class MlxEngine:
 
         return stream_generate(self._model, self._tokenizer, tokens, **kwargs)
 
-    def generate(self, messages: list[dict], max_tokens: int) -> str:
-        tokens = self._tokens(messages)
+    def generate(self, messages: list[dict], max_tokens: int, think: bool = False) -> str:
+        thinking = think and self.can_think
+        tokens = self._tokens(messages, thinking)
         shared = self._prepare(tokens)
         fed = tokens[shared:]
         pieces = []
         produced = 0
         started = time.perf_counter()
 
-        for response in self._stream(fed, max_tokens):
+        for response in self._stream(fed, max_tokens + (THINK_TOKENS if thinking else 0)):
             pieces.append(response.text)
             produced += 1
 
@@ -292,9 +311,10 @@ class MlxEngine:
         elapsed = time.perf_counter() - started
         self._prompt = tokens
 
-        self.usage.record(len(fed), produced, elapsed)
+        self.usage.record(len(fed), produced, elapsed, thinking)
+        text = cut_at_stop("".join(pieces))[0]
 
-        return cut_at_stop("".join(pieces))[0].strip()
+        return (self._spoken(text) if thinking else text).strip()
 
 
 def build_engine(backend: str, model: str | None, temperature: float = 0.0):

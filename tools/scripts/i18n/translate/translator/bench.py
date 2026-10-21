@@ -174,6 +174,7 @@ def shape_note(args, current: Pass) -> dict:
         "inject": current.inject,
         "batch": args.batch,
         "temperature": args.temperature,
+        "think": args.think,
         "prompt": prompt_print(current, args),
         "code": code_print(),
     }
@@ -676,7 +677,7 @@ def header(plan: list[Pass], args, out: Path) -> list[str]:
         f"- Models: {', '.join(f'`{alias}`' for alias in aliases)}",
         f"- Passes written to: `{out}`",
         f"- Settings: temperature {args.temperature}, batch up to {args.batch}, "
-        "translation memory off",
+        f"thinking {'on the last try' if args.think else 'off'}, translation memory off",
         f"- Code: `{code_print()}`",
         f"- Written: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
     ]

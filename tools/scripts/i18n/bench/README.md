@@ -163,7 +163,8 @@ trae, por idioma:
 ### La columna `prompt`
 
 Cada pasada guarda en su `.json` una huella de los prompts que vio (todos los de primer intento,
-tal como se mandan) y otra del código del traductor. El informe la enseña en la columna `prompt`
+tal como se mandan), otra del código del traductor y si se dejó razonar al modelo en los últimos
+intentos (`think`, que `--no-think` apaga). El informe la enseña en la columna `prompt`
 y avisa en negrita si no todas las filas coinciden: comparar dos modelos que vieron prompts
 distintos no mide sólo el modelo. Al cambiar las instrucciones, **un `--output` nuevo por
 experimento**:

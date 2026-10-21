@@ -258,6 +258,7 @@ class Reporter:
             "review": len(self.reviewed),
             "forms_flagged": len(self.groups),
             "calls": engine.usage.calls,
+            "thinking_calls": engine.usage.thoughts,
             "prompt_tokens": engine.usage.prompt_tokens,
             "generation_tokens": engine.usage.generation_tokens,
             **{key: round(value, 2) for key, value in rates.items()},
@@ -277,7 +278,7 @@ class Reporter:
         self.say(
             f"{summary['units_per_minute']:.1f} units/min · "
             f"{summary['tokens_per_second']:.1f} tokens/s · "
-            f"{summary['calls']} model calls · "
+            f"{summary['calls']} model calls ({summary['thinking_calls']} thinking) · "
             f"{summary['prompt_tokens_per_call']:.0f} prompt tokens/call"
         )
 

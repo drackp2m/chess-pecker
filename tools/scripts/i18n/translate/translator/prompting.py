@@ -7,7 +7,7 @@ from .context import parse_glossary, split_rules, useful_keep, useful_rules, use
 from .models import INSTRUCT, TRANSLATE
 from .placeholders import marker_position
 from .samples import gender_of, plural_of
-from .validate import FORM_SEPARATOR, Form, validate_forms
+from .validate import ECHO_ISSUE, FORM_SEPARATOR, Form, Issue, validate_forms
 from .xliff_io import (
     expected_markers_for,
     find_files,
@@ -70,6 +70,18 @@ GENDER_RULES = """\
 concordar: no inventes terminaciones que el idioma no tenga.
 - Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con barras.\
 """
+
+CONFIRMATIONS = {
+    "untranslated": (
+        "Tu respuesta anterior es idéntica al original. Si en {lang} se escribe exactamente así, "
+        "repítela tal cual; si no, tradúcela."
+    ),
+    ECHO_ISSUE: (
+        "Tu respuesta anterior es la misma frase que la forma «many»: «{detail}». Si en {lang} "
+        "con los números de esta forma se escribe exactamente así, repítela tal cual; si no, "
+        "corrígela para esos números."
+    ),
+}
 
 CONTEXT_PREFIX = "- Qué es: "
 DEMAND_PREFIX = "- Usa sí o sí estas palabras: "
@@ -330,7 +342,7 @@ class Batch:
     attempt: int = 0
     reason: str = ""
     demand: tuple[tuple[str, str], ...] = ()
-    confirm: bool = False
+    confirm: Issue | None = None
 
     @property
     def size(self) -> int:
@@ -416,11 +428,9 @@ class Batch:
         if not (self.attempt and self.reason):
             return ""
 
-        if self.confirm:
-            return (
-                "Tu respuesta anterior es idéntica al original. Si en "
-                f"{self.block.target_lang} se escribe exactamente así, repítela tal cual; si no, "
-                "tradúcela."
+        if self.confirm is not None:
+            return CONFIRMATIONS[self.confirm.code].format(
+                lang=self.block.target_lang, detail=self.confirm.detail
             )
 
         lines = [

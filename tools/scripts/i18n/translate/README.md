@@ -151,6 +151,8 @@ Two more things separate them:
 - **Thinking.** Qwen3 `14B` is a hybrid reasoning model. Left alone it would spend the whole token
   budget thinking and return nothing, so the engine turns it off twice over: through the chat
   template (`enable_thinking=False`) and with the `/no_think` switch appended to the user turn.
+  Reasoning is only switched back on, for any model whose template can do it, on the calls of
+  _Validation and review_ that come after a unit has already failed.
 - **Whether the prompt cache survives.** The `qwen35-*` family is `Qwen3_5ForConditionalGeneration`:
   part attention, part linear-attention layers whose state is a recurrent `ArraysCache`. `mlx_lm`
   cannot trim that, so the cache is rebuilt on every call and the shared head is re-read every time
@@ -298,7 +300,11 @@ the call:
   it (`sample`, in its README). What prompting did not fix is the 2–4 form after a verb:
   `gemma4-12b-optiq` still writes «Сервер отклонил 3 упражнений» in a few keys, with the verb in
   the sample and with a `nunca «купил 3 книг»` after it, which made nothing better and was
-  dropped.
+  dropped. So the end of the batch checks it instead. In a language that tells `few` from
+  `many`, a `few` form written exactly like the `many` one was, in every bench pass, either that
+  mistake or a sentence where the number governs nothing («# отклонено», «более # дней»). Only
+  the model can say which, so it is asked again on its own, quoting the `many` sentence, then once
+  more reasoning; the same sentence back both times is taken as its word.
 - **The gender rules.** `## Género` travels the same way and only when the call carries a form of a
   gender select: agree with the person the form is written for, and — the counter-intuitive half —
   when there is no gender to agree with, turn the sentence around rather than invent an ending the
@@ -313,10 +319,14 @@ the call:
   triple: what he and she would be told, and the turned-around sentence that fits anyone. It is
   about a book for the same reason: «Партия сохранена», the first triple, came back as the
   translation of «Te has rendido. Mira cómo iba». And since the forms of a key share a batch, the
-  end of that batch is where the unspecified one is held against the other two: when it came
-  back equal to his or hers, it is asked again on its own with that as the reason, and a second
-  miss keeps the first answer and leaves it for review. Only that check, out of the form checks:
-  the others also fire where the language does not mark the form (see the bench README).
+  end of that batch is where the unspecified one is held against the other two. When he and she
+  are told the same sentence, the language does not mark gender there and the unspecified form is
+  that sentence too: it is copied without asking. Told to turn the sentence around, the model
+  otherwise made something up to tell it apart — «S'has rendit» and «Etbemvenim» in Catalan,
+  «Resignation occurred» in English. When it came back equal to only his or hers, it is asked
+  again on its own with that as the reason, then once more reasoning, and a miss keeps the first
+  answer and leaves it for review. Only those checks, out of the form checks: the others also fire
+  where the language does not mark the form (see the bench README).
 - **The forms travel together.** A batch is never cut through the forms of one key: when they do
   not fit in what is left of it, the batch ends before them. Otherwise the unspecified form of
   «Te has rendido» landed alone in the next call, without the two it has to differ from.
@@ -394,12 +404,20 @@ stays inside a length band and honours the glossary terms the unit's `term` note
 
 Before any of that, the answer is cleaned: code fences, `«…»` quotes, `Here is the translation:`
 lead-ins, a final full stop the source did not have, `<think>…</think>` blocks, and everything from
-the first end-of-turn token onwards.
+the first end-of-turn token onwards. A first letter in lowercase is raised when the source opens
+in uppercase — the Russian chart legends came back «подсказки», «ошибки» —, with the Turkish
+dotted `İ` where it applies, and nothing is touched when either text opens with a marker or a
+number.
 
-A rejected answer is retried with the reason attached, then with an example. What still fails is
-salvaged — dropped markers are re-attached — and the segment is written with
-`subState="chesspecker:review"` and listed at the end of the run. Nothing dubious is ever passed off
-as good.
+A rejected answer is retried with the reason attached, then with an example, and that last try
+lets the model reason first if its chat template can (`enable_thinking`, which Gemma 4 and Qwen 3
+have). The reasoning is asked for nowhere else but in the re-asks of the forms above, so it only
+costs time on units that were heading for review anyway, and the summary counts those calls. It
+gets 1024 tokens on top of the answer's budget and is cut off before the answer is read; one that
+runs out leaves an empty answer, which fails like any other. `--no-think` keeps every call as it
+was. What still fails is salvaged — dropped markers are re-attached — and the segment is written
+with `subState="chesspecker:review"` and listed at the end of the run. Nothing dubious is ever
+passed off as good.
 
 The copy of the source is the one rejection a model may overrule. «A la primera», «Coronar a» and
 «torre blanca» are Catalan as much as Spanish, and the first Catalan bench left fifteen of them for
@@ -413,7 +431,7 @@ out of it:
 
 ```
 Translated 85 units (72 in a batch, 10 from memory) in 253s
-20.2 units/min · 5.2 tokens/s · 10 model calls · 1051 prompt tokens/call
+20.2 units/min · 5.2 tokens/s · 10 model calls (1 thinking) · 1051 prompt tokens/call
 
 Batches: 4 calls, 75 units offered, 72 answered and kept
   3 rejected (checks failed: glossary 3)
@@ -474,6 +492,8 @@ What each number is for:
 - `--json` prints NDJSON progress on stdout instead of the human log; `--report <file>` writes a
   markdown summary with the speed, the batch share and the units left for review.
 - `--temperature` defaults to 0 — deterministic, which is what makes two models comparable.
+- `--no-think` never lets the model reason, not even on the last try of a failing unit (see
+  _Validation and review_). The bench records which of the two a pass ran with.
 
 ## Backends
 
