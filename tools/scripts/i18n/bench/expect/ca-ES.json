@@ -1,0 +1,241 @@
+{
+	"lang": {
+		"quotes": [["«", "»"]],
+		"stops": ["."]
+	},
+	"units": {
+		"CommonI18n.FIRST_TRY": { "allow": ["untranslated"] },
+		"TrainingI18n.DAILY_SERIES_FIRST_TRY": { "allow": ["untranslated"] },
+		"CommonI18n.PROMOTE_TO": { "allow": ["untranslated"] },
+		"CommonI18n.PROMOTE_TO_PIECE": { "allow": ["untranslated"] },
+		"CommonI18n.CANCEL": {
+			"axis": "ortografía",
+			"ref": ["Cancel·lar", "Cancel·la"],
+			"re": ["cance(l·l|ŀl)"],
+			"severity": "major"
+		},
+		"CommonI18n.CANCELLED": {
+			"axis": "ortografía",
+			"ref": ["Cancel·lat"],
+			"re": ["cance(l·l|ŀl)"],
+			"severity": "major"
+		},
+		"CommonI18n.STAGE": { "ref": ["Etapa"], "allow": ["untranslated"] },
+		"CommonI18n.PREVIOUS": { "ref": ["Anterior"], "allow": ["untranslated"] },
+		"CommonI18n.DIFFICULTY": {
+			"axis": "concordancia entre claves",
+			"ref": ["Dificultat: {level}"],
+			"has": ["dificultat"]
+		},
+		"CommonI18n.DIFFICULTY_EASY": {
+			"axis": "concordancia entre claves",
+			"ref": ["fàcil"],
+			"re": ["^fàcil$"]
+		},
+		"CommonI18n.DIFFICULTY_MEDIUM": {
+			"axis": "concordancia entre claves",
+			"ref": ["mitjana"],
+			"re": ["^mitjana$"]
+		},
+		"CommonI18n.DIFFICULTY_HARD": {
+			"axis": "concordancia entre claves",
+			"ref": ["difícil"],
+			"re": ["^difícil$"],
+			"allow": ["untranslated"]
+		},
+		"CommonI18n.PIECE_WHITE_PAWN": { "axis": "concordancia entre claves", "has": ["peó blanc"] },
+		"CommonI18n.PIECE_WHITE_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"has": ["cavall blanc"]
+		},
+		"CommonI18n.PIECE_WHITE_BISHOP": {
+			"axis": "concordancia entre claves",
+			"has": ["alfil blanc"]
+		},
+		"CommonI18n.PIECE_WHITE_ROOK": {
+			"axis": "concordancia entre claves",
+			"has": ["torre blanca"],
+			"allow": ["untranslated"]
+		},
+		"CommonI18n.PIECE_WHITE_QUEEN": {
+			"axis": "concordancia entre claves",
+			"has": ["dama blanca"],
+			"allow": ["untranslated"]
+		},
+		"CommonI18n.PIECE_WHITE_KING": { "axis": "concordancia entre claves", "has": ["rei blanc"] },
+		"CommonI18n.PIECE_BLACK_PAWN": { "axis": "concordancia entre claves", "has": ["peó negre"] },
+		"CommonI18n.PIECE_BLACK_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"has": ["cavall negre"]
+		},
+		"CommonI18n.PIECE_BLACK_BISHOP": {
+			"axis": "concordancia entre claves",
+			"has": ["alfil negre"]
+		},
+		"CommonI18n.PIECE_BLACK_ROOK": {
+			"axis": "concordancia entre claves",
+			"has": ["torre negra"],
+			"allow": ["untranslated"]
+		},
+		"CommonI18n.PIECE_BLACK_QUEEN": {
+			"axis": "concordancia entre claves",
+			"has": ["dama negra"],
+			"allow": ["untranslated"]
+		},
+		"CommonI18n.PIECE_BLACK_KING": { "axis": "concordancia entre claves", "has": ["rei negre"] },
+		"CommonI18n.SERVER_DETAIL": {
+			"axis": "marcadores",
+			"ref": ["{detail}"],
+			"re": ["^\\{detail\\}$"]
+		},
+		"CommonI18n.DEMO_TASK": { "axis": "coherencia entre claves", "has": ["torre negra"] },
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:one": {
+			"axis": "plural",
+			"has": ["exercici"],
+			"not": ["exercicis"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:other": {
+			"axis": "plural",
+			"has": ["exercicis"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:one": {
+			"axis": "plural",
+			"has": ["exercici"],
+			"not": ["exercicis"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:other": {
+			"axis": "plural",
+			"has": ["exercicis"],
+			"allow": ["glossary"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:one": {
+			"axis": "plural",
+			"has": ["caràcter"],
+			"not": ["caràcters"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:other": { "axis": "plural", "has": ["caràcters"] },
+		"DashboardI18n.ACTIVITY_TOTAL#plural:one": {
+			"axis": "plural",
+			"has": ["exercici"],
+			"not": ["exercicis"]
+		},
+		"DashboardI18n.ACTIVITY_TOTAL#plural:other": { "axis": "plural", "has": ["exercicis"] },
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:one": {
+			"axis": "plural",
+			"has": ["exercici"],
+			"not": ["exercicis"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:other": { "axis": "plural", "has": ["exercicis"] },
+		"IntroI18n.PURPOSE_TITLE#gender:male": {
+			"axis": "género de quien usa",
+			"ref": ["Benvingut a Chess Pecker"],
+			"has": ["benvingut"]
+		},
+		"IntroI18n.PURPOSE_TITLE#gender:female": {
+			"axis": "género de quien usa",
+			"ref": ["Benvinguda a Chess Pecker"],
+			"has": ["benvinguda"]
+		},
+		"IntroI18n.PURPOSE_TITLE#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["Et donem la benvinguda a Chess Pecker"],
+			"not": ["benvingut"],
+			"re": ["^(?!benvinguda)"]
+		},
+		"MatchI18n.RESIGNED#gender:male": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit"],
+			"not": ["s'ha", "rendirte"]
+		},
+		"MatchI18n.RESIGNED#gender:female": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit"],
+			"not": ["s'ha", "rendirte"]
+		},
+		"MatchI18n.RESIGNED#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit"],
+			"not": ["s'ha", "rendirte"]
+		},
+		"TrainingI18n.GAVE_UP_WATCHING#gender:male": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit. Mira com anava."],
+			"not": ["s'ha"]
+		},
+		"TrainingI18n.GAVE_UP_WATCHING#gender:female": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit. Mira com anava."],
+			"not": ["s'ha"]
+		},
+		"TrainingI18n.GAVE_UP_WATCHING#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit. Mira com anava."],
+			"not": ["s'ha"]
+		},
+		"TrainingI18n.GAVE_UP_LINE#gender:male": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit. Aquesta era la línia."],
+			"not": ["s'ha"]
+		},
+		"TrainingI18n.GAVE_UP_LINE#gender:female": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit. Aquesta era la línia."],
+			"not": ["s'ha"]
+		},
+		"TrainingI18n.GAVE_UP_LINE#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["T'has rendit. Aquesta era la línia."],
+			"not": ["s'ha"]
+		},
+		"MatchI18n.DISMISS": { "ref": ["Descartar"], "allow": ["untranslated"] },
+		"MatchI18n.OPPONENT": { "ref": ["Rival"], "allow": ["untranslated"] },
+		"MatchI18n.LEGACY_ENGINE": { "ref": ["Original"], "allow": ["untranslated"] },
+		"MatchI18n.ELO": { "axis": "nombres que no se traducen", "ref": ["ELO"], "re": ["^elo$"] },
+		"PuzzleI18n.IMPORTED#plural:one": {
+			"axis": "plural",
+			"has": ["exercici"],
+			"not": ["exercicis"]
+		},
+		"PuzzleI18n.IMPORTED#plural:other": { "axis": "plural", "has": ["exercicis"] },
+		"SettingI18n.BOARD_INTRO": { "axis": "coherencia entre claves", "has": ["torre negra"] },
+		"SettingI18n.SYNC_ROWS#plural:one": {
+			"axis": "plural",
+			"has": ["fila"],
+			"not": ["files"],
+			"allow": ["untranslated"]
+		},
+		"SettingI18n.SYNC_ROWS#plural:other": { "axis": "plural", "has": ["files"] },
+		"SettingI18n.SYNC_UP_TO_DATE": {
+			"axis": "corta sin contexto",
+			"ref": ["al dia", "actualitzat"],
+			"re": ["(al dia|actualitzat)"],
+			"not": ["diari"]
+		},
+		"SettingI18n.SYNC_STALE#plural:one": { "axis": "plural", "re": ["\\bdia\\b"], "not": ["dies"] },
+		"SettingI18n.SYNC_STALE#plural:other": { "axis": "plural", "has": ["dies"] },
+		"SettingI18n.SYNC_MORE_REJECTED": {
+			"axis": "corta sin contexto",
+			"ref": ["i {count} més"],
+			"has": ["{count} més"]
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:one": {
+			"axis": "plural",
+			"has": ["exercici"],
+			"not": ["exercicis"]
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:other": { "axis": "plural", "has": ["exercicis"] },
+		"TrainingI18n.SAVE_THE_PACE": {
+			"axis": "vocabulario de interfaz",
+			"ref": ["Desar el ritme"],
+			"has": ["desar"],
+			"severity": "major"
+		},
+		"ProfileI18n.LOG_OUT": { "allow": ["glossary"] },
+		"AuthI18n.LOGGING_IN": { "allow": ["glossary"] },
+		"ProfileI18n.LOGGED_IN_AS": { "allow": ["glossary"] },
+		"CommonI18n.LOG_OUT_ANYWAY": { "allow": ["glossary"] }
+	}
+}

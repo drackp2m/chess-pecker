@@ -1,0 +1,888 @@
+{
+	"version": 2,
+	"frozen": "2026-10-20",
+	"commit": "7cc85fc",
+	"langs": ["en-GB", "ru-RU", "fr-FR", "ca-ES", "hi-IN"],
+	"scopes": [
+		{
+			"name": "common",
+			"const": "CommonI18n",
+			"prefixed": false,
+			"windows": [
+				"CANCEL … STAGE",
+				"LINE … PIECE_BLACK_KING",
+				"APP_UPDATED … CATALOG_EMPTY",
+				"DEMO_TASK … PROMOTE_TO_PIECE",
+				"PENDING_SYNC_TITLE … STAY"
+			],
+			"keys": [
+				{
+					"name": "CANCEL",
+					"id": "01KZCMJMZJP7DHE9CDMSHCGZE3",
+					"source": "Cancelar"
+				},
+				{
+					"name": "CANCELLED",
+					"id": "01KZCNHDHA14YM5MAJG6NASMFV",
+					"source": "Cancelado"
+				},
+				{
+					"name": "CYCLE",
+					"id": "01KZCNHDHASS8P14F182FX9F43",
+					"source": "Ciclo {index}",
+					"params": {
+						"index": "number"
+					}
+				},
+				{
+					"name": "FINISHED",
+					"id": "01KZCNHDHA92B79BC7ZCH4ZN9F",
+					"source": "Terminado"
+				},
+				{
+					"name": "IN_PROGRESS",
+					"id": "01KZCNHDHAJE1EFM6RMYC8SDPY",
+					"source": "En curso"
+				},
+				{
+					"name": "LEVEL_FOUND",
+					"id": "01KZCNHDHANPVNNXMTZMAV7AW6",
+					"source": "Nivel encontrado"
+				},
+				{
+					"name": "RESULT_RAISE",
+					"id": "01KZCNHDHA7X8M1QRPFS75QYV1",
+					"source": "Sube el nivel"
+				},
+				{
+					"name": "RESULT_LOWER",
+					"id": "01KZCNHDHA0GNGH1MWY7Y84P80",
+					"source": "Baja el nivel"
+				},
+				{
+					"name": "REFINE",
+					"id": "01KZCNHDHA1Q924MN48RDPTB12",
+					"source": "Afinado"
+				},
+				{
+					"name": "RESULT",
+					"id": "01KZCGYE0JAAE1ADHHHTZ5CHFR",
+					"source": "Resultado"
+				},
+				{
+					"name": "RETRY",
+					"id": "01KZCMJMZJRK4AFH58N8BBC1B5",
+					"source": "Reintentar"
+				},
+				{
+					"name": "RUNNING",
+					"id": "01KZCNHDHA66DPQ7RY0GA1K4BF",
+					"source": "En marcha"
+				},
+				{
+					"name": "EXPLORATION",
+					"id": "01KZCNHDHA5HH9S8H89X25RBHP",
+					"source": "Exploración"
+				},
+				{
+					"name": "FIRST_TRY",
+					"id": "01KZCGYE0J17YBS1HH8DJTFVFT",
+					"source": "A la primera"
+				},
+				{
+					"name": "STAGE",
+					"id": "01KZCGYE0JPF0B3JXKDSARDXYG",
+					"source": "Etapa"
+				},
+				{
+					"name": "LINE",
+					"id": "01KZJ895M4HJ7CDCCFX7AASJ2R",
+					"source": "Línea"
+				},
+				{
+					"name": "MOVES",
+					"id": "01KZJ895M4QT2DN62FNNVKSWAD",
+					"source": "Jugadas"
+				},
+				{
+					"name": "NO_MOVES_YET",
+					"id": "01KZJ895M4XFFG5WM1KRW0C5EY",
+					"source": "Todavía no hay jugadas."
+				},
+				{
+					"name": "PREVIOUS",
+					"id": "01KZJ895M45BZR7ZH71Z7X0Y3K",
+					"source": "Anterior"
+				},
+				{
+					"name": "NEXT",
+					"id": "01KZJ895M4WW7VTNSRZRP6DHY3",
+					"source": "Siguiente"
+				},
+				{
+					"name": "DIFFICULTY",
+					"id": "01KZJ895M4PTW4NRACCX8S8A3B",
+					"source": "Dificultad: {level}",
+					"params": {
+						"level": "string"
+					}
+				},
+				{
+					"name": "DIFFICULTY_EASY",
+					"id": "01KZJ895M4VG4PBSES83MTQXDQ",
+					"source": "fácil"
+				},
+				{
+					"name": "DIFFICULTY_MEDIUM",
+					"id": "01KZJ895M4ZTHGX1882A54MFVG",
+					"source": "media"
+				},
+				{
+					"name": "DIFFICULTY_HARD",
+					"id": "01KZJ895M4C212SRRCPC7GNKEE",
+					"source": "difícil"
+				},
+				{
+					"name": "SQUARE_EMPTY",
+					"id": "01KZJ895M42EAV5PJH4568TNYZ",
+					"source": "Casilla vacía {square}",
+					"params": {
+						"square": "string"
+					}
+				},
+				{
+					"name": "SQUARE_MOVE_TO",
+					"id": "01KZJ895M4KACKS0KT2HQASW16",
+					"source": "Mover a {square}",
+					"params": {
+						"square": "string"
+					}
+				},
+				{
+					"name": "SQUARE_PIECE",
+					"id": "01KZJ895M4ND9TZ6332H66SDPA",
+					"source": "{piece} en {square}",
+					"params": {
+						"piece": "string",
+						"square": "string"
+					}
+				},
+				{
+					"name": "SQUARE_CAPTURE",
+					"id": "01KZJ895M4JJZ9TJTTTG9ZW1VT",
+					"source": "Capturar {piece} en {square}",
+					"params": {
+						"piece": "string",
+						"square": "string"
+					}
+				},
+				{
+					"name": "PIECE_WHITE_PAWN",
+					"id": "01KZJ895M5D48K4X9AA8DK2YFB",
+					"source": "peón blanco"
+				},
+				{
+					"name": "PIECE_WHITE_KNIGHT",
+					"id": "01KZJ895M5A5CMDECM0QS8M574",
+					"source": "caballo blanco"
+				},
+				{
+					"name": "PIECE_WHITE_BISHOP",
+					"id": "01KZJ895M524HQZ6NMAWEENYFZ",
+					"source": "alfil blanco"
+				},
+				{
+					"name": "PIECE_WHITE_ROOK",
+					"id": "01KZJ895M5QEC2CZPYJN9HNW0T",
+					"source": "torre blanca"
+				},
+				{
+					"name": "PIECE_WHITE_QUEEN",
+					"id": "01KZJ895M5HTBHY9BH1JW1W7G4",
+					"source": "dama blanca"
+				},
+				{
+					"name": "PIECE_WHITE_KING",
+					"id": "01KZJ895M5XGWH8N9XYZFHABXJ",
+					"source": "rey blanco"
+				},
+				{
+					"name": "PIECE_BLACK_PAWN",
+					"id": "01KZJ895M5D5R9K7HKYD8RRX47",
+					"source": "peón negro"
+				},
+				{
+					"name": "PIECE_BLACK_KNIGHT",
+					"id": "01KZJ895M5EM90QGFFYSCTE6RT",
+					"source": "caballo negro"
+				},
+				{
+					"name": "PIECE_BLACK_BISHOP",
+					"id": "01KZJ895M51JGVPH451A4BJN0P",
+					"source": "alfil negro"
+				},
+				{
+					"name": "PIECE_BLACK_ROOK",
+					"id": "01KZJ895M5C494XTCXSZF7X52N",
+					"source": "torre negra"
+				},
+				{
+					"name": "PIECE_BLACK_QUEEN",
+					"id": "01KZJ895M5E3W36MRF8XKMDHXM",
+					"source": "dama negra"
+				},
+				{
+					"name": "PIECE_BLACK_KING",
+					"id": "01KZJ895M543B9MWGW4YX04TTK",
+					"source": "rey negro"
+				},
+				{
+					"name": "APP_UPDATED",
+					"id": "01KZJ895M549ZZSRNK6BDVXHE7",
+					"source": "Aplicación actualizada a la v{version}",
+					"params": {
+						"version": "string"
+					}
+				},
+				{
+					"name": "SETTINGS_LOAD_ERROR",
+					"id": "01KZJ895M5KKX7HGB6B9Z5BCGF",
+					"source": "No se han podido cargar tus ajustes, así que están en uso los valores por defecto."
+				},
+				{
+					"name": "SETTINGS_SAVE_ERROR",
+					"id": "01KZJ895M5HG8QR5Z3BDFRNQFS",
+					"source": "No se ha podido guardar el ajuste."
+				},
+				{
+					"name": "SETTINGS_BLOCKED_UPGRADE",
+					"id": "01KZJ895M5FVDK3GJWD8TYTXHC",
+					"source": "Cierra las demás pestañas de esta aplicación para terminar de actualizar su base de datos local."
+				},
+				{
+					"name": "SERVER_UNREACHABLE",
+					"id": "01KZJ895M5G0BQV1TG8JC425X4",
+					"source": "No se llega al servidor. Comprueba que el API está en marcha."
+				},
+				{
+					"name": "SERVER_DETAIL",
+					"id": "01KZJ895M5XWG0GF2STZHSBH7X",
+					"source": "{detail}",
+					"params": {
+						"detail": "string"
+					}
+				},
+				{
+					"name": "CATALOG_EMPTY",
+					"id": "01KZJ895M50KK3084TMWF8FPSS",
+					"source": "Este dispositivo no tiene ejercicios en esa banda de nivel. Conéctate para descargar el catálogo, o importa tus propios ejercicios desde un CSV."
+				},
+				{
+					"name": "DEMO_TASK",
+					"id": "01KZJ895M5Q4J3RYQVDKY2GTPR",
+					"source": "Cómete la torre negra."
+				},
+				{
+					"name": "SELECT_OPTION_POSITION",
+					"id": "01KZJ8YH9E11WV4CQKQHWQSK5B",
+					"source": "{option}, {position} de {total}",
+					"params": {
+						"option": "string",
+						"position": "number",
+						"total": "number"
+					}
+				},
+				{
+					"name": "PROMOTION_DIALOG",
+					"id": "01KZJA7B2XVZDMMY3NQ789EV2K",
+					"source": "Elige la pieza de coronación"
+				},
+				{
+					"name": "PROMOTE_TO",
+					"id": "01KZJA7B2XSYA2JR3QZSHNM6YB",
+					"source": "Coronar a"
+				},
+				{
+					"name": "PROMOTE_TO_PIECE",
+					"id": "01KZJA7B2XY37MYRC4SMK9RXEA",
+					"source": "Coronar a {piece}",
+					"params": {
+						"piece": "string"
+					}
+				},
+				{
+					"name": "PENDING_SYNC_TITLE",
+					"id": "01KZS8AGRWGFP8X9KFM4GS6Z41",
+					"source": "Quedan ejercicios sin subir"
+				},
+				{
+					"name": "PENDING_SYNC_MESSAGE",
+					"id": "01KZS8AGRW2GFXT6E5GZ6HHZPQ",
+					"source": "{pending, plural, one {# ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.} other {# ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.}}",
+					"params": {
+						"pending": "number"
+					},
+					"catalogue": "{pending} ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos."
+				},
+				{
+					"name": "PENDING_SYNC_REJECTED",
+					"id": "01M0WDEDFAJ2PMX8BFXKKQFD0A",
+					"source": "{rejected, plural, one {El servidor rechazó # ejercicio de este dispositivo y no se va a reintentar. Al cerrar sesión se borra, y no hay forma de recuperarlo.} other {El servidor rechazó # ejercicios de este dispositivo y no se van a reintentar. Al cerrar sesión se borran, y no hay forma de recuperarlos.}}",
+					"params": {
+						"rejected": "number"
+					},
+					"catalogue": "El servidor rechazó {rejected} ejercicios de este dispositivo y no se van a reintentar. Al cerrar sesión se borran, y no hay forma de recuperarlos."
+				},
+				{
+					"name": "LOG_OUT_ANYWAY",
+					"id": "01KZS8AGRWES0GY7DRQM4RQVPC",
+					"source": "Cerrar sesión igualmente"
+				},
+				{
+					"name": "STAY",
+					"id": "01KZS8AGRWVYYDY12EVBWAY17D",
+					"source": "Quedarme"
+				}
+			]
+		},
+		{
+			"name": "auth",
+			"const": "AuthI18n",
+			"prefixed": true,
+			"windows": ["LOG_IN_INTRO … ALREADY_REGISTERED"],
+			"keys": [
+				{
+					"name": "LOG_IN_INTRO",
+					"id": "01KZJ895M8350P0W0JZJ1T22F6",
+					"source": "La sesión se abre contra el API de Chess Pecker y se guarda en una cookie, así que sobrevive a una recarga."
+				},
+				{
+					"name": "USERNAME",
+					"id": "01KZJ895M8JKH3E7R23Y83EBXF",
+					"source": "Nombre de usuario"
+				},
+				{
+					"name": "PASSWORD",
+					"id": "01KZJ895M8PGYCPQXZ60M9A1ET",
+					"source": "Contraseña"
+				},
+				{
+					"name": "LOGGING_IN",
+					"id": "01KZJ895M800F5XVWG9QEDC3X9",
+					"source": "Iniciando sesión…"
+				},
+				{
+					"name": "NO_ACCOUNT_YET",
+					"id": "01KZJ895M87D6602JB3FNXZZ6C",
+					"source": "¿Todavía no tienes cuenta?"
+				},
+				{
+					"name": "CREATE_ONE",
+					"id": "01KZJ895M8CK5V08TPNEZQ38XV",
+					"source": "Crea una"
+				},
+				{
+					"name": "REGISTER_INTRO",
+					"id": "01KZJ895M82WP0GNSCB8ZJBE3W",
+					"source": "Con un nombre de usuario y una contraseña basta. El correo es opcional y sólo sirve para recuperar la cuenta si pierdes la contraseña."
+				},
+				{
+					"name": "EMAIL_OPTIONAL",
+					"id": "01KZJ895M8N7Y5VZRMW04ANY11",
+					"source": "Correo (opcional)"
+				},
+				{
+					"name": "PASSWORD_MIN_LENGTH",
+					"id": "01KZJ895M8N6WQ02RVEABREFTF",
+					"source": "Al menos {length, plural, one {# carácter} other {# caracteres}}.",
+					"params": {
+						"length": "number"
+					},
+					"catalogue": "Al menos {length} caracteres."
+				},
+				{
+					"name": "CREATING_ACCOUNT",
+					"id": "01KZJ895M8P2H1QBJ9V0Q3DCBF",
+					"source": "Creando la cuenta…"
+				},
+				{
+					"name": "ALREADY_REGISTERED",
+					"id": "01KZJ895M8NR4HJM9V1N3RNNY9",
+					"source": "¿Ya tienes cuenta?"
+				}
+			]
+		},
+		{
+			"name": "dashboard",
+			"const": "DashboardI18n",
+			"prefixed": true,
+			"windows": ["ACTIVITY_TOTAL … ACTIVITY_DAY_DETAIL"],
+			"keys": [
+				{
+					"name": "ACTIVITY_TOTAL",
+					"id": "450807Y5ZBDPF1ARZJCTNNMHEM",
+					"source": "{done, plural, one {# ejercicio hecho en el periodo elegido} other {# ejercicios hechos en el periodo elegido}}",
+					"params": {
+						"done": "number"
+					},
+					"catalogue": "{done} ejercicios hechos en el periodo elegido"
+				},
+				{
+					"name": "ACTIVITY_DAY_DETAIL",
+					"id": "62FBJMQVTVSE1N6D6QAJ53Y3E6",
+					"source": "{done, plural, one {# ejercicio hecho el {date}} other {# ejercicios hechos el {date}}}",
+					"params": {
+						"done": "number",
+						"date": "string"
+					},
+					"catalogue": "{done} ejercicios hechos el {date}"
+				}
+			]
+		},
+		{
+			"name": "intro",
+			"const": "IntroI18n",
+			"prefixed": true,
+			"windows": ["PURPOSE_TITLE … PURPOSE_BODY_2"],
+			"keys": [
+				{
+					"name": "PURPOSE_TITLE",
+					"id": "01M0R9S83BZC0SV2ESMWRS5TFZ",
+					"source": "{gender, select, male {Bienvenido a Chess Pecker} female {Bienvenida a Chess Pecker} other {Te damos la bienvenida a Chess Pecker}}",
+					"catalogue": "Bienvenido a Chess Pecker"
+				},
+				{
+					"name": "PURPOSE_BODY_1",
+					"id": "01M0R9S83BAMS048MJ2YKB2FZ7",
+					"source": "Chess Pecker es una aplicación para entrenar la táctica siguiendo el método Woodpecker. No es una colección de puzles que vas resolviendo sin más: es un entrenamiento con un principio, un final y una forma concreta de saber si estás mejorando."
+				},
+				{
+					"name": "PURPOSE_BODY_2",
+					"id": "01M0R9S83BXYQK0V1MSHYDSADY",
+					"source": "La aplicación se encarga del recorrido entero: prepara tu conjunto de ejercicios, lleva la cuenta de cada ciclo y te muestra cuánto has ganado en velocidad y en precisión. Funciona también sin conexión y guarda tu progreso en el dispositivo, así que puedes entrenar donde y cuando quieras."
+				}
+			]
+		},
+		{
+			"name": "match",
+			"const": "MatchI18n",
+			"prefixed": true,
+			"windows": ["DISMISS … DRAW_AGREED"],
+			"keys": [
+				{
+					"name": "DISMISS",
+					"id": "01KZJ895MBS2HDHRSR83E1EN5M",
+					"source": "Descartar"
+				},
+				{
+					"name": "FEN_UNREADABLE",
+					"id": "01KZJ895MBQ7F44AZ9DTZ2RNRS",
+					"source": "No se ha podido leer ese FEN."
+				},
+				{
+					"name": "ILLEGAL_MOVE",
+					"id": "01KZJ93GA1JB7TQ9Z498HP9W55",
+					"source": "«{notation}» no es una jugada legal aquí.",
+					"params": {
+						"notation": "string"
+					}
+				},
+				{
+					"name": "OPPONENT",
+					"id": "01KZJB0P5J4GQ0E2H8Z3Y7QK6M",
+					"source": "Rival"
+				},
+				{
+					"name": "LEGACY_ENGINE",
+					"id": "01KZJB0P5J4GQ0E2H8Z3Y7QK6N",
+					"source": "Original"
+				},
+				{
+					"name": "ELO",
+					"id": "01KZJB0P5J4GQ0E2H8Z3Y7QK6P",
+					"source": "ELO"
+				},
+				{
+					"name": "CHOOSE_SIDE",
+					"id": "01M3M8Y6KFA5GVCBCEVJ6J6FHH",
+					"source": "Elige rival y bando"
+				},
+				{
+					"name": "REVIEWING",
+					"id": "01M3M8Y6KF26442ZHY5MKAYYTG",
+					"source": "Repasando la partida"
+				},
+				{
+					"name": "RESIGNED",
+					"id": "01M3M8Y6KFTJR90JF6ZFC94JSN",
+					"source": "{gender, select, male {Te has rendido} female {Te has rendido} other {Te has rendido}}",
+					"catalogue": "Te has rendido"
+				},
+				{
+					"name": "DRAW_AGREED",
+					"id": "01M3M8Y6KF144DV1DHB0FFCX3M",
+					"source": "Tablas de mutuo acuerdo"
+				}
+			]
+		},
+		{
+			"name": "profile",
+			"const": "ProfileI18n",
+			"prefixed": true,
+			"windows": ["YOUR_ACCOUNT … UNREACHABLE_EXPLANATION"],
+			"keys": [
+				{
+					"name": "YOUR_ACCOUNT",
+					"id": "01KZJ895M9S6NRNRF6EH38YVR2",
+					"source": "Tu cuenta"
+				},
+				{
+					"name": "LOGGED_IN_AS",
+					"id": "01KZJ895M9VRFHRP1P3PK1XRA1",
+					"source": "Sesión iniciada como {username}.",
+					"params": {
+						"username": "string"
+					}
+				},
+				{
+					"name": "SESSION_OPEN",
+					"id": "01KZJ895M9YQX8MTTMZVY2YZ4M",
+					"source": "Tu sesión está abierta."
+				},
+				{
+					"name": "LOG_OUT",
+					"id": "01KZJ895M98TV12288S27SWAEB",
+					"source": "Cerrar sesión"
+				},
+				{
+					"name": "UNREACHABLE_EXPLANATION",
+					"id": "01KZJ895M9SXCH6EYP2JJYJK6B",
+					"source": "El servidor no responde, así que no hay forma de saber si tu sesión sigue abierta. Puede que esté despertando, lo que tarda hasta un minuto en el plan gratuito. Mientras tanto el tablero, el juego libre, un conjunto importado y tus ajustes funcionan igual: nunca salen de este dispositivo."
+				}
+			]
+		},
+		{
+			"name": "puzzle",
+			"const": "PuzzleI18n",
+			"prefixed": true,
+			"windows": ["FILE_UNREADABLE … IMPORTED_WITH_SKIPPED"],
+			"keys": [
+				{
+					"name": "FILE_UNREADABLE",
+					"id": "01KZJ895MC41534M6SMAPZ8D0G",
+					"source": "No se ha podido leer {name}.",
+					"params": {
+						"name": "string"
+					}
+				},
+				{
+					"name": "NO_READABLE_ROWS",
+					"id": "01KZJ895MCRTD753DF6A89EP8G",
+					"source": "Ese CSV no tiene ningún ejercicio legible."
+				},
+				{
+					"name": "IMPORT_NOT_SAVED",
+					"id": "01KZJ895MCCANY5YTHG3QR0PXQ",
+					"source": "Importado, pero el conjunto no se ha podido guardar para la próxima vez."
+				},
+				{
+					"name": "IMPORTED",
+					"id": "01KZJ895MCZXZPE04RY1KW34N5",
+					"source": "{loaded, plural, one {Cargado # ejercicio.} other {Cargados # ejercicios.}}",
+					"params": {
+						"loaded": "number"
+					},
+					"catalogue": "Cargados {loaded} ejercicios."
+				},
+				{
+					"name": "IMPORTED_WITH_SKIPPED",
+					"id": "01KZJ895MCRBV83D30RKZ29XGT",
+					"source": "Cargados {loaded} ejercicios, descartadas {skipped} filas ilegibles.",
+					"params": {
+						"loaded": "number",
+						"skipped": "number"
+					}
+				}
+			]
+		},
+		{
+			"name": "setting",
+			"const": "SettingI18n",
+			"prefixed": true,
+			"windows": ["GENDER … BOARD_INTRO", "SYNC_PENDING … SYNC_MORE_REJECTED"],
+			"keys": [
+				{
+					"name": "GENDER",
+					"id": "01M1AGM7HWDSF69TQHTNXDCCE4",
+					"source": "Género"
+				},
+				{
+					"name": "GENDER_INTRO",
+					"id": "01M1AGM7HW9QJZZ32PHGAKCETJ",
+					"source": "El género con el que la aplicación se dirige a ti. Con «Otro», te habla en género neutro."
+				},
+				{
+					"name": "GENDER_MALE",
+					"id": "01M1AGM7HW70A703G1YY2EBCPD",
+					"source": "Masculino"
+				},
+				{
+					"name": "GENDER_FEMALE",
+					"id": "01M1AGM7HWX6G3WSCZV1DBTAHY",
+					"source": "Femenino"
+				},
+				{
+					"name": "GENDER_OTHER",
+					"id": "01M1AGM7HWJVPJ03SM0RPNE5CW",
+					"source": "Otro"
+				},
+				{
+					"name": "BOARD",
+					"id": "01KZJ895MAWZR1RN38AC7D2ZSY",
+					"source": "Tablero"
+				},
+				{
+					"name": "BOARD_INTRO",
+					"id": "01KZJ895MAQEQH4B51X4ZKFA7A",
+					"source": "Cómo se comporta el tablero. La tira de abajo es un ejercicio de verdad — cómete la torre negra — así que cada ajuste se puede probar donde se elige: falla a propósito y te deshace la jugada, falla lo suficiente y te enseña la respuesta."
+				},
+				{
+					"name": "SYNC_PENDING",
+					"id": "01M08VDKAS0CE1HAKWH316QNZA",
+					"source": "{count} por subir",
+					"params": {
+						"count": "number"
+					}
+				},
+				{
+					"name": "SYNC_REJECTED",
+					"id": "01M08VDKASYVQVQZBT7FC7NVED",
+					"source": "{count, plural, one {# rechazada} other {# rechazadas}}",
+					"params": {
+						"count": "number"
+					},
+					"catalogue": "{count} rechazadas"
+				},
+				{
+					"name": "SYNC_ROWS",
+					"id": "01M08VDKASWZD813H32BZAWQH2",
+					"source": "{count, plural, one {# fila aquí} other {# filas aquí}}",
+					"params": {
+						"count": "number"
+					},
+					"catalogue": "{count} filas aquí"
+				},
+				{
+					"name": "SYNC_CURSOR",
+					"id": "01M08VDKASAE26PQB2099HSB2X",
+					"source": "bajado hasta {at}",
+					"params": {
+						"at": "string"
+					}
+				},
+				{
+					"name": "SYNC_NO_CURSOR",
+					"id": "01M08VDKASXT18BZ3NE5AGNF2E",
+					"source": "nada bajado"
+				},
+				{
+					"name": "SYNC_UP_TO_DATE",
+					"id": "01M08VDKAS0W9NJCB6A91ZCDQZ",
+					"source": "al día"
+				},
+				{
+					"name": "SYNC_STALE",
+					"id": "01M08VDKASMC1MSDT138TC3Q96",
+					"source": "Algo lleva más de {days, plural, one {# día} other {# días}} esperando.",
+					"params": {
+						"days": "number"
+					},
+					"catalogue": "Algo lleva más de {days} días esperando."
+				},
+				{
+					"name": "SYNC_REASONS",
+					"id": "01M08VDKAS4NWPPGN7J1F4WWQS",
+					"source": "Rechazadas"
+				},
+				{
+					"name": "SYNC_MORE_REJECTED",
+					"id": "01M08VDKASYW2DA154RCQEXEQN",
+					"source": "y {count} más",
+					"params": {
+						"count": "number"
+					}
+				}
+			]
+		},
+		{
+			"name": "training",
+			"const": "TrainingI18n",
+			"prefixed": true,
+			"windows": [
+				"FIX_THE_SET … SAVE_THE_PACE",
+				"CALIBRATION_LABEL … OUTCOME_LOWER",
+				"DAILY_SERIES_FIRST_TRY … DAILY_DAY_DETAIL"
+			],
+			"keys": [
+				{
+					"name": "FIX_THE_SET",
+					"id": "01KZJ895MCX6HDWAJMFPNCEYAM",
+					"source": "Fijar el conjunto"
+				},
+				{
+					"name": "SET_ALREADY_FIXED",
+					"id": "01KZJ895MC1C5VZ1E3FZ1P1HZ7",
+					"source": "{size, plural, one {Ya hay # ejercicio fijado para todos los ciclos.} other {Ya hay # ejercicios fijados para todos los ciclos.}}",
+					"params": {
+						"size": "number"
+					},
+					"catalogue": "Ya hay {size} ejercicios fijados para todos los ciclos."
+				},
+				{
+					"name": "COMMIT_TO_A_PACE",
+					"id": "01KZJ895MC6366DDQE2RMNRMK1",
+					"source": "Comprométete a un ritmo"
+				},
+				{
+					"name": "PACE_LABEL",
+					"id": "01KZJ895MCX4TCTG7P005NV5DT",
+					"source": "Ejercicios al día"
+				},
+				{
+					"name": "SAVE_THE_PACE",
+					"id": "01KZJ895MCCVFYPN2MEZ3K8Y79",
+					"source": "Guardar el ritmo"
+				},
+				{
+					"name": "CALIBRATION_LABEL",
+					"id": "01KZJ895MC4PRBR9FYQY8TQZ03",
+					"source": "Calibración · ronda {round} · ELO {rating}",
+					"params": {
+						"round": "number",
+						"rating": "number"
+					}
+				},
+				{
+					"name": "CALIBRATION_LABEL_PROGRESS",
+					"id": "01KZJ895MC0TCT6MDA60JZDWGQ",
+					"source": "Calibración · ronda {round} ({position} / {total}) · ELO {rating}",
+					"params": {
+						"round": "number",
+						"position": "number",
+						"total": "number",
+						"rating": "number"
+					}
+				},
+				{
+					"name": "CYCLE_LABEL",
+					"id": "01KZJ895MC35MZFCR9CNW451Z6",
+					"source": "Ciclo"
+				},
+				{
+					"name": "CYCLE_LABEL_POSITION",
+					"id": "01KZJ895MCZ12A1D454Q37V6D0",
+					"source": "Ciclo · ejercicio {position}",
+					"params": {
+						"position": "number"
+					}
+				},
+				{
+					"name": "LOADING_EXERCISE",
+					"id": "01KZJ895MC7T6CZ0PETFZ4BYND",
+					"source": "Cargando el ejercicio…"
+				},
+				{
+					"name": "NOPE",
+					"id": "01KZJ895MC5FHCPJYVHN5J0WVG",
+					"source": "¡No era esa!"
+				},
+				{
+					"name": "RECORDING_ATTEMPT",
+					"id": "01KZJ895MC9WN48V3BH7JSCRHH",
+					"source": "Anotando el intento…"
+				},
+				{
+					"name": "GAVE_UP_WATCHING",
+					"id": "01KZJ895MCCFZNE118J7456F6H",
+					"source": "{gender, select, male {Te has rendido. Mira cómo iba.} female {Te has rendido. Mira cómo iba.} other {Te has rendido. Mira cómo iba.}}",
+					"catalogue": "Te has rendido. Mira cómo iba."
+				},
+				{
+					"name": "GAVE_UP_LINE",
+					"id": "01KZJ895MCR74GDF8M81342YHM",
+					"source": "{gender, select, male {Te has rendido. Esa era la línea.} female {Te has rendido. Esa era la línea.} other {Te has rendido. Esa era la línea.}}",
+					"catalogue": "Te has rendido. Esa era la línea."
+				},
+				{
+					"name": "FOUND_AFTER_MISS",
+					"id": "01KZJ895MC8GX2NWCRJM2S5ZN3",
+					"source": "Muy bien, así sí."
+				},
+				{
+					"name": "SOLVED",
+					"id": "01KZJ895MCS0BQTNCX9ZA10QDD",
+					"source": "Resuelto."
+				},
+				{
+					"name": "MISSED_RETRY",
+					"id": "01KZJ895MCWFF32GHQ09H6EYKE",
+					"source": "Inténtalo de nuevo."
+				},
+				{
+					"name": "OUTCOME_ACCEPT",
+					"id": "01KZJ895MC17MZ15FX5HKTMR4Z",
+					"source": "Calibración terminada: esa banda es tu nivel."
+				},
+				{
+					"name": "OUTCOME_RAISE",
+					"id": "01KZJ895MC45BF3M87Q1TVH9RM",
+					"source": "Resuelta. La siguiente ronda sube el nivel."
+				},
+				{
+					"name": "OUTCOME_LOWER",
+					"id": "01KZJ895MCM29FWS7DZC4K9FK4",
+					"source": "Fallada. La siguiente ronda baja el nivel."
+				},
+				{
+					"name": "DAILY_SERIES_FIRST_TRY",
+					"id": "01M2K7B4X0W7YKJ6GKH27163RZ",
+					"source": "A la primera"
+				},
+				{
+					"name": "DAILY_SERIES_AFTER_MISS",
+					"id": "01M2K7B4X0DG11H6RYWZTYKJ5G",
+					"source": "Tras fallar"
+				},
+				{
+					"name": "DAILY_SERIES_SHOWN",
+					"id": "01M2K7B4X00MZRZS3YJ612PS3H",
+					"source": "Solución vista"
+				},
+				{
+					"name": "DAILY_SERIES_MISTAKES",
+					"id": "01M2K7B4X0R38PJDYSHMFA35W3",
+					"source": "Errores"
+				},
+				{
+					"name": "DAILY_SERIES_HINTS",
+					"id": "01M2K7B4X04KBQBJ29EGR0QY3K",
+					"source": "Pistas"
+				},
+				{
+					"name": "DAILY_DAY_DETAIL",
+					"id": "01M2K7B4X0NTWEBKKW6K0ZAZ0R",
+					"source": "{date} · {firstTry} a la primera, {afterMiss} tras fallar, {shown} con la solución vista · {mistakes} errores, {hints} pistas · {minutes} min",
+					"params": {
+						"date": "string",
+						"firstTry": "number",
+						"afterMiss": "number",
+						"shown": "number",
+						"mistakes": "number",
+						"hints": "number",
+						"minutes": "number"
+					}
+				}
+			]
+		}
+	]
+}

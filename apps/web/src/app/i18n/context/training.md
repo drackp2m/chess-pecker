@@ -56,7 +56,7 @@ Sustituye al botón de reparar mientras el conjunto de ejercicios del entrenamie
 
 ## DAILY_*
 
-El gráfico de actividad diaria. Las tres primeras series parten en tres los ejercicios hechos, sin solaparse: **a la primera** (acertados al primer intento), **tras fallar** (encontrados, pero después de al menos un error) y **solución vista** (los que se abandonaron para ver la línea). Las otras dos cuentan otra cosa: **errores** son jugadas equivocadas dentro de un ejercicio, y **pistas** las ayudas pedidas. Cada etiqueta tiene que caber en una leyenda estrecha.
+El gráfico de actividad diaria. Las tres primeras series parten en tres los ejercicios hechos, sin solaparse: «A la primera» (acertados al primer intento), «Tras fallar» (encontrados, pero después de al menos un error) y «Solución vista» (los que se abandonaron para ver la línea). Las otras dos cuentan otra cosa: «Errores» son jugadas equivocadas dentro de un ejercicio, y «Pistas» las ayudas pedidas. Cada `DAILY_SERIES_*` es el nombre de una serie en la leyenda: empieza con mayúscula, va en plural donde el original lo está y tiene que caber en una leyenda estrecha.
 
 ## PRACTICE_NOTICE_*
 

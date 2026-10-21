@@ -12,6 +12,7 @@ from .ollama_client import ollama_chat_messages
 from .validate import cut_at_stop
 
 MIN_SHARED_TOKENS = 16
+PREFILL_STEP = 512
 NO_THINK = "/no_think"
 NO_TRIM = (
     "  This model keeps a recurrent cache that cannot be trimmed, so the shared "
@@ -257,7 +258,11 @@ class MlxEngine:
     def _stream(self, tokens: list[int], max_tokens: int):
         from mlx_lm import stream_generate
 
-        kwargs = {"max_tokens": max_tokens, "prompt_cache": self._cache}
+        kwargs = {
+            "max_tokens": max_tokens,
+            "prompt_cache": self._cache,
+            "prefill_step_size": PREFILL_STEP,
+        }
         parameters = inspect.signature(stream_generate).parameters
 
         if "sampler" in parameters:

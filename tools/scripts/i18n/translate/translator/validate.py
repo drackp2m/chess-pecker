@@ -22,6 +22,11 @@ STOP_MARKERS = (
 THINK_CLOSED_RE = re.compile(r"^.*</think\s*>", re.DOTALL)
 THINK_OPEN_RE = re.compile(r"<think\s*>.*$", re.DOTALL)
 FENCED_RE = re.compile(r"⟦(.*?)⟧", re.DOTALL)
+WRITTEN_RE = re.compile(r"\{[^{}]*\}")
+SPECIAL_RE = re.compile(r"<\|?[A-Za-z_][\w-]*\|>|<\|[A-Za-z_][\w-]*>")
+INVERTED_MARKS = ("¿", "¡")
+INVERTING_LANGUAGES = frozenset({"es", "gl", "ast"})
+CONFIRMABLE = frozenset({"untranslated"})
 LEAD_RE = re.compile(
     r"^\s*(?:here (?:is|'s)[^:\n]{0,40}|the translation[^:\n]{0,40}|translation|"
     r"traducci[óo]n[^:\n]{0,40}|traduction[^:\n]{0,40}|sure[^:\n]{0,40}|"
@@ -188,6 +193,33 @@ def check_markers(text: str, expected: list[str]) -> list[Issue]:
         issues.append(Issue("placeholder-repeated", f"repetidos {', '.join(repeated)}", True))
 
     return issues
+
+
+def check_written(text: str, source: str) -> list[Issue]:
+    written = sorted({marker for marker in WRITTEN_RE.findall(text) if marker not in source})
+
+    if not written:
+        return []
+
+    detail = f"{', '.join(written)} no está en el original y no es un marcador"
+
+    return [Issue("placeholder-written", detail)]
+
+
+def check_special(text: str) -> list[Issue]:
+    found = sorted(set(SPECIAL_RE.findall(text)))
+
+    if not found:
+        return []
+
+    return [Issue("special-token", f"tokens internos del modelo: {', '.join(found)}")]
+
+
+def check_inverted(text: str, lang: str) -> list[Issue]:
+    if base_of(lang) in INVERTING_LANGUAGES or not any(mark in text for mark in INVERTED_MARKS):
+        return []
+
+    return [Issue("inverted-marks", "«¿» y «¡» sólo se escriben en español")]
 
 
 def measured(text: str) -> int:
@@ -470,6 +502,9 @@ def validate(
 
     return [
         *check_markers(text, markers),
+        *check_written(text, source),
+        *check_special(text),
+        *check_inverted(text, lang),
         *check_copy(text, source, keep),
         *check_script(text, lang, keep),
         *check_length(text, source),

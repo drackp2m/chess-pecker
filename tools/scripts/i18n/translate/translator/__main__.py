@@ -28,7 +28,17 @@ from .prompting import (
     parse_answers,
 )
 from .report import GAVE_UP, Record, Reporter, Tally, write_report
-from .validate import clean, demanded, reason_of, repair, validate
+from .validate import (
+    CONFIRMABLE,
+    Form,
+    Issue,
+    clean,
+    demanded,
+    reason_of,
+    repair,
+    validate,
+    validate_forms,
+)
 from .xliff_io import (
     build_target,
     ensure_parent,
@@ -42,6 +52,7 @@ from .xliff_io import (
 )
 
 RETRIES = 2
+NEUTRAL_ISSUE = "forms-gender-other"
 MAX_TOKENS_FACTOR = 4
 MAX_TOKENS_FLOOR = 48
 MAX_TOKENS_CEILING = 640
@@ -115,8 +126,13 @@ def attempt(engine, batch: Batch, index: int, issues: list) -> tuple[str, list]:
     batch.attempt = index
     batch.reason = reason_of(issues) if issues else ""
     batch.demand = demanded(issues)
+    batch.confirm = confirmable(issues)
 
     return judge(batch.block, batch.units[0], ask(engine, batch))
+
+
+def confirmable(issues: list) -> bool:
+    return bool(issues) and all(issue.code in CONFIRMABLE for issue in issues)
 
 
 def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]:
@@ -127,8 +143,12 @@ def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]
 
     while issues and calls <= RETRIES:
         seen.extend(issue.code for issue in issues)
+        previous, asked = candidate, confirmable(issues)
         candidate, issues = attempt(session.engine, batch, calls, issues)
         calls += 1
+
+        if asked and confirmable(issues) and candidate == previous:
+            issues = []
 
     if not issues:
         session.tally.alone(calls, calls, seen, False)
@@ -215,7 +235,56 @@ def resolve(session: Session, batch: Batch) -> list:
 
         outcomes.append((unit, text, "model", issues, review))
 
-    return in_order(batch, outcomes)
+    return revisit(session, batch, in_order(batch, outcomes))
+
+
+def neutral_issues(outcomes: list, members: list[int], lang: str) -> list:
+    forms = [Form(outcomes[index][0].category, outcomes[index][1]) for index in members]
+
+    found = validate_forms(forms, lang)
+
+    return [Issue(issue.code, issue.detail) for issue in found if issue.code == NEUTRAL_ISSUE]
+
+
+# The forms of a key travel in one batch, so this is the first moment the
+# unspecified one can be held against the two it has to differ from.
+def revisit(session: Session, batch: Batch, outcomes: list) -> list:
+    lang = batch.block.target_lang
+    groups: dict[str, list[int]] = {}
+
+    for index, outcome in enumerate(outcomes):
+        if "#" in outcome[0].id:
+            groups.setdefault(group_id(outcome[0]), []).append(index)
+
+    for members in groups.values():
+        issues = neutral_issues(outcomes, members, lang)
+
+        if not issues:
+            continue
+
+        for index in members:
+            if outcomes[index][0].neutral:
+                outcomes[index] = rethought(session, batch, outcomes, members, index, issues)
+
+    return outcomes
+
+
+def rethought(
+    session: Session, batch: Batch, outcomes: list, members: list[int], index: int, issues: list
+) -> tuple:
+    unit, text, origin, found, _ = outcomes[index]
+    candidate, problems = attempt(session.engine, Batch(batch.block, [unit]), 1, issues)
+    trial = list(outcomes)
+    trial[index] = (unit, candidate, "model", [], False)
+
+    if problems or neutral_issues(trial, members, batch.block.target_lang):
+        noted = found + [f"{issue.code}: {issue.detail}" for issue in issues]
+
+        return (unit, text, origin, noted, True)
+
+    session.memory.remember(batch.block.target_lang, unit.source, candidate, unit.category)
+
+    return trial[index]
 
 
 def wanted(unit, args) -> bool:
@@ -256,6 +325,17 @@ def plan_file(root, args, shape) -> tuple[list, int]:
     return jobs, total
 
 
+def group_span(jobs: list, index: int) -> int:
+    owner, first = jobs[index]
+    group = group_id(first)
+    end = index
+
+    while end < len(jobs) and jobs[end][0] is owner and group_id(jobs[end][1]) == group:
+        end += 1
+
+    return end - index
+
+
 # Units arrive in the document order the export wrote, which is the order of
 # keys.ts: neighbours in a batch are neighbours in the catalogue. Batches are
 # cut one at a time because the size can drop while the run is going.
@@ -265,12 +345,20 @@ def next_batch(jobs: list, start: int, size: int) -> Batch:
     length = 0
     group = group_id(jobs[start][1])
 
-    for owner, unit in jobs[start:]:
-        same_group = group_id(unit) == group
-        crowded = not same_group and (len(units) >= size or length + len(unit.source) > BATCH_CHARS)
+    for index in range(start, len(jobs)):
+        owner, unit = jobs[index]
 
-        if owner is not block or (units and crowded):
+        if owner is not block:
             break
+
+        if group_id(unit) != group:
+            crowded = len(units) >= size or length + len(unit.source) > BATCH_CHARS
+            split = "#" in unit.id and len(units) + group_span(jobs, index) > size
+
+            if crowded or split:
+                break
+
+            group = group_id(unit)
 
         units.append(unit)
         length += len(unit.source)

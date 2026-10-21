@@ -50,11 +50,11 @@ Los botones de la barra del tablero, compartidos por todas las pantallas que lo 
 
 ## PIECE_*
 
-Los nombres de las piezas con su color, en minúscula, tal como se leen dentro de una frase de lector de pantalla. Se usa el nombre de la pieza en el ajedrez del idioma de destino, no una traducción literal del español.
+Los nombres de las piezas con su color, en minúscula, tal como se leen dentro de una frase de lector de pantalla. Se usa el nombre de la pieza en el ajedrez del idioma de destino, no una traducción literal del español, y el color va donde lo ponga ese idioma, que no tiene por qué ser detrás.
 
 ## SQUARE_*
 
-Textos accesibles de una casilla. `{square}` es la coordenada algebraica (e4, d5) y no se traduce; `{piece}` llega ya traducido desde `PIECE_*`, así que la frase tiene que sonar bien con ese nombre metido dentro y con su género y su número.
+Textos accesibles de una casilla. `{square}` es la coordenada algebraica (e4, d5) y no se traduce; `{piece}` llega ya traducido desde `PIECE_*`, así que la frase tiene que sonar bien con ese nombre metido dentro y con su género y su número. Llega además tal cual, sin declinar: en un idioma con casos, la frase se construye para que el nombre vaya en el caso de diccionario, sin un verbo o una preposición que pidan otro.
 
 ## FIND_MOVE_*
 
@@ -98,7 +98,7 @@ Título del diálogo que sale cuando un peón llega a la última fila y hay que 
 
 ## PROMOTE_TO*
 
-La coronación en sí. `PROMOTE_TO` encabeza la lista y `PROMOTE_TO_PIECE` es cada botón, con `{piece}` ya traducido desde `PIECE_*`: la frase tiene que sonar bien con ese nombre dentro.
+La coronación en sí. `PROMOTE_TO` encabeza la lista y `PROMOTE_TO_PIECE` es cada botón, con `{piece}` ya traducido desde `PIECE_*`: la frase tiene que sonar bien con ese nombre dentro. Llega además tal cual, sin declinar: en un idioma con casos, la frase se construye para que el nombre vaya en el caso de diccionario, sin un verbo o una preposición que pidan otro.
 
 ## CHART_*
 
@@ -114,7 +114,7 @@ Errores de los ajustes guardados en este dispositivo. `SETTINGS_BLOCKED_UPGRADE`
 
 ## PENDING_SYNC_*
 
-Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.
+Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `PENDING_SYNC_TITLE` es el título y no lleva número. En `PENDING_SYNC_MESSAGE`, `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.
 
 ## SYNC_*
 

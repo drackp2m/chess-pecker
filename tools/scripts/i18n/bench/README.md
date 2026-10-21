@@ -1,185 +1,184 @@
 # bench — el banco de pruebas del traductor
 
-Cuarenta y tantas unidades del catálogo elegidas a mano, cada una con **la traducción buena
-escrita al lado**. Es el patrón contra el que se miden los modelos: `--compare --reference` lee
-estos ficheros y todo lo que salga de `--bench` (paso 4.2) se puntúa contra ellos.
+El banco v2 mide a los modelos en las mismas condiciones en que traducirán el catálogo de verdad,
+y los compara de forma automática, sin que nadie tenga que leer los idiomas. El banco anterior
+está en [`legacy/`](legacy/README.md), intacto, con sus propias pasadas en
+`translate/bench-runs/legacy/`.
 
 No es una traducción de producción. Nada de aquí entra en `apps/web/src/app/i18n/*.json`, y
-**`pnpm i18n:import` no debe apuntar nunca a este directorio**: las unidades de los bloques
-`bench-icu-*` llevan identificadores que no existen en el catálogo y el importador las ofrecería
-como claves nuevas.
+**`pnpm i18n:import` no debe apuntar nunca a este directorio**.
 
 ## Los ficheros
 
-| Fichero                              | Qué es                                                                               |
-| ------------------------------------ | ------------------------------------------------------------------------------------ |
-| `bench.json`                         | La selección: qué unidad entra, en qué eje y por qué                                 |
-| `gold/en-GB.json`, `gold/ru-RU.json` | La traducción buena, indexada por `scope.CONSTANTE`                                  |
-| `en-GB.xlf`, `ru-RU.xlf`             | El banco con la traducción buena dentro: la referencia. **Generado**                 |
-| `en-GB.blank.xlf`, `ru-RU.blank.xlf` | Las mismas unidades con el `<target>` vacío: lo que se le da al modelo. **Generado** |
-| `build.mjs`                          | Rehace los cuatro `.xlf` desde el catálogo y el `gold/`                              |
-
-Se edita `gold/` y se vuelve a generar:
+| Fichero              | Qué es                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| `snapshot.json`      | Los textos congelados: 135 claves del catálogo del 20/10/2026, en tramos contiguos          |
+| `build.mjs`          | Genera un `<lang>.blank.xlf` por idioma con el código real de la exportación                |
+| `<lang>.blank.xlf`   | Lo que se le da al modelo. **Generado**                                                     |
+| `expect/<lang>.json` | Lo que se espera de cada unidad: referencias, aserciones y excepciones a las comprobaciones |
 
 ```sh
 node tools/scripts/i18n/bench/build.mjs
 ```
 
-Sale por pantalla cuántas unidades ha escrito por idioma, avisa de la que se haya quedado sin
-traducción buena y de la que sobre en `gold/`, y termina en 1 si falta alguna. Los `.xlf` no se
-editan a mano: se toca `gold/` y se regenera. El origen español,
-las notas, el glosario y los `<ph>` los saca de donde los saca la exportación de verdad, así que
-el fichero que ve el modelo es indistinguible de un `pnpm i18n:export`.
+Escribe los cinco `.blank.xlf` y dice, por idioma, cuántas unidades salen y su **huella**: un hash
+del fichero entero. Si la huella cambia es que ha cambiado lo que ve el modelo.
 
-## Qué se mide
+## Por qué así
 
-Treinta y dos unidades reales del catálogo, repartidas en seis ejes. La columna «eje» de
-`bench.json` los nombra y cada entrada dice por qué está:
+**Los textos están congelados, las instrucciones no.** `snapshot.json` guarda los textos
+españoles, sus ULID y sus parámetros tal como estaban el día de la instantánea, así que el
+catálogo puede seguir cambiando sin romper ninguna comparación. El contexto —`app.md`, las notas
+de cada scope, el glosario— se lee del repositorio cada vez que se genera el banco, porque es justo
+lo que se quiere mejorar: un cambio en las instrucciones se mide regenerando el banco y repitiendo
+la pasada. Si una clave de la instantánea desaparece del catálogo, `build.mjs` lo avisa, porque su
+nota de contexto se habrá perdido con ella.
 
-| Eje                 | Unidades | Qué pone a prueba                                                                                 |
-| ------------------- | -------- | ------------------------------------------------------------------------------------------------- |
-| corta sin contexto  | 7        | Una palabra suelta y ambigua: `Línea`, `Partida`, `Afinado`. Sin glosario no hay forma de acertar |
-| género entre claves | 8        | Una clave rellena el hueco de otra y la concordancia cruza las dos                                |
-| parámetros          | 6        | De uno a siete huecos, pegados a texto o solos en la cadena                                       |
-| número              | 4        | Recuentos que hoy son plural fijo y mañana serán ramas ICU                                        |
-| texto largo         | 4        | Cuatro frases seguidas, donde se ve si el modelo resume o inventa                                 |
-| imperativo          | 2        | El español manda de tú y el ruso quiere infinitivo                                                |
-| tipografía          | 1        | Comillas por idioma alrededor de un hueco que no se traduce                                       |
+**Es la exportación de verdad, no una imitación.** `build.mjs` monta la instantánea como un
+catálogo en miniatura en un directorio temporal y la pasa por `buildExport`, el mismo código que
+`pnpm i18n:export --blank`. Las notas, el orden de las claves y la expansión de plurales y
+géneros son las de producción.
 
-El eje que más discrimina es el de **género entre claves**, y conviene entender por qué. La
-aplicación compone frases con piezas sueltas: `SQUARE_PIECE` es `«{piece} en {square}»` y
-el hueco lo rellena un `PIECE_*` ya traducido. Traducidas por separado, cada pieza sale bien y la
-frase compuesta sale mal:
+**Tramos contiguos, no unidades sueltas.** El traductor reparte las unidades en lotes por orden
+del catálogo, así que lo que rodea a una unidad cambia su prompt: el glosario filtrado, las reglas
+que tocan y el contexto compartido. Elegir claves sueltas ponía en un mismo lote textos que en
+producción nunca van juntos. Los tramos de cada scope están en `snapshot.json`, en `windows`.
 
-- `dama negra` es femenino en español y `ферзь` es **masculino** en ruso → `чёрный ферзь`.
-- `peón negro` es masculino en español y `пешка` es **femenino** en ruso → `чёрная пешка`.
+**Las claves ICU están escritas como las tendrá el catálogo.** Hoy el catálogo no tiene ninguna,
+pero la decisión del modelo se toma para el catálogo de mañana. Catorce claves de la instantánea
+llevan su versión ICU (`catalogue` guarda la cadena plana original):
 
-Un modelo que traduzca palabra a palabra acierta el sustantivo y falla el adjetivo, y eso no lo
-detecta ninguna de las métricas duras de `validate.py`. Aquí sí, porque la traducción buena está
-escrita.
+- **Plurales con `#`**: `PENDING_SYNC_MESSAGE`, `PENDING_SYNC_REJECTED`, `PASSWORD_MIN_LENGTH`,
+  `ACTIVITY_TOTAL`, `ACTIVITY_DAY_DETAIL`, `IMPORTED`, `SYNC_REJECTED`, `SYNC_ROWS`,
+  `SYNC_STALE` y `SET_ALREADY_FIXED`. En ruso cada una se abre en cuatro unidades.
+- **Género de quien usa la aplicación**: `PURPOSE_TITLE` (que en español sí varía:
+  «Bienvenido», «Bienvenida», «Te damos la bienvenida») y `RESIGNED`, `GAVE_UP_WATCHING` y
+  `GAVE_UP_LINE`, cuyas tres ramas españolas son idénticas porque el español no marca género en
+  «te has rendido». La variación la pone el idioma de destino.
+- `IMPORTED_WITH_SKIPPED` se queda plana: con dos plurales serían 16 formas en ruso, y el
+  catálogo pone el tope en 12.
 
-Los dos casos de `SQUARE_CAPTURE` y `PROMOTE_TO_PIECE` van más allá: el ruso pediría acusativo
-(«взять белую ладью») y el hueco llega siempre en nominativo. No hay traducción literal correcta,
-así que la traducción buena **esquiva el caso** con dos puntos. Es un límite del diseño de la
-aplicación, no del modelo, y está en el banco para que se vea: si un modelo declina el hueco, está
-produciendo una frase que en pantalla saldrá rota.
+## Cómo se puntúa
 
-## Los bloques `bench-icu-*`
+No hay nadie que pueda leer los cinco idiomas, así que cada unidad pasa por tres capas que no
+necesitan a nadie:
 
-Los `.xlf` traen tres bloques más —`bench-icu-puzzle`, `bench-icu-common` y
-`bench-icu-training`— con unidades escritas a mano que reproducen lo que la exportación con
-fan-out (paso 9 del índice) emite cuando el catálogo habla ICU. Cada una es una rama de un plural
-o de un `select` de género, con las notas de ese paso —`category`, `examples`, `siblings`,
-`gender-note`—, el origen puesto siempre en la rama `other` del español.
+1. **Comprobaciones automáticas**, iguales para todos los idiomas: marcadores (`markers`), que
+   también cuenta los que el modelo escribe a mano —un `{pending}` copiado de la nota de contexto
+   en un texto que no lo lleva—, respuesta vacía (`empty`), copia del original (`untranslated`),
+   alfabeto equivocado (`script`), glosario (`glossary`), nombres que no se traducen (`keep`),
+   separador « · » (`separator`), mayúscula inicial (`case`, salvo cuando el original o la
+   respuesta empiezan por un marcador, porque entonces la mayúscula la pone su valor), puntuación
+   final (`ending`), «…» (`ellipsis`), comillas del idioma (`quotes`), longitud (`length`), tokens
+   internos del modelo (`tokens`, como el `<audio|>` que Gemma 4 suelta en catalán), «¿» y «¡»
+   fuera del español (`inverted`) y
+   ejemplo copiado (`sample`): las notas de plural y de género enseñan la gramática con manzanas y
+   libros (`translate/translator/samples.py`), y cualquier rastro de esas palabras en una respuesta
+   es un crítico, porque sólo puede venir de la nota. La heurística del traductor que compara las
+   formas de una clave no entra: fuera de las unidades que ya tienen aserciones, sólo saltaba donde
+   el idioma no marca esa forma («# rejected», «Добро пожаловать», «Tu as abandonné», casi todo el
+   hindi), así que sólo añadía falsos positivos. Sigue mandando unidades a revisar, y eso se ve en
+   la columna `review`.
+2. **Aserciones escritas a mano** en `expect/<lang>.json` (`expected`): lo que tiene que aparecer
+   (`has`), lo que no puede aparecer (`not`) y expresiones regulares (`re`). Están sólo donde no
+   hay duda posible: la forma del sustantivo de cada plural ruso, el género del verbo en pasado,
+   el adjetivo que concuerda con la pieza, los casos que un marcador no puede llevar, el
+   infinitivo de los botones, errores de significado ya vistos («ежедневно» por «al día»). Lo que
+   es preferible pero no un error, como el orden «чёрный слон» frente a «слон чёрный», va en
+   `prefer` y cuenta como leve (`style`).
+3. **chrF contra una o varias referencias** (`ref`), escritas para este banco sin que nadie las
+   haya revisado. Se compara con la más parecida, así que una paráfrasis aceptable no penaliza
+   si está en la lista. Antes de puntuar se igualan ё/е y las comillas, y los marcadores cuentan
+   como un solo carácter.
 
-**Van repartidos por scope, y no en un bloque propio, porque eso es lo que el modelo va a
-recibir.** Las tres claves son de `puzzle`, `common` y `training`, así que cada bloque lleva la
-nota de scope de su fichero de contexto, la misma que llevaría en una exportación de verdad.
-Tener un bloque solo obligaba a escribirle una nota de scope a mano, y esa nota acababa
-contándole al modelo que estaba ante un simulacro: leído eso, lo que se mide ya no es lo que
-pasará en producción. El sufijo del identificador es lo único que queda de aquello, y sirve para
-que el informe siga teniendo sus columnas aparte.
+Cada fallo tiene una gravedad: **crítico** (marcador perdido, respuesta vacía, aserción no
+cumplida), **grave** (glosario, nombre traducido, alfabeto, separador) o **leve** (mayúscula,
+puntuación, comillas, longitud, `prefer`). Las aserciones son críticas salvo que digan
+`"severity": "major"`.
 
-Están porque sin ellas el banco mediría el catálogo de hoy y la decisión del paso 4.4 se toma
-sobre el de mañana. El ruso pasa de una unidad a cuatro por cada clave con plural, y la pregunta
-que hay que contestar —«¿este modelo vale para `ru-RU`?»— no es la misma cuando lo que se le pide
-es una rama `few` con una nota que dice «se usa con 2, 3, 4, 22» en vez de una frase entera.
+### Escribir una expectativa
 
-Tres claves, y el reparto por idioma es el que pide cada uno:
+```json
+"CommonI18n.PIECE_BLACK_QUEEN": {
+	"axis": "concordancia entre claves",
+	"ref": ["чёрный ферзь"],
+	"has": ["черный"],
+	"prefer": ["черный ферзь"]
+},
+"TrainingI18n.GAVE_UP_WATCHING#gender:other": {
+	"axis": "género de quien usa",
+	"not": ["сдался", "сдалась", "ты сдал"]
+},
+"CommonI18n.LOG_OUT_ANYWAY": { "allow": ["glossary"] }
+```
 
-| Clave                         | Tipo   | en-GB               | ru-RU                 |
-| ----------------------------- | ------ | ------------------- | --------------------- |
-| `puzzle.IMPORTED`             | plural | one, other          | one, few, many, other |
-| `common.PENDING_SYNC_MESSAGE` | plural | one, other          | one, few, many, other |
-| `training.GAVE_UP_WATCHING`   | género | male, female, other | male, female, other   |
+- La clave es la constante y el nombre (`CommonI18n.PIECE_BLACK_QUEEN`) más el sufijo de la forma
+  si la hay (`#plural:few`, `#gender:other`).
+- `has`, `not`, `re` y `prefer` se comparan con la respuesta **normalizada**: en minúsculas, con ё
+  como е y los espacios finos como espacios. Se escriben así.
+- Una aserción comprueba una sola cosa. En el ejemplo, `has` exige la concordancia (ферзь es
+  masculino aunque la dama sea femenina) y `prefer` el orden natural: «ферзь черный» concuerda y
+  sólo pierde un leve, «ферзь черная» es un crítico.
+- Los marcadores se escriben como en el catálogo: `{piece}`, `{count}`, y `#` dentro de un plural.
+- `allow` desactiva una comprobación automática en esa unidad cuando es un falso positivo
+  sabido: «Al cerrar sesión» no lleva «сессия», «Original» se escribe igual en inglés, la
+  «torre negra» catalana es la misma que la española.
+- `axis` agrupa las aserciones en la tabla «Expectations met, by axis» del informe.
+- El bloque `lang` dice qué comillas y qué puntos finales vale cada idioma (`।` en hindi).
 
-La de género es la más interesante de las tres: el español **no marca género** en «te has
-rendido», así que las tres ramas del origen son idénticas y el ruso tiene que producir
-«сдался» / «сдалась» sin nada en el origen que se lo sugiera. Y la rama `other` no puede
-inventarse una terminación: la traducción buena reformula («Попытка завершена») para que no haya
-nada que concordar. En inglés las tres ramas son iguales a propósito — un modelo que se invente
-variación donde el idioma no la tiene también está fallando.
-
-Dos diferencias con lo que emitirá el paso 9, y las dos a favor de poder medir hoy:
-
-- El hueco del número viaja como `{loaded}` y no como el `#` de ICU. Así lo cuenta el control
-  de marcadores de `validate.py`; con un `#` pelado, perderlo no dispararía ningún aviso.
-- El identificador es `puzzle.IMPORTED#plural:few` y no `puzzle.01KZ…#plural:few`. La forma
-  `clave#ruta` es la del plan; el ULID se pone cuando el fan-out sea real.
-
-## Cosas sabidas antes de leer las tablas
-
-- **`common.PENDING_SYNC_MESSAGE` va a dar siempre un aviso de glosario, en los dos idiomas.** El
-  origen dice «Al cerrar sesión», donde «sesión» es parte de «cerrar sesión» y no el sustantivo del
-  glosario; la traducción correcta es «logging out» / «при выходе из аккаунта» y no lleva
-  `session` / `сессия`. El aviso es de la comprobación, no del modelo: no cuenta.
-- **`common.SERVER_DETAIL` es sólo el hueco.** La única respuesta correcta es devolverlo intacto.
-  Puntúa 100 o puntúa mal, no hay término medio, y es donde un modelo pequeño se pone a inventar.
-- **La traducción buena de `en-GB` no es la del catálogo.** Cuatro unidades la corrigen a
-  propósito, porque el `en-GB.json` de hoy contradice el glosario: `REFINE` («Refine» → «Refinement»),
-  `FIRST_TRY` («Solved» → «First try»), `DAILY_SERIES_SHOWN` («Resigned» → «Solution shown») y
-  `EXPLORATION` («Scan» → «Exploration»). Medir contra el catálogo habría premiado el error.
-- **`ru-RU` está vacío en el catálogo**, así que su mitad del banco no sale de ninguna traducción
-  previa. Es texto escrito para esto.
-- **`siblings` sigue sin llegar al modelo.** Los pasos 12.2 y 12.3 montaron `category`,
-  `examples` y `gender-note` en el prompt, que son las que distinguen una rama de otra; la de las
-  hermanas se queda en el XLIFF sin leer, y entra con el paso 12.4, que es quien garantiza que las
-  hermanas caigan en el mismo lote. **Las medidas de `bench-icu-*` anteriores al 31/08/2026 no
-  valen**: se tomaron cuando el modelo veía cuatro veces la misma frase española sin nada que
-  distinguiera las ramas, y devolvía cuatro veces lo mismo.
-- **`hi-IN` no está.** El paso 4.4 tiene que decidir también sobre el hindi y este banco no le da
-  nada: hacen falta cuarenta traducciones al hindi escritas por alguien que lo hable. Hasta
-  entonces, la decisión sobre `hi-IN` se toma sin patrón debajo.
+**La regla de oro es la precisión**: una aserción que falla con una traducción correcta envenena
+el banco. Ante la duda, una referencia más y ninguna aserción.
 
 ## Cómo se usa
-
-Con `--bench`, que es el arnés del paso 4.2: coge estos ficheros, los pasa por cada modelo de la
-lista, puntúa cada pasada contra la traducción buena de al lado y deja un markdown con las tablas
-una debajo de otra. El guion entero está en el README del traductor, en «Generating a model
-comparison».
 
 ```sh
 cd tools/scripts/i18n/translate
 
-# Los dos idiomas del banco por tres modelos y DeepL
-uv run translate --bench --model gemma-12b-qat,gemma4-e4b,qwen35-9b,deepl
+# Los cinco idiomas, dos modelos
+uv run translate --bench --model gemma4-e4b-optiq,qwen35-9b
 
-# Sólo el ruso, con las pasadas y el informe en otro sitio
-uv run translate --bench --model gemma-12b-qat,deepl ../bench/ru-RU.blank.xlf -o ../../../../bench-ru
+# Sólo ruso e inglés, que son los que tienen referencias completas
+uv run translate --bench --model gemma4-e4b-optiq ../bench/ru-RU.blank.xlf ../bench/en-GB.blank.xlf
 ```
 
-Sin fichero de entrada coge todos los `*.blank.xlf` de este directorio, y de cada uno saca su
-referencia quitándole el `.blank`. Lo que se le da al modelo es **siempre el `.blank.xlf`**, nunca
-el otro: una unidad sólo está pendiente cuando su `<target>` está vacío, así que el banco con la
-traducción buena dentro no tiene nada que traducir, y su memoria de traducción se sembraría además
-con las respuestas.
+Las pasadas quedan en `bench-runs/` y el informe en `bench-runs/comparison.md`. El informe ordena
+los modelos por críticos, luego por aserciones no cumplidas, luego por graves y luego por chrF, y
+trae, por idioma:
 
-Cada pasada queda como un XLIFF normal en `bench-runs/`, así que se puede volver sobre ella a mano
-para un corte que el informe no traiga:
+- **La tabla de calidad**: unidades con algún fallo crítico, grave o leve; porcentaje de unidades
+  sin ningún fallo; aserciones cumplidas; claves con formas (plural o género) que cumplen todas sus
+  aserciones; chrF medio; y las que el traductor dejó para revisar.
+- **El coste**, igual que antes.
+- **Los fallos por código**, para ver de qué pie cojea cada modelo.
+- **Las aserciones por eje**, que es donde se ve si unas instrucciones nuevas arreglan el plural
+  o el género.
+- **El cara a cara**, dos veces: para cada par de modelos, en cuántas unidades es mejor uno y en
+  cuántas el otro, con la `p` de una prueba de signo. La primera tabla sólo mira lo que saldría
+  roto (críticos y aserciones) y es la que decide; la segunda cuenta también graves y leves, así
+  que un modelo que pone «слон белый» en diez piezas pierde diez unidades aunque no haya roto
+  nada. Con `p` por encima de 0,05 la diferencia puede ser suerte.
+- **Las unidades que fallan**, con el original, la referencia y lo que dijo cada modelo con sus
+  fallos al lado.
+
+### La columna `prompt`
+
+Cada pasada guarda en su `.json` una huella de los prompts que vio (todos los de primer intento,
+tal como se mandan) y otra del código del traductor. El informe la enseña en la columna `prompt`
+y avisa en negrita si no todas las filas coinciden: comparar dos modelos que vieron prompts
+distintos no mide sólo el modelo. Al cambiar las instrucciones, **un `--output` nuevo por
+experimento**:
 
 ```sh
-# La tabla, contra la traducción buena de este directorio
-uv run translate bench-runs/ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf --worst 20
-
-# Sólo las ramas de ICU
-uv run translate bench-runs/ru-RU.*.xlf --compare --reference ../bench/ru-RU.xlf \
-  --scope bench-icu-puzzle --scope bench-icu-common --scope bench-icu-training
+uv run translate --bench --model gemma4-e4b-optiq,qwen35-9b -o bench-runs/base
+# … se toca app.md o prompting.py, se regenera el banco …
+uv run translate --bench --model gemma4-e4b-optiq,qwen35-9b -o bench-runs/ejemplos
 ```
 
-La puntuación cruza por identificador de unidad, así que la referencia y las pasadas tienen que
-salir de la misma generación del banco: si se regenera entre una pasada y la comparación, las
-unidades que hayan cambiado de origen se quedan fuera y la columna `missing` las cuenta.
+Un cambio de instrucciones se da por bueno cuando mejora en **los dos** modelos, y en ningún
+idioma empeora: así no se ajusta el prompt a la medida de uno solo.
 
-Una pasada cuyo fichero ya está completo no se vuelve a traducir, de modo que añadir un modelo más
-tarde es el mismo comando con un alias más: sólo corre lo que falta. Lo que costó cada pasada queda
-en un `.json` al lado de su XLIFF, así que **volver a lanzar un banco terminado rehace el informe
-entero, tabla de velocidad incluida, sin cargar ningún modelo**. Para repetir una pasada se borran
-sus dos ficheros.
+## Cuando haya que congelar otra vez
 
-## Cuando el español cambie
-
-Cada unidad lleva su `srcHash` en el `.xlf`, igual que en una exportación normal. Si alguien toca
-una de estas cadenas en `es-ES.json`, al regenerar el banco el hash cambia y la traducción buena
-que hay en `gold/` pasa a ser la de otra frase. `build.mjs` no puede detectarlo solo —no guarda el
-hash anterior—, así que la regla es a mano: **quien cambie una cadena que esté en `bench.json`
-revisa su entrada en `gold/`**. Son treinta y dos claves; `bench.json` las lista todas.
+Cuando el catálogo cambie tanto que el banco ya no se le parezca, se hace un banco v3: otra
+instantánea, otro `snapshot.json` con `version: 3`, y las expectativas revisadas. Las pasadas de
+una versión no se comparan con las de otra.

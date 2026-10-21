@@ -1,0 +1,163 @@
+{
+	"lang": {
+		"quotes": [["«", "»"]],
+		"stops": ["."]
+	},
+	"units": {
+		"CommonI18n.RETRY": {
+			"axis": "infinitivo en botones",
+			"ref": ["Réessayer"],
+			"re": ["\\b\\w+(er|ir|re)\\b"],
+			"severity": "major"
+		},
+		"CommonI18n.DIFFICULTY": {
+			"axis": "concordancia entre claves",
+			"ref": ["Difficulté : {level}"],
+			"has": ["difficulté"]
+		},
+		"CommonI18n.DIFFICULTY_EASY": {
+			"axis": "concordancia entre claves",
+			"ref": ["facile"],
+			"re": ["^facile$"]
+		},
+		"CommonI18n.DIFFICULTY_MEDIUM": {
+			"axis": "concordancia entre claves",
+			"ref": ["moyenne"],
+			"re": ["^moyenne$"]
+		},
+		"CommonI18n.DIFFICULTY_HARD": {
+			"axis": "concordancia entre claves",
+			"ref": ["difficile"],
+			"re": ["^difficile$"]
+		},
+		"CommonI18n.PIECE_WHITE_PAWN": { "axis": "concordancia entre claves", "has": ["pion blanc"] },
+		"CommonI18n.PIECE_WHITE_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"has": ["cavalier blanc"]
+		},
+		"CommonI18n.PIECE_WHITE_BISHOP": { "axis": "concordancia entre claves", "has": ["fou blanc"] },
+		"CommonI18n.PIECE_WHITE_ROOK": {
+			"axis": "concordancia entre claves",
+			"has": ["tour blanche"]
+		},
+		"CommonI18n.PIECE_WHITE_QUEEN": {
+			"axis": "concordancia entre claves",
+			"has": ["dame blanche"]
+		},
+		"CommonI18n.PIECE_WHITE_KING": { "axis": "concordancia entre claves", "has": ["roi blanc"] },
+		"CommonI18n.PIECE_BLACK_PAWN": { "axis": "concordancia entre claves", "has": ["pion noir"] },
+		"CommonI18n.PIECE_BLACK_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"has": ["cavalier noir"]
+		},
+		"CommonI18n.PIECE_BLACK_BISHOP": { "axis": "concordancia entre claves", "has": ["fou noir"] },
+		"CommonI18n.PIECE_BLACK_ROOK": { "axis": "concordancia entre claves", "has": ["tour noire"] },
+		"CommonI18n.PIECE_BLACK_QUEEN": { "axis": "concordancia entre claves", "has": ["dame noire"] },
+		"CommonI18n.PIECE_BLACK_KING": { "axis": "concordancia entre claves", "has": ["roi noir"] },
+		"CommonI18n.SERVER_DETAIL": {
+			"axis": "marcadores",
+			"ref": ["{detail}"],
+			"re": ["^\\{detail\\}$"]
+		},
+		"CommonI18n.DEMO_TASK": { "axis": "coherencia entre claves", "has": ["tour noire"] },
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:one": {
+			"axis": "plural",
+			"has": ["exercice"],
+			"not": ["exercices"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:other": {
+			"axis": "plural",
+			"has": ["exercices"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:one": {
+			"axis": "plural",
+			"has": ["exercice"],
+			"not": ["exercices"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:other": {
+			"axis": "plural",
+			"has": ["exercices"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.LOG_OUT_ANYWAY": {
+			"axis": "infinitivo en botones",
+			"ref": ["Se déconnecter quand même"],
+			"re": ["\\b\\w+(er|ir|re)\\b"],
+			"allow": ["glossary"],
+			"severity": "major"
+		},
+		"CommonI18n.STAY": {
+			"axis": "infinitivo en botones",
+			"ref": ["Rester"],
+			"re": ["\\b\\w+(er|ir|re)\\b"],
+			"severity": "major"
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:one": {
+			"axis": "plural",
+			"has": ["caractère"],
+			"not": ["caractères"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:other": { "axis": "plural", "has": ["caractères"] },
+		"DashboardI18n.ACTIVITY_TOTAL#plural:one": {
+			"axis": "plural",
+			"has": ["exercice"],
+			"not": ["exercices"]
+		},
+		"DashboardI18n.ACTIVITY_TOTAL#plural:other": { "axis": "plural", "has": ["exercices"] },
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:one": {
+			"axis": "plural",
+			"has": ["exercice"],
+			"not": ["exercices"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:other": { "axis": "plural", "has": ["exercices"] },
+		"MatchI18n.DISMISS": {
+			"axis": "infinitivo en botones",
+			"ref": ["Ignorer", "Fermer"],
+			"re": ["\\b\\w+(er|ir|re)\\b"],
+			"severity": "major"
+		},
+		"MatchI18n.LEGACY_ENGINE": { "ref": ["Original"], "allow": ["untranslated"] },
+		"MatchI18n.ELO": { "axis": "nombres que no se traducen", "ref": ["ELO"], "re": ["^elo$"] },
+		"ProfileI18n.LOG_OUT": { "allow": ["glossary"] },
+		"AuthI18n.LOGGING_IN": { "allow": ["glossary"] },
+		"ProfileI18n.LOGGED_IN_AS": { "allow": ["glossary"] },
+		"PuzzleI18n.IMPORTED#plural:one": {
+			"axis": "plural",
+			"has": ["exercice"],
+			"not": ["exercices"]
+		},
+		"PuzzleI18n.IMPORTED#plural:other": { "axis": "plural", "has": ["exercices"] },
+		"SettingI18n.BOARD_INTRO": { "axis": "coherencia entre claves", "has": ["tour noire"] },
+		"SettingI18n.SYNC_ROWS#plural:one": { "axis": "plural", "has": ["ligne"], "not": ["lignes"] },
+		"SettingI18n.SYNC_ROWS#plural:other": { "axis": "plural", "has": ["lignes"] },
+		"SettingI18n.SYNC_UP_TO_DATE": {
+			"axis": "corta sin contexto",
+			"ref": ["à jour"],
+			"has": ["à jour"],
+			"not": ["quotidien", "par jour"]
+		},
+		"SettingI18n.SYNC_STALE#plural:one": { "axis": "plural", "has": ["jour"], "not": ["jours"] },
+		"SettingI18n.SYNC_STALE#plural:other": { "axis": "plural", "has": ["jours"] },
+		"TrainingI18n.FIX_THE_SET": {
+			"axis": "infinitivo en botones",
+			"ref": ["Fixer l'ensemble"],
+			"re": ["\\b\\w+(er|ir|re)\\b"],
+			"severity": "major"
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:one": {
+			"axis": "plural",
+			"has": ["exercice"],
+			"not": ["exercices"]
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:other": { "axis": "plural", "has": ["exercices"] },
+		"TrainingI18n.SAVE_THE_PACE": {
+			"axis": "infinitivo en botones",
+			"ref": ["Enregistrer le rythme"],
+			"re": ["\\b\\w+(er|ir|re)\\b"],
+			"severity": "major"
+		}
+	}
+}

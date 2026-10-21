@@ -1,0 +1,439 @@
+{
+	"lang": {
+		"quotes": [["\"", "\""]],
+		"stops": ["."]
+	},
+	"units": {
+		"CommonI18n.CANCEL": { "ref": ["Cancel"] },
+		"CommonI18n.CANCELLED": {
+			"axis": "ortografía británica",
+			"ref": ["Cancelled"],
+			"has": ["cancelled"],
+			"severity": "major"
+		},
+		"CommonI18n.CYCLE": { "ref": ["Cycle {index}"] },
+		"CommonI18n.FINISHED": { "ref": ["Finished"] },
+		"CommonI18n.IN_PROGRESS": { "ref": ["In progress"] },
+		"CommonI18n.LEVEL_FOUND": { "ref": ["Level found"] },
+		"CommonI18n.RESULT_RAISE": { "ref": ["Level up", "Probes higher", "Raises the level"] },
+		"CommonI18n.RESULT_LOWER": { "ref": ["Level down", "Probes lower", "Lowers the level"] },
+		"CommonI18n.REFINE": { "ref": ["Refinement"] },
+		"CommonI18n.RESULT": { "ref": ["Result"] },
+		"CommonI18n.RETRY": { "ref": ["Retry", "Try again"] },
+		"CommonI18n.RUNNING": { "ref": ["Running", "In progress"] },
+		"CommonI18n.EXPLORATION": { "ref": ["Exploration"] },
+		"CommonI18n.FIRST_TRY": { "ref": ["First try"] },
+		"CommonI18n.STAGE": { "ref": ["Stage"] },
+		"CommonI18n.LINE": { "ref": ["Line"] },
+		"CommonI18n.MOVES": { "ref": ["Moves"] },
+		"CommonI18n.NO_MOVES_YET": { "ref": ["No moves yet."] },
+		"CommonI18n.PREVIOUS": { "ref": ["Previous"] },
+		"CommonI18n.NEXT": { "ref": ["Next"] },
+		"CommonI18n.DIFFICULTY": { "ref": ["Difficulty: {level}"] },
+		"CommonI18n.DIFFICULTY_EASY": {
+			"axis": "concordancia entre claves",
+			"ref": ["easy"],
+			"re": ["^easy$"]
+		},
+		"CommonI18n.DIFFICULTY_MEDIUM": {
+			"axis": "concordancia entre claves",
+			"ref": ["medium"],
+			"re": ["^medium$"]
+		},
+		"CommonI18n.DIFFICULTY_HARD": {
+			"axis": "concordancia entre claves",
+			"ref": ["hard"],
+			"re": ["^(hard|difficult)$"]
+		},
+		"CommonI18n.SQUARE_EMPTY": { "ref": ["Empty square {square}"] },
+		"CommonI18n.SQUARE_MOVE_TO": { "ref": ["Move to {square}"] },
+		"CommonI18n.SQUARE_PIECE": { "ref": ["{piece} on {square}"] },
+		"CommonI18n.SQUARE_CAPTURE": {
+			"ref": ["Capture {piece} on {square}", "Take {piece} on {square}"]
+		},
+		"CommonI18n.PIECE_WHITE_PAWN": {
+			"axis": "concordancia entre claves",
+			"ref": ["white pawn"],
+			"has": ["white pawn"]
+		},
+		"CommonI18n.PIECE_WHITE_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"ref": ["white knight"],
+			"has": ["white knight"]
+		},
+		"CommonI18n.PIECE_WHITE_BISHOP": {
+			"axis": "concordancia entre claves",
+			"ref": ["white bishop"],
+			"has": ["white bishop"]
+		},
+		"CommonI18n.PIECE_WHITE_ROOK": {
+			"axis": "concordancia entre claves",
+			"ref": ["white rook"],
+			"has": ["white rook"]
+		},
+		"CommonI18n.PIECE_WHITE_QUEEN": {
+			"axis": "concordancia entre claves",
+			"ref": ["white queen"],
+			"has": ["white queen"]
+		},
+		"CommonI18n.PIECE_WHITE_KING": {
+			"axis": "concordancia entre claves",
+			"ref": ["white king"],
+			"has": ["white king"]
+		},
+		"CommonI18n.PIECE_BLACK_PAWN": {
+			"axis": "concordancia entre claves",
+			"ref": ["black pawn"],
+			"has": ["black pawn"]
+		},
+		"CommonI18n.PIECE_BLACK_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"ref": ["black knight"],
+			"has": ["black knight"]
+		},
+		"CommonI18n.PIECE_BLACK_BISHOP": {
+			"axis": "concordancia entre claves",
+			"ref": ["black bishop"],
+			"has": ["black bishop"]
+		},
+		"CommonI18n.PIECE_BLACK_ROOK": {
+			"axis": "concordancia entre claves",
+			"ref": ["black rook"],
+			"has": ["black rook"]
+		},
+		"CommonI18n.PIECE_BLACK_QUEEN": {
+			"axis": "concordancia entre claves",
+			"ref": ["black queen"],
+			"has": ["black queen"]
+		},
+		"CommonI18n.PIECE_BLACK_KING": {
+			"axis": "concordancia entre claves",
+			"ref": ["black king"],
+			"has": ["black king"]
+		},
+		"CommonI18n.APP_UPDATED": {
+			"axis": "marcadores",
+			"ref": ["App updated to v{version}", "App updated to version {version}"]
+		},
+		"CommonI18n.SETTINGS_LOAD_ERROR": {
+			"ref": ["Your settings could not be loaded, so the defaults are in use."]
+		},
+		"CommonI18n.SETTINGS_SAVE_ERROR": { "ref": ["The setting could not be saved."] },
+		"CommonI18n.SETTINGS_BLOCKED_UPGRADE": {
+			"ref": ["Close the other tabs of this app to finish updating its local database."]
+		},
+		"CommonI18n.SERVER_UNREACHABLE": {
+			"ref": [
+				"The server is unreachable. Check that the API is running.",
+				"Cannot reach the server. Check that the API is running."
+			]
+		},
+		"CommonI18n.SERVER_DETAIL": {
+			"axis": "marcadores",
+			"ref": ["{detail}"],
+			"re": ["^\\{detail\\}$"]
+		},
+		"CommonI18n.CATALOG_EMPTY": {
+			"axis": "ortografía británica",
+			"ref": [
+				"This device has no exercises in that rating band. Go online to download the catalogue, or import your own exercises from a CSV."
+			],
+			"has": ["catalogue"],
+			"severity": "major"
+		},
+		"CommonI18n.DEMO_TASK": {
+			"axis": "coherencia entre claves",
+			"ref": ["Take the black rook.", "Capture the black rook."],
+			"has": ["black rook"]
+		},
+		"CommonI18n.SELECT_OPTION_POSITION": { "ref": ["{option}, {position} of {total}"] },
+		"CommonI18n.PROMOTION_DIALOG": {
+			"ref": ["Choose a promotion piece", "Choose the piece to promote to"]
+		},
+		"CommonI18n.PROMOTE_TO": { "ref": ["Promote to"] },
+		"CommonI18n.PROMOTE_TO_PIECE": { "ref": ["Promote to {piece}"] },
+		"CommonI18n.PENDING_SYNC_TITLE": {
+			"ref": ["Some exercises have not been uploaded", "Exercises still to upload"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:one": {
+			"axis": "plural",
+			"ref": [
+				"# exercise from this device has not reached the server yet. Logging out deletes it, with no way to get it back."
+			],
+			"has": ["exercise"],
+			"not": ["exercises"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:other": {
+			"axis": "plural",
+			"ref": [
+				"# exercises from this device have not reached the server yet. Logging out deletes them, with no way to get them back."
+			],
+			"has": ["exercises"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:one": {
+			"axis": "plural",
+			"ref": [
+				"The server refused # exercise from this device and will not retry it. Logging out deletes it, with no way to get it back."
+			],
+			"has": ["exercise"],
+			"not": ["exercises"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:other": {
+			"axis": "plural",
+			"ref": [
+				"The server refused # exercises from this device and will not retry them. Logging out deletes them, with no way to get them back."
+			],
+			"has": ["exercises"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.LOG_OUT_ANYWAY": { "ref": ["Log out anyway"], "allow": ["glossary"] },
+		"CommonI18n.STAY": { "ref": ["Stay"] },
+		"AuthI18n.LOG_IN_INTRO": {
+			"ref": [
+				"The session is opened against the Chess Pecker API and kept in a cookie, so it survives a reload."
+			]
+		},
+		"AuthI18n.USERNAME": { "ref": ["Username"] },
+		"AuthI18n.PASSWORD": { "ref": ["Password"] },
+		"AuthI18n.LOGGING_IN": { "ref": ["Logging in…"], "allow": ["glossary"] },
+		"AuthI18n.NO_ACCOUNT_YET": { "ref": ["No account yet?"] },
+		"AuthI18n.CREATE_ONE": { "ref": ["Create one"] },
+		"AuthI18n.REGISTER_INTRO": {
+			"ref": [
+				"A username and a password are enough. The email is optional and only used to get the account back if you lose the password."
+			]
+		},
+		"AuthI18n.EMAIL_OPTIONAL": { "ref": ["Email (optional)"] },
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:one": {
+			"axis": "plural",
+			"ref": ["At least # character."],
+			"has": ["character"],
+			"not": ["characters"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:other": {
+			"axis": "plural",
+			"ref": ["At least # characters."],
+			"has": ["characters"]
+		},
+		"AuthI18n.CREATING_ACCOUNT": { "ref": ["Creating the account…", "Creating your account…"] },
+		"AuthI18n.ALREADY_REGISTERED": { "ref": ["Already have an account?", "Already registered?"] },
+		"DashboardI18n.ACTIVITY_TOTAL#plural:one": {
+			"axis": "plural",
+			"ref": ["# exercise done in the selected period"],
+			"has": ["exercise"],
+			"not": ["exercises"]
+		},
+		"DashboardI18n.ACTIVITY_TOTAL#plural:other": {
+			"axis": "plural",
+			"ref": ["# exercises done in the selected period"],
+			"has": ["exercises"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:one": {
+			"axis": "plural",
+			"ref": ["# exercise done on {date}"],
+			"has": ["exercise"],
+			"not": ["exercises"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:other": {
+			"axis": "plural",
+			"ref": ["# exercises done on {date}"],
+			"has": ["exercises"]
+		},
+		"IntroI18n.PURPOSE_TITLE#gender:male": { "ref": ["Welcome to Chess Pecker"] },
+		"IntroI18n.PURPOSE_TITLE#gender:female": { "ref": ["Welcome to Chess Pecker"] },
+		"IntroI18n.PURPOSE_TITLE#gender:other": { "ref": ["Welcome to Chess Pecker"] },
+		"IntroI18n.PURPOSE_BODY_1": {
+			"ref": [
+				"Chess Pecker is an app for training tactics with the Woodpecker method. It is not a pile of puzzles to work through: it is a training programme with a beginning, an end and a concrete way of telling whether you are getting better."
+			]
+		},
+		"IntroI18n.PURPOSE_BODY_2": {
+			"ref": [
+				"The app takes care of the whole run: it builds your set of exercises, keeps count of every cycle and shows you how much you have gained in speed and accuracy. It works offline too and keeps your progress on the device, so you can train wherever and whenever you like."
+			]
+		},
+		"MatchI18n.DISMISS": { "ref": ["Dismiss"] },
+		"MatchI18n.FEN_UNREADABLE": {
+			"ref": ["That FEN could not be read.", "Could not read that FEN."]
+		},
+		"MatchI18n.ILLEGAL_MOVE": { "ref": ["\"{notation}\" is not a legal move here."] },
+		"MatchI18n.OPPONENT": { "ref": ["Opponent"] },
+		"MatchI18n.LEGACY_ENGINE": { "ref": ["Original", "Classic"], "allow": ["untranslated"] },
+		"MatchI18n.ELO": { "axis": "nombres que no se traducen", "ref": ["ELO"], "re": ["^elo$"] },
+		"MatchI18n.CHOOSE_SIDE": {
+			"ref": ["Choose opponent and side", "Choose an opponent and a side"]
+		},
+		"MatchI18n.REVIEWING": { "ref": ["Reviewing the match", "Reviewing the game"] },
+		"MatchI18n.RESIGNED#gender:male": { "ref": ["You resigned"] },
+		"MatchI18n.RESIGNED#gender:female": { "ref": ["You resigned"] },
+		"MatchI18n.RESIGNED#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["You resigned"],
+			"has": ["you"]
+		},
+		"MatchI18n.DRAW_AGREED": { "ref": ["Draw by agreement", "Draw agreed"] },
+		"ProfileI18n.YOUR_ACCOUNT": { "ref": ["Your account"] },
+		"ProfileI18n.LOGGED_IN_AS": { "ref": ["Logged in as {username}."], "allow": ["glossary"] },
+		"ProfileI18n.SESSION_OPEN": { "ref": ["Your session is open."] },
+		"ProfileI18n.LOG_OUT": { "ref": ["Log out"], "allow": ["glossary"] },
+		"ProfileI18n.UNREACHABLE_EXPLANATION": {
+			"ref": [
+				"The server is not answering, so there is no way to tell whether your session is still open. It may be waking up, which takes up to a minute on the free plan. Meanwhile the board, free play, an imported set and your settings work just the same: they never leave this device."
+			]
+		},
+		"PuzzleI18n.FILE_UNREADABLE": {
+			"ref": ["Could not read {name}.", "{name} could not be read."]
+		},
+		"PuzzleI18n.NO_READABLE_ROWS": {
+			"ref": ["That CSV has no readable exercises.", "No readable exercises in that CSV."]
+		},
+		"PuzzleI18n.IMPORT_NOT_SAVED": {
+			"ref": ["Imported, but the set could not be saved for next time."]
+		},
+		"PuzzleI18n.IMPORTED#plural:one": {
+			"axis": "plural",
+			"ref": ["Loaded # exercise."],
+			"has": ["exercise"],
+			"not": ["exercises"]
+		},
+		"PuzzleI18n.IMPORTED#plural:other": {
+			"axis": "plural",
+			"ref": ["Loaded # exercises."],
+			"has": ["exercises"]
+		},
+		"PuzzleI18n.IMPORTED_WITH_SKIPPED": {
+			"ref": ["Loaded {loaded} exercises, skipped {skipped} unreadable rows."]
+		},
+		"SettingI18n.GENDER": { "ref": ["Gender"] },
+		"SettingI18n.GENDER_INTRO": {
+			"ref": [
+				"The gender the app uses to address you. With \"Other\", it speaks to you in neutral terms."
+			]
+		},
+		"SettingI18n.GENDER_MALE": { "ref": ["Male", "Masculine"] },
+		"SettingI18n.GENDER_FEMALE": { "ref": ["Female", "Feminine"] },
+		"SettingI18n.GENDER_OTHER": { "ref": ["Other"] },
+		"SettingI18n.BOARD": { "ref": ["Board"] },
+		"SettingI18n.BOARD_INTRO": {
+			"axis": "coherencia entre claves",
+			"ref": [
+				"How the board behaves. The strip below is a real exercise — take the black rook — so every setting can be tried where it is chosen: miss on purpose and it takes your move back, miss often enough and it plays you the answer."
+			],
+			"has": ["black rook"]
+		},
+		"SettingI18n.SYNC_PENDING": {
+			"axis": "dirección de la sincronización",
+			"ref": ["{count} to upload"],
+			"has": ["upload"]
+		},
+		"SettingI18n.SYNC_REJECTED#plural:one": { "axis": "plural", "ref": ["# rejected"] },
+		"SettingI18n.SYNC_REJECTED#plural:other": { "axis": "plural", "ref": ["# rejected"] },
+		"SettingI18n.SYNC_ROWS#plural:one": {
+			"axis": "plural",
+			"ref": ["# row here"],
+			"has": ["row"],
+			"not": ["rows"]
+		},
+		"SettingI18n.SYNC_ROWS#plural:other": {
+			"axis": "plural",
+			"ref": ["# rows here"],
+			"has": ["rows"]
+		},
+		"SettingI18n.SYNC_CURSOR": {
+			"axis": "dirección de la sincronización",
+			"ref": ["downloaded up to {at}"],
+			"has": ["download"]
+		},
+		"SettingI18n.SYNC_NO_CURSOR": {
+			"axis": "dirección de la sincronización",
+			"ref": ["nothing downloaded"],
+			"has": ["download"]
+		},
+		"SettingI18n.SYNC_UP_TO_DATE": {
+			"axis": "corta sin contexto",
+			"ref": ["up to date"],
+			"has": ["up to date"],
+			"not": ["daily", "per day"]
+		},
+		"SettingI18n.SYNC_STALE#plural:one": {
+			"axis": "plural",
+			"ref": ["Something has been waiting for over # day."],
+			"has": ["day"],
+			"not": ["days"]
+		},
+		"SettingI18n.SYNC_STALE#plural:other": {
+			"axis": "plural",
+			"ref": ["Something has been waiting for over # days."],
+			"has": ["days"]
+		},
+		"SettingI18n.SYNC_REASONS": { "ref": ["Rejected"] },
+		"SettingI18n.SYNC_MORE_REJECTED": {
+			"axis": "corta sin contexto",
+			"ref": ["and {count} more"],
+			"re": ["^and \\{count\\} more$"]
+		},
+		"TrainingI18n.FIX_THE_SET": { "ref": ["Fix the set", "Lock in the set"] },
+		"TrainingI18n.SET_ALREADY_FIXED#plural:one": {
+			"axis": "plural",
+			"ref": ["# exercise is already fixed for every cycle."],
+			"has": ["exercise"],
+			"not": ["exercises"]
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:other": {
+			"axis": "plural",
+			"ref": ["# exercises are already fixed for every cycle."],
+			"has": ["exercises"]
+		},
+		"TrainingI18n.COMMIT_TO_A_PACE": { "ref": ["Commit to a pace"] },
+		"TrainingI18n.PACE_LABEL": { "ref": ["Exercises per day", "Exercises a day"] },
+		"TrainingI18n.SAVE_THE_PACE": { "ref": ["Save the pace"] },
+		"TrainingI18n.CALIBRATION_LABEL": { "ref": ["Calibration · round {round} · ELO {rating}"] },
+		"TrainingI18n.CALIBRATION_LABEL_PROGRESS": {
+			"ref": ["Calibration · round {round} ({position} / {total}) · ELO {rating}"]
+		},
+		"TrainingI18n.CYCLE_LABEL": { "ref": ["Cycle"] },
+		"TrainingI18n.CYCLE_LABEL_POSITION": { "ref": ["Cycle · exercise {position}"] },
+		"TrainingI18n.LOADING_EXERCISE": { "ref": ["Loading the exercise…"] },
+		"TrainingI18n.NOPE": { "ref": ["Not that one!", "Nope!"] },
+		"TrainingI18n.RECORDING_ATTEMPT": { "ref": ["Recording the attempt…"] },
+		"TrainingI18n.GAVE_UP_WATCHING#gender:male": {
+			"ref": ["You gave up. Watch how it went.", "You gave up. Here's how it went."]
+		},
+		"TrainingI18n.GAVE_UP_WATCHING#gender:female": {
+			"ref": ["You gave up. Watch how it went.", "You gave up. Here's how it went."]
+		},
+		"TrainingI18n.GAVE_UP_WATCHING#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["You gave up. Watch how it went.", "You gave up. Here's how it went."],
+			"has": ["you"]
+		},
+		"TrainingI18n.GAVE_UP_LINE#gender:male": { "ref": ["You gave up. That was the line."] },
+		"TrainingI18n.GAVE_UP_LINE#gender:female": { "ref": ["You gave up. That was the line."] },
+		"TrainingI18n.GAVE_UP_LINE#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["You gave up. That was the line."],
+			"has": ["you"]
+		},
+		"TrainingI18n.FOUND_AFTER_MISS": {
+			"ref": ["Well done, that's it.", "Very good, that's more like it."]
+		},
+		"TrainingI18n.SOLVED": { "ref": ["Solved."] },
+		"TrainingI18n.MISSED_RETRY": { "ref": ["Try again."] },
+		"TrainingI18n.OUTCOME_ACCEPT": { "ref": ["Calibration finished: that band is your level."] },
+		"TrainingI18n.OUTCOME_RAISE": { "ref": ["Solved. The next round raises the level."] },
+		"TrainingI18n.OUTCOME_LOWER": { "ref": ["Missed. The next round lowers the level."] },
+		"TrainingI18n.DAILY_SERIES_FIRST_TRY": { "ref": ["First try"] },
+		"TrainingI18n.DAILY_SERIES_AFTER_MISS": { "ref": ["After a miss"] },
+		"TrainingI18n.DAILY_SERIES_SHOWN": { "ref": ["Solution shown"] },
+		"TrainingI18n.DAILY_SERIES_MISTAKES": { "ref": ["Mistakes"] },
+		"TrainingI18n.DAILY_SERIES_HINTS": { "ref": ["Hints"] },
+		"TrainingI18n.DAILY_DAY_DETAIL": {
+			"ref": [
+				"{date} · {firstTry} first try, {afterMiss} after a miss, {shown} solution shown · {mistakes} mistakes, {hints} hints · {minutes} min"
+			]
+		}
+	}
+}

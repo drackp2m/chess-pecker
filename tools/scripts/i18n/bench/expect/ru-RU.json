@@ -1,0 +1,673 @@
+{
+	"lang": {
+		"quotes": [["«", "»"]],
+		"stops": ["."]
+	},
+	"units": {
+		"CommonI18n.CANCEL": { "ref": ["Отмена", "Отменить"] },
+		"CommonI18n.CANCELLED": { "ref": ["Отменено", "Отменён"] },
+		"CommonI18n.CYCLE": { "ref": ["Цикл {index}"] },
+		"CommonI18n.FINISHED": { "ref": ["Завершено", "Завершён"] },
+		"CommonI18n.IN_PROGRESS": { "ref": ["В процессе", "Идёт"] },
+		"CommonI18n.LEVEL_FOUND": { "ref": ["Уровень найден", "Уровень определён"] },
+		"CommonI18n.RESULT_RAISE": { "ref": ["Уровень выше", "Повышение уровня"] },
+		"CommonI18n.RESULT_LOWER": { "ref": ["Уровень ниже", "Понижение уровня"] },
+		"CommonI18n.REFINE": { "ref": ["Уточнение"] },
+		"CommonI18n.RESULT": { "ref": ["Результат"] },
+		"CommonI18n.RETRY": {
+			"axis": "infinitivo en botones",
+			"ref": ["Повторить", "Попробовать снова"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"severity": "major"
+		},
+		"CommonI18n.RUNNING": { "ref": ["Выполняется", "Идёт"] },
+		"CommonI18n.EXPLORATION": { "ref": ["Разведка"] },
+		"CommonI18n.FIRST_TRY": { "ref": ["С первой попытки"] },
+		"CommonI18n.STAGE": { "ref": ["Этап"] },
+		"CommonI18n.LINE": {
+			"axis": "corta sin contexto",
+			"ref": ["Вариант"],
+			"has": ["вариант"],
+			"not": ["линия"]
+		},
+		"CommonI18n.MOVES": { "ref": ["Ходы"] },
+		"CommonI18n.NO_MOVES_YET": { "ref": ["Ходов пока нет.", "Пока нет ходов."] },
+		"CommonI18n.PREVIOUS": { "ref": ["Назад", "Предыдущий"] },
+		"CommonI18n.NEXT": { "ref": ["Далее", "Следующий"] },
+		"CommonI18n.DIFFICULTY": {
+			"axis": "concordancia entre claves",
+			"ref": ["Сложность: {level}"],
+			"has": ["сложность"]
+		},
+		"CommonI18n.DIFFICULTY_EASY": {
+			"axis": "concordancia entre claves",
+			"ref": ["низкая", "лёгкая"],
+			"re": ["^(низкая|легкая|простая)$"]
+		},
+		"CommonI18n.DIFFICULTY_MEDIUM": {
+			"axis": "concordancia entre claves",
+			"ref": ["средняя"],
+			"re": ["^средняя$"]
+		},
+		"CommonI18n.DIFFICULTY_HARD": {
+			"axis": "concordancia entre claves",
+			"ref": ["высокая", "сложная"],
+			"re": ["^(высокая|сложная|трудная)$"]
+		},
+		"CommonI18n.SQUARE_EMPTY": { "ref": ["Пустое поле {square}"] },
+		"CommonI18n.SQUARE_MOVE_TO": { "ref": ["Ход на {square}", "Пойти на {square}"] },
+		"CommonI18n.SQUARE_PIECE": {
+			"axis": "concordancia entre claves",
+			"ref": ["{piece} на {square}"],
+			"has": ["{piece} на {square}"]
+		},
+		"CommonI18n.SQUARE_CAPTURE": {
+			"axis": "concordancia entre claves",
+			"ref": ["Взятие: {piece} на {square}"],
+			"not": ["взять {piece}", "съесть {piece}", "побить {piece}", "захватить {piece}", "поймать"]
+		},
+		"CommonI18n.PIECE_WHITE_PAWN": {
+			"axis": "concordancia entre claves",
+			"ref": ["белая пешка"],
+			"has": ["бел"],
+			"not": ["белый"],
+			"prefer": ["белая пешка"]
+		},
+		"CommonI18n.PIECE_WHITE_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"ref": ["белый конь"],
+			"has": ["бел"],
+			"not": ["белая"],
+			"prefer": ["белый конь"]
+		},
+		"CommonI18n.PIECE_WHITE_BISHOP": {
+			"axis": "concordancia entre claves",
+			"ref": ["белый слон"],
+			"has": ["бел"],
+			"not": ["белая"],
+			"prefer": ["белый слон"]
+		},
+		"CommonI18n.PIECE_WHITE_ROOK": {
+			"axis": "concordancia entre claves",
+			"ref": ["белая ладья"],
+			"has": ["бел"],
+			"not": ["белый"],
+			"prefer": ["белая ладья"]
+		},
+		"CommonI18n.PIECE_WHITE_QUEEN": {
+			"axis": "concordancia entre claves",
+			"ref": ["белый ферзь"],
+			"has": ["бел"],
+			"not": ["белая"],
+			"prefer": ["белый ферзь"]
+		},
+		"CommonI18n.PIECE_WHITE_KING": {
+			"axis": "concordancia entre claves",
+			"ref": ["белый король"],
+			"has": ["бел"],
+			"not": ["белая"],
+			"prefer": ["белый король"]
+		},
+		"CommonI18n.PIECE_BLACK_PAWN": {
+			"axis": "concordancia entre claves",
+			"ref": ["чёрная пешка"],
+			"has": ["черн"],
+			"not": ["черный"],
+			"prefer": ["черная пешка"]
+		},
+		"CommonI18n.PIECE_BLACK_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"ref": ["чёрный конь"],
+			"has": ["черн"],
+			"not": ["черная"],
+			"prefer": ["черный конь"]
+		},
+		"CommonI18n.PIECE_BLACK_BISHOP": {
+			"axis": "concordancia entre claves",
+			"ref": ["чёрный слон"],
+			"has": ["черн"],
+			"not": ["черная"],
+			"prefer": ["черный слон"]
+		},
+		"CommonI18n.PIECE_BLACK_ROOK": {
+			"axis": "concordancia entre claves",
+			"ref": ["чёрная ладья"],
+			"has": ["черн"],
+			"not": ["черный"],
+			"prefer": ["черная ладья"]
+		},
+		"CommonI18n.PIECE_BLACK_QUEEN": {
+			"axis": "concordancia entre claves",
+			"ref": ["чёрный ферзь"],
+			"has": ["черн"],
+			"not": ["черная"],
+			"prefer": ["черный ферзь"]
+		},
+		"CommonI18n.PIECE_BLACK_KING": {
+			"axis": "concordancia entre claves",
+			"ref": ["чёрный король"],
+			"has": ["черн"],
+			"not": ["черная"],
+			"prefer": ["черный король"]
+		},
+		"CommonI18n.APP_UPDATED": {
+			"axis": "marcadores",
+			"ref": ["Приложение обновлено до v{version}", "Приложение обновлено до версии {version}"]
+		},
+		"CommonI18n.SETTINGS_LOAD_ERROR": {
+			"ref": ["Не удалось загрузить твои настройки, поэтому используются значения по умолчанию."]
+		},
+		"CommonI18n.SETTINGS_SAVE_ERROR": { "ref": ["Не удалось сохранить настройку."] },
+		"CommonI18n.SETTINGS_BLOCKED_UPGRADE": {
+			"ref": [
+				"Закрой другие вкладки этого приложения, чтобы завершить обновление его локальной базы данных."
+			]
+		},
+		"CommonI18n.SERVER_UNREACHABLE": {
+			"ref": [
+				"Сервер недоступен. Проверь, что API запущен.",
+				"Не удаётся связаться с сервером. Проверь, что API запущен."
+			],
+			"allow": ["script"]
+		},
+		"CommonI18n.SERVER_DETAIL": {
+			"axis": "marcadores",
+			"ref": ["{detail}"],
+			"re": ["^\\{detail\\}$"]
+		},
+		"CommonI18n.CATALOG_EMPTY": {
+			"ref": [
+				"На этом устройстве нет упражнений в этом диапазоне рейтинга. Подключись к интернету, чтобы скачать каталог, или импортируй свои упражнения из CSV."
+			]
+		},
+		"CommonI18n.DEMO_TASK": {
+			"axis": "coherencia entre claves",
+			"ref": ["Возьми чёрную ладью.", "Съешь чёрную ладью."],
+			"has": ["черную ладью"]
+		},
+		"CommonI18n.SELECT_OPTION_POSITION": {
+			"axis": "marcadores",
+			"ref": ["{option}, {position} из {total}"],
+			"has": ["{position} из {total}"]
+		},
+		"CommonI18n.PROMOTION_DIALOG": { "ref": ["Выбери фигуру для превращения"] },
+		"CommonI18n.PROMOTE_TO": { "ref": ["Превратить в", "Превращение в"] },
+		"CommonI18n.PROMOTE_TO_PIECE": {
+			"axis": "concordancia entre claves",
+			"ref": ["Превратить: {piece}"],
+			"not": ["в {piece}"]
+		},
+		"CommonI18n.PENDING_SYNC_TITLE": {
+			"ref": ["Есть неотправленные упражнения", "Остались неотправленные упражнения"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:one": {
+			"axis": "plural",
+			"ref": [
+				"# упражнение с этого устройства ещё не дошло до сервера. При выходе из аккаунта оно будет удалено без возможности восстановления."
+			],
+			"has": ["упражнение"],
+			"not": ["упражнения", "упражнений"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:few": {
+			"axis": "plural",
+			"ref": [
+				"# упражнения с этого устройства ещё не дошли до сервера. При выходе из аккаунта они будут удалены без возможности восстановления."
+			],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:many": {
+			"axis": "plural",
+			"ref": [
+				"# упражнений с этого устройства ещё не дошли до сервера. При выходе из аккаунта они будут удалены без возможности восстановления."
+			],
+			"has": ["упражнений"],
+			"not": ["упражнение", "упражнения"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_MESSAGE#plural:other": {
+			"axis": "plural",
+			"ref": [
+				"# упражнения с этого устройства ещё не дошли до сервера. При выходе из аккаунта они будут удалены без возможности восстановления."
+			],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:one": {
+			"axis": "plural",
+			"ref": [
+				"Сервер отклонил # упражнение с этого устройства, и повторной попытки не будет. При выходе из аккаунта оно будет удалено без возможности восстановления."
+			],
+			"has": ["упражнение"],
+			"not": ["упражнения", "упражнений"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:few": {
+			"axis": "plural",
+			"ref": [
+				"Сервер отклонил # упражнения с этого устройства, и повторной попытки не будет. При выходе из аккаунта они будут удалены без возможности восстановления."
+			],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:many": {
+			"axis": "plural",
+			"ref": [
+				"Сервер отклонил # упражнений с этого устройства, и повторной попытки не будет. При выходе из аккаунта они будут удалены без возможности восстановления."
+			],
+			"has": ["упражнений"],
+			"not": ["упражнение", "упражнения"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.PENDING_SYNC_REJECTED#plural:other": {
+			"axis": "plural",
+			"ref": [
+				"Сервер отклонил # упражнения с этого устройства, и повторной попытки не будет. При выходе из аккаунта они будут удалены без возможности восстановления."
+			],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"],
+			"allow": ["glossary"]
+		},
+		"CommonI18n.LOG_OUT_ANYWAY": {
+			"axis": "infinitivo en botones",
+			"ref": ["Всё равно выйти", "Выйти всё равно"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"allow": ["glossary"],
+			"severity": "major"
+		},
+		"CommonI18n.STAY": {
+			"axis": "infinitivo en botones",
+			"ref": ["Остаться"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"severity": "major"
+		},
+		"AuthI18n.LOG_IN_INTRO": {
+			"ref": [
+				"Сессия открывается через API Chess Pecker и хранится в cookie, поэтому переживает перезагрузку страницы."
+			],
+			"allow": ["script"]
+		},
+		"AuthI18n.USERNAME": { "ref": ["Имя пользователя"] },
+		"AuthI18n.PASSWORD": { "ref": ["Пароль"] },
+		"AuthI18n.LOGGING_IN": { "ref": ["Вход…", "Выполняется вход…"], "allow": ["glossary"] },
+		"AuthI18n.NO_ACCOUNT_YET": { "ref": ["Ещё нет аккаунта?"] },
+		"AuthI18n.CREATE_ONE": {
+			"axis": "infinitivo en botones",
+			"ref": ["Создать", "Создать аккаунт"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"severity": "major"
+		},
+		"AuthI18n.REGISTER_INTRO": {
+			"ref": [
+				"Достаточно имени пользователя и пароля. Почта необязательна и нужна только для того, чтобы восстановить аккаунт, если ты забудешь пароль."
+			]
+		},
+		"AuthI18n.EMAIL_OPTIONAL": {
+			"ref": ["Почта (необязательно)", "Электронная почта (необязательно)"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:one": {
+			"axis": "plural",
+			"ref": ["Не менее # символа.", "Минимум # символ."],
+			"not": ["символов"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:few": {
+			"axis": "plural",
+			"ref": ["Не менее # символов.", "Минимум # символа."],
+			"re": ["символ(а|ов)\\b"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:many": {
+			"axis": "plural",
+			"ref": ["Не менее # символов.", "Минимум # символов."],
+			"has": ["символов"]
+		},
+		"AuthI18n.PASSWORD_MIN_LENGTH#plural:other": {
+			"axis": "plural",
+			"ref": ["Не менее # символа.", "Минимум # символа."],
+			"re": ["символа\\b"]
+		},
+		"AuthI18n.CREATING_ACCOUNT": { "ref": ["Создание аккаунта…"] },
+		"AuthI18n.ALREADY_REGISTERED": { "ref": ["Уже есть аккаунт?"] },
+		"DashboardI18n.ACTIVITY_TOTAL#plural:one": {
+			"axis": "plural",
+			"ref": ["# упражнение выполнено за выбранный период"],
+			"has": ["упражнение"],
+			"not": ["упражнения", "упражнений"]
+		},
+		"DashboardI18n.ACTIVITY_TOTAL#plural:few": {
+			"axis": "plural",
+			"ref": ["# упражнения выполнено за выбранный период"],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"DashboardI18n.ACTIVITY_TOTAL#plural:many": {
+			"axis": "plural",
+			"ref": ["# упражнений выполнено за выбранный период"],
+			"has": ["упражнений"],
+			"not": ["упражнение", "упражнения"]
+		},
+		"DashboardI18n.ACTIVITY_TOTAL#plural:other": {
+			"axis": "plural",
+			"ref": ["# упражнения выполнено за выбранный период"],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:one": {
+			"axis": "plural",
+			"ref": ["# упражнение выполнено {date}"],
+			"has": ["упражнение"],
+			"not": ["упражнения", "упражнений"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:few": {
+			"axis": "plural",
+			"ref": ["# упражнения выполнено {date}"],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:many": {
+			"axis": "plural",
+			"ref": ["# упражнений выполнено {date}"],
+			"has": ["упражнений"],
+			"not": ["упражнение", "упражнения"]
+		},
+		"DashboardI18n.ACTIVITY_DAY_DETAIL#plural:other": {
+			"axis": "plural",
+			"ref": ["# упражнения выполнено {date}"],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"IntroI18n.PURPOSE_TITLE#gender:male": { "ref": ["Добро пожаловать в Chess Pecker"] },
+		"IntroI18n.PURPOSE_TITLE#gender:female": { "ref": ["Добро пожаловать в Chess Pecker"] },
+		"IntroI18n.PURPOSE_TITLE#gender:other": { "ref": ["Добро пожаловать в Chess Pecker"] },
+		"IntroI18n.PURPOSE_BODY_1": {
+			"ref": [
+				"Chess Pecker — это приложение для тренировки тактики по методу Woodpecker. Это не сборник задач, которые решаешь без всякой цели: это тренировка с началом, концом и понятным способом узнать, становишься ли ты сильнее."
+			]
+		},
+		"IntroI18n.PURPOSE_BODY_2": {
+			"ref": [
+				"Приложение берёт на себя весь путь: собирает твой набор упражнений, ведёт счёт каждому циклу и показывает, насколько выросли твои скорость и точность. Оно работает и без интернета и хранит прогресс на устройстве, так что тренироваться можно где и когда угодно."
+			]
+		},
+		"MatchI18n.DISMISS": {
+			"axis": "infinitivo en botones",
+			"ref": ["Закрыть", "Скрыть", "Отклонить"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"severity": "major"
+		},
+		"MatchI18n.FEN_UNREADABLE": { "ref": ["Не удалось прочитать этот FEN."] },
+		"MatchI18n.ILLEGAL_MOVE": {
+			"ref": [
+				"«{notation}» — недопустимый ход в этой позиции.",
+				"«{notation}» — здесь недопустимый ход."
+			]
+		},
+		"MatchI18n.OPPONENT": { "ref": ["Соперник"] },
+		"MatchI18n.LEGACY_ENGINE": { "ref": ["Оригинальный", "Классический"] },
+		"MatchI18n.ELO": { "axis": "nombres que no se traducen", "ref": ["ELO"], "re": ["^elo$"] },
+		"MatchI18n.CHOOSE_SIDE": { "ref": ["Выбери соперника и сторону"] },
+		"MatchI18n.REVIEWING": { "ref": ["Просмотр партии", "Разбор партии"] },
+		"MatchI18n.RESIGNED#gender:male": {
+			"axis": "género de quien usa",
+			"ref": ["Ты сдался"],
+			"re": ["\\bсдался\\b"],
+			"not": ["сдалась"]
+		},
+		"MatchI18n.RESIGNED#gender:female": {
+			"axis": "género de quien usa",
+			"ref": ["Ты сдалась"],
+			"re": ["\\bсдалась\\b"],
+			"not": ["сдался"]
+		},
+		"MatchI18n.RESIGNED#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["Партия сдана", "Сдача партии"],
+			"not": ["сдал"],
+			"re": ["(сда|заверш|оконч|прекращ|отказ)"]
+		},
+		"MatchI18n.DRAW_AGREED": { "ref": ["Ничья по соглашению", "Ничья по взаимному согласию"] },
+		"ProfileI18n.YOUR_ACCOUNT": { "ref": ["Твой аккаунт"] },
+		"ProfileI18n.LOGGED_IN_AS": {
+			"axis": "género de quien usa",
+			"ref": ["Вход выполнен как {username}."],
+			"not": ["вошел", "вошла"],
+			"allow": ["glossary"],
+			"severity": "major"
+		},
+		"ProfileI18n.SESSION_OPEN": { "ref": ["Твоя сессия открыта."] },
+		"ProfileI18n.LOG_OUT": {
+			"axis": "infinitivo en botones",
+			"ref": ["Выйти"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"allow": ["glossary"],
+			"severity": "major"
+		},
+		"ProfileI18n.UNREACHABLE_EXPLANATION": {
+			"ref": [
+				"Сервер не отвечает, поэтому понять, открыта ли ещё твоя сессия, невозможно. Возможно, он просыпается — на бесплатном тарифе это занимает до минуты. Тем временем доска, свободная игра, импортированный набор и твои настройки работают как обычно: они никогда не покидают это устройство."
+			]
+		},
+		"PuzzleI18n.FILE_UNREADABLE": { "ref": ["Не удалось прочитать {name}."] },
+		"PuzzleI18n.NO_READABLE_ROWS": { "ref": ["В этом CSV нет ни одного читаемого упражнения."] },
+		"PuzzleI18n.IMPORT_NOT_SAVED": {
+			"ref": ["Импортировано, но набор не удалось сохранить на следующий раз."]
+		},
+		"PuzzleI18n.IMPORTED#plural:one": {
+			"axis": "plural",
+			"ref": ["Загружено # упражнение."],
+			"has": ["упражнение"],
+			"not": ["упражнения", "упражнений"]
+		},
+		"PuzzleI18n.IMPORTED#plural:few": {
+			"axis": "plural",
+			"ref": ["Загружено # упражнения."],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"PuzzleI18n.IMPORTED#plural:many": {
+			"axis": "plural",
+			"ref": ["Загружено # упражнений."],
+			"has": ["упражнений"],
+			"not": ["упражнение", "упражнения"]
+		},
+		"PuzzleI18n.IMPORTED#plural:other": {
+			"axis": "plural",
+			"ref": ["Загружено # упражнения."],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"PuzzleI18n.IMPORTED_WITH_SKIPPED": {
+			"ref": [
+				"Загружено упражнений: {loaded}, пропущено нечитаемых строк: {skipped}.",
+				"Загружено {loaded} упражнений, пропущено {skipped} нечитаемых строк."
+			]
+		},
+		"SettingI18n.GENDER": { "ref": ["Обращение", "Пол", "Род"] },
+		"SettingI18n.GENDER_INTRO": {
+			"ref": [
+				"Род, в котором приложение обращается к тебе. С вариантом «Другой» оно говорит с тобой нейтрально."
+			]
+		},
+		"SettingI18n.GENDER_MALE": { "ref": ["Мужской"] },
+		"SettingI18n.GENDER_FEMALE": { "ref": ["Женский"] },
+		"SettingI18n.GENDER_OTHER": { "ref": ["Другой", "Нейтральный"] },
+		"SettingI18n.BOARD": { "ref": ["Доска"] },
+		"SettingI18n.BOARD_INTRO": {
+			"axis": "coherencia entre claves",
+			"ref": [
+				"Как ведёт себя доска. Полоса внизу — настоящее упражнение: возьми чёрную ладью. Поэтому каждую настройку можно проверить прямо там, где ты её выбираешь: ошибись нарочно — ход вернётся назад; ошибись достаточно раз — доска покажет ответ."
+			],
+			"has": ["черную ладью"]
+		},
+		"SettingI18n.SYNC_PENDING": { "ref": ["{count} к отправке", "{count} ждут отправки"] },
+		"SettingI18n.SYNC_REJECTED#plural:one": { "axis": "plural", "ref": ["Отклонено: #"] },
+		"SettingI18n.SYNC_REJECTED#plural:few": { "axis": "plural", "ref": ["Отклонено: #"] },
+		"SettingI18n.SYNC_REJECTED#plural:many": { "axis": "plural", "ref": ["Отклонено: #"] },
+		"SettingI18n.SYNC_REJECTED#plural:other": { "axis": "plural", "ref": ["Отклонено: #"] },
+		"SettingI18n.SYNC_ROWS#plural:one": {
+			"axis": "plural",
+			"ref": ["# строка здесь", "# запись на этом устройстве"],
+			"re": ["(строка|запись)\\b"]
+		},
+		"SettingI18n.SYNC_ROWS#plural:few": {
+			"axis": "plural",
+			"ref": ["# строки здесь", "# записи на этом устройстве"],
+			"re": ["(строки|записи)\\b"]
+		},
+		"SettingI18n.SYNC_ROWS#plural:many": {
+			"axis": "plural",
+			"ref": ["# строк здесь", "# записей на этом устройстве"],
+			"re": ["(строк|записей)\\b"]
+		},
+		"SettingI18n.SYNC_ROWS#plural:other": {
+			"axis": "plural",
+			"ref": ["# строки здесь", "# записи на этом устройстве"],
+			"re": ["(строки|записи)\\b"]
+		},
+		"SettingI18n.SYNC_CURSOR": { "ref": ["загружено до {at}", "скачано до {at}"] },
+		"SettingI18n.SYNC_NO_CURSOR": { "ref": ["ничего не загружено", "ничего не скачано"] },
+		"SettingI18n.SYNC_UP_TO_DATE": {
+			"axis": "corta sin contexto",
+			"ref": ["актуально", "всё актуально", "синхронизировано"],
+			"not": ["ежедневно", "за сегодня", "в срок", "на сегодня", "в день"]
+		},
+		"SettingI18n.SYNC_STALE#plural:one": {
+			"axis": "plural",
+			"ref": ["Что-то ждёт отправки больше # дня."],
+			"re": ["(дня|день)\\b"],
+			"not": ["дней"]
+		},
+		"SettingI18n.SYNC_STALE#plural:few": {
+			"axis": "plural",
+			"ref": ["Что-то ждёт отправки больше # дней."],
+			"re": ["(дня|дней)\\b"]
+		},
+		"SettingI18n.SYNC_STALE#plural:many": {
+			"axis": "plural",
+			"ref": ["Что-то ждёт отправки больше # дней."],
+			"has": ["дней"]
+		},
+		"SettingI18n.SYNC_STALE#plural:other": {
+			"axis": "plural",
+			"ref": ["Что-то ждёт отправки больше # дня."],
+			"re": ["дня\\b"]
+		},
+		"SettingI18n.SYNC_REASONS": { "ref": ["Отклонённые"] },
+		"SettingI18n.SYNC_MORE_REJECTED": {
+			"axis": "corta sin contexto",
+			"ref": ["и ещё {count}"],
+			"has": ["еще {count}"],
+			"not": ["больше"],
+			"severity": "major"
+		},
+		"TrainingI18n.FIX_THE_SET": {
+			"axis": "infinitivo en botones",
+			"ref": ["Зафиксировать набор"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"severity": "major"
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:one": {
+			"axis": "plural",
+			"ref": ["Уже зафиксировано # упражнение для всех циклов."],
+			"has": ["упражнение"],
+			"not": ["упражнения", "упражнений"]
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:few": {
+			"axis": "plural",
+			"ref": ["Уже зафиксировано # упражнения для всех циклов."],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:many": {
+			"axis": "plural",
+			"ref": ["Уже зафиксировано # упражнений для всех циклов."],
+			"has": ["упражнений"],
+			"not": ["упражнение", "упражнения"]
+		},
+		"TrainingI18n.SET_ALREADY_FIXED#plural:other": {
+			"axis": "plural",
+			"ref": ["Уже зафиксировано # упражнения для всех циклов."],
+			"has": ["упражнения"],
+			"not": ["упражнение", "упражнений"]
+		},
+		"TrainingI18n.COMMIT_TO_A_PACE": { "ref": ["Зафиксировать темп", "Определись с темпом"] },
+		"TrainingI18n.PACE_LABEL": { "ref": ["Упражнений в день"] },
+		"TrainingI18n.SAVE_THE_PACE": {
+			"axis": "infinitivo en botones",
+			"ref": ["Сохранить темп"],
+			"re": ["\\b\\w+(ть|ти|чь)(ся|сь)?\\b"],
+			"severity": "major"
+		},
+		"TrainingI18n.CALIBRATION_LABEL": { "ref": ["Калибровка · раунд {round} · ELO {rating}"] },
+		"TrainingI18n.CALIBRATION_LABEL_PROGRESS": {
+			"ref": ["Калибровка · раунд {round} ({position} / {total}) · ELO {rating}"]
+		},
+		"TrainingI18n.CYCLE_LABEL": { "ref": ["Цикл"] },
+		"TrainingI18n.CYCLE_LABEL_POSITION": { "ref": ["Цикл · упражнение {position}"] },
+		"TrainingI18n.LOADING_EXERCISE": { "ref": ["Загрузка упражнения…"] },
+		"TrainingI18n.NOPE": { "ref": ["Не тот ход!", "Мимо!", "Не то!"] },
+		"TrainingI18n.RECORDING_ATTEMPT": { "ref": ["Сохранение попытки…", "Записываем попытку…"] },
+		"TrainingI18n.GAVE_UP_WATCHING#gender:male": {
+			"axis": "género de quien usa",
+			"ref": ["Ты сдался. Посмотри, как это было."],
+			"re": ["\\bсдался\\b"],
+			"not": ["сдалась"]
+		},
+		"TrainingI18n.GAVE_UP_WATCHING#gender:female": {
+			"axis": "género de quien usa",
+			"ref": ["Ты сдалась. Посмотри, как это было."],
+			"re": ["\\bсдалась\\b"],
+			"not": ["сдался"]
+		},
+		"TrainingI18n.GAVE_UP_WATCHING#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["Попытка завершена. Посмотри, как это было."],
+			"not": ["сдал"],
+			"re": ["(сда|заверш|оконч|прекращ|отказ)"]
+		},
+		"TrainingI18n.GAVE_UP_LINE#gender:male": {
+			"axis": "género de quien usa",
+			"ref": ["Ты сдался. Вот какой был вариант."],
+			"re": ["\\bсдался\\b"],
+			"not": ["сдалась"]
+		},
+		"TrainingI18n.GAVE_UP_LINE#gender:female": {
+			"axis": "género de quien usa",
+			"ref": ["Ты сдалась. Вот какой был вариант."],
+			"re": ["\\bсдалась\\b"],
+			"not": ["сдался"]
+		},
+		"TrainingI18n.GAVE_UP_LINE#gender:other": {
+			"axis": "género de quien usa",
+			"ref": ["Попытка завершена. Вот какой был вариант."],
+			"not": ["сдал"],
+			"re": ["(сда|заверш|оконч|прекращ|отказ)"]
+		},
+		"TrainingI18n.FOUND_AFTER_MISS": {
+			"axis": "género de quien usa",
+			"ref": ["Отлично, вот так верно.", "Вот так-то лучше."],
+			"not": ["нашел", "нашла"],
+			"severity": "major"
+		},
+		"TrainingI18n.SOLVED": { "ref": ["Решено."] },
+		"TrainingI18n.MISSED_RETRY": { "ref": ["Попробуй ещё раз."] },
+		"TrainingI18n.OUTCOME_ACCEPT": {
+			"ref": ["Калибровка завершена: этот диапазон — твой уровень."]
+		},
+		"TrainingI18n.OUTCOME_RAISE": { "ref": ["Решено. Следующий раунд повысит уровень."] },
+		"TrainingI18n.OUTCOME_LOWER": { "ref": ["Не решено. Следующий раунд понизит уровень."] },
+		"TrainingI18n.DAILY_SERIES_FIRST_TRY": { "ref": ["С первой попытки"] },
+		"TrainingI18n.DAILY_SERIES_AFTER_MISS": { "ref": ["После ошибки"] },
+		"TrainingI18n.DAILY_SERIES_SHOWN": { "ref": ["Решение показано"] },
+		"TrainingI18n.DAILY_SERIES_MISTAKES": { "ref": ["Ошибки"] },
+		"TrainingI18n.DAILY_SERIES_HINTS": { "ref": ["Подсказки"] },
+		"TrainingI18n.DAILY_DAY_DETAIL": {
+			"ref": [
+				"{date} · {firstTry} с первой попытки, {afterMiss} после ошибки, {shown} — решение показано · {mistakes} ошибок, {hints} подсказок · {minutes} мин"
+			]
+		}
+	}
+}

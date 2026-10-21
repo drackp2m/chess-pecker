@@ -1,0 +1,50 @@
+{
+	"lang": {
+		"quotes": [
+			["\"", "\""],
+			["“", "”"],
+			["«", "»"]
+		],
+		"stops": [".", "।"]
+	},
+	"units": {
+		"CommonI18n.PIECE_BLACK_PAWN": {
+			"axis": "concordancia entre claves",
+			"has": ["काला"],
+			"not": ["काली"]
+		},
+		"CommonI18n.PIECE_BLACK_KNIGHT": {
+			"axis": "concordancia entre claves",
+			"has": ["काला"],
+			"not": ["काली"]
+		},
+		"CommonI18n.PIECE_BLACK_BISHOP": {
+			"axis": "concordancia entre claves",
+			"has": ["काला"],
+			"not": ["काली"]
+		},
+		"CommonI18n.PIECE_BLACK_ROOK": {
+			"axis": "concordancia entre claves",
+			"has": ["काला"],
+			"not": ["काली"]
+		},
+		"CommonI18n.PIECE_BLACK_QUEEN": {
+			"axis": "concordancia entre claves",
+			"has": ["काला"],
+			"not": ["काली"]
+		},
+		"CommonI18n.PIECE_BLACK_KING": {
+			"axis": "concordancia entre claves",
+			"has": ["काला"],
+			"not": ["काली"]
+		},
+		"CommonI18n.SERVER_DETAIL": {
+			"axis": "marcadores",
+			"ref": ["{detail}"],
+			"re": ["^\\{detail\\}$"]
+		},
+		"MatchI18n.ELO": { "axis": "nombres que no se traducen", "ref": ["ELO"], "re": ["^elo$"] },
+		"CommonI18n.SERVER_UNREACHABLE": { "allow": ["script"] },
+		"AuthI18n.LOG_IN_INTRO": { "allow": ["script"] }
+	}
+}
