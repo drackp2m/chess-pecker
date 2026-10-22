@@ -19,10 +19,10 @@ import {
 	TrainingRow,
 } from '@app/repository/definition/training-schema.interface';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
-import { born, rejected } from '@app/use-case/sync/local-record';
+import { born, rejected, touch } from '@app/use-case/sync/local-record';
 import { SyncConfirmUseCase } from '@app/use-case/sync/sync-confirm.use-case';
 import { SyncManifest } from '@app/use-case/sync/sync-manifest';
-import { TrainingTreePush } from '@app/use-case/sync/training-tree.use-case';
+import { TrainingTreePush, TrainingTreeUseCase } from '@app/use-case/sync/training-tree.use-case';
 
 const TRAINING = 'training-1';
 
@@ -35,6 +35,8 @@ const UPDATED = new Date('2026-08-18T09:00:00.000Z');
 const RECEIVED_AT = '2026-08-18T10:00:00.000Z';
 
 const REFUSED_EARLIER = new Date('2026-08-17T10:00:00.000Z');
+
+const FINISHED = new Date('2026-08-18T09:30:00.000Z');
 
 function training(uuid: string, over: Partial<TrainingRow> = {}): TrainingRow {
 	return { uuid, status: 'running', createdAt: CREATED, updatedAt: UPDATED, ...over };
@@ -84,18 +86,27 @@ function attempt(uuid: string): AttemptRow {
 
 function emptyManifest(): SyncManifest {
 	return {
-		training: [],
-		trainingGoal: [],
-		calibrationRound: [],
-		calibrationPuzzle: [],
-		trainingPuzzle: [],
-		cycle: [],
-		cycleItem: [],
-		attempt: [],
+		training: new Map(),
+		trainingGoal: new Map(),
+		calibrationRound: new Map(),
+		calibrationPuzzle: new Map(),
+		trainingPuzzle: new Map(),
+		cycle: new Map(),
+		cycleItem: new Map(),
+		attempt: new Map(),
 	};
 }
 
-function promising(over: Partial<SyncManifest> = {}): TrainingTreePush {
+function sentAsStored(over: Partial<Record<SyncEntity, readonly string[]>>): Partial<SyncManifest> {
+	return Object.fromEntries(
+		Object.entries(over).map(([entity, uuids]) => [
+			entity,
+			new Map(uuids.map((uuid) => [uuid, UPDATED.getTime()])),
+		]),
+	);
+}
+
+function promising(over: Partial<Record<SyncEntity, readonly string[]>> = {}): TrainingTreePush {
 	return {
 		trainingUuid: TRAINING,
 		request: {
@@ -108,7 +119,7 @@ function promising(over: Partial<SyncManifest> = {}): TrainingTreePush {
 				cycles: [],
 			},
 		},
-		manifest: { ...emptyManifest(), ...over },
+		manifest: { ...emptyManifest(), ...sentAsStored(over) },
 	};
 }
 
@@ -133,6 +144,32 @@ function answer(
 	refusals: readonly SyncRejection[] = [],
 ): PushTrainingResult {
 	return { receivedAt: RECEIVED_AT, uuids, rejected: refusals };
+}
+
+async function inFlight(trees: TrainingTreeUseCase): Promise<TrainingTreePush> {
+	const push = await trees.build(TRAINING);
+
+	if (undefined === push) {
+		throw new Error('The tree had nothing to push');
+	}
+
+	return push;
+}
+
+async function finishMeanwhile(repository: LocalDataRepository): Promise<void> {
+	const stored = await repository.find('training', TRAINING);
+
+	if (undefined === stored) {
+		throw new Error('The training is not on this device');
+	}
+
+	await repository.insert(
+		'training',
+		touch<TrainingRow>(
+			{ ...stored, status: 'finished', finishedReason: 'completed', finishedAt: FINISHED },
+			FINISHED,
+		),
+	);
 }
 
 function configure() {
@@ -347,5 +384,79 @@ describe('SyncConfirmUseCase.rejectAll', () => {
 		await expect(
 			confirms.rejectAll(promising({ trainingGoal: ['goal-1', 'gone'] }), 'sync/bad request'),
 		).resolves.toEqual({ confirmed: 0, rejected: 1 });
+	});
+});
+
+describe('SyncConfirmUseCase on a row that changed while its push travelled', () => {
+	let repository: LocalDataRepository;
+	let confirms: SyncConfirmUseCase;
+	let trees: TrainingTreeUseCase;
+
+	beforeEach(async () => {
+		({ repository, confirms } = configure());
+		trees = TestBed.inject(TrainingTreeUseCase);
+
+		await repository.insert('training', born(training(TRAINING)));
+	});
+
+	it('keeps waiting a row that changed while its push travelled', async () => {
+		const push = await inFlight(trees);
+
+		await finishMeanwhile(repository);
+		await confirms.execute(push, answer());
+
+		const row = await repository.find('training', TRAINING);
+
+		expect(row?.syncedAt).toEqual(new Date(RECEIVED_AT));
+		expect(row?.pendingSince).toEqual(UPDATED);
+	});
+
+	it('does not refuse a row that changed while a refused push travelled', async () => {
+		const push = await inFlight(trees);
+
+		await finishMeanwhile(repository);
+		await confirms.rejectAll(push, 'sync/bad request');
+
+		const row = await repository.find('training', TRAINING);
+
+		expect(row?.rejectedAt).toBeUndefined();
+		expect(row?.pendingSince).toEqual(UPDATED);
+	});
+
+	it('does not refuse a row that changed while its own refusal travelled', async () => {
+		const push = await inFlight(trees);
+
+		await finishMeanwhile(repository);
+		await confirms.execute(
+			push,
+			answer(assigned(), [{ entity: 'training', clientRef: TRAINING, reason: 'sync/refused' }]),
+		);
+
+		const row = await repository.find('training', TRAINING);
+
+		expect(row?.rejectedAt).toBeUndefined();
+		expect(row?.pendingSince).toEqual(UPDATED);
+	});
+
+	it('seals whole a row that did not change', async () => {
+		const push = await inFlight(trees);
+
+		await confirms.execute(push, answer());
+
+		const row = await repository.find('training', TRAINING);
+
+		expect(row?.syncedAt).toEqual(new Date(RECEIVED_AT));
+		expect(row?.pendingSince).toBeUndefined();
+	});
+
+	it('sends again in the next push what changed in flight', async () => {
+		const push = await inFlight(trees);
+
+		await finishMeanwhile(repository);
+		await confirms.execute(push, answer());
+
+		await expect(trees.build(TRAINING)).resolves.toMatchObject({
+			request: { training: { status: 'finished' } },
+		});
 	});
 });

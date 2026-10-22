@@ -19,6 +19,10 @@ function row(over: Partial<SyncableRow> = {}): SyncableRow {
 	return { uuid: 'row-1', createdAt: CREATED, updatedAt: UPDATED, ...over };
 }
 
+function uuids(sent: ReadonlyMap<string, number>): string[] {
+	return [...sent.keys()];
+}
+
 describe('syncRef', () => {
 	it('names a row that never travelled by its retry key', () => {
 		expect(syncRef(row({ clientRef: 'born-here' }))).toBe('born-here');
@@ -59,7 +63,7 @@ describe('SyncManifestBuilder', () => {
 		const builder = new SyncManifestBuilder();
 
 		expect(builder.pending).toBe(0);
-		expect(builder.build().training).toEqual([]);
+		expect(uuids(builder.build().training)).toEqual([]);
 	});
 
 	it('lists what it takes, by entity', () => {
@@ -69,11 +73,19 @@ describe('SyncManifestBuilder', () => {
 		builder.add('cycleItem', row({ uuid: 'item-1', pendingSince: UPDATED }));
 		builder.add('cycleItem', row({ uuid: 'item-2', pendingSince: UPDATED }));
 
+		const manifest = builder.build();
+
 		expect(builder.pending).toBe(3);
-		expect(builder.build()).toMatchObject({
-			cycle: ['cycle-1'],
-			cycleItem: ['item-1', 'item-2'],
-		});
+		expect(uuids(manifest.cycle)).toEqual(['cycle-1']);
+		expect(uuids(manifest.cycleItem)).toEqual(['item-1', 'item-2']);
+	});
+
+	it('records the updatedAt each row was sent with', () => {
+		const builder = new SyncManifestBuilder();
+
+		builder.add('training', row({ uuid: 'training-1', pendingSince: UPDATED }));
+
+		expect(builder.build().training.get('training-1')).toBe(UPDATED.getTime());
 	});
 
 	it('lets a sealed row through without spending budget or being confirmed', () => {
@@ -81,7 +93,7 @@ describe('SyncManifestBuilder', () => {
 
 		expect(builder.add('training', row({ syncedAt: UPDATED }))).toBe(true);
 		expect(builder.pending).toBe(0);
-		expect(builder.build().training).toEqual([]);
+		expect(uuids(builder.build().training)).toEqual([]);
 	});
 
 	it('refuses the row that does not fit, and only that one', () => {
@@ -99,7 +111,7 @@ describe('SyncManifestBuilder', () => {
 		expect(builder.add('attempt', row({ uuid: 'over', pendingSince: UPDATED }))).toBe(false);
 		expect(builder.add('attempt', row({ uuid: 'sealed', syncedAt: UPDATED }))).toBe(true);
 		expect(builder.pending).toBe(SyncPolicy.pushBatchSize);
-		expect(builder.build().attempt).not.toContain('over');
+		expect(builder.build().attempt.has('over')).toBe(false);
 	});
 });
 

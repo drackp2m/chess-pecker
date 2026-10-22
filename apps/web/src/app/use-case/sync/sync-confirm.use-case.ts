@@ -17,6 +17,8 @@ export interface SyncConfirmCount {
 
 type ConfirmStore = PendingStore<'readwrite'>;
 
+type Settle = (row: PendingRow) => PendingRow | undefined;
+
 type ConfirmTransaction = RepositoryTransaction<AppSchema, 'readwrite'>;
 
 interface Settlement {
@@ -78,8 +80,8 @@ export class SyncConfirmUseCase {
 			for (const entity of SYNC_ENTITIES) {
 				const store = transaction.objectStore(entity) as unknown as ConfirmStore;
 
-				for (const uuid of push.manifest[entity]) {
-					count += await settleRow(store, uuid, (row) => rejected(row, rejectedAt, reason));
+				for (const [uuid, sentAt] of push.manifest[entity]) {
+					count += await settleRow(store, uuid, refusing(sentAt, rejectedAt, reason));
 				}
 			}
 
@@ -97,12 +99,14 @@ async function settleEntity(
 	const store = transaction.objectStore(entity) as unknown as ConfirmStore;
 	let settled = NOTHING_SETTLED;
 
-	for (const localUuid of push.manifest[entity]) {
+	for (const [localUuid, sentAt] of push.manifest[entity]) {
 		const reason = settlement.reasons.get(`${entity}/${localUuid}`);
 
 		if (undefined !== reason) {
-			const count = await settleRow(store, localUuid, (row) =>
-				rejected(row, settlement.receivedAt, reason),
+			const count = await settleRow(
+				store,
+				localUuid,
+				refusing(sentAt, settlement.receivedAt, reason),
 			);
 
 			settled = addSettled(settled, { confirmed: 0, rejected: count });
@@ -111,7 +115,7 @@ async function settleEntity(
 		}
 
 		const uuid = settlement.uuids[entity][localUuid] ?? localUuid;
-		const count = await settleRow(store, uuid, (row) => confirmed(row, settlement.receivedAt));
+		const count = await settleRow(store, uuid, sealing(sentAt, settlement.receivedAt));
 
 		settled = addSettled(settled, { confirmed: count, rejected: 0 });
 	}
@@ -120,20 +124,29 @@ async function settleEntity(
 }
 
 /** `0` when the row is gone: another tab may have taken it while the push was in flight. */
-async function settleRow(
-	store: ConfirmStore,
-	uuid: string,
-	settle: (row: PendingRow) => PendingRow,
-): Promise<number> {
+async function settleRow(store: ConfirmStore, uuid: string, settle: Settle): Promise<number> {
 	const row = await store.get(uuid);
+	const settled = undefined === row ? undefined : settle(row);
 
-	if (undefined === row) {
+	if (undefined === settled) {
 		return 0;
 	}
 
-	await store.put(settle(row));
+	await store.put(settled);
 
 	return 1;
+}
+
+function sealing(sentAt: number, syncedAt: Date): Settle {
+	return (row) => (isAsSent(row, sentAt) ? confirmed(row, syncedAt) : { ...row, syncedAt });
+}
+
+function refusing(sentAt: number, rejectedAt: Date, reason: string): Settle {
+	return (row) => (isAsSent(row, sentAt) ? rejected(row, rejectedAt, reason) : undefined);
+}
+
+function isAsSent(row: PendingRow, sentAt: number): boolean {
+	return row.updatedAt.getTime() === sentAt;
 }
 
 function toReasons(rejections: readonly SyncRejection[]): Map<string, string> {

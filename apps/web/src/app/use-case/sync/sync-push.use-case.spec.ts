@@ -33,14 +33,14 @@ interface Options {
 
 function emptyManifest(): SyncManifest {
 	return {
-		training: [],
-		trainingGoal: [],
-		calibrationRound: [],
-		calibrationPuzzle: [],
-		trainingPuzzle: [],
-		cycle: [],
-		cycleItem: [],
-		attempt: [],
+		training: new Map(),
+		trainingGoal: new Map(),
+		calibrationRound: new Map(),
+		calibrationPuzzle: new Map(),
+		trainingPuzzle: new Map(),
+		cycle: new Map(),
+		cycleItem: new Map(),
+		attempt: new Map(),
 	};
 }
 
@@ -70,7 +70,7 @@ function treePush(trainingUuid: string): TrainingTreePush {
 				cycles: [],
 			},
 		},
-		manifest: { ...emptyManifest(), training: [trainingUuid] },
+		manifest: { ...emptyManifest(), training: new Map([[trainingUuid, 0]]) },
 	};
 }
 
