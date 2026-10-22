@@ -410,11 +410,9 @@ export class ActivityChartComponent {
 	}
 
 	private readLabelSpace(): number {
-		const widths = this.labelElements().map(
-			(element) => element.nativeElement.getBoundingClientRect().width,
-		);
+		const widths = this.labelElements().map((element) => element.nativeElement.offsetWidth);
 
-		return 0 === widths.length ? 0 : Math.ceil(Math.max(...widths)) + LABEL_GAP;
+		return 0 === widths.length ? 0 : Math.max(...widths) + LABEL_GAP;
 	}
 }
 
@@ -442,5 +440,5 @@ function legendDash(dash: string | null): string | null {
 function tickWidth(axis: HTMLElement | undefined): number {
 	const ticks = Array.from(axis?.children ?? []).filter((tick) => tick instanceof HTMLElement);
 
-	return Math.ceil(Math.max(0, ...ticks.map((tick) => tick.getBoundingClientRect().width)));
+	return Math.max(0, ...ticks.map((tick) => tick.offsetWidth));
 }
