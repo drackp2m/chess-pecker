@@ -10,6 +10,7 @@ import { mock } from 'vitest-mock-extended';
 
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
 import { JwtFactory } from '../../../shared/module/config/factory/jwt.factory';
+import { JwtFaker, JwtFakerOptions } from '../factory/jwt.faker';
 
 import { CheckJwtTokenUseCase } from './check-jwt-token.use-case';
 
@@ -25,16 +26,35 @@ function shiftedDate(date: Date, unit: 'day' | 'month', amount: number): Date {
 	return shifted;
 }
 
-describe('CheckJwtRefreshTokenUseCase', () => {
+function signed(type: 'access' | 'refresh', lifetime: JwtFakerOptions): string {
+	return JwtFaker.makeOne(
+		{ sub: 'user-uuid', jti: 'uuid', iss: 'test', aud: `test-runner-${type}-token` },
+		{ secret: 'secret', ...lifetime },
+	);
+}
+
+describe('CheckJwtTokenUseCase', () => {
 	let module: TestingModule;
 	let useCase: CheckJwtTokenUseCase;
 
 	const jwtServiceVerify = vi.spyOn(JwtService.prototype, 'verify');
+	const jwtIssuedDate = new Date('2024-03-20T21:52:48.000Z');
 	const validJwtDate = new Date('2024-03-20T22:10:42.000Z');
 	const jwtNotBeforeDate = new Date('2024-03-20T22:07:48.000Z');
 	const jwtExpirationDate = new Date('2024-04-04T21:52:48.000Z');
-	const fakeJwtRefreshToken =
-		'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MTA5NzE1NjgsIm5iZiI6MTcxMDk3MjQ2OCwiZXhwIjoxNzEyMjY3NTY4LCJhdWQiOiJ0ZXN0LXJ1bm5lci1yZWZyZXNoLXRva2VuIiwiaXNzIjoidGVzdCIsInN1YiI6InVzZXItdXVpZCIsImp0aSI6InV1aWQifQ.2hP7NbBjKGpUJ3rPLFo3qIhpTeSAVwl7uTW1gd4n1lutBpEwxIcSmi_WALMENNq9yl4Lkf2vjbhGxsLhx7WJJQ';
+	const validAccessDate = new Date('2024-03-20T22:00:00.000Z');
+	const accessExpirationDate = new Date('2024-03-20T22:07:48.000Z');
+	const refreshLifetime: JwtFakerOptions = {
+		issuedAt: jwtIssuedDate,
+		notBefore: jwtNotBeforeDate,
+		expiresAt: jwtExpirationDate,
+	};
+	const accessLifetime: JwtFakerOptions = {
+		issuedAt: jwtIssuedDate,
+		expiresAt: accessExpirationDate,
+	};
+	const fakeJwtRefreshToken = signed('refresh', refreshLifetime);
+	const fakeJwtAccessToken = signed('access', accessLifetime);
 
 	const prepareTestingModule = async (
 		configurationService: ConfigurationService,
@@ -70,8 +90,6 @@ describe('CheckJwtRefreshTokenUseCase', () => {
 	it('should be defined', () => {
 		expect(useCase).toBeDefined();
 	});
-
-	// ToDo => add tests for accessToken
 
 	describe('execute', () => {
 		it('throw JsonWebTokenError with "invalid signature" when secret is not valid', async () => {
@@ -204,6 +222,48 @@ describe('CheckJwtRefreshTokenUseCase', () => {
 				audience: 'test-runner-refresh-token',
 				issuer: 'test',
 			});
+		});
+	});
+
+	describe('execute, with an access token', () => {
+		it('returns the claims of an access token while it lives', () => {
+			vi.useFakeTimers().setSystemTime(validAccessDate);
+
+			expect(useCase.execute(fakeJwtAccessToken, 'access')).toMatchObject({
+				sub: 'user-uuid',
+				aud: 'test-runner-access-token',
+			});
+
+			expect(jwtServiceVerify).toHaveBeenCalledTimes(1);
+			expect(jwtServiceVerify).toHaveBeenCalledWith(fakeJwtAccessToken, {
+				jwtid: 'uuid',
+				audience: 'test-runner-access-token',
+				issuer: 'test',
+			});
+		});
+
+		it('refuses a refresh token presented as an access one', () => {
+			vi.useFakeTimers().setSystemTime(validAccessDate);
+
+			expect(() => useCase.execute(signed('refresh', accessLifetime), 'access')).toThrow(
+				new JsonWebTokenError('jwt audience invalid. expected: test-runner-access-token'),
+			);
+		});
+
+		it('refuses an access token presented as a refresh one', () => {
+			vi.useFakeTimers().setSystemTime(validJwtDate);
+
+			expect(() => useCase.execute(signed('access', refreshLifetime), 'refresh')).toThrow(
+				new JsonWebTokenError('jwt audience invalid. expected: test-runner-refresh-token'),
+			);
+		});
+
+		it('refuses an access token once it expired', () => {
+			vi.useFakeTimers().setSystemTime(validJwtDate);
+
+			expect(() => useCase.execute(fakeJwtAccessToken, 'access')).toThrow(
+				new TokenExpiredError('jwt expired', accessExpirationDate),
+			);
 		});
 	});
 });
