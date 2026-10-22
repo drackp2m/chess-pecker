@@ -21,6 +21,7 @@ import { TrainingStore } from '@app/store/training.store';
 import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
+import { SYNC_LOCK, withExclusiveLock } from '@app/util/exclusive-lock';
 
 interface Options {
 	readonly unsaved?: UnsavedByEntity;
@@ -35,6 +36,27 @@ const NOTHING_UNSAVED: UnsavedByEntity = Object.fromEntries(
 
 function withAttempts(attempt: UnsavedCount): UnsavedByEntity {
 	return { ...NOTHING_UNSAVED, attempt };
+}
+
+function holdSyncLock(): () => void {
+	let release: () => void = () => undefined;
+	const held = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+
+	void withExclusiveLock(SYNC_LOCK, () => held);
+
+	return () => {
+		release();
+	};
+}
+
+function nextTask(): Promise<void> {
+	return new Promise((resolve) => {
+		setTimeout(() => {
+			resolve();
+		}, 0);
+	});
 }
 
 function configure(options: Options = {}) {
@@ -165,12 +187,14 @@ describe('DiscardLocalDataUseCase.execute', () => {
 		TestBed.resetTestingModule();
 	});
 
-	it('empties memory before the database, and lets the stamp go last', async () => {
+	it('resets the stores after the wipe, not before', async () => {
 		const { discard, order } = configure();
 
 		await discard.execute();
 
 		expect(order).toEqual([
+			'clear',
+			'release',
 			'activity',
 			'bookmark',
 			'notification',
@@ -178,8 +202,6 @@ describe('DiscardLocalDataUseCase.execute', () => {
 			'share',
 			'sync',
 			'training',
-			'clear',
-			'release',
 		]);
 	});
 
@@ -195,5 +217,44 @@ describe('DiscardLocalDataUseCase.execute', () => {
 		expect(stores.share.reset).toHaveBeenCalledTimes(1);
 		expect(stores.sync.reset).toHaveBeenCalledTimes(1);
 		expect(stores.training.reset).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('DiscardLocalDataUseCase.execute, while a pass holds the sync lock', () => {
+	let releasePass: () => void = () => undefined;
+
+	afterEach(() => {
+		releasePass();
+		TestBed.resetTestingModule();
+	});
+
+	it('waits for the pass holding the sync lock before wiping', async () => {
+		const { discard, localData, stores } = configure();
+
+		releasePass = holdSyncLock();
+
+		const wiping = discard.execute();
+
+		await nextTask();
+
+		expect(localData.clearUserData).not.toHaveBeenCalled();
+		expect(stores.sync.reset).not.toHaveBeenCalled();
+
+		releasePass();
+		await wiping;
+	});
+
+	it('wipes as soon as the pass lets the lock go', async () => {
+		const { discard, localData, localOwner } = configure();
+
+		releasePass = holdSyncLock();
+
+		const wiping = discard.execute();
+
+		releasePass();
+		await wiping;
+
+		expect(localData.clearUserData).toHaveBeenCalledTimes(1);
+		expect(localOwner.release).toHaveBeenCalledTimes(1);
 	});
 });

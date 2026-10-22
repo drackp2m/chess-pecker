@@ -14,6 +14,7 @@ import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
+import { SYNC_LOCK, withExclusiveLock } from '@app/util/exclusive-lock';
 
 @Injectable({
 	providedIn: 'root',
@@ -49,12 +50,14 @@ export class DiscardLocalDataUseCase {
 	}
 
 	async execute(): Promise<void> {
+		await withExclusiveLock(SYNC_LOCK, async () => {
+			await this.localDataRepository.clearUserData();
+			await this.localOwnerUseCase.release();
+		});
+
 		for (const store of this.stores) {
 			store.reset();
 		}
-
-		await this.localDataRepository.clearUserData();
-		await this.localOwnerUseCase.release();
 	}
 
 	private async hasLocalWork(): Promise<boolean> {
