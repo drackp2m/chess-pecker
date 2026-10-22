@@ -9,7 +9,13 @@ import {
 } from '@app/repository/definition/bookmark-schema.interface';
 import { PuzzleBookmarkRepository } from '@app/repository/puzzle-bookmark.repository';
 import { SessionStore } from '@app/store/session.store';
-import { adoptRemote, isPending, markSynced, mergeBookmarks } from '@app/util/bookmark-merge';
+import {
+	adoptRemote,
+	isPending,
+	markSent,
+	markSynced,
+	mergeBookmarks,
+} from '@app/util/bookmark-merge';
 
 /**
  * The two sides of a bookmark: this device, which always answers, and the account, which
@@ -95,16 +101,15 @@ export class BookmarkMirrorUseCase {
 	async pull(): Promise<readonly BookmarkRow[]> {
 		const local = await this.localRepository.readAll();
 		const { save, drop, push } = mergeBookmarks(local, await this.remoteRepository.list());
+		const before = new Map(local.map((row) => [row.lichessId, row]));
+		const dropped = drop.flatMap((lichessId) => {
+			const row = before.get(lichessId);
 
-		await this.localRepository.saveAll(save);
-		await Promise.all(
-			drop.map(async (lichessId) => {
-				const row = local.find((candidate) => candidate.lichessId === lichessId);
+			return undefined === row ? [] : [{ ...row, removedAt: row.updatedAt }];
+		});
 
-				if (undefined !== row) {
-					await this.localRepository.save({ ...row, removedAt: row.updatedAt });
-				}
-			}),
+		await this.localRepository.replaceAll(
+			[...save, ...dropped].map((next) => ({ expected: before.get(next.lichessId), next })),
 		);
 		await Promise.all(push.map((row) => this.pushRow(row)));
 
@@ -129,7 +134,6 @@ export class BookmarkMirrorUseCase {
 
 	private async send(row: BookmarkRow): Promise<BookmarkRow> {
 		const history = row.history ?? [];
-		let synced = row;
 		let stored = 0 === history.length ? await this.sendCurrent(row) : null;
 
 		for (const event of history) {
@@ -138,14 +142,14 @@ export class BookmarkMirrorUseCase {
 			}
 
 			stored = await this.sendEvent(row.lichessId, event);
-			synced = markSynced(synced, event);
-			await this.localRepository.save(synced);
+			await this.localRepository.update(row.lichessId, (current) => markSynced(current, event));
 		}
 
-		const sealed = adoptRemote({ ...synced, syncedAt: synced.updatedAt }, stored);
-		await this.localRepository.save(sealed);
+		const sealed = await this.localRepository.update(row.lichessId, (current) =>
+			adoptRemote(markSent(current, row.updatedAt), stored),
+		);
 
-		return sealed;
+		return sealed ?? row;
 	}
 
 	private async sendCurrent(row: BookmarkRow): Promise<PuzzleBookmark | null> {

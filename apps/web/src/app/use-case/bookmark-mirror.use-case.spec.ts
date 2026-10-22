@@ -4,7 +4,10 @@ import type { PuzzleBookmark, PuzzleBookmarkType } from '@chesspecker/api-defini
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AttemptRepository } from '@app/repository/attempt.repository';
-import { BookmarkLocalRepository } from '@app/repository/bookmark-local.repository';
+import {
+	BookmarkLocalRepository,
+	BookmarkReplacement,
+} from '@app/repository/bookmark-local.repository';
 import {
 	BookmarkHistoryRow,
 	BookmarkRow,
@@ -71,9 +74,19 @@ function configure(options: Options = {}) {
 
 			return Promise.resolve(next);
 		}),
-		saveAll: vi.fn((next: readonly BookmarkRow[]) => {
-			for (const each of next) {
-				stored.set(each.lichessId, each);
+		update: vi.fn((lichessId: string, change: (current: BookmarkRow) => BookmarkRow) => {
+			const current = stored.get(lichessId);
+			const next = undefined === current ? undefined : change(current);
+
+			if (undefined !== next) {
+				stored.set(lichessId, next);
+			}
+
+			return Promise.resolve(next);
+		}),
+		replaceAll: vi.fn((replacements: readonly BookmarkReplacement[]) => {
+			for (const { next } of replacements) {
+				stored.set(next.lichessId, next);
 			}
 
 			return Promise.resolve();
@@ -553,7 +566,8 @@ describe('BookmarkMirrorUseCase', () => {
 			remote.list.mockRejectedValueOnce(new Error('offline'));
 
 			await expect(mirror.pull()).rejects.toThrow('offline');
-			expect(local.saveAll).not.toHaveBeenCalled();
+			expect(local.replaceAll).not.toHaveBeenCalled();
+			expect(local.update).not.toHaveBeenCalled();
 			expect(local.save).not.toHaveBeenCalled();
 			expect(stored.get(LICHESS_ID)).toEqual(current);
 		});

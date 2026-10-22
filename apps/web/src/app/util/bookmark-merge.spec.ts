@@ -5,7 +5,14 @@ import {
 	BookmarkHistoryRow,
 	BookmarkRow,
 } from '@app/repository/definition/bookmark-schema.interface';
-import { adoptRemote, isPending, markSynced, mergeBookmarks } from '@app/util/bookmark-merge';
+import {
+	adoptRemote,
+	isPending,
+	isSameVersion,
+	markSent,
+	markSynced,
+	mergeBookmarks,
+} from '@app/util/bookmark-merge';
 
 const OLD = new Date('2026-08-01T10:00:00.000Z');
 const NEW = new Date('2026-08-02T10:00:00.000Z');
@@ -227,5 +234,38 @@ describe('adoptRemote', () => {
 			syncedAt: NEW,
 			history,
 		});
+	});
+});
+
+describe('markSent', () => {
+	it('seals the row as of the version that went up', () => {
+		expect(markSent(row({ updatedAt: NEW }), NEW).syncedAt).toEqual(NEW);
+	});
+
+	it('never takes back an acknowledgement the row already had', () => {
+		expect(markSent(row({ syncedAt: NEWER }), NEW).syncedAt).toEqual(NEWER);
+	});
+});
+
+describe('isSameVersion', () => {
+	it('reads a row nobody touched as the same version', () => {
+		expect(isSameVersion(row({ history: [event()] }), row({ history: [event()] }))).toBe(true);
+	});
+
+	it('tells apart a row filed again since', () => {
+		expect(isSameVersion(row(), row({ updatedAt: NEW }))).toBe(false);
+	});
+
+	it('tells apart a row whose events went up since', () => {
+		const waiting = row({ history: [event()] });
+		const sent = row({ history: [event({ syncedAt: OLD })] });
+
+		expect(isSameVersion(waiting, sent)).toBe(false);
+	});
+
+	it('tells apart a row that appeared or left since', () => {
+		expect(isSameVersion(undefined, row())).toBe(false);
+		expect(isSameVersion(row(), undefined)).toBe(false);
+		expect(isSameVersion(undefined, undefined)).toBe(true);
 	});
 });
