@@ -87,9 +87,14 @@ function createRepository(cycleFinished = false) {
 	};
 }
 
-type StoreName = 'attempt' | 'attemptDraft';
+type StoreName = 'attempt' | 'attemptDraft' | 'training' | 'calibrationRound' | 'cycleItem';
+
+type SlotKey = string | readonly string[];
 
 interface FakeStore {
+	getKey: (key: string) => Promise<string>;
+	get: (slotId: string) => Promise<AttemptDraftRow | undefined>;
+	index: (name: string) => { get: (key: SlotKey) => Promise<AttemptRow | undefined> };
 	put: (row: AttemptRow | AttemptDraftRow) => Promise<void>;
 	delete: (key: string) => Promise<void>;
 }
@@ -109,7 +114,17 @@ function createAttemptStorage() {
 		drafts.set((row as AttemptDraftRow).slotId, row as AttemptDraftRow);
 	};
 
+	const closed = (key: SlotKey): AttemptRow | undefined =>
+		[...rows.values()].find((row) =>
+			'string' === typeof key
+				? row.cycleItemUuid === key
+				: row.roundUuid === key[0] && row.puzzleUuid === key[1],
+		);
+
 	const objectStore = (storeName: StoreName): FakeStore => ({
+		getKey: (key) => Promise.resolve(key),
+		get: (slotId) => Promise.resolve(drafts.get(slotId)),
+		index: () => ({ get: (key) => Promise.resolve(closed(key)) }),
 		put: (row) => {
 			put(storeName, row);
 
@@ -125,31 +140,13 @@ function createAttemptStorage() {
 	return {
 		rows,
 		drafts,
-		insert: vi.fn((storeName: StoreName, row: AttemptRow | AttemptDraftRow) => {
-			put(storeName, row);
-
-			return Promise.resolve(row);
-		}),
-		find: vi.fn((_storeName: 'attemptDraft', slotId: string) =>
-			Promise.resolve(drafts.get(slotId)),
-		),
-		findByIndex: vi.fn(
-			(_storeName: 'attempt', _indexName: string, key: string | readonly string[]) =>
-				Promise.resolve(
-					[...rows.values()].find((row) =>
-						'string' === typeof key
-							? row.cycleItemUuid === key
-							: row.roundUuid === key[0] && row.puzzleUuid === key[1],
-					),
-				),
-		),
 		runInTransaction: vi.fn(
 			(
 				_stores: StoreName[],
 				_mode: string,
 				operation: (transaction: {
 					objectStore: (storeName: StoreName) => FakeStore;
-				}) => Promise<void>,
+				}) => Promise<unknown>,
 			) => operation({ objectStore }),
 		),
 	};

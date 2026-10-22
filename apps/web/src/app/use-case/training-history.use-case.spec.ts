@@ -12,6 +12,7 @@ import {
 import { PuzzleRepository } from '@app/repository/puzzle.repository';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
+import { LocalKeyUseCase } from '@app/use-case/sync/local-key.use-case';
 import { TrainingHistoryUseCase } from '@app/use-case/training-history.use-case';
 
 const TRAINING = 'training-1';
@@ -108,6 +109,10 @@ function configure(
 			},
 			{ provide: TrainingLocalRepository, useValue: local },
 			{ provide: LocalCycleUseCase, useValue: cycles },
+			{
+				provide: LocalKeyUseCase,
+				useValue: { current: (_entity: string, uuid: string) => Promise.resolve(uuid) },
+			},
 		],
 	});
 

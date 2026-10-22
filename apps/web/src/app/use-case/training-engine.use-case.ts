@@ -7,6 +7,7 @@ import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { LocalProgressUseCase } from '@app/use-case/local-progress.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
 import { PartialCycle, RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
+import { LocalKeyUseCase } from '@app/use-case/sync/local-key.use-case';
 
 @Injectable({
 	providedIn: 'root',
@@ -16,13 +17,14 @@ export class TrainingEngineUseCase {
 	private readonly cycles = inject(LocalCycleUseCase);
 	private readonly progress = inject(LocalProgressUseCase);
 	private readonly repair = inject(RepairCycleUseCase);
+	private readonly keys = inject(LocalKeyUseCase);
 
 	async list(): Promise<readonly TrainingRow[]> {
 		return this.trainings.list();
 	}
 
 	async getProgress(uuid: string): Promise<TrainingProgress> {
-		return this.progress.build(uuid);
+		return this.progress.build(await this.training(uuid));
 	}
 
 	async start(): Promise<void> {
@@ -30,27 +32,28 @@ export class TrainingEngineUseCase {
 	}
 
 	async selectSet(uuid: string, size: number): Promise<number> {
-		return this.cycles.selectSet(uuid, size);
+		return this.cycles.selectSet(await this.training(uuid), size);
 	}
 
 	async setGoal(uuid: string, goal: SetTrainingGoalRequest): Promise<void> {
-		await this.trainings.setGoal(uuid, goal);
+		await this.trainings.setGoal(await this.training(uuid), goal);
 	}
 
 	async startCycle(uuid: string): Promise<void> {
-		await this.cycles.startCycle(uuid);
+		await this.cycles.startCycle(await this.training(uuid));
 	}
 
 	async listPartialCycles(uuid: string): Promise<readonly PartialCycle[]> {
-		return this.repair.listPartial(uuid);
+		return this.repair.listPartial(await this.training(uuid));
 	}
 
 	async repairCycle(cycleUuid: string): Promise<void> {
-		await this.repair.execute(cycleUuid);
+		await this.repair.execute(await this.keys.current('cycle', cycleUuid));
 	}
 
 	async finish(uuid: string): Promise<void> {
-		const progress = await this.progress.build(uuid);
+		const trainingUuid = await this.training(uuid);
+		const progress = await this.progress.build(trainingUuid);
 		const completed = progress.cycles.filter(
 			(cycle) => 0 < cycle.total && cycle.attempted === cycle.total,
 		);
@@ -63,11 +66,21 @@ export class TrainingEngineUseCase {
 			throw new Error('The training has not run enough cycles yet');
 		}
 
-		await this.trainings.finish(uuid, 'finished', progress.suggestFinish ? 'plateau' : 'completed');
+		await this.trainings.finish(
+			trainingUuid,
+			'finished',
+			progress.suggestFinish ? 'plateau' : 'completed',
+		);
 	}
 
 	async cancel(uuid: string): Promise<void> {
-		await this.cycles.abandonRunningCycle(uuid);
-		await this.trainings.finish(uuid, 'cancelled', 'cancelled');
+		const trainingUuid = await this.training(uuid);
+
+		await this.cycles.abandonRunningCycle(trainingUuid);
+		await this.trainings.finish(trainingUuid, 'cancelled', 'cancelled');
+	}
+
+	private training(uuid: string): Promise<string> {
+		return this.keys.current('training', uuid);
 	}
 }

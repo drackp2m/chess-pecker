@@ -1,10 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import type { PuzzleAttemptClosure, PuzzleAttemptKind } from '@chesspecker/api-definitions';
+import { StoreNames } from 'idb';
 
 import { PuzzleRecord } from '@app/definition/puzzle.type';
 import { AttemptRepository } from '@app/repository/attempt.repository';
+import { AppSchema } from '@app/repository/definition/app-schema.interface';
 import { AttemptDraftRow } from '@app/repository/definition/attempt-draft-schema.interface';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
+import { RepositoryTransaction } from '@app/repository/generic.repository';
+import { currentKey } from '@app/use-case/sync/local-key.use-case';
 import { born } from '@app/use-case/sync/local-record';
 
 export interface AttemptIdentity {
@@ -45,6 +49,33 @@ export function toSlotId(identity: AttemptIdentity): string {
 	return `${identity.trainingUuid}/${identity.roundUuid ?? ''}/${identity.puzzleUuid}`;
 }
 
+const IDENTITY_STORES: StoreNames<AppSchema>[] = ['training', 'calibrationRound', 'cycleItem'];
+
+async function currentIdentity<M extends 'readonly' | 'readwrite'>(
+	transaction: RepositoryTransaction<AppSchema, M>,
+	identity: AttemptIdentity,
+): Promise<AttemptIdentity> {
+	const { roundUuid, cycleItemUuid } = identity;
+
+	return {
+		...identity,
+		trainingUuid: await currentKey(transaction, 'training', identity.trainingUuid),
+		...(undefined === roundUuid
+			? {}
+			: { roundUuid: await currentKey(transaction, 'calibrationRound', roundUuid) }),
+		...(undefined === cycleItemUuid
+			? {}
+			: { cycleItemUuid: await currentKey(transaction, 'cycleItem', cycleItemUuid) }),
+	};
+}
+
+async function currentDraft<M extends 'readonly' | 'readwrite'>(
+	transaction: RepositoryTransaction<AppSchema, M>,
+	draft: AttemptDraft,
+): Promise<AttemptDraft> {
+	return { ...draft, identity: await currentIdentity(transaction, draft.identity) };
+}
+
 @Injectable({
 	providedIn: 'root',
 })
@@ -52,7 +83,15 @@ export class AttemptDraftUseCase {
 	private readonly repository = inject(AttemptRepository);
 
 	find(identity: AttemptIdentity): Promise<AttemptDraftRow | undefined> {
-		return this.repository.find('attemptDraft', toSlotId(identity));
+		return this.repository.runInTransaction(
+			[...IDENTITY_STORES, 'attemptDraft'],
+			'readonly',
+			async (transaction) => {
+				const current = await currentIdentity(transaction, identity);
+
+				return transaction.objectStore('attemptDraft').get(toSlotId(current));
+			},
+		);
 	}
 
 	/**
@@ -60,22 +99,34 @@ export class AttemptDraftUseCase {
 	 * uuid, so matching on that would duplicate what is already here.
 	 */
 	findClosed(identity: AttemptIdentity): Promise<AttemptRow | undefined> {
-		if (undefined !== identity.cycleItemUuid) {
-			return this.repository.findByIndex('attempt', 'cycleItemUuid', identity.cycleItemUuid);
-		}
+		return this.repository.runInTransaction(
+			[...IDENTITY_STORES, 'attempt'],
+			'readonly',
+			async (transaction) => {
+				const current = await currentIdentity(transaction, identity);
+				const attempts = transaction.objectStore('attempt');
 
-		if (undefined === identity.roundUuid) {
-			return Promise.resolve(undefined);
-		}
+				if (undefined !== current.cycleItemUuid) {
+					return attempts.index('cycleItemUuid').get(current.cycleItemUuid);
+				}
 
-		return this.repository.findByIndex('attempt', 'roundUuid-puzzleUuid', [
-			identity.roundUuid,
-			identity.puzzleUuid,
-		]);
+				return undefined === current.roundUuid
+					? undefined
+					: attempts.index('roundUuid-puzzleUuid').get([current.roundUuid, current.puzzleUuid]);
+			},
+		);
 	}
 
 	async save(draft: AttemptDraft, progress: AttemptProgress): Promise<void> {
-		await this.repository.insert('attemptDraft', this.toDraftRow(draft, progress));
+		await this.repository.runInTransaction(
+			[...IDENTITY_STORES, 'attemptDraft'],
+			'readwrite',
+			async (transaction) => {
+				const current = await currentDraft(transaction, draft);
+
+				await transaction.objectStore('attemptDraft').put(this.toDraftRow(current, progress));
+			},
+		);
 	}
 
 	/**
@@ -83,15 +134,14 @@ export class AttemptDraftUseCase {
 	 * instant where the same slot is in both places or in neither.
 	 */
 	async seal(draft: AttemptDraft, outcome: AttemptOutcome): Promise<void> {
-		const row = this.toAttemptRow(draft, outcome);
-		const slotId = toSlotId(draft.identity);
-
 		await this.repository.runInTransaction(
-			['attempt', 'attemptDraft'],
+			[...IDENTITY_STORES, 'attempt', 'attemptDraft'],
 			'readwrite',
 			async (transaction) => {
-				await transaction.objectStore('attempt').put(row);
-				await transaction.objectStore('attemptDraft').delete(slotId);
+				const current = await currentDraft(transaction, draft);
+
+				await transaction.objectStore('attempt').put(this.toAttemptRow(current, outcome));
+				await transaction.objectStore('attemptDraft').delete(toSlotId(current.identity));
 			},
 		);
 	}

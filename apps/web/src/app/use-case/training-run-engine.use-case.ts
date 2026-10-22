@@ -8,6 +8,7 @@ import {
 } from '@app/repository/definition/training-schema.interface';
 import { LocalCalibrationUseCase } from '@app/use-case/local-calibration.use-case';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
+import { LocalKeyUseCase } from '@app/use-case/sync/local-key.use-case';
 
 export interface RunCalibrationRound {
 	readonly round: CalibrationRoundRow;
@@ -32,25 +33,26 @@ export interface RunCycleSlot {
 export class TrainingRunEngineUseCase {
 	private readonly calibration = inject(LocalCalibrationUseCase);
 	private readonly cycles = inject(LocalCycleUseCase);
+	private readonly keys = inject(LocalKeyUseCase);
 
 	async listRounds(trainingUuid: string): Promise<readonly CalibrationRoundRow[]> {
-		return this.calibration.listRounds(trainingUuid);
+		return this.calibration.listRounds(await this.training(trainingUuid));
 	}
 
 	async createRound(trainingUuid: string): Promise<RunCalibrationRound> {
-		return this.calibration.createRound(trainingUuid);
+		return this.calibration.createRound(await this.training(trainingUuid));
 	}
 
 	async listRoundPuzzles(roundUuid: string): Promise<RunRoundPuzzles> {
-		return this.calibration.listRoundPuzzles(roundUuid);
+		return this.calibration.listRoundPuzzles(await this.round(roundUuid));
 	}
 
 	async submitCalibrationAttempt(roundUuid: string): Promise<CalibrationRoundOutcome> {
-		return this.calibration.closeIfComplete(roundUuid);
+		return this.calibration.closeIfComplete(await this.round(roundUuid));
 	}
 
 	async nextCycleSlot(trainingUuid: string): Promise<RunCycleSlot | null> {
-		const slot = await this.cycles.nextSlot(trainingUuid);
+		const slot = await this.cycles.nextSlot(await this.training(trainingUuid));
 
 		return undefined === slot
 			? null
@@ -58,6 +60,17 @@ export class TrainingRunEngineUseCase {
 	}
 
 	async submitCycleAttempt(trainingUuid: string, item: CycleItemRow): Promise<boolean> {
-		return this.cycles.closeIfComplete(trainingUuid, item.cycleUuid);
+		return this.cycles.closeIfComplete(
+			await this.training(trainingUuid),
+			await this.keys.current('cycle', item.cycleUuid),
+		);
+	}
+
+	private training(uuid: string): Promise<string> {
+		return this.keys.current('training', uuid);
+	}
+
+	private round(uuid: string): Promise<string> {
+		return this.keys.current('calibrationRound', uuid);
 	}
 }
