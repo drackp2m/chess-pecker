@@ -11,6 +11,7 @@ import {
 } from 'fake-indexeddb';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
 
 type Database = typeof IDBDatabase.prototype;
@@ -50,6 +51,10 @@ function chain(error: unknown): string[] {
 	}
 
 	return messages;
+}
+
+function indexesClientRef(store: unknown): boolean {
+	return (store as { readonly indexNames: DOMStringList }).indexNames.contains('clientRef');
 }
 
 async function reasonOf(promise: Promise<unknown>): Promise<unknown> {
@@ -110,6 +115,19 @@ describe('the migrations that open the database', () => {
 		const failure = await reasonOf(repository.findAll('training'));
 
 		expect(chain(failure)[1]).toContain('IndexedDB migration v15 failed');
+	});
+
+	it('indexes clientRef in the eight sync stores', async () => {
+		const missing = await repository.runInTransaction(
+			[...SYNC_ENTITIES],
+			'readonly',
+			(transaction) =>
+				Promise.resolve(
+					SYNC_ENTITIES.filter((entity) => !indexesClientRef(transaction.objectStore(entity))),
+				),
+		);
+
+		expect(missing).toEqual([]);
 	});
 
 	it('does not cache the connection it could not open', async () => {

@@ -68,7 +68,7 @@ a file exported today translates the same way tomorrow.
 ## Choosing a model
 
 `--model` takes an alias from the table below or any Hugging Face repository id. The default is
-`gemma-12b-qat`, which is what the bench of 30/08/2026 settled on.
+`gemma4-e4b-optiq`, which is what the bench of 30/08/2026 settled on.
 
 | Alias                | Repository                                               | On disk | Published  |
 | -------------------- | -------------------------------------------------------- | ------- | ---------- |
@@ -79,9 +79,13 @@ a file exported today translates the same way tomorrow.
 | `gemma4-e4b-qat`     | `mlx-community/gemma-4-E4B-it-qat-4bit`                  | 6.8 GB  | 2026-06-05 |
 | `gemma4-e4b-optiq`   | `mlx-community/gemma-4-e4b-it-qat-OptiQ-4bit`            | 7.5 GB  | 2026-06-13 |
 | `gemma4-e4b-8bit`    | `mlx-community/gemma-4-e4b-it-8bit`                      | 8.9 GB  | 2026-04-02 |
+| `gemma4-12b`         | `mlx-community/gemma-4-12B-it-4bit`                      | 6.7 GB  | 2026-06-03 |
+| `gemma4-12b-optiq`   | `mlx-community/gemma-4-12B-it-qat-OptiQ-4bit`            | 9.0 GB  | 2026-06-15 |
 | `qwen-14b`           | `mlx-community/Qwen3-14B-4bit`                           | 8.3 GB  | 2025-04-28 |
 | `qwen35-9b`          | `mlx-community/Qwen3.5-9B-4bit`                          | 6.0 GB  | 2026-03-02 |
 | `qwen35-9b-optiq`    | `mlx-community/Qwen3.5-9B-OptiQ-4bit`                    | 8.2 GB  | 2026-03-05 |
+| `bonsai-27b-1bit`    | `prism-ml/Bonsai-27B-mlx-1bit`                           | 5.1 GB  | 2026-07-04 |
+| `bonsai2-27b`        | `prism-ml/Ternary-Bonsai-2-27B-mlx-2bit`                 | 8.6 GB  | 2026-09-16 |
 | `mistral-24b`        | `mlx-community/Mistral-Small-3.2-24B-Instruct-2506-4bit` | 13.3 GB | 2025-06-21 |
 
 `--list-models` prints the same table with what each one is for and how much of it is already on
@@ -90,17 +94,36 @@ weights behind a `gemma-3` conversion of 2025 are the model Google released that
 
 **The list is what a 16 GB Mac can run.** A model needs roughly its size on disk in unified
 memory, plus the context, plus whatever the Mac is already doing, so anything up to about 9 GB is
-comfortable and the three above that are deliberate stretches, flagged below. The 27B and 31B
-conversions, the mixture-of-experts ones (`26B-A4B`, `35B-A3B`) and the whole Qwen 3.6 / 3.8 line
-are 15–20 GB and were dropped for that reason alone, not for being bad — on a 32 GB machine they
-are worth adding back. The 2B and 4B ones were dropped for the opposite reason.
+comfortable and the three above that are deliberate stretches, flagged below. The 4-bit 27B and
+31B conversions, the mixture-of-experts ones (`26B-A4B`, `35B-A3B`) and the whole Qwen 3.6 / 3.8
+line are 15–20 GB and were dropped for that reason alone, not for being bad — on a 32 GB machine
+they are worth adding back. The two `bonsai` rows are the exception: a Qwen 27B squeezed below two
+bits, see _The 27Bs that fit_. The 2B and 4B ones were dropped for the opposite reason.
 
 ### The three big ones, and the wired limit
 
-macOS caps what the GPU may hold at about 75% of RAM, which on a 16 GB Mac is roughly 12 GB. Under
-that cap the weights are simply resident and everything is fine; over it, macOS starts paging and
-the run does not fail, it just crawls — which is worth knowing before reading a `units/min` column
-and blaming the model.
+macOS caps what the GPU may hold at about 75% of RAM, whatever else is or is not open — closing
+apps frees RAM, not room under the cap. This prints it, in GB; on the 16 GB MacBook Air this tool
+is run on it says 11.84:
+
+```sh
+uv run python -c "import mlx.core as mx; info = getattr(mx, 'device_info', None) or mx.metal.device_info; print(info()['max_recommended_working_set_size'] / 2**30)"
+```
+
+Under the cap the weights are simply resident and everything is fine. Over it there are two ways
+to go wrong. When the weights alone do not fit, macOS starts paging and the run does not fail, it
+just crawls — which is worth knowing before reading a `units/min` column and blaming the model.
+When they fit but a long prompt pushes the working set past the cap, the call fails with
+`[METAL] Command buffer execution failed: Insufficient Memory` and the bench marks the pass
+`failed`.
+
+Two things keep that second case away. The engine feeds the prompt to the model 512 tokens at a
+time instead of mlx-lm's 2048, and the size of that step is what sets the peak of a call; a model
+that trims its cache only feeds the new tail of each prompt anyway, so for the Gemmas it changes
+almost nothing. And `sudo sysctl iogpu.wired_limit_mb=13312` raises the cap to 13 GB until the next
+restart (`=0` puts the default back): it is what mlx-lm itself suggests for a model close to the
+cap, and it is safe with nothing else running, but it does nothing for a model whose weights are
+already over the cap.
 
 - `gemma4-e4b-8bit` (8.9 GB) and `gemma-12b-qat-6bit` (11.2 GB) sit under the cap. The 6-bit one
   leaves little room for a long prompt, so watch `units/min` on the first pass.
@@ -128,6 +151,9 @@ Two more things separate them:
 - **Thinking.** Qwen3 `14B` is a hybrid reasoning model. Left alone it would spend the whole token
   budget thinking and return nothing, so the engine turns it off twice over: through the chat
   template (`enable_thinking=False`) and with the `/no_think` switch appended to the user turn.
+  `--think` switches reasoning back on, for any model whose template can do it, only on the
+  calls of _Validation and review_ that come after a unit has already failed; `--think always`,
+  on every call.
 - **Whether the prompt cache survives.** The `qwen35-*` family is `Qwen3_5ForConditionalGeneration`:
   part attention, part linear-attention layers whose state is a recurrent `ArraysCache`. `mlx_lm`
   cannot trim that, so the cache is rebuilt on every call and the shared head is re-read every time
@@ -146,21 +172,43 @@ of `config.json` — 345 per-layer overrides on the E4B, 250 on the Qwen — and
 understood that block for a long time. **Plain text generation loads with no extra package.** The
 `mlx-optiq` package is for serving these models with images, which this tool never does.
 
-The one OptiQ conversion that genuinely does not load is the Gemma 4 12B, and the reason is the
-architecture rather than the quantisation:
-
-### Gemma 4 12B, and why it is not here
+### Gemma 4 12B, and the mlx-lm it needs
 
 `gemma-4-12B-it-4bit`, its QAT twin and both OptiQ conversions declare `model_type: gemma4_unified`,
 and `mlx_lm` resolves an architecture by importing `mlx_lm.models.<model_type>`. The unified text
-tower landed after the 0.31.3 release this project pins, and **the main branch still reports version
-0.31.3**, so a version check cannot tell them apart — it needs `mlx-lm` installed from git. The
-E4B and 26B conversions declare plain `gemma4` and load fine, which is why they are in the table and
-the 12B is not. Worth re-checking after an `update:deps`.
+tower landed after 0.31.3 and was first released in **mlx-lm 0.32.0** (15/10/2026), which is why
+`pyproject.toml` now asks for it: on anything older the 12B fails to load with
+`Model type gemma4_unified not supported`.
 
-### What the bench measured
+### The 27Bs that fit
 
-Two rounds on 30/08/2026, over the 39 English and 43 Russian units of `tools/scripts/i18n/bench`.
+PrismML squeezes Qwen's 27B down to weights of one bit, or of three values (ternary), and publishes
+MLX packs small enough for this Mac:
+
+- `bonsai-27b-1bit` is Qwen 3.6 27B at about 1.25 bits per weight. It needs the 1-bit kernels of
+  **mlx 0.32.4**. Its own card reports instruction following well below the original (IFEval 65.8
+  against 78.4), and following instructions is half of what this tool asks.
+- `bonsai2-27b` is the second generation, over Qwen 3.8 27B, at about 2 bits. Its card keeps 98% of
+  the original's scores, instruction following included. It declares
+  `model_type: prism_hadamard_qwen35`, which mlx-lm learned in 0.32.0. Its 8.6 GB load fine, but on
+  20/10/2026, with the prompt still fed 2048 tokens at a time, it ran out of GPU memory at its fifth
+  batch of both Russian and English, the first with long texts (_The three big ones, and the wired
+  limit_).
+
+Three things to know before reading their rows. Neither card reports a single multilingual score.
+Their scores were taken **thinking**, and this tool turns thinking off, so they are
+not the numbers this bench will see. And both are `qwen3_5` underneath, with the cache that cannot be
+trimmed of _Reading the names_, so the whole prompt is processed again on every call, by a 27B:
+expect a slow first token, and read `tokens/s` before blaming the model.
+
+### What the legacy bench measured
+
+These numbers come from the first bench, retired on 20/10/2026 and kept in
+`tools/scripts/i18n/bench/legacy`. They are chrF against a single reference over hand-picked units,
+which is exactly what the new bench stopped trusting, so read them as history: the next decision
+is taken on the new bench, with the checks of _Generating a model comparison_.
+
+Two rounds on 30/08/2026, over the 39 English and 43 Russian units of the legacy bench.
 **Every pass ran with the same prompt shape** — `--profile instruct`, no `--inject` (nothing in the
 list needs it), `--batch 10`, `--temperature 0` — so the only variable is the model. The passes and
 their cost are in `bench-runs/`, and `ideas/i18n/Decisión del modelo.md` is the decision they led
@@ -184,7 +232,8 @@ Four things came out of it, and only one of them is a chrF column:
   legitimate paraphrase — `Минимум` where the reference wrote `Не менее` — while the units it wins
   are real mistakes by the other: `gemma-12b-qat` translated `al día` as `ежедневно`, _daily_,
   and wrote `и N больше` for `y N más`, which is English grammar in Russian words. Its two
-  `[review]` units are both the glossary false positive the bench README documents, not broken text.
+  `[review]` units are both the glossary false positive the legacy bench README documents, not
+  broken text.
 - **Six bits buy nothing.** `gemma-12b-qat-6bit` gains 1.8 points of English and loses 0.9 of
   Russian for 3.2 GB more and a fifth of the speed. The QAT conversion at 4 bits was not costing
   anything, which is the whole reason that experiment existed.
@@ -240,7 +289,25 @@ the call:
   the same split `## Marcadores` already has with its per-marker lines. When only some of the texts
   in the call are forms, one more line says so, so the rest are not read as plurals. Without this
   the fan-out is pointless: the model sees the same Spanish sentence four times with nothing to
-  tell the copies apart, and answers the same thing four times.
+  tell the copies apart, and answers the same thing four times. Knowing the numbers was not
+  enough, though: the first bench of 20/10/2026 had every model write «1,5 упражнений» and
+  «2 упражнений». So for a language listed in `samples.py` the note also shows two words already
+  bent for those numbers, and the grammatical case where the language has cases
+  (`Ejemplo: «2 яблока», «купил 3 книги» (genitivo singular, también tras un verbo).`), under a
+  short `## Los ejemplos de las notas` section saying their words never go in the translation.
+  The words are apples and books on purpose. The first try used `jugada` and `partida` from the
+  glossary, and `qwen35-9b` copied them: «# filas aquí» came back as «# moves here». A word from
+  nowhere near a chess app is no temptation, and when a model copies it anyway the bench catches
+  it (`sample`, in its README). What prompting did not fix is the 2–4 form after a verb:
+  `gemma4-12b-optiq` still writes «Сервер отклонил 3 упражнений» in a few keys, with the verb in
+  the sample and with a `nunca «купил 3 книг»` after it, which made nothing better and was
+  dropped. So the end of the batch checks it instead. In a language that tells `few` from
+  `many`, a `few` form written exactly like the `many` one was, in every bench pass, either that
+  mistake or a sentence where the number governs nothing («# отклонено», «более # дней»). Only
+  the model can say which, and only reasoning: asked plainly, quoting the `many` sentence, it gave
+  the same sentence back for all five keys of the 21/10/2026 bench. So under `--think` that form
+  is asked once more, reasoning, and the same sentence back is taken as its word; without it the
+  check does nothing.
 - **The gender rules.** `## Género` travels the same way and only when the call carries a form of a
   gender select: agree with the person the form is written for, and — the counter-intuitive half —
   when there is no gender to agree with, turn the sentence around rather than invent an ending the
@@ -250,7 +317,23 @@ the call:
   left out of that line on purpose: a `select` case is named by us and means nothing to a
   translator, and printing it would put `- Género «other»` next to `- Forma «other»` on a key that
   branches on both, which are two unrelated things. The two sections stack: a string that branches
-  on both carries its gender line and its plural line.
+  on both carries its gender line and its plural line. The unspecified form is the one every model
+  got wrong — «Ты сдался», «Ты сдал(а)ся» — so in a language of `samples.py` its line ends with a
+  triple: what he and she would be told, and the turned-around sentence that fits anyone. It is
+  about a book for the same reason: «Партия сохранена», the first triple, came back as the
+  translation of «Te has rendido. Mira cómo iba». And since the forms of a key share a batch, the
+  end of that batch is where the unspecified one is held against the other two. When he and she
+  are told the same sentence, the language does not mark gender there and the unspecified form is
+  that sentence too: it is copied without asking. Told to turn the sentence around, the model
+  otherwise made something up to tell it apart — «S'has rendit» and «Etbemvenim» in Catalan,
+  «Resignation occurred» in English. When it came back equal to only his or hers, it is asked
+  again on its own with that as the reason (reasoning the second time under `--think`, and the
+  only time under `--think always`), and a miss keeps the first answer and leaves it for review.
+  Only those checks, out of the form checks: the others also fire where the language does not
+  mark the form (see the bench README).
+- **The forms travel together.** A batch is never cut through the forms of one key: when they do
+  not fit in what is left of it, the batch ends before them. Otherwise the unspecified form of
+  «Te has rendido» landed alone in the next call, without the two it has to differ from.
 - **The repeated context.** The export hangs a group's note on every key of that group, so ten keys
   of one group would carry the same paragraph ten times. It is written once and the rest point at
   it (`- Qué es: lo mismo que en el 8.`).
@@ -316,19 +399,51 @@ summary. `--profile translate` forces `--batch 1`.
 
 ## Validation and review
 
-A translation is accepted only if it keeps every placeholder exactly once, invents none, is not a
-copy of the source, leaves no word in the source language when the target language writes in a
-script of its own (Devanagari, Cyrillic, …, minus the untranslatable names of the glossary), stays
-inside a length band and honours the glossary terms the unit's `term` note lists.
+A translation is accepted only if it keeps every placeholder exactly once, invents none — nor
+writes one by hand, a `{pending}` lifted from a note —, carries none of the model's own tokens
+(Gemma 4 lets `<audio|>` and `<image|>` slip into Catalan), uses `¿` and `¡` only in Spanish, is
+not a copy of the source, leaves no word in the source language when the target language writes
+in a script of its own (Devanagari, Cyrillic, …, minus the untranslatable names of the glossary),
+stays inside a length band and honours the glossary terms the unit's `term` note lists.
 
 Before any of that, the answer is cleaned: code fences, `«…»` quotes, `Here is the translation:`
 lead-ins, a final full stop the source did not have, `<think>…</think>` blocks, and everything from
-the first end-of-turn token onwards.
+the first end-of-turn token onwards. A first letter in lowercase is raised when the source opens
+in uppercase — the Russian chart legends came back «подсказки», «ошибки» —, with the Turkish
+dotted `İ` where it applies, and nothing is touched when either text opens with a marker or a
+number.
 
-A rejected answer is retried with the reason attached, then with an example. What still fails is
-salvaged — dropped markers are re-attached — and the segment is written with
-`subState="chesspecker:review"` and listed at the end of the run. Nothing dubious is ever passed off
-as good.
+A rejected answer is retried with the reason attached, then with an example. Of the three
+answers, the one kept is the least broken — an empty one never wins, then the fewest hard
+failures, then the fewest failures, the later on a tie —, so a last try that goes worse does not
+throw away a usable one. What still fails is salvaged — dropped markers are re-attached — and the
+segment is written with `subState="chesspecker:review"` and listed at the end of the run. Nothing
+dubious is ever passed off as good.
+
+**Reasoning is off unless `--think` is given.** With it, that last try and the re-asks of the
+forms above let the model reason first, if its chat template can (`enable_thinking`, which Gemma 4
+and Qwen 3 have); with `--think always`, every call does, batches included. The reasoning gets
+`--think-tokens` (2048) on top of the answer's budget and is cut off before the answer is read;
+one that runs out leaves an empty answer, and a batch left that way goes one unit at a time
+without taking `--batch` down. The summary says how many calls reasoned, for how long,
+and how many were cut off. Each reasoning is also written whole to a `.thoughts.jsonl` beside the
+output (`fr-FR.translated.thoughts.jsonl`), one line per call as soon as it ends: the units it was
+for, the attempt and why it was asked again, the tokens and seconds, whether it was cut off, the
+thought and the answer. Measured on 21/10/2026 with
+`gemma4-12b-optiq` and 1024 tokens, it did not pay: twelve calls reasoned over the five bench
+languages, almost all ran out before answering, one fixed a unit (a Russian `few` form), and they
+added 26 minutes to a pass of 81 — two minutes or more per call on this Mac. Their empty answers
+also replaced the usable ones the earlier tries had, which is what keeping the least broken answer
+now prevents. `--think always` with 8192 tokens, on 22/10/2026, did not pay either: in six hours
+it reached 56 of the 173 Russian units, which take 15 minutes without it. Every reasoning that ran
+out — all six batches and three single units, three times each — was the same lines over and over,
+which is what greedy decoding does to a thought, and the ones that finished changed words without
+fixing anything: one unit better but still wrong, one broken.
+
+The copy of the source is the one rejection a model may overrule. «A la primera», «Coronar a» and
+«torre blanca» are Catalan as much as Spanish, and the first Catalan bench left fifteen of them for
+review after three calls each. So the retry asks instead of ordering — if it is written exactly so
+in the target language, repeat it — and the same answer twice is taken as the model's word.
 
 ## Reading the run summary
 
@@ -398,6 +513,10 @@ What each number is for:
 - `--json` prints NDJSON progress on stdout instead of the human log; `--report <file>` writes a
   markdown summary with the speed, the batch share and the units left for review.
 - `--temperature` defaults to 0 — deterministic, which is what makes two models comparable.
+- `--think` lets the model reason on the last try of a failing unit and on the re-asks of a
+  form (`--think retry`, what the bare flag means), or on every call (`--think always`), with
+  `--think-tokens` (2048) for it; off by default (see _Validation and review_). The bench records
+  how a pass ran it, and with how many tokens.
 
 ## Backends
 
@@ -512,17 +631,19 @@ The recipe from nothing to a table, so it can be repeated in six months without 
 It runs on the host, from this directory, and `--bench` is the whole of it:
 
 ```sh
-uv run translate --bench --model gemma-12b-qat,gemma4-e4b,gemma4-e4b-qat,deepl
+node tools/scripts/i18n/bench/build.mjs              # devcontainer, from the repo root
+uv run translate --bench --model gemma4-e4b-optiq,qwen35-9b
 ```
 
-1. **What goes in.** With no input file it takes every `*.blank.xlf` of
-   `tools/scripts/i18n/bench` — today `en-GB.blank.xlf` and `ru-RU.blank.xlf`, the forty-odd
-   hand-picked units of the bench with their `<target>` emptied. That directory's README says what
-   is in them and why. To bench something else, name the files: `pnpm i18n:export --blank --scope
-<name>` writes the same kind of file, and then `--reference` has to name the yardstick by hand.
-2. **The yardstick.** For each input, the file beside it with the `.blank` dropped —
-   `ru-RU.blank.xlf` → `ru-RU.xlf`, the translation written by hand. Nothing is scored against
-   another model, which is the difference between this and a bare `--compare`.
+1. **What goes in.** `build.mjs` turns the frozen texts of `tools/scripts/i18n/bench/snapshot.json`
+   into one `<lang>.blank.xlf` per language through the real export code and the live context, and
+   with no input file `--bench` takes all of them. The texts never change, so passes stay
+   comparable while the catalogue moves on; the instructions do, and regenerating the bench is how
+   a change to them gets measured. That directory's README says what is in it and why.
+2. **The yardstick.** For each input, `bench/expect/<lang>.json`: references to score chrF against
+   and assertions written by hand, on top of the automatic checks every unit goes through. A
+   neighbour with the `.blank` dropped, as the legacy bench has, adds its translations to the
+   references. Nothing is scored against another model.
 3. **One pass per model and file.** `--model` is a comma-separated list here, and `deepl` counts as
    one more candidate — it goes through the DeepL API and needs `DEEPL_API_KEY`, as above. The
    translation memory is off for every pass, so every unit is really translated. `--profile` and
@@ -532,16 +653,18 @@ uv run translate --bench --model gemma-12b-qat,gemma4-e4b,gemma4-e4b-qat,deepl
    (`--output <dir>` moves them), and `bench-runs/comparison.md` (`--report <file>` moves that).
    The passes are ordinary translated files, so `--compare` can be re-run over them by hand for a
    cut the report does not have.
-5. **What the markdown says**, per bench file: the quality table — chrF against the reference, its
-   worst unit, how many fell `under 50`, the prompt shape the pass ran with and the checks that
-   failed — then the cost table with units/min, seconds per unit and tokens/s, then chrF by scope,
-   then the worst N units printed in full with the reference and every pass underneath. `--worst N`
-   sets how many (default 10). The quality and cost tables are printed to the terminal as well, so
-   nothing has to be opened to see them.
-6. **Reading it.** `under 50` first, then the three `bench-icu-*` columns of the by-scope table,
-   which are the fan-out of step 9 and the reason those units are in the bench at all. Then read the worst
-   list: the score says which units to read, not whether the translation is good. The bench README
-   lists the units that always trip a check for reasons that are not the model's fault.
+5. **What the markdown says**, per bench file: the quality table, sorted best first — units with a
+   critical, major or minor failure, the share with none, assertions met, keys whose forms met all
+   their assertions, chrF and units left for review — then the cost, the failed checks by code, the
+   assertions met by axis, two head to heads of every pair of models with the `p` of a sign test
+   (one on what would ship broken, one on every failure), and the failing units printed in full
+   with what every pass said and why it failed. `--worst N` sets how many (default 10). The
+   quality and cost tables are printed to the terminal as well.
+6. **Reading it.** `critical` first, then `expected`: those are the units that would ship broken.
+   Then the first head to head, because a few points of chrF between two models are noise and its
+   `p` says when a difference is not; the second one also counts minor failures, so read it as a
+   tie-breaker, not a verdict. Then the failing units, to see whether the fault is the model's
+   or an assertion that is wrong.
 
 A pass whose output file is already complete is not translated again, so a bench survives Ctrl-C
 and adding a model later is the same command with one more alias — only the new pass runs. What
@@ -571,6 +694,12 @@ Each directory gets its own `comparison.md`, and both stay readable side by side
 anyway, nothing is silently wrong: the shape each pass ran with is recorded in its `.json`, a kept
 pass reports the shape it was **actually** translated with rather than the one you just asked for,
 and the run warns on stderr when the two disagree.
+
+The shape includes two fingerprints, and they are what catches the change nobody passed as a
+flag. `prompt` hashes every first-attempt prompt of the pass exactly as it is sent, so an edit to
+`app.md`, the glossary or `prompting.py` changes it; `code` hashes the modules that build, send and
+validate those prompts. The report shows `prompt` as a column and says so in bold when its rows
+disagree — that table is no longer comparing models only.
 
 **Write the answer down where it will be found**: the fiche of the model in _Choosing a model_ says
 which `--profile` and which `--inject` it entered the comparison with, because that is half the
@@ -637,15 +766,17 @@ translate/
 		downloads.py     what the Hugging Face cache holds, and deleting from it
 		compare.py       chrF agreement between several translated files
 		bench.py         the bench harness: every model, timed, scored, tabulated
+		scoring.py       the bench's verdict on every unit: checks, expectations, head to head
 		deepl.py         the reference translation, and the glossary it is held to
 		dotenv.py        the root .env, read the way the API reads it
 		tables.py        the aligned columns every listing is printed with
 		picker.py        the arrow-key multi-select the cache deletion asks with
 		engine.py        model loading, prompt cache, generation, token accounting
 		prompting.py     the system turn, the batched user turn, reading the answer back
+		samples.py       words bent for each plural form and gender, per target language
 		context.py       slicing the app note and the glossary down to what a call needs
 		memory.py        translation memory of the run
-		validate.py      cleanup, placeholders, glossary, parasitic prose, length
+		validate.py      cleanup, placeholders (and `{…}` written by hand), glossary, prose, length
 		report.py        human log, NDJSON progress and the markdown summary
 		environment.py   host checks: Apple Silicon, mlx importable, Metal available
 		ollama_client.py prototype backend, removed in T5

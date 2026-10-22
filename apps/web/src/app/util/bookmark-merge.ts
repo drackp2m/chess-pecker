@@ -46,6 +46,34 @@ export function markSynced(row: BookmarkRow, event: BookmarkHistoryRow): Bookmar
 	};
 }
 
+export function markSent(row: BookmarkRow, sent: Date): BookmarkRow {
+	const syncedAt =
+		undefined === row.syncedAt || row.syncedAt.getTime() < sent.getTime() ? sent : row.syncedAt;
+
+	return { ...row, syncedAt };
+}
+
+export function isSameVersion(
+	left: BookmarkRow | undefined,
+	right: BookmarkRow | undefined,
+): boolean {
+	return fingerprint(left) === fingerprint(right);
+}
+
+function fingerprint(row: BookmarkRow | undefined): string {
+	if (undefined === row) {
+		return '';
+	}
+
+	const history = row.history ?? [];
+	const sent = history.filter((event) => undefined !== event.syncedAt).length;
+	const stamps = [row.updatedAt, row.syncedAt, row.removedAt].map(
+		(stamp) => stamp?.getTime() ?? '',
+	);
+
+	return [...stamps, history.length, sent].join('/');
+}
+
 export function adoptRemote(row: BookmarkRow, stored: PuzzleBookmark | null): BookmarkRow {
 	if (null === stored || new Date(stored.updatedAt).getTime() <= row.updatedAt.getTime()) {
 		return row;

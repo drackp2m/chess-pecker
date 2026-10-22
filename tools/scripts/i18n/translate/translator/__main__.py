@@ -12,11 +12,13 @@ from .downloads import prune_cache, show_cache, sizes_by_repo
 from .compare import compare
 from .deepl import DeeplError, run_deepl
 from .dotenv import load_env
-from .engine import build_engine
+from .engine import THINK_ALWAYS, THINK_OFF, THINK_RETRY, build_engine
 from .environment import HostUnsupportedError
 from .memory import TranslationMemory
 from .models import TRANSLATE, profile_for, summary, table
 from .prompting import (
+    GENDER_LABEL,
+    PLURAL_LABEL,
     REVIEW_SUB_STATE,
     Batch,
     blocks_of,
@@ -28,7 +30,20 @@ from .prompting import (
     parse_answers,
 )
 from .report import GAVE_UP, Record, Reporter, Tally, write_report
-from .validate import clean, demanded, reason_of, repair, validate
+from .scoring import name_of
+from .validate import (
+    CONFIRMABLE,
+    ECHO_ISSUE,
+    FORM_SEPARATOR,
+    Form,
+    Issue,
+    clean,
+    demanded,
+    reason_of,
+    repair,
+    validate,
+    validate_forms,
+)
 from .xliff_io import (
     build_target,
     ensure_parent,
@@ -42,6 +57,10 @@ from .xliff_io import (
 )
 
 RETRIES = 2
+NEUTRAL_ISSUE = "forms-gender-other"
+FEW, MANY = "few", "many"
+MALE, FEMALE = "male", "female"
+TWIN = "forms"
 MAX_TOKENS_FACTOR = 4
 MAX_TOKENS_FLOOR = 48
 MAX_TOKENS_CEILING = 640
@@ -94,7 +113,8 @@ def max_tokens_for(engine, batch: Batch) -> int:
 
 
 def judge(block, unit, text: str) -> tuple[str, list]:
-    candidate = clean(text, unit.source, "last" if fenced(block, unit) else "first")
+    prefer = "last" if fenced(block, unit) else "first"
+    candidate = clean(text, unit.source, prefer, block.target_lang)
     issues = validate(
         candidate,
         unit.source,
@@ -107,28 +127,65 @@ def judge(block, unit, text: str) -> tuple[str, list]:
     return candidate, issues
 
 
-def ask(engine, batch: Batch) -> str:
-    return engine.generate(build_messages(batch), max_tokens_for(engine, batch))
+def ask(session: Session, batch: Batch, think: bool = False) -> str:
+    engine = session.engine
+    reply = engine.generate(build_messages(batch), max_tokens_for(engine, batch), think)
+
+    if engine.thought is not None:
+        units = [name_of(unit) for unit in batch.units]
+        session.reporter.thought(units, batch.attempt, batch.reason, engine.thought, reply)
+
+    return reply
 
 
-def attempt(engine, batch: Batch, index: int, issues: list) -> tuple[str, list]:
+def attempt(
+    session: Session, batch: Batch, index: int, issues: list, think: bool = False
+) -> tuple[str, list]:
     batch.attempt = index
     batch.reason = reason_of(issues) if issues else ""
     batch.demand = demanded(issues)
+    batch.confirm = issues[0] if confirmable(issues) else None
 
-    return judge(batch.block, batch.units[0], ask(engine, batch))
+    return judge(batch.block, batch.units[0], ask(session, batch, think))
+
+
+def confirmable(issues: list) -> bool:
+    return bool(issues) and all(issue.code in CONFIRMABLE for issue in issues)
+
+
+def thinking(session: Session, last: bool = False) -> bool:
+    mode = session.args.think
+
+    return mode == THINK_ALWAYS or (mode == THINK_RETRY and last)
+
+
+def reasks(session: Session) -> tuple[bool, ...]:
+    plans = {THINK_OFF: (False,), THINK_RETRY: (False, True), THINK_ALWAYS: (True,)}
+
+    return plans[session.args.think]
+
+
+def weight(candidate: str, issues: list) -> tuple[bool, int, int]:
+    return (not candidate.strip(), sum(issue.hard for issue in issues), len(issues))
 
 
 def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]:
     batch = Batch(block, [unit])
     seen: list[str] = []
-    candidate, issues = attempt(session.engine, batch, 0, [])
+    candidate, issues = attempt(session, batch, 0, [], thinking(session))
     calls = 1
 
     while issues and calls <= RETRIES:
         seen.extend(issue.code for issue in issues)
-        candidate, issues = attempt(session.engine, batch, calls, issues)
+        best, asked = (candidate, issues), confirmable(issues)
+        think = thinking(session, calls == RETRIES)
+        candidate, issues = attempt(session, batch, calls, issues, think)
         calls += 1
+
+        if asked and confirmable(issues) and candidate == best[0]:
+            issues = []
+        elif weight(*best) < weight(candidate, issues):
+            candidate, issues = best
 
     if not issues:
         session.tally.alone(calls, calls, seen, False)
@@ -149,12 +206,14 @@ def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]
 # A batch answer is all-or-nothing per line: what comes back clean is kept, and
 # what does not is simply not there, so the caller retranslates it on its own.
 def translate_batch(session: Session, batch: Batch) -> dict[int, str]:
-    reply = ask(session.engine, batch)
+    reply = ask(session, batch, thinking(session))
     answers = parse_answers(reply, batch.size)
+    thought = session.engine.thought
+    cut = thought is not None and thought.cut
     accepted = {}
     seen: list[str] = []
 
-    if not answers:
+    if not answers and not cut:
         session.reporter.unparsed(reply)
 
     for number, answer in answers.items():
@@ -168,7 +227,9 @@ def translate_batch(session: Session, batch: Batch) -> dict[int, str]:
     session.tally.batched(
         batch.size, len(answers), len(accepted), seen, max(answers, default=0)
     )
-    session.shrink(batch.size, len(answers))
+
+    if not cut:
+        session.shrink(batch.size, len(answers))
 
     return accepted
 
@@ -215,7 +276,129 @@ def resolve(session: Session, batch: Batch) -> list:
 
         outcomes.append((unit, text, "model", issues, review))
 
-    return in_order(batch, outcomes)
+    return revisit(session, batch, in_order(batch, outcomes))
+
+
+def neutral_issues(outcomes: list, members: list[int], lang: str) -> list:
+    forms = [Form(outcomes[index][0].category, outcomes[index][1]) for index in members]
+
+    found = validate_forms(forms, lang)
+
+    return [Issue(issue.code, issue.detail) for issue in found if issue.code == NEUTRAL_ISSUE]
+
+
+def swapped(category: str, label: str, value: str) -> str:
+    parts = category.split(FORM_SEPARATOR)
+
+    return FORM_SEPARATOR.join(
+        f"{label}:{value}" if part.partition(":")[0] == label else part for part in parts
+    )
+
+
+def sibling_text(outcomes: list, members: list[int], unit, label: str, value: str) -> str:
+    wanted = swapped(unit.category, label, value)
+
+    for index in members:
+        other, text, _, _, review = outcomes[index]
+
+        if other.category == wanted and not review:
+            return text.strip()
+
+    return ""
+
+
+def form_groups(outcomes: list) -> list[list[int]]:
+    groups: dict[str, list[int]] = {}
+
+    for index, outcome in enumerate(outcomes):
+        if "#" in outcome[0].id:
+            groups.setdefault(group_id(outcome[0]), []).append(index)
+
+    return list(groups.values())
+
+
+# The forms of a key travel in one batch, so this is the first moment each one
+# can be held against its siblings: the unspecified gender against the two it
+# has to differ from, or copy when they do not, and few against many.
+def revisit(session: Session, batch: Batch, outcomes: list) -> list:
+    for members in form_groups(outcomes):
+        for index in members:
+            unit = outcomes[index][0]
+
+            if unit.neutral:
+                outcomes[index] = settled_neutral(session, batch, outcomes, members, index)
+
+            if unit.plural_key == FEW:
+                outcomes[index] = settled_few(session, batch, outcomes, members, index)
+
+    return outcomes
+
+
+def settled_neutral(
+    session: Session, batch: Batch, outcomes: list, members: list[int], index: int
+) -> tuple:
+    unit, text, _, found, _ = outcomes[index]
+    lang = batch.block.target_lang
+    male = sibling_text(outcomes, members, unit, GENDER_LABEL, MALE)
+    female = sibling_text(outcomes, members, unit, GENDER_LABEL, FEMALE)
+
+    if male and male == female:
+        if male == text.strip():
+            return outcomes[index]
+
+        session.memory.remember(lang, unit.source, male, unit.category)
+
+        return (unit, male, TWIN, [], False)
+
+    issues = neutral_issues(outcomes, members, lang)
+
+    if not issues:
+        return outcomes[index]
+
+    return rethought(session, batch, outcomes, members, index, issues)
+
+
+def rethought(
+    session: Session, batch: Batch, outcomes: list, members: list[int], index: int, issues: list
+) -> tuple:
+    unit, text, origin, found, _ = outcomes[index]
+    lang = batch.block.target_lang
+    single = Batch(batch.block, [unit])
+
+    for step, think in enumerate(reasks(session), start=1):
+        candidate, problems = attempt(session, single, step, issues, think)
+        trial = list(outcomes)
+        trial[index] = (unit, candidate, "model", [], False)
+
+        if not problems and not neutral_issues(trial, members, lang):
+            session.memory.remember(lang, unit.source, candidate, unit.category)
+
+            return trial[index]
+
+    noted = found + [f"{issue.code}: {issue.detail}" for issue in issues]
+
+    return (unit, text, origin, noted, True)
+
+
+def settled_few(
+    session: Session, batch: Batch, outcomes: list, members: list[int], index: int
+) -> tuple:
+    unit, text, _, found, review = outcomes[index]
+    many = sibling_text(outcomes, members, unit, PLURAL_LABEL, MANY)
+
+    if session.args.think == THINK_OFF or review or not many or text.strip() != many:
+        return outcomes[index]
+
+    lang = batch.block.target_lang
+    single = Batch(batch.block, [unit])
+    candidate, problems = attempt(session, single, 1, [Issue(ECHO_ISSUE, many)], True)
+
+    if problems or candidate.strip() == many:
+        return outcomes[index]
+
+    session.memory.remember(lang, unit.source, candidate, unit.category)
+
+    return (unit, candidate, "model", found, False)
 
 
 def wanted(unit, args) -> bool:
@@ -256,6 +439,17 @@ def plan_file(root, args, shape) -> tuple[list, int]:
     return jobs, total
 
 
+def group_span(jobs: list, index: int) -> int:
+    owner, first = jobs[index]
+    group = group_id(first)
+    end = index
+
+    while end < len(jobs) and jobs[end][0] is owner and group_id(jobs[end][1]) == group:
+        end += 1
+
+    return end - index
+
+
 # Units arrive in the document order the export wrote, which is the order of
 # keys.ts: neighbours in a batch are neighbours in the catalogue. Batches are
 # cut one at a time because the size can drop while the run is going.
@@ -265,12 +459,20 @@ def next_batch(jobs: list, start: int, size: int) -> Batch:
     length = 0
     group = group_id(jobs[start][1])
 
-    for owner, unit in jobs[start:]:
-        same_group = group_id(unit) == group
-        crowded = not same_group and (len(units) >= size or length + len(unit.source) > BATCH_CHARS)
+    for index in range(start, len(jobs)):
+        owner, unit = jobs[index]
 
-        if owner is not block or (units and crowded):
+        if owner is not block:
             break
+
+        if group_id(unit) != group:
+            crowded = len(units) >= size or length + len(unit.source) > BATCH_CHARS
+            split = "#" in unit.id and len(units) + group_span(jobs, index) > size
+
+            if crowded or split:
+                break
+
+            group = group_id(unit)
 
         units.append(unit)
         length += len(unit.source)
@@ -392,7 +594,7 @@ def run_file(path: Path, session: Session, budget: int | None, shape=None, outpu
 # The bench names an output of its own for every pass, so the caller may hand
 # in the (input, output) pairs instead of letting them be derived.
 def run(args, reporter, jobs=None) -> int:
-    engine = build_engine(args.backend, args.model, args.temperature)
+    engine = build_engine(args.backend, args.model, args.temperature, args.think_tokens)
     session = Session(engine, args, TranslationMemory(enabled=args.memory), reporter, Tally())
     shape = shape_for(args, engine.model)
 

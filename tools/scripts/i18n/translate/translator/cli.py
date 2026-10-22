@@ -6,6 +6,7 @@ from pathlib import Path
 from .bench import DEFAULT_OUT as DEFAULT_BENCH_OUT
 from .bench import REPORT_NAME as BENCH_REPORT
 from .deepl import KEY_VAR
+from .engine import THINK_OFF, THINK_RETRY, THINK_TOKENS, THINKING
 from .models import ALIASES, DEFAULT_ALIAS, PROFILES
 from .ollama_client import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
 from .prompting import INJECTIONS
@@ -156,8 +157,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
             "Translated XLIFF to treat as the yardstick under --compare, such "
             "as one written by a professional or another engine. Every other "
             "file is scored against it instead of against the others. Under "
-            "--bench it defaults to the file next to each input with the "
-            "'.blank' dropped, which is the translation written by hand."
+            "--bench its translations join the references of the expectations, "
+            "and it defaults to the file next to each input with the '.blank' "
+            "dropped, when there is one."
         ),
     )
 
@@ -165,7 +167,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--worst",
         type=int,
         default=10,
-        help="How many disagreeing units --compare prints in full. (default: 10)",
+        help=(
+            "How many disagreeing units --compare prints in full, or how many "
+            "failing units --bench lists. (default: 10)"
+        ),
     )
 
     parser.add_argument(
@@ -173,8 +178,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Translate the given blank bench files with every model in "
-            "--model, score each pass against its reference and write one "
-            "markdown with the tables side by side. With no input file it "
+            "--model, check every unit of each pass against the expectations "
+            "in bench/expect/<lang>.json and write one markdown with the tables "
+            "side by side. With no input file it "
             "takes every *.blank.xlf of tools/scripts/i18n/bench. Each pass is "
             "kept as its own XLIFF, so --compare can be re-run on it by hand, "
             "and what it cost goes in a .json beside it. A pass whose file is "
@@ -283,6 +289,30 @@ def build_arg_parser() -> argparse.ArgumentParser:
         type=float,
         default=0.0,
         help="Sampling temperature (default: 0, deterministic).",
+    )
+
+    parser.add_argument(
+        "--think",
+        nargs="?",
+        choices=THINKING,
+        const=THINK_RETRY,
+        default=THINK_OFF,
+        help=(
+            "Let the model reason before answering. 'retry', what a bare --think means, only "
+            "on the last try of a unit that keeps failing and when a form is asked again; "
+            "'always' on every call, batches included. Models whose chat template cannot "
+            f"reason ignore it. (default: {THINK_OFF})"
+        ),
+    )
+
+    parser.add_argument(
+        "--think-tokens",
+        type=int,
+        default=THINK_TOKENS,
+        help=(
+            f"Tokens the reasoning may take on top of the answer (default: {THINK_TOKENS}). "
+            "A thought that runs out leaves no answer."
+        ),
     )
 
     parser.set_defaults(memory=True)

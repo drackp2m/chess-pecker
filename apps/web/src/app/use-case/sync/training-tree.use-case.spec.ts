@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import type { SyncEntity } from '@chesspecker/api-definitions';
 import {
 	IDBCursor,
 	IDBDatabase,
@@ -11,6 +12,7 @@ import {
 } from 'fake-indexeddb';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { SYNC_ENTITIES } from '@app/definition/sync-entity.constant';
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { AttemptRow } from '@app/repository/definition/attempt-schema.interface';
 import {
@@ -24,7 +26,7 @@ import {
 } from '@app/repository/definition/training-schema.interface';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { SyncableRow, born, confirmed, rejected } from '@app/use-case/sync/local-record';
-import { TrainingTreeUseCase } from '@app/use-case/sync/training-tree.use-case';
+import { TrainingTreePush, TrainingTreeUseCase } from '@app/use-case/sync/training-tree.use-case';
 
 const TRAINING = 'training-1';
 
@@ -42,6 +44,16 @@ function sealed<T extends SyncableRow>(row: T): T {
 
 function refused<T extends SyncableRow>(row: T): T {
 	return rejected(born(row), REFUSED_AT, 'sync/unknown puzzle');
+}
+
+function promised(push: TrainingTreePush | undefined): Record<SyncEntity, string[]> | undefined {
+	if (undefined === push) {
+		return undefined;
+	}
+
+	return Object.fromEntries(
+		SYNC_ENTITIES.map((entity) => [entity, [...push.manifest[entity].keys()]]),
+	) as Record<SyncEntity, string[]>;
 }
 
 function training(uuid: string, over: Partial<TrainingRow> = {}): TrainingRow {
@@ -282,7 +294,7 @@ describe('TrainingTreeUseCase.build', () => {
 				},
 			],
 		});
-		expect(push?.manifest).toEqual({
+		expect(promised(push)).toEqual({
 			training: [TRAINING],
 			trainingGoal: ['goal-1'],
 			calibrationRound: ['round-1'],
@@ -315,7 +327,7 @@ describe('TrainingTreeUseCase.build', () => {
 		const push = await trees.build(TRAINING);
 
 		expect(push?.request.training.cycles[0]?.items).toEqual([]);
-		expect(push?.manifest.cycleItem).toEqual([]);
+		expect(promised(push)?.cycleItem).toEqual([]);
 	});
 
 	it('leaves out a branch that is already up, and the parent holding only those', async () => {
@@ -345,7 +357,7 @@ describe('TrainingTreeUseCase.build', () => {
 		expect(push?.request.training.cycles).toMatchObject([
 			{ uuid: 'cycle-1', itemCount: 3, items: [{ clientRef: 'item-2' }] },
 		]);
-		expect(push?.manifest).toMatchObject({ cycle: [], cycleItem: ['item-2'] });
+		expect(promised(push)).toMatchObject({ cycle: [], cycleItem: ['item-2'] });
 	});
 
 	it('leaves out a slot that is up, and keeps it as a parent of what is not', async () => {
@@ -360,7 +372,7 @@ describe('TrainingTreeUseCase.build', () => {
 		expect(push?.request.training.cycles[0]?.items).toMatchObject([
 			{ uuid: 'item-1', attempts: [{ clientRef: 'attempt-1' }] },
 		]);
-		expect(push?.manifest.attempt).toEqual(['attempt-1']);
+		expect(promised(push)?.attempt).toEqual(['attempt-1']);
 	});
 
 	it('leaves out a branch the server already refused', async () => {
@@ -371,7 +383,7 @@ describe('TrainingTreeUseCase.build', () => {
 		const push = await trees.build(TRAINING);
 
 		expect(push?.request.training.goals).toEqual([]);
-		expect(push?.manifest.trainingGoal).toEqual([]);
+		expect(promised(push)?.trainingGoal).toEqual([]);
 	});
 
 	it('builds nothing when the tree has nothing waiting', async () => {
@@ -396,7 +408,7 @@ describe('TrainingTreeUseCase.build', () => {
 			const push = await trees.build(TRAINING);
 
 			expect(push?.request.training.goals).toHaveLength(GOAL_FILL);
-			expect(push?.manifest.trainingPuzzle).toEqual([]);
+			expect(promised(push)?.trainingPuzzle).toEqual([]);
 			expect(push?.request.training.puzzles).toEqual([]);
 		});
 
@@ -408,8 +420,8 @@ describe('TrainingTreeUseCase.build', () => {
 			const push = await trees.build(TRAINING);
 
 			expect(push?.request.training.rounds).toEqual([]);
-			expect(push?.manifest.calibrationRound).toEqual([]);
-			expect(push?.manifest.calibrationPuzzle).toEqual([]);
+			expect(promised(push)?.calibrationRound).toEqual([]);
+			expect(promised(push)?.calibrationPuzzle).toEqual([]);
 		});
 
 		it('drops a parent that is already up once nothing under it fits either', async () => {
@@ -420,7 +432,7 @@ describe('TrainingTreeUseCase.build', () => {
 			const push = await trees.build(TRAINING);
 
 			expect(push?.request.training.rounds).toEqual([]);
-			expect(push?.manifest.calibrationPuzzle).toEqual([]);
+			expect(promised(push)?.calibrationPuzzle).toEqual([]);
 		});
 
 		it('counts the bytes an attempt carries, not just the row', async () => {
@@ -431,7 +443,7 @@ describe('TrainingTreeUseCase.build', () => {
 
 			const push = await trees.build(TRAINING);
 
-			expect(push?.manifest.attempt).toEqual(['attempt-1']);
+			expect(promised(push)?.attempt).toEqual(['attempt-1']);
 		});
 	});
 });

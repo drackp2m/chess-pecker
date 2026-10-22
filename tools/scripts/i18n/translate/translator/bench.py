@@ -1,46 +1,78 @@
 """The bench harness: the same blank file through one model after another, each
-pass scored against the translation written by hand, all of it side by side in
-one markdown. The metrics are the ones validate.py and compare.py already
-compute; what lives here is the loop, the clock and the table."""
+pass checked unit by unit and scored against the expectations written beside
+it, all of it side by side in one markdown. The checks live in scoring.py; what
+lives here is the loop, the clock and the table."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import time
 from argparse import Namespace
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime
+from itertools import combinations
 from pathlib import Path
 
-from .compare import Sheet, between, mean, per_unit, sheet_of, shared_ids, worst_lines
+from .engine import THINK_ALWAYS, THINK_OFF
 from .environment import HostUnsupportedError
 from .models import DEFAULT_ALIAS, TRANSLATE, profile_for
-from .prompting import blocks_of, is_pending
+from .prompting import blocks_of, build_messages, is_pending
 from .report import Reporter
+from .scoring import (
+    Verdict,
+    answers_of,
+    by_axis,
+    details,
+    duel,
+    failing,
+    load_expectations,
+    sign_test,
+    summarise,
+    verdicts_of,
+)
 from .tables import ruled
 from .xliff_io import find_files, get_languages, read_xliff
 
 DEEPL = "deepl"
 BENCH_DIR = Path(__file__).resolve().parents[2] / "bench"
+EXPECT_DIR = "expect"
 BLANK = ".blank"
 DEFAULT_OUT = Path("bench-runs")
 REPORT_NAME = "comparison.md"
-WEAK = 50
 NONE = "—"
+PRINT = 8
+CODE_FILES = (
+    "__main__.py",
+    "context.py",
+    "engine.py",
+    "memory.py",
+    "placeholders.py",
+    "prompting.py",
+    "samples.py",
+    "validate.py",
+    "xliff_io.py",
+)
 QUALITY = (
     "model",
-    "profile",
-    "inject",
-    "units",
-    "missing",
+    "prompt",
+    "answered",
+    "critical",
+    "major",
+    "minor",
+    "clean",
+    "expected",
+    "forms",
     "chrF",
-    "worst",
-    f"under {WEAK}",
     "review",
-    "checks failed",
 )
 COST = ("model", "units/min", "s/unit", "tokens/s", "calls", "prompt tokens/call", "seconds")
+PAIRS = ("a", "b", "a better", "b better", "tie", "p")
+BROKEN_TITLE = (
+    "Head to head on what would ship broken (critical checks and assertions; p from a sign test):"
+)
+RANK_TITLE = "Head to head on every failure, minor ones included:"
 
 
 @dataclass
@@ -48,13 +80,21 @@ class Pass:
     alias: str
     lang: str
     source: Path
-    reference: Path
+    reference: Path | None
     output: Path
     profile: str
     inject: str
     summary: dict = field(default_factory=dict)
     reused: bool = False
     error: str = ""
+
+    @property
+    def expect(self) -> Path:
+        return self.source.parent / EXPECT_DIR / f"{self.lang}.json"
+
+    @property
+    def prompt(self) -> str:
+        return (self.summary.get("shape") or {}).get("prompt", NONE)
 
 
 def aliases_of(args) -> list[str]:
@@ -73,13 +113,15 @@ def bare_stem(path: Path) -> str:
     return stem[: -len(BLANK)] if stem.endswith(BLANK) else stem
 
 
-# The file handed to the model is the blank one; the one with the good
-# translation inside is its neighbour, and it is the yardstick of every pass.
-def reference_for(path: Path, args) -> Path:
+# The file handed to the model is the blank one; a neighbour with the good
+# translation inside, when there is one, adds its answers to the references.
+def reference_for(path: Path, args) -> Path | None:
     if args.reference is not None:
         return args.reference
 
-    return path.with_name(f"{bare_stem(path)}{path.suffix}")
+    neighbour = path.with_name(f"{bare_stem(path)}{path.suffix}")
+
+    return neighbour if neighbour.exists() and neighbour != path else None
 
 
 # An alias can also be a bare repository id, and its slashes would name
@@ -95,27 +137,62 @@ def stats_of(output: Path) -> Path:
     return output.with_suffix(".json")
 
 
-def shape_note(args, current: "Pass") -> dict:
+def code_print() -> str:
+    digest = hashlib.sha256()
+    here = Path(__file__).parent
+
+    for name in CODE_FILES:
+        digest.update((here / name).read_bytes())
+
+    return digest.hexdigest()[:PRINT]
+
+
+def prompt_print(current: Pass, args) -> str:
+    if current.alias == DEEPL:
+        return NONE
+
+    from .__main__ import next_batch, plan_file
+
+    root = read_xliff(current.source).getroot()
+    shape = {"profile": current.profile, "injection": args.inject}
+    jobs, _ = plan_file(root, pass_args(args, current.alias), shape)
+    size = 1 if current.profile == TRANSLATE else max(1, args.batch)
+    digest = hashlib.sha256()
+    start = 0
+
+    while start < len(jobs):
+        batch = next_batch(jobs, start, size)
+        messages = json.dumps(build_messages(batch), ensure_ascii=False, sort_keys=True)
+        digest.update(messages.encode("utf-8"))
+        start += batch.size
+
+    return digest.hexdigest()[:PRINT]
+
+
+def shape_note(args, current: Pass) -> dict:
     return {
         "profile": current.profile,
         "inject": current.inject,
         "batch": args.batch,
         "temperature": args.temperature,
+        "think": False if args.think == THINK_OFF else f"{args.think} {args.think_tokens}",
+        "prompt": prompt_print(current, args),
+        "code": code_print(),
     }
 
 
-def save_stats(args, current: "Pass") -> None:
-    payload = {**current.summary, "shape": shape_note(args, current)}
+def save_stats(args, current: Pass) -> None:
+    current.summary = {**current.summary, "shape": shape_note(args, current)}
 
     try:
         stats_of(current.output).write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+            json.dumps(current.summary, ensure_ascii=False, indent=2), encoding="utf-8"
         )
     except OSError:
         pass
 
 
-def load_stats(current: "Pass") -> dict:
+def load_stats(current: Pass) -> dict:
     path = stats_of(current.output)
 
     try:
@@ -192,7 +269,7 @@ def summary_of(reporter: Reporter, elapsed: float) -> dict:
     }
 
 
-def checked(args, reporter) -> list[tuple[Path, Path]] | None:
+def checked(args, reporter) -> list[tuple[Path, Path | None]] | None:
     paths = inputs_of(args)
     pairs = []
 
@@ -210,13 +287,13 @@ def checked(args, reporter) -> list[tuple[Path, Path]] | None:
         reference = reference_for(path, args)
 
         for target in (path, reference):
-            if not target.exists():
+            if target is not None and not target.exists():
                 reporter.warn(f"ERROR: file does not exist: {target}")
 
                 return None
 
         if reference == path:
-            reporter.warn(f"ERROR: {path} is its own reference. Give --reference.")
+            reporter.warn(f"ERROR: {path} is its own reference.")
 
             return None
 
@@ -227,7 +304,7 @@ def checked(args, reporter) -> list[tuple[Path, Path]] | None:
 
 # Model by model rather than file by file: the weights are loaded once per pass
 # either way, and this order lets an interrupted bench end on a whole model.
-def planned(args, pairs: list[tuple[Path, Path]], out: Path) -> list[Pass]:
+def planned(args, pairs: list[tuple[Path, Path | None]], out: Path) -> list[Pass]:
     plan = []
 
     for alias in aliases_of(args):
@@ -311,17 +388,20 @@ def translate_all(plan: list[Pass], args, reporter, translate, deepl) -> None:
         run_pass(current, args, reporter, translate, deepl)
 
 
-def sheets_of(group: list[Pass], scopes: list[str]) -> dict[str, Sheet]:
+def scored(group: list[Pass], args) -> dict[str, dict[str, Verdict]]:
+    first = group[0]
+    expectations = load_expectations(first.expect)
+    reference = answers_of(first.reference, args.scope)[1] if first.reference else {}
     sheets = {}
 
     for current in group:
         if current.error or not current.output.exists():
             continue
 
-        sheet = sheet_of(current.output, scopes)
+        verdicts = verdicts_of(current.output, expectations, reference, args.scope)
 
-        if sheet.answers:
-            sheets[current.alias] = sheet
+        if any(verdict.answer.target for verdict in verdicts.values()):
+            sheets[current.alias] = verdicts
 
     return sheets
 
@@ -330,48 +410,51 @@ def blank_row(current: Pass, headings: tuple[str, ...], why: str) -> tuple[str, 
     return (current.alias, why, *(NONE for _ in headings[2:]))
 
 
-def failed_checks(summary: dict) -> str:
-    tally = summary.get("tally") or {}
-    counts = Counter(tally.get("batch_issues") or {})
-    counts.update(tally.get("single_issues") or {})
-
-    return ", ".join(f"{code} {count}" for code, count in counts.most_common()) or NONE
+def ratio(part: int, whole: int) -> str:
+    return f"{part}/{whole}" if whole else NONE
 
 
-def quality_row(current: Pass, scores: list[float], missing: int) -> tuple[str, ...]:
-    review = current.summary.get("review")
+def quality_row(current: Pass, verdicts: dict[str, Verdict]) -> tuple[str, ...]:
+    summary = summarise(verdicts)
+    answered = len([verdict for verdict in verdicts.values() if verdict.answer.target])
 
     return (
         current.alias,
-        current.profile,
-        current.inject,
-        str(len(scores)),
-        str(missing),
-        f"{mean(scores):.1f}",
-        f"{min(scores):.1f}",
-        str(len([score for score in scores if score < WEAK])),
-        NONE if review is None else str(review),
-        failed_checks(current.summary),
+        current.prompt,
+        ratio(answered, summary.units),
+        str(summary.critical),
+        str(summary.major),
+        str(summary.minor),
+        f"{100 * summary.clean / summary.units:.0f}%" if summary.units else NONE,
+        ratio(summary.met, summary.expected),
+        ratio(summary.groups_ok, summary.groups),
+        NONE if summary.score is None else f"{summary.score:.1f}",
+        str(summary.review),
     )
 
 
-def quality_rows(group: list[Pass], gold: Sheet, sheets: dict[str, Sheet]) -> list[tuple]:
-    rows = [QUALITY]
+def standing(verdicts: dict[str, Verdict]) -> tuple:
+    summary = summarise(verdicts)
+
+    return (
+        summary.critical,
+        summary.expected - summary.met,
+        summary.major,
+        -(summary.score or 0.0),
+        summary.minor,
+    )
+
+
+def quality_rows(group: list[Pass], sheets: dict[str, dict[str, Verdict]]) -> list[tuple]:
+    rated = sorted(
+        (current for current in group if current.alias in sheets),
+        key=lambda current: standing(sheets[current.alias]),
+    )
+    rows = [QUALITY, *(quality_row(current, sheets[current.alias]) for current in rated)]
 
     for current in group:
-        sheet = sheets.get(current.alias)
-
-        if sheet is None:
+        if current.alias not in sheets:
             rows.append(blank_row(current, QUALITY, "failed" if current.error else "no answers"))
-            continue
-
-        ids = shared_ids([sheet, gold])
-
-        if not ids:
-            rows.append(blank_row(current, QUALITY, "no unit in common"))
-            continue
-
-        rows.append(quality_row(current, between(sheet, gold, ids), len(gold.answers) - len(ids)))
 
     return rows
 
@@ -413,33 +496,46 @@ def cost_rows(group: list[Pass]) -> list[tuple]:
     return rows
 
 
-def by_scope(sheet: Sheet, ids: list[str]) -> dict[str, list[str]]:
-    grouped: dict[str, list[str]] = {}
+def code_rows(sheets: dict[str, dict[str, Verdict]]) -> list[tuple]:
+    counts = {alias: summarise(verdicts).codes for alias, verdicts in sheets.items()}
+    codes = sorted({code for tally in counts.values() for code in tally})
 
-    for unit in ids:
-        grouped.setdefault(sheet.answers[unit].scope, []).append(unit)
+    if not codes:
+        return []
 
-    return grouped
+    rows = [("model", *codes)]
+
+    for alias, tally in counts.items():
+        rows.append((alias, *(str(tally.get(code, 0)) for code in codes)))
+
+    return rows
 
 
-def scope_rows(group: list[Pass], gold: Sheet, sheets: dict[str, Sheet]) -> list[tuple]:
-    grouped = by_scope(gold, list(gold.answers))
-    scopes = sorted(grouped)
-    rows = [("model", *scopes)]
+def axis_rows(sheets: dict[str, dict[str, Verdict]]) -> list[tuple]:
+    tallies = {alias: by_axis(verdicts) for alias, verdicts in sheets.items()}
+    axes = sorted({axis for tally in tallies.values() for axis in tally})
 
-    for current in group:
-        sheet = sheets.get(current.alias)
+    if not axes:
+        return []
 
-        if sheet is None:
-            continue
+    rows = [("model", *axes)]
 
-        scored = []
+    for alias, tally in tallies.items():
+        rows.append((alias, *(ratio(*tally[axis]) if axis in tally else NONE for axis in axes)))
 
-        for scope in scopes:
-            ids = [unit for unit in grouped[scope] if unit in sheet.answers]
-            scored.append(f"{mean(between(sheet, gold, ids)):.1f}" if ids else NONE)
+    return rows
 
-        rows.append((current.alias, *scored))
+
+def pair_rows(sheets: dict[str, dict[str, Verdict]], aspect: str) -> list[tuple]:
+    if len(sheets) < 2:
+        return []
+
+    rows = [PAIRS]
+
+    for left, right in combinations(sheets, 2):
+        wins, losses, ties = duel(sheets[left], sheets[right], aspect)
+        p = f"{sign_test(wins, losses):.2f}"
+        rows.append((left, right, str(wins), str(losses), str(ties), p))
 
     return rows
 
@@ -449,46 +545,96 @@ def cells(row: tuple[str, ...]) -> str:
 
 
 def table(rows: list[tuple]) -> list[str]:
+    if not rows:
+        return []
+
     head, *body = rows
     lines = [f"| {cells(head)} |", f"| {' | '.join('---' for _ in head)} |"]
 
     return lines + [f"| {cells(row)} |" for row in body]
 
 
-def worst_block(group: list[Pass], gold: Sheet, sheets: dict[str, Sheet], worst: int) -> list[str]:
-    rated = [sheets[current.alias] for current in group if current.alias in sheets]
+def titled(title: str, rows: list[tuple]) -> list[str]:
+    return ["", title, "", *table(rows)] if rows else []
 
-    if not rated:
-        return []
 
-    ids = shared_ids([gold, *rated])
+def failing_units(sheets: dict[str, dict[str, Verdict]]) -> list[str]:
+    counts: Counter = Counter()
 
-    if not ids:
-        return ["", "No unit is answered by every pass, so there is nothing to line up."]
+    for verdicts in sheets.values():
+        counts.update(unit for unit, verdict in verdicts.items() if failing(verdict))
 
-    scores = per_unit(rated, ids, gold)
-    shown = min(worst, len(ids))
+    return sorted(counts, key=lambda unit: (-counts[unit], unit))
+
+
+def failure_lines(sheets: dict[str, dict[str, Verdict]], unit: str, width: int) -> list[str]:
+    verdicts = [(alias, sheet[unit]) for alias, sheet in sheets.items() if unit in sheet]
+    answer, expectation = verdicts[0][1].answer, verdicts[0][1].expectation
+    lines = [
+        f"\n{answer.scope}/{answer.name}",
+        f"  {'source'.ljust(width)}  {answer.shown_source!r}",
+    ]
+
+    if expectation.refs:
+        lines.append(f"  {'ref'.ljust(width)}  {expectation.refs[0]!r}")
+
+    for alias, verdict in verdicts:
+        target = verdict.answer.shown_target
+        lines.append(f"  {alias.ljust(width)}  {target!r}  [{details(verdict)}]")
+
+    return lines
+
+
+def failure_block(sheets: dict[str, dict[str, Verdict]], worst: int) -> list[str]:
+    units = failing_units(sheets)
+
+    if not units:
+        return ["", "No unit failed a critical check or an expectation."]
+
+    width = max(len("source"), *(len(alias) for alias in sheets))
+    lines = [line for unit in units[:worst] for line in failure_lines(sheets, unit, width)]
 
     return [
         "",
-        f"Where they disagree most, worst {shown} of {len(ids)} "
-        "(mean chrF against the reference):",
+        f"Where they fail, {min(worst, len(units))} of {len(units)} units with a critical "
+        "check or an expectation broken:",
         "",
         "```",
-        *worst_lines([gold, *rated], ids, scores, worst),
+        *lines,
         "```",
+    ]
+
+
+def expectation_note(group: list[Pass]) -> str:
+    first = group[0]
+    expectations = load_expectations(first.expect)
+    written = len([unit for unit in expectations.units.values() if unit.count or unit.refs])
+
+    if not written:
+        return "No expectations written for this language: automatic checks only."
+
+    return f"Expectations: `{first.expect}` ({written} units)."
+
+
+def mixed_note(group: list[Pass]) -> list[str]:
+    prints = {current.prompt for current in group if current.prompt != NONE}
+
+    if len(prints) < 2:
+        return []
+
+    return [
+        "",
+        "**Not every pass ran with the same prompt** (column `prompt`): compare them with care.",
     ]
 
 
 def section(group: list[Pass], args, reporter) -> list[str]:
     lang = group[0].lang
-    gold = sheet_of(group[0].reference, args.scope)
-    sheets = sheets_of(group, args.scope)
-    quality = quality_rows(group, gold, sheets)
-
+    sheets = scored(group, args)
+    quality = quality_rows(group, sheets)
     cost = cost_rows(group)
 
-    reporter.say(f"\n{lang} · scored against {group[0].reference.name}\n")
+    reporter.say(f"\n{lang} · {group[0].source.name}\n")
     reporter.say(ruled(quality))
     reporter.say("")
     reporter.say(ruled(cost))
@@ -497,19 +643,16 @@ def section(group: list[Pass], args, reporter) -> list[str]:
         "",
         f"## {lang}",
         "",
-        f"Every pass scored against `{group[0].reference}` "
-        f"({len(gold.answers)} translated units).",
+        expectation_note(group),
+        *mixed_note(group),
         "",
         *table(quality),
-        "",
-        "Cost:",
-        "",
-        *table(cost),
-        "",
-        "chrF by scope:",
-        "",
-        *table(scope_rows(group, gold, sheets)),
-        *worst_block(group, gold, sheets, args.worst),
+        *titled("Cost:", cost),
+        *titled("Failed checks, by code:", code_rows(sheets)),
+        *titled("Expectations met, by axis:", axis_rows(sheets)),
+        *titled(BROKEN_TITLE, pair_rows(sheets, "broken")),
+        *titled(RANK_TITLE, pair_rows(sheets, "rank")),
+        *failure_block(sheets, args.worst),
     ]
 
 
@@ -535,9 +678,19 @@ def header(plan: list[Pass], args, out: Path) -> list[str]:
         f"- Models: {', '.join(f'`{alias}`' for alias in aliases)}",
         f"- Passes written to: `{out}`",
         f"- Settings: temperature {args.temperature}, batch up to {args.batch}, "
-        "translation memory off",
+        f"thinking {thinking_of(args)}, translation memory off",
+        f"- Code: `{code_print()}`",
         f"- Written: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
     ]
+
+
+def thinking_of(args) -> str:
+    if args.think == THINK_OFF:
+        return "off"
+
+    where = "on every call" if args.think == THINK_ALWAYS else "on the last try"
+
+    return f"up to {args.think_tokens} tokens {where}"
 
 
 def write_bench(path: Path, plan: list[Pass], args, reporter, out: Path) -> None:

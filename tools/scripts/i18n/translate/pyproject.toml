@@ -7,7 +7,8 @@ dependencies = [
 	"lxml>=5.3",
 	"huggingface-hub>=0.34",
 	"requests>=2.32",
-	"mlx-lm>=0.28; sys_platform == 'darwin' and platform_machine == 'arm64'",
+	"mlx>=0.32.4; sys_platform == 'darwin' and platform_machine == 'arm64'",
+	"mlx-lm>=0.32.0; sys_platform == 'darwin' and platform_machine == 'arm64'",
 ]
 
 [project.scripts]

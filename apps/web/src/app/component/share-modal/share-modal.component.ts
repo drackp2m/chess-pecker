@@ -7,9 +7,8 @@ import { TextareaDirective } from '@app/directive/textarea.directive';
 import { I18n } from '@app/i18n';
 import { Modal } from '@app/model/modal.model';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
-import { FriendshipRepository } from '@app/repository/friendship.repository';
 import { I18nService } from '@app/service/i18n.service';
-import { ApiCancelledError } from '@app/util/api-cancelled-error';
+import { FriendStore } from '@app/store/friend.store';
 
 /** What the modal was closed with. Nothing at all means it was dismissed. */
 export interface ShareChoice {
@@ -23,8 +22,9 @@ export interface ShareChoice {
 }
 
 /**
- * Picks who a finished exercise is sent to. The friend list is read here rather than taken
- * from `ProfileStore`, which would pull the requests and the blocks down with it.
+ * Picks who a finished exercise is sent to. The friend list comes from `FriendStore`, which
+ * the share button warms up beforehand, so the modal opens with it already in place and only
+ * refreshes it underneath.
  */
 @Component({
 	selector: 'app-share-modal',
@@ -35,14 +35,18 @@ export interface ShareChoice {
 export class ShareModalComponent extends Modal<ShareChoice | null> implements OnInit {
 	protected readonly I18n = I18n;
 
-	private readonly friendshipRepository = inject(FriendshipRepository);
+	private readonly friendStore = inject(FriendStore);
 	private readonly i18n = inject(I18nService);
 
 	readonly TITLE = this.i18n.translate(I18n.common.SHARE_TITLE);
 
-	readonly friends = signal<readonly FriendUser[]>([]);
-	readonly isLoading = signal(true);
-	readonly hasFailed = signal(false);
+	readonly friends = this.friendStore.friends;
+	readonly isLoading = computed(() => !this.friendStore.isLoaded());
+	readonly hasFailed = computed(() => this.isLoading() && this.friendStore.hasFailed());
+	readonly isEmpty = computed(() => !this.isLoading() && 0 === this.friends().length);
+	readonly selectPlaceholder = computed(() =>
+		this.isLoading() ? I18n.common.LOADING : I18n.common.SELECT_PLACEHOLDER,
+	);
 
 	// ToDo => the select carries one value, so a challenge goes to one friend at a time.
 	// The API, the request and everything below already take a list: when the select learns
@@ -61,7 +65,7 @@ export class ShareModalComponent extends Modal<ShareChoice | null> implements On
 	readonly canConfirm = computed(() => 0 < this.recipients().length);
 
 	ngOnInit(): void {
-		void this.loadFriends();
+		void this.friendStore.refresh();
 	}
 
 	selectFriend(event: Event): void {
@@ -85,20 +89,5 @@ export class ShareModalComponent extends Modal<ShareChoice | null> implements On
 
 	dismiss(): void {
 		this.close(null);
-	}
-
-	private async loadFriends(): Promise<void> {
-		try {
-			this.friends.set(await this.friendshipRepository.listFriends());
-		} catch (error: unknown) {
-			// A navigation cancels the read, and a modal that outlived one has nothing to
-			// report: what failed is the trip, and it was never asked for again.
-			if (!ApiCancelledError.is(error)) {
-				console.error('Could not load the friend list to share with', error);
-				this.hasFailed.set(true);
-			}
-		} finally {
-			this.isLoading.set(false);
-		}
 	}
 }

@@ -6,7 +6,8 @@ from dataclasses import dataclass, field
 from .context import parse_glossary, split_rules, useful_keep, useful_rules, useful_terms
 from .models import INSTRUCT, TRANSLATE
 from .placeholders import marker_position
-from .validate import FORM_SEPARATOR, Form, validate_forms
+from .samples import gender_of, plural_of
+from .validate import ECHO_ISSUE, FORM_SEPARATOR, Form, Issue, validate_forms
 from .xliff_io import (
     expected_markers_for,
     find_files,
@@ -54,6 +55,13 @@ PLURAL_RULES = """\
 - Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con «o».\
 """
 
+SAMPLE_RULES = """\
+## Los ejemplos de las notas
+- Usan a propósito palabras que no tienen nada que ver con la aplicación: enseñan cómo cambia \
+una frase, para que hagas lo mismo con las palabras del texto.
+- Sus palabras no van nunca en la traducción.\
+"""
+
 GENDER_RULES = """\
 ## Género
 - Esta frase se escribe para una persona concreta, y su nota dice para quién.
@@ -62,6 +70,18 @@ GENDER_RULES = """\
 concordar: no inventes terminaciones que el idioma no tenga.
 - Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con barras.\
 """
+
+CONFIRMATIONS = {
+    "untranslated": (
+        "Tu respuesta anterior es idéntica al original. Si en {lang} se escribe exactamente así, "
+        "repítela tal cual; si no, tradúcela."
+    ),
+    ECHO_ISSUE: (
+        "Tu respuesta anterior es la misma frase que la forma «many»: «{detail}». Si en {lang} "
+        "con los números de esta forma se escribe exactamente así, repítela tal cual; si no, "
+        "corrígela para esos números."
+    ),
+}
 
 CONTEXT_PREFIX = "- Qué es: "
 DEMAND_PREFIX = "- Usa sí o sí estas palabras: "
@@ -79,7 +99,9 @@ MIXED_GENDERS = (
 )
 
 PLURAL_LABEL = "plural"
-FORM_LABELS = {PLURAL_LABEL: "forma", "gender": "género"}
+GENDER_LABEL = "gender"
+NEUTRAL = "other"
+FORM_LABELS = {PLURAL_LABEL: "forma", GENDER_LABEL: "género"}
 TAG_ARROW = " ← "
 
 EXAMPLE = """\
@@ -194,15 +216,18 @@ class Unit:
     def gender(self) -> str:
         return " ".join(note_text(self.notes, "gender-note").split())
 
-    @property
-    def plural_key(self) -> str:
+    def form_key(self, label: str) -> str:
         for part in self.category.split(FORM_SEPARATOR):
             name, _, key = part.partition(":")
 
-            if name == PLURAL_LABEL:
+            if name == label:
                 return key
 
         return ""
+
+    @property
+    def plural_key(self) -> str:
+        return self.form_key(PLURAL_LABEL)
 
     @property
     def form_tag(self) -> str:
@@ -223,17 +248,35 @@ class Unit:
 
         return f"{wrapped}{TAG_ARROW}{tag}" if tag else wrapped
 
-    def plural_lines(self) -> list[str]:
+    def plural_lines(self, lang: str) -> list[str]:
         if not self.examples:
             return []
 
-        return [f"- Forma «{self.plural_key or self.category}»: {sentence(self.examples)}"]
+        line = f"- Forma «{self.plural_key or self.category}»: {sentence(self.examples)}"
+        sample = plural_of(lang, self.plural_key)
 
-    def gender_lines(self) -> list[str]:
+        if sample is None:
+            return [line]
+
+        words = ", ".join(f"«{word}»" for word in sample.words)
+        grammar = f" ({sample.grammar})" if sample.grammar else ""
+
+        return [f"{line} Ejemplo: {words}{grammar}."]
+
+    def gender_lines(self, lang: str) -> list[str]:
         if not self.gender:
             return []
 
-        return [f"- Género: {sentence(self.gender)}"]
+        line = f"- Género: {sentence(self.gender)}"
+        sample = gender_of(lang)
+
+        if sample is None or not self.neutral:
+            return [line]
+
+        return [
+            f"{line} Ejemplo: si a él se le dice «{sample.male}» y a ella «{sample.female}», aquí "
+            f"iría algo como «{sample.neutral}», nunca «{sample.slashed}»."
+        ]
 
     def markers_note(self) -> list[str]:
         lines = []
@@ -259,8 +302,18 @@ class Unit:
 
         return [DEMAND_PREFIX + ", ".join(pairs)] if pairs else []
 
-    def detail_lines(self) -> list[str]:
-        lines = self.gender_lines() + self.plural_lines()
+    @property
+    def neutral(self) -> bool:
+        return self.form_key(GENDER_LABEL) == NEUTRAL
+
+    def shows_sample(self, lang: str) -> bool:
+        if self.gender and self.neutral and gender_of(lang):
+            return True
+
+        return bool(self.examples) and plural_of(lang, self.plural_key) is not None
+
+    def detail_lines(self, lang: str) -> list[str]:
+        lines = self.gender_lines(lang) + self.plural_lines(lang)
         params = note_text(self.notes, "param")
 
         if params and self.markers:
@@ -276,10 +329,10 @@ class Unit:
 
         return lines
 
-    def note_lines(self) -> list[str]:
+    def note_lines(self, lang: str) -> list[str]:
         lines = [f"{CONTEXT_PREFIX}{self.context}"] if self.context else []
 
-        return self.demand_lines() + lines + self.detail_lines()
+        return self.demand_lines() + lines + self.detail_lines(lang)
 
 
 @dataclass
@@ -289,6 +342,7 @@ class Batch:
     attempt: int = 0
     reason: str = ""
     demand: tuple[tuple[str, str], ...] = ()
+    confirm: Issue | None = None
 
     @property
     def size(self) -> int:
@@ -341,6 +395,11 @@ class Batch:
 
         return f"{GENDER_RULES}\n{MIXED_GENDERS}"
 
+    def sample_section(self) -> str:
+        lang = self.block.target_lang
+
+        return SAMPLE_RULES if any(unit.shows_sample(lang) for unit in self.units) else ""
+
     def named_terms(self) -> set[str]:
         return {source.casefold() for unit in self.units for source, _ in unit.terms}
 
@@ -369,6 +428,11 @@ class Batch:
         if not (self.attempt and self.reason):
             return ""
 
+        if self.confirm is not None:
+            return CONFIRMATIONS[self.confirm.code].format(
+                lang=self.block.target_lang, detail=self.confirm.detail
+            )
+
         lines = [
             f"Tu respuesta anterior se rechazó: {self.reason}. Responde otra vez con "
             "sólo la traducción, corrigiendo eso."
@@ -391,6 +455,7 @@ class Batch:
             self.marker_section(),
             self.plural_section(),
             self.gender_section(),
+            self.sample_section(),
             self.glossary_section(),
             self.retry_section(),
             self.example_section(),
@@ -400,7 +465,7 @@ class Batch:
 
     def one(self) -> str:
         unit = self.units[0]
-        notes = unit.note_lines()
+        notes = unit.note_lines(self.block.target_lang)
         parts = []
 
         if notes:
@@ -434,7 +499,7 @@ class Batch:
             if unit.context:
                 lines.append(self.context_line(unit, index, seen))
 
-            lines.extend(f"  {note}" for note in unit.detail_lines())
+            lines.extend(f"  {note}" for note in unit.detail_lines(self.block.target_lang))
 
         return (
             f"Traduce al {self.block.target_lang} los {self.size} textos numerados. Responde "

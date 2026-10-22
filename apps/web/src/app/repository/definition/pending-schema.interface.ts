@@ -14,7 +14,11 @@ export interface PendingRow extends LocalRecord {
 }
 
 export interface PendingSchema extends DBSchema {
-	row: { key: string; value: PendingRow; indexes: { pendingSince: Date; rejectedAt: Date } };
+	row: {
+		key: string;
+		value: PendingRow;
+		indexes: { clientRef: string; pendingSince: Date; rejectedAt: Date };
+	};
 }
 
 /**

@@ -10,6 +10,7 @@ from pathlib import Path
 GAVE_UP = 0
 TRACE_LINES = 6
 ORDINALS = {1: "first try", 2: "second", 3: "third", 4: "fourth"}
+THOUGHTS = "thoughts.jsonl"
 
 
 @dataclass
@@ -136,6 +137,10 @@ def counted(issues: Counter) -> str:
     return ", ".join(f"{code} {count}" for code, count in issues.most_common())
 
 
+def thoughts_of(output: Path) -> Path:
+    return output.with_name(f"{output.stem}.{THOUGHTS}")
+
+
 @dataclass
 class Reporter:
     as_json: bool = False
@@ -144,6 +149,7 @@ class Reporter:
     groups: list[dict] = field(default_factory=list)
     files: list[dict] = field(default_factory=list)
     finished: dict = field(default_factory=dict)
+    log: Path | None = None
 
     def reset(self) -> None:
         self.started = time.perf_counter()
@@ -187,6 +193,7 @@ class Reporter:
 
     def file_started(self, path: Path, output: Path, pending: int, total: int) -> None:
         self.files.append({"input": str(path), "output": str(output), "pending": pending})
+        self.log = thoughts_of(output)
         self.emit(
             {
                 "event": "file",
@@ -224,6 +231,34 @@ class Reporter:
         for issue in record.issues:
             self.say(f"    ! {issue}")
 
+    def thought(self, units: list[str], attempt: int, reason: str, thought, answer: str) -> None:
+        entry = {
+            "units": units,
+            "attempt": attempt,
+            "reason": reason,
+            "tokens": thought.tokens,
+            "seconds": round(thought.seconds, 1),
+            "cut": thought.cut,
+            "thought": thought.text,
+            "answer": answer,
+        }
+        ending = "cut off before answering" if thought.cut else "then answered"
+
+        self.emit({"event": "thought", **entry})
+        self.say(
+            f"  reasoned over {len(units)} unit(s): {thought.tokens} tokens in "
+            f"{thought.seconds:.0f}s, {ending}"
+        )
+
+        if self.log is None:
+            return
+
+        try:
+            with self.log.open("a", encoding="utf-8") as handle:
+                handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        except OSError:
+            pass
+
     def forms_checked(self, scope: str, key: str, issues: list) -> None:
         if not issues:
             return
@@ -258,6 +293,9 @@ class Reporter:
             "review": len(self.reviewed),
             "forms_flagged": len(self.groups),
             "calls": engine.usage.calls,
+            "thinking_calls": engine.usage.thoughts,
+            "thinking_cut": engine.usage.thoughts_cut,
+            "thinking_seconds": round(engine.usage.thinking_seconds, 1),
             "prompt_tokens": engine.usage.prompt_tokens,
             "generation_tokens": engine.usage.generation_tokens,
             **{key: round(value, 2) for key, value in rates.items()},
@@ -280,6 +318,13 @@ class Reporter:
             f"{summary['calls']} model calls · "
             f"{summary['prompt_tokens_per_call']:.0f} prompt tokens/call"
         )
+
+        if summary["thinking_calls"]:
+            self.say(
+                f"{summary['thinking_calls']} call(s) reasoned for "
+                f"{summary['thinking_seconds']:.0f}s, {summary['thinking_cut']} of them cut "
+                "off before answering"
+            )
 
         for line in tally.lines():
             self.say(line if line.startswith(" ") else f"\n{line}")

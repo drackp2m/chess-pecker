@@ -7,6 +7,7 @@ import { AttemptRow } from '@app/repository/definition/attempt-schema.interface'
 import { PuzzleRepository } from '@app/repository/puzzle.repository';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
+import { LocalKeyUseCase } from '@app/use-case/sync/local-key.use-case';
 import { PuzzleMapper } from '@app/util/puzzle-mapper';
 import { isWholeCycle } from '@app/util/whole-cycle';
 
@@ -38,8 +39,10 @@ export class TrainingHistoryUseCase {
 	private readonly puzzles = inject(PuzzleRepository);
 	private readonly local = inject(TrainingLocalRepository);
 	private readonly cycles = inject(LocalCycleUseCase);
+	private readonly keys = inject(LocalKeyUseCase);
 
-	async list(scope: TrainingHistoryScope): Promise<readonly SolvedAttempt[]> {
+	async list(asked: TrainingHistoryScope): Promise<readonly SolvedAttempt[]> {
+		const scope = await this.currentScope(asked);
 		const placement = await this.resolvePlacement(scope);
 
 		if (undefined === placement) {
@@ -55,6 +58,18 @@ export class TrainingHistoryUseCase {
 		const entries = await Promise.all(finished.map((row) => this.toEntry(row, placement)));
 
 		return entries.filter((entry): entry is SolvedAttempt => undefined !== entry);
+	}
+
+	private async currentScope(scope: TrainingHistoryScope): Promise<TrainingHistoryScope> {
+		const { roundUuid } = scope;
+
+		return {
+			...scope,
+			trainingUuid: await this.keys.current('training', scope.trainingUuid),
+			...(undefined === roundUuid
+				? {}
+				: { roundUuid: await this.keys.current('calibrationRound', roundUuid) }),
+		};
 	}
 
 	private async resolvePlacement(

@@ -1,194 +1,126 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { collectUsages, readScopes } from '../catalogue/collect.mjs';
+import { readScopes } from '../catalogue/collect.mjs';
 import { DEFAULTS } from '../catalogue/config.mjs';
-import { readContext, termsIn } from '../catalogue/context.mjs';
-import { hashOf } from '../catalogue/freshness.mjs';
+import { readContext } from '../catalogue/context.mjs';
 import { buildExport } from '../transfer/build.mjs';
-import { buildXliff } from '../transfer/xliff.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
-const ICU_FILE = 'bench-icu';
-const ORIGINAL = 'tools/scripts/i18n/bench/bench.json';
-const FILE_LEVELS = new Set(['app', 'language', 'scope']);
+const ROOT = path.resolve(DIR, '..', '..', '..', '..');
+const LIVE_I18N = path.resolve(ROOT, DEFAULTS.i18nDir);
+const ROOT_SCOPE = 'common';
 
-const load = (...names) => JSON.parse(readFileSync(path.join(DIR, ...names), 'utf8'));
+const snapshot = JSON.parse(readFileSync(path.join(DIR, 'snapshot.json'), 'utf8'));
 
-const scopeOf = (key) => key.split('.')[0];
+const valueOf = (scope, key) => (scope.prefixed ? `${scope.name}.${key.id}` : key.id);
 
-const bench = load('bench.json');
+const scopeDir = (base, scope) => (ROOT_SCOPE === scope.name ? base : path.join(base, scope.name));
 
-function idsByKey(scopes) {
-	const ids = new Map();
+function keysFile(scope) {
+	const lines = scope.keys.map((key) => `\t${key.name}: '${valueOf(scope, key)}',`);
 
-	for (const scope of scopes) {
-		for (const entry of scope.keys?.entries ?? []) {
-			ids.set(`${scope.name}.${entry.name}`, entry.value);
-		}
+	return [`export const ${scope.const} = {`, ...lines, '} as const;', ''].join('\n');
+}
+
+function paramsFile(scope) {
+	const entries = scope.keys
+		.filter((key) => undefined !== key.params)
+		.flatMap((key) => [
+			`\t'${valueOf(scope, key)}': {`,
+			...Object.entries(key.params).map(([name, type]) => `\t\t${name}: ${type};`),
+			'\t};',
+		]);
+
+	return [`export interface ${scope.const}Params {`, ...entries, '}', ''].join('\n');
+}
+
+function sourcesOf(scope) {
+	return Object.fromEntries(scope.keys.map((key) => [key.id, key.source]));
+}
+
+function writeCatalogue(base) {
+	for (const scope of snapshot.scopes) {
+		const dir = scopeDir(base, scope);
+
+		mkdirSync(dir, { recursive: true });
+		writeFileSync(path.join(dir, 'keys.ts'), keysFile(scope), 'utf8');
+		writeFileSync(path.join(dir, 'params.ts'), paramsFile(scope), 'utf8');
+		writeFileSync(
+			path.join(dir, `${DEFAULTS.defaultLang}.json`),
+			`${JSON.stringify(sourcesOf(scope), null, '\t')}\n`,
+			'utf8',
+		);
 	}
-
-	return ids;
 }
 
-function wantedIds(ids) {
-	const wanted = new Map();
+const namesOf = (scope) =>
+	(scope.keys?.entries ?? []).map((entry) => `${scope.name}.${entry.name}`);
 
-	for (const { key } of bench.real) {
-		const id = ids.get(key);
+function liveNames() {
+	const scopes = readScopes({ i18nDir: LIVE_I18N, langs: [DEFAULTS.defaultLang] });
 
-		if (undefined === id) {
-			throw new Error(`bench.json names ${key}, which is not in the catalogue`);
-		}
-
-		wanted.set(id, key);
-	}
-
-	return wanted;
+	return new Set(scopes.flatMap(namesOf));
 }
 
-function pickedFiles(document, wanted, gold) {
-	return document.files
-		.map((file) => ({
-			...file,
-			units: file.units
-				.filter((unit) => wanted.has(unit.id))
-				.map((unit) => ({ ...unit, target: gold[wanted.get(unit.id)] ?? '' })),
-		}))
-		.filter((file) => 0 !== file.units.length);
+function gone() {
+	const live = liveNames();
+
+	return snapshot.scopes.flatMap((scope) =>
+		scope.keys.map((key) => `${scope.name}.${key.name}`).filter((name) => !live.has(name)),
+	);
 }
 
-const termLine = (term, lang) => {
-	const target = term.translations?.[lang];
-	const note = undefined === term.note ? '' : ` — ${term.note}`;
+const fingerprint = (content) => createHash('sha256').update(content).digest('hex').slice(0, 12);
 
-	return `${term.term}${undefined === target ? '' : ` → ${target}`}${note}`;
-};
-
-function glossaryNotes(context, lang, sources) {
-	const { glossary } = context;
-	const lines = termsIn(glossary, sources).map((term) => termLine(term, lang));
-	const keep = glossary.keep ?? [];
-
-	if (0 !== keep.length) {
-		lines.push(`No traducir nunca: ${keep.join(', ')}`);
-	}
-
-	return 0 === lines.length ? [] : [{ category: 'glossary', text: lines.join('\n') }];
-}
-
-function icuNotes(entry, category, examples) {
-	const kind = 'plural' === entry.kind ? 'examples' : 'gender-note';
-
-	return [
-		{ category: 'key', text: entry.key },
-		{ category: 'category', text: `${entry.kind}:${category}` },
-		{ category: kind, text: examples },
-		{ category: 'siblings', text: entry.siblings },
-		{ category: 'context', text: entry.context },
-		{ category: 'srcHash', text: hashOf(entry.source) },
-	];
-}
-
-function icuUnits(entry, lang, gold) {
-	return Object.entries(entry.categories[lang] ?? {}).map(([category, examples]) => {
-		const id = `${entry.key}#${entry.kind}:${category}`;
-
-		return {
-			id,
-			notes: icuNotes(entry, category, examples),
-			source: entry.source,
-			target: gold[id] ?? '',
-		};
+function exportFor(lang, base, scopes, context) {
+	return buildExport({
+		scopes,
+		defaultLang: DEFAULTS.defaultLang,
+		lang,
+		usages: new Map(),
+		root: base,
+		context,
+		blank: true,
+		i18nDir: base,
+		states: new Map(scopes.map((scope) => [scope.name, { data: {} }])),
 	});
 }
 
-// One block per scope, with that scope's own notes, because that is what the export
-// emits: the ICU units are keys of `puzzle`, `common` and `training`, and putting them
-// under one heading of their own would hand the model a scope note no real run sends.
-function icuFile(context, scope, lang, gold) {
-	const units = bench.icu
-		.filter((entry) => scopeOf(entry.key) === scope)
-		.flatMap((entry) => icuUnits(entry, lang, gold));
-	const shared = context
-		.contextFor(scope, '', lang)
-		.filter((layer) => FILE_LEVELS.has(layer.level))
-		.map(({ level, text }) => ({ category: level, text }));
-	const sources = units.map((unit) => unit.source);
+const keyCount = (document) =>
+	new Set(document.files.flatMap((file) => file.units.map((unit) => unit.id.split('#')[0]))).size;
 
-	return {
-		id: `${ICU_FILE}-${scope}`,
-		original: ORIGINAL,
-		notes: [...shared, ...glossaryNotes(context, lang, sources)],
-		units,
-	};
-}
+function build(base) {
+	writeCatalogue(base);
 
-function icuFiles(context, lang, gold) {
-	const scopes = [...new Set(bench.icu.map((entry) => scopeOf(entry.key)))];
+	const langs = [DEFAULTS.defaultLang];
+	const scopes = readScopes({ i18nDir: base, langs, rootScope: ROOT_SCOPE });
+	const context = readContext({ i18nDir: LIVE_I18N });
 
-	return scopes.map((scope) => icuFile(context, scope, lang, gold));
-}
+	for (const lang of snapshot.langs) {
+		const document = exportFor(lang, base, scopes, context);
+		const units = `${document.total} unidades de ${keyCount(document)} claves`;
 
-function missing(files, gold, wanted) {
-	const written = new Set(
-		files.flatMap((file) => file.units.map((unit) => wanted.get(unit.id) ?? unit.id)),
-	);
-	const holes = files.flatMap((file) =>
-		file.units.filter((unit) => '' === unit.target).map((unit) => wanted.get(unit.id) ?? unit.id),
-	);
-	const spare = Object.keys(gold).filter((key) => !written.has(key));
-
-	return { holes, spare };
-}
-
-const blanked = (files) =>
-	files.map((file) => ({
-		...file,
-		units: file.units.map((unit) => ({ ...unit, target: '', state: 'initial' })),
-	}));
-
-function write(lang, files, defaultLang) {
-	const xliff = (blocks) => buildXliff({ srcLang: defaultLang, trgLang: lang, files: blocks });
-
-	writeFileSync(path.join(DIR, `${lang}.xlf`), xliff(files), 'utf8');
-	writeFileSync(path.join(DIR, `${lang}.blank.xlf`), xliff(blanked(files)), 'utf8');
-}
-
-function report(lang, files, gold, wanted) {
-	const total = files.reduce((count, file) => count + file.units.length, 0);
-	const { holes, spare } = missing(files, gold, wanted);
-
-	console.log(`  ${lang}: ${total} unidades en ${files.length} bloques`);
-
-	for (const id of holes) {
-		console.log(`    ✖ sin traducción buena: ${id}`);
+		writeFileSync(path.join(DIR, `${lang}.blank.xlf`), document.content, 'utf8');
+		console.log(`  ${lang}: ${units} · huella ${fingerprint(document.content)}`);
 	}
-
-	for (const id of spare) {
-		console.log(`    ⚠ sobra en gold/${lang}.json: ${id}`);
-	}
-
-	return 0 === holes.length;
 }
 
-const options = { ...DEFAULTS };
-const scopes = readScopes(options);
-const context = readContext(options);
-const { usages } = collectUsages(options.sourceDirs);
-const wanted = wantedIds(idsByKey(scopes));
+const base = mkdtempSync(path.join(tmpdir(), 'chesspecker-bench-'));
 
-let complete = true;
-
-for (const lang of bench.langs) {
-	const gold = load('gold', `${lang}.json`);
-	const document = buildExport({ ...options, scopes, lang, usages, context, blank: true });
-	const files = [...pickedFiles(document, wanted, gold), ...icuFiles(context, lang, gold)];
-
-	write(lang, files, options.defaultLang);
-	complete = report(lang, files, gold, wanted) && complete;
+try {
+	console.log(`Banco v${snapshot.version}, congelado el ${snapshot.frozen} (${snapshot.commit})`);
+	build(base);
+} finally {
+	rmSync(base, { recursive: true, force: true });
 }
 
-process.exit(complete ? 0 : 1);
+const missing = gone();
+
+for (const name of missing) {
+	console.log(`  ⚠ ya no está en el catálogo, su nota de contexto puede haberse perdido: ${name}`);
+}

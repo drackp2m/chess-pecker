@@ -4,6 +4,7 @@ import type { PushTrainingResult } from '@chesspecker/api-definitions';
 
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { SyncRepository } from '@app/repository/sync.repository';
+import { OrphanRepairUseCase } from '@app/use-case/sync/orphan-repair.use-case';
 import { RekeyUseCase } from '@app/use-case/sync/rekey.use-case';
 import {
 	NOTHING_SETTLED,
@@ -57,10 +58,13 @@ export class SyncPushUseCase {
 	private readonly remote = inject(SyncRepository);
 	private readonly rekey = inject(RekeyUseCase);
 	private readonly confirmer = inject(SyncConfirmUseCase);
+	private readonly orphans = inject(OrphanRepairUseCase);
 
 	async execute(): Promise<SyncPushReport> {
 		let settled = NOTHING_SETTLED;
 		let interrupted = false;
+
+		await this.reattachOrphans();
 
 		for (const trainingUuid of await this.trees.listPending()) {
 			const outcome = await this.pushTraining(trainingUuid);
@@ -78,6 +82,14 @@ export class SyncPushUseCase {
 		const pending = await this.trees.listPending();
 
 		return { ...settled, pendingTrainings: pending.length, interrupted };
+	}
+
+	private async reattachOrphans(): Promise<void> {
+		try {
+			await this.orphans.execute();
+		} catch (error) {
+			console.error('Could not reattach the rows that still name a parent by its old uuid', error);
+		}
 	}
 
 	/** One tree in as many requests as it takes: what does not fit goes in the next. */

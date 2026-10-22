@@ -50,7 +50,7 @@ Explica el modelo de datos de la aplicación: se entrena contra el dispositivo y
 
 ## SYNC_*
 
-Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido.
+Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido. «Al día» es «sincronizado, sin nada pendiente», nunca «por día» ni «cada día».
 
 ## SYNC_ROWS
 

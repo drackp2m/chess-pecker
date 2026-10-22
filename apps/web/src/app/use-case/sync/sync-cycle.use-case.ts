@@ -16,6 +16,7 @@ import { PuzzleCatalogReplicaUseCase } from '@app/use-case/puzzle-catalog-replic
 import { RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
 import { SettingMirrorUseCase } from '@app/use-case/setting-mirror.use-case';
 import { ShareMirrorUseCase } from '@app/use-case/share-mirror.use-case';
+import { OrphanRepairUseCase } from '@app/use-case/sync/orphan-repair.use-case';
 import { SyncPullUseCase } from '@app/use-case/sync/sync-pull.use-case';
 import { SyncPushUseCase } from '@app/use-case/sync/sync-push.use-case';
 import { SyncStatus, SyncSummaryUseCase } from '@app/use-case/sync/sync-summary.use-case';
@@ -68,6 +69,7 @@ export class SyncCycleUseCase {
 	private readonly puller = inject(SyncPullUseCase);
 	private readonly catalog = inject(PuzzleCatalogReplicaUseCase);
 	private readonly repair = inject(RepairCycleUseCase);
+	private readonly orphans = inject(OrphanRepairUseCase);
 	private readonly shares = inject(ShareMirrorUseCase);
 	private readonly bookmarks = inject(BookmarkMirrorUseCase);
 	private readonly settings = inject(SettingMirrorUseCase);
@@ -207,10 +209,22 @@ export class SyncCycleUseCase {
 	}
 
 	private async heal(): Promise<boolean> {
+		const reattached = await this.reattachOrphans();
+
 		try {
-			return 0 < (await this.repair.repairAll()).length;
+			return 0 < (await this.repair.repairAll()).length || reattached;
 		} catch (error) {
 			console.error('Could not repair the cycles this device holds half of', error);
+
+			return reattached;
+		}
+	}
+
+	private async reattachOrphans(): Promise<boolean> {
+		try {
+			return 0 < (await this.orphans.execute());
+		} catch (error) {
+			console.error('Could not reattach the rows that still name a parent by its old uuid', error);
 
 			return false;
 		}

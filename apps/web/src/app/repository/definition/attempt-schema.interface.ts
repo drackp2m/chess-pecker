@@ -40,6 +40,7 @@ export interface AttemptSchema extends DBSchema {
 			cycleItemUuid: string;
 			'roundUuid-puzzleUuid': [string, string];
 			updatedAt: Date;
+			clientRef: string;
 			pendingSince: Date;
 			rejectedAt: Date;
 		};

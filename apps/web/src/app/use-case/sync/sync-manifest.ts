@@ -9,22 +9,22 @@ import { SyncableRow } from '@app/use-case/sync/local-record';
  * Which rows a push expects to confirm, by local uuid. The response can only name those born
  * on this device, so nothing else could seal one that came down and was touched after.
  */
-export type SyncManifest = Record<SyncEntity, readonly string[]>;
+export type SyncManifest = Record<SyncEntity, ReadonlyMap<string, number>>;
 
 /**
  * What the tree commits to uploading in this request, on a budget: a veteran account does
  * not fit in one call, and the overflow goes up next pass without duplicating anything.
  */
 export class SyncManifestBuilder {
-	private readonly rows: Record<SyncEntity, string[]> = {
-		training: [],
-		trainingGoal: [],
-		calibrationRound: [],
-		calibrationPuzzle: [],
-		trainingPuzzle: [],
-		cycle: [],
-		cycleItem: [],
-		attempt: [],
+	private readonly rows: Record<SyncEntity, Map<string, number>> = {
+		training: new Map(),
+		trainingGoal: new Map(),
+		calibrationRound: new Map(),
+		calibrationPuzzle: new Map(),
+		trainingPuzzle: new Map(),
+		cycle: new Map(),
+		cycleItem: new Map(),
+		attempt: new Map(),
 	};
 
 	private budget: number = SyncPolicy.pushBatchSize;
@@ -32,7 +32,7 @@ export class SyncManifestBuilder {
 
 	/** How many rows have to be confirmed once the server answers. */
 	get pending(): number {
-		return SYNC_ENTITIES.reduce((total, entity) => total + this.rows[entity].length, 0);
+		return SYNC_ENTITIES.reduce((total, entity) => total + this.rows[entity].size, 0);
 	}
 
 	/**
@@ -50,7 +50,7 @@ export class SyncManifestBuilder {
 
 		this.budget -= 1;
 		this.bytes -= weight;
-		this.rows[entity].push(row.uuid);
+		this.rows[entity].set(row.uuid, row.updatedAt.getTime());
 
 		return true;
 	}

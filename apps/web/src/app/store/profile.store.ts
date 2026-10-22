@@ -8,11 +8,11 @@ import { I18n, i18nRef } from '@app/i18n';
 import { FriendshipRepository } from '@app/repository/friendship.repository';
 import { UserRepository } from '@app/repository/user.repository';
 import { NO_SYNC_STATE, withSyncState } from '@app/store/feature/with-sync-state';
+import { FriendStore } from '@app/store/friend.store';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
 interface ProfileStoreProps {
-	friends: readonly FriendUser[];
 	received: readonly Friendship[];
 	sent: readonly Friendship[];
 	blocked: readonly UserBlock[];
@@ -24,7 +24,6 @@ interface ProfileStoreProps {
 }
 
 const initialState: ProfileStoreProps = {
-	friends: [],
 	received: [],
 	sent: [],
 	blocked: [],
@@ -43,9 +42,13 @@ export class ProfileStore
 {
 	private readonly friendshipRepository = inject(FriendshipRepository);
 	private readonly userRepository = inject(UserRepository);
+	private readonly friendStore = inject(FriendStore);
+
+	readonly friends = this.friendStore.friends;
 
 	reset(): void {
 		patchState(this, initialState, NO_SYNC_STATE);
+		this.friendStore.reset();
 	}
 
 	async load(): Promise<void> {
@@ -59,8 +62,8 @@ export class ProfileStore
 				this.friendshipRepository.listBlocked(),
 			]);
 
+			this.friendStore.replace(friends);
 			patchState(this, {
-				friends,
 				received: requests.received,
 				sent: requests.sent,
 				blocked,

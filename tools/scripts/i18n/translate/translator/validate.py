@@ -22,6 +22,13 @@ STOP_MARKERS = (
 THINK_CLOSED_RE = re.compile(r"^.*</think\s*>", re.DOTALL)
 THINK_OPEN_RE = re.compile(r"<think\s*>.*$", re.DOTALL)
 FENCED_RE = re.compile(r"⟦(.*?)⟧", re.DOTALL)
+WRITTEN_RE = re.compile(r"\{[^{}]*\}")
+SPECIAL_RE = re.compile(r"<\|?[A-Za-z_][\w-]*\|>|<\|[A-Za-z_][\w-]*>")
+INVERTED_MARKS = ("¿", "¡")
+INVERTING_LANGUAGES = frozenset({"es", "gl", "ast"})
+ECHO_ISSUE = "forms-plural-many"
+CONFIRMABLE = frozenset({"untranslated", ECHO_ISSUE})
+DOTTED_CAPITALS = {"tr": {"i": "İ"}, "az": {"i": "İ"}}
 LEAD_RE = re.compile(
     r"^\s*(?:here (?:is|'s)[^:\n]{0,40}|the translation[^:\n]{0,40}|translation|"
     r"traducci[óo]n[^:\n]{0,40}|traduction[^:\n]{0,40}|sure[^:\n]{0,40}|"
@@ -158,7 +165,30 @@ def extract(text: str, prefer: str) -> str:
     return (lines[-1] if prefer == "last" else lines[0]).strip()
 
 
-def clean(text: str, source: str, prefer: str = "first") -> str:
+def first_letter(text: str) -> int:
+    for index, char in enumerate(text):
+        if char.isalpha():
+            return index
+
+        if char.isalnum() or char == "_":
+            return -1
+
+    return -1
+
+
+def fix_case(text: str, source: str, lang: str = "") -> str:
+    wanted, given = first_letter(source), first_letter(text)
+
+    if wanted < 0 or given < 0 or not source[wanted].isupper() or not text[given].islower():
+        return text
+
+    letter = text[given]
+    capital = DOTTED_CAPITALS.get(base_of(lang), {}).get(letter, letter.upper())
+
+    return f"{text[:given]}{capital}{text[given + 1 :]}"
+
+
+def clean(text: str, source: str, prefer: str = "first", lang: str = "") -> str:
     cleaned = FENCE_RE.sub("", strip_control(str(text))).strip()
     cleaned = LEAD_RE.sub("", cleaned).strip()
     cleaned = unquote(cleaned)
@@ -168,7 +198,7 @@ def clean(text: str, source: str, prefer: str = "first") -> str:
     else:
         cleaned = FENCED_RE.sub(r"\1", cleaned).strip()
 
-    return fix_trailing(unquote(cleaned.strip()), source)
+    return fix_case(fix_trailing(unquote(cleaned.strip()), source), source, lang)
 
 
 def check_markers(text: str, expected: list[str]) -> list[Issue]:
@@ -188,6 +218,33 @@ def check_markers(text: str, expected: list[str]) -> list[Issue]:
         issues.append(Issue("placeholder-repeated", f"repetidos {', '.join(repeated)}", True))
 
     return issues
+
+
+def check_written(text: str, source: str) -> list[Issue]:
+    written = sorted({marker for marker in WRITTEN_RE.findall(text) if marker not in source})
+
+    if not written:
+        return []
+
+    detail = f"{', '.join(written)} no está en el original y no es un marcador"
+
+    return [Issue("placeholder-written", detail)]
+
+
+def check_special(text: str) -> list[Issue]:
+    found = sorted(set(SPECIAL_RE.findall(text)))
+
+    if not found:
+        return []
+
+    return [Issue("special-token", f"tokens internos del modelo: {', '.join(found)}")]
+
+
+def check_inverted(text: str, lang: str) -> list[Issue]:
+    if base_of(lang) in INVERTING_LANGUAGES or not any(mark in text for mark in INVERTED_MARKS):
+        return []
+
+    return [Issue("inverted-marks", "«¿» y «¡» sólo se escriben en español")]
 
 
 def measured(text: str) -> int:
@@ -470,6 +527,9 @@ def validate(
 
     return [
         *check_markers(text, markers),
+        *check_written(text, source),
+        *check_special(text),
+        *check_inverted(text, lang),
         *check_copy(text, source, keep),
         *check_script(text, lang, keep),
         *check_length(text, source),

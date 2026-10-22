@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { SyncRepository } from '@app/repository/sync.repository';
+import { OrphanRepairUseCase } from '@app/use-case/sync/orphan-repair.use-case';
 import { RekeyUseCase } from '@app/use-case/sync/rekey.use-case';
 import { SyncConfirmCount, SyncConfirmUseCase } from '@app/use-case/sync/sync-confirm.use-case';
 import { SyncManifest } from '@app/use-case/sync/sync-manifest';
@@ -32,14 +33,14 @@ interface Options {
 
 function emptyManifest(): SyncManifest {
 	return {
-		training: [],
-		trainingGoal: [],
-		calibrationRound: [],
-		calibrationPuzzle: [],
-		trainingPuzzle: [],
-		cycle: [],
-		cycleItem: [],
-		attempt: [],
+		training: new Map(),
+		trainingGoal: new Map(),
+		calibrationRound: new Map(),
+		calibrationPuzzle: new Map(),
+		trainingPuzzle: new Map(),
+		cycle: new Map(),
+		cycleItem: new Map(),
+		attempt: new Map(),
 	};
 }
 
@@ -69,7 +70,7 @@ function treePush(trainingUuid: string): TrainingTreePush {
 				cycles: [],
 			},
 		},
-		manifest: { ...emptyManifest(), training: [trainingUuid] },
+		manifest: { ...emptyManifest(), training: new Map([[trainingUuid, 0]]) },
 	};
 }
 
@@ -131,6 +132,7 @@ function configure(options: Options = {}) {
 			{ provide: SyncRepository, useValue: remote },
 			{ provide: RekeyUseCase, useValue: rekey },
 			{ provide: SyncConfirmUseCase, useValue: confirmer },
+			{ provide: OrphanRepairUseCase, useValue: { execute: vi.fn(() => Promise.resolve(0)) } },
 		],
 	});
 
