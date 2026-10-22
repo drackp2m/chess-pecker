@@ -12,9 +12,8 @@ import { JwtCookie } from '../definition/jwt-cookie.enum';
 @Injectable()
 export class JwtStrategyService extends PassportStrategy(Strategy) {
 	constructor(
-		// FixMe => configurationService private crash with "Property is declared but its value is never read"
 		@Inject(ConfigurationService)
-		protected readonly configurationService: ConfigurationService,
+		configurationService: ConfigurationService,
 		@Inject(UserRepository)
 		private readonly userRepository: UserRepository,
 	) {
