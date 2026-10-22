@@ -151,8 +151,9 @@ Two more things separate them:
 - **Thinking.** Qwen3 `14B` is a hybrid reasoning model. Left alone it would spend the whole token
   budget thinking and return nothing, so the engine turns it off twice over: through the chat
   template (`enable_thinking=False`) and with the `/no_think` switch appended to the user turn.
-  Reasoning is only switched back on, for any model whose template can do it, on the calls of
-  _Validation and review_ that come after a unit has already failed.
+  `--think` switches reasoning back on, for any model whose template can do it, only on the
+  calls of _Validation and review_ that come after a unit has already failed; `--think always`,
+  on every call.
 - **Whether the prompt cache survives.** The `qwen35-*` family is `Qwen3_5ForConditionalGeneration`:
   part attention, part linear-attention layers whose state is a recurrent `ArraysCache`. `mlx_lm`
   cannot trim that, so the cache is rebuilt on every call and the shared head is re-read every time
@@ -303,8 +304,10 @@ the call:
   dropped. So the end of the batch checks it instead. In a language that tells `few` from
   `many`, a `few` form written exactly like the `many` one was, in every bench pass, either that
   mistake or a sentence where the number governs nothing («# отклонено», «более # дней»). Only
-  the model can say which, so it is asked again on its own, quoting the `many` sentence, then once
-  more reasoning; the same sentence back both times is taken as its word.
+  the model can say which, and only reasoning: asked plainly, quoting the `many` sentence, it gave
+  the same sentence back for all five keys of the 21/10/2026 bench. So under `--think` that form
+  is asked once more, reasoning, and the same sentence back is taken as its word; without it the
+  check does nothing.
 - **The gender rules.** `## Género` travels the same way and only when the call carries a form of a
   gender select: agree with the person the form is written for, and — the counter-intuitive half —
   when there is no gender to agree with, turn the sentence around rather than invent an ending the
@@ -324,9 +327,10 @@ the call:
   that sentence too: it is copied without asking. Told to turn the sentence around, the model
   otherwise made something up to tell it apart — «S'has rendit» and «Etbemvenim» in Catalan,
   «Resignation occurred» in English. When it came back equal to only his or hers, it is asked
-  again on its own with that as the reason, then once more reasoning, and a miss keeps the first
-  answer and leaves it for review. Only those checks, out of the form checks: the others also fire
-  where the language does not mark the form (see the bench README).
+  again on its own with that as the reason (reasoning the second time under `--think`, and the
+  only time under `--think always`), and a miss keeps the first answer and leaves it for review.
+  Only those checks, out of the form checks: the others also fire where the language does not
+  mark the form (see the bench README).
 - **The forms travel together.** A batch is never cut through the forms of one key: when they do
   not fit in what is left of it, the batch ends before them. Otherwise the unspecified form of
   «Te has rendido» landed alone in the next call, without the two it has to differ from.
@@ -409,15 +413,28 @@ in uppercase — the Russian chart legends came back «подсказки», «�
 dotted `İ` where it applies, and nothing is touched when either text opens with a marker or a
 number.
 
-A rejected answer is retried with the reason attached, then with an example, and that last try
-lets the model reason first if its chat template can (`enable_thinking`, which Gemma 4 and Qwen 3
-have). The reasoning is asked for nowhere else but in the re-asks of the forms above, so it only
-costs time on units that were heading for review anyway, and the summary counts those calls. It
-gets 1024 tokens on top of the answer's budget and is cut off before the answer is read; one that
-runs out leaves an empty answer, which fails like any other. `--no-think` keeps every call as it
-was. What still fails is salvaged — dropped markers are re-attached — and the segment is written
-with `subState="chesspecker:review"` and listed at the end of the run. Nothing dubious is ever
-passed off as good.
+A rejected answer is retried with the reason attached, then with an example. Of the three
+answers, the one kept is the least broken — an empty one never wins, then the fewest hard
+failures, then the fewest failures, the later on a tie —, so a last try that goes worse does not
+throw away a usable one. What still fails is salvaged — dropped markers are re-attached — and the
+segment is written with `subState="chesspecker:review"` and listed at the end of the run. Nothing
+dubious is ever passed off as good.
+
+**Reasoning is off unless `--think` is given.** With it, that last try and the re-asks of the
+forms above let the model reason first, if its chat template can (`enable_thinking`, which Gemma 4
+and Qwen 3 have); with `--think always`, every call does, batches included. The reasoning gets
+`--think-tokens` (2048) on top of the answer's budget and is cut off before the answer is read;
+one that runs out leaves an empty answer, and a batch left that way goes one unit at a time
+without taking `--batch` down. The summary says how many calls reasoned, for how long,
+and how many were cut off. Each reasoning is also written whole to a `.thoughts.jsonl` beside the
+output (`fr-FR.translated.thoughts.jsonl`), one line per call as soon as it ends: the units it was
+for, the attempt and why it was asked again, the tokens and seconds, whether it was cut off, the
+thought and the answer. Measured on 21/10/2026 with
+`gemma4-12b-optiq` and 1024 tokens, it did not pay: twelve calls reasoned over the five bench
+languages, almost all ran out before answering, one fixed a unit (a Russian `few` form), and they
+added 26 minutes to a pass of 81 — two minutes or more per call on this Mac. Their empty answers
+also replaced the usable ones the earlier tries had, which is what keeping the least broken answer
+now prevents.
 
 The copy of the source is the one rejection a model may overrule. «A la primera», «Coronar a» and
 «torre blanca» are Catalan as much as Spanish, and the first Catalan bench left fifteen of them for
@@ -431,7 +448,7 @@ out of it:
 
 ```
 Translated 85 units (72 in a batch, 10 from memory) in 253s
-20.2 units/min · 5.2 tokens/s · 10 model calls (1 thinking) · 1051 prompt tokens/call
+20.2 units/min · 5.2 tokens/s · 10 model calls · 1051 prompt tokens/call
 
 Batches: 4 calls, 75 units offered, 72 answered and kept
   3 rejected (checks failed: glossary 3)
@@ -492,8 +509,10 @@ What each number is for:
 - `--json` prints NDJSON progress on stdout instead of the human log; `--report <file>` writes a
   markdown summary with the speed, the batch share and the units left for review.
 - `--temperature` defaults to 0 — deterministic, which is what makes two models comparable.
-- `--no-think` never lets the model reason, not even on the last try of a failing unit (see
-  _Validation and review_). The bench records which of the two a pass ran with.
+- `--think` lets the model reason on the last try of a failing unit and on the re-asks of a
+  form (`--think retry`, what the bare flag means), or on every call (`--think always`), with
+  `--think-tokens` (2048) for it; off by default (see _Validation and review_). The bench records
+  how a pass ran it, and with how many tokens.
 
 ## Backends
 

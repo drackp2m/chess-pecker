@@ -6,6 +6,7 @@ from pathlib import Path
 from .bench import DEFAULT_OUT as DEFAULT_BENCH_OUT
 from .bench import REPORT_NAME as BENCH_REPORT
 from .deepl import KEY_VAR
+from .engine import THINK_OFF, THINK_RETRY, THINK_TOKENS, THINKING
 from .models import ALIASES, DEFAULT_ALIAS, PROFILES
 from .ollama_client import DEFAULT_MODEL as DEFAULT_OLLAMA_MODEL
 from .prompting import INJECTIONS
@@ -292,12 +293,25 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
     parser.add_argument(
         "--think",
-        action=argparse.BooleanOptionalAction,
-        default=True,
+        nargs="?",
+        choices=THINKING,
+        const=THINK_RETRY,
+        default=THINK_OFF,
         help=(
-            "Let the model reason before answering, only on the last try of a unit that "
-            "keeps failing and when a form is asked again. Models whose chat template "
-            "cannot reason ignore it. --no-think turns it off."
+            "Let the model reason before answering. 'retry', what a bare --think means, only "
+            "on the last try of a unit that keeps failing and when a form is asked again; "
+            "'always' on every call, batches included. Models whose chat template cannot "
+            f"reason ignore it. (default: {THINK_OFF})"
+        ),
+    )
+
+    parser.add_argument(
+        "--think-tokens",
+        type=int,
+        default=THINK_TOKENS,
+        help=(
+            f"Tokens the reasoning may take on top of the answer (default: {THINK_TOKENS}). "
+            "A thought that runs out leaves no answer."
         ),
     )
 

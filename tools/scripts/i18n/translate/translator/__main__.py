@@ -12,7 +12,7 @@ from .downloads import prune_cache, show_cache, sizes_by_repo
 from .compare import compare
 from .deepl import DeeplError, run_deepl
 from .dotenv import load_env
-from .engine import build_engine
+from .engine import THINK_ALWAYS, THINK_OFF, THINK_RETRY, build_engine
 from .environment import HostUnsupportedError
 from .memory import TranslationMemory
 from .models import TRANSLATE, profile_for, summary, table
@@ -30,6 +30,7 @@ from .prompting import (
     parse_answers,
 )
 from .report import GAVE_UP, Record, Reporter, Tally, write_report
+from .scoring import name_of
 from .validate import (
     CONFIRMABLE,
     ECHO_ISSUE,
@@ -126,44 +127,65 @@ def judge(block, unit, text: str) -> tuple[str, list]:
     return candidate, issues
 
 
-def ask(engine, batch: Batch, think: bool = False) -> str:
-    return engine.generate(build_messages(batch), max_tokens_for(engine, batch), think)
+def ask(session: Session, batch: Batch, think: bool = False) -> str:
+    engine = session.engine
+    reply = engine.generate(build_messages(batch), max_tokens_for(engine, batch), think)
+
+    if engine.thought is not None:
+        units = [name_of(unit) for unit in batch.units]
+        session.reporter.thought(units, batch.attempt, batch.reason, engine.thought, reply)
+
+    return reply
 
 
 def attempt(
-    engine, batch: Batch, index: int, issues: list, think: bool = False
+    session: Session, batch: Batch, index: int, issues: list, think: bool = False
 ) -> tuple[str, list]:
     batch.attempt = index
     batch.reason = reason_of(issues) if issues else ""
     batch.demand = demanded(issues)
     batch.confirm = issues[0] if confirmable(issues) else None
 
-    return judge(batch.block, batch.units[0], ask(engine, batch, think))
+    return judge(batch.block, batch.units[0], ask(session, batch, think))
 
 
 def confirmable(issues: list) -> bool:
     return bool(issues) and all(issue.code in CONFIRMABLE for issue in issues)
 
 
+def thinking(session: Session, last: bool = False) -> bool:
+    mode = session.args.think
+
+    return mode == THINK_ALWAYS or (mode == THINK_RETRY and last)
+
+
 def reasks(session: Session) -> tuple[bool, ...]:
-    return (False, True) if session.args.think else (False,)
+    plans = {THINK_OFF: (False,), THINK_RETRY: (False, True), THINK_ALWAYS: (True,)}
+
+    return plans[session.args.think]
+
+
+def weight(candidate: str, issues: list) -> tuple[bool, int, int]:
+    return (not candidate.strip(), sum(issue.hard for issue in issues), len(issues))
 
 
 def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]:
     batch = Batch(block, [unit])
     seen: list[str] = []
-    candidate, issues = attempt(session.engine, batch, 0, [])
+    candidate, issues = attempt(session, batch, 0, [], thinking(session))
     calls = 1
 
     while issues and calls <= RETRIES:
         seen.extend(issue.code for issue in issues)
-        previous, asked = candidate, confirmable(issues)
-        think = session.args.think and calls == RETRIES
-        candidate, issues = attempt(session.engine, batch, calls, issues, think)
+        best, asked = (candidate, issues), confirmable(issues)
+        think = thinking(session, calls == RETRIES)
+        candidate, issues = attempt(session, batch, calls, issues, think)
         calls += 1
 
-        if asked and confirmable(issues) and candidate == previous:
+        if asked and confirmable(issues) and candidate == best[0]:
             issues = []
+        elif weight(*best) < weight(candidate, issues):
+            candidate, issues = best
 
     if not issues:
         session.tally.alone(calls, calls, seen, False)
@@ -184,12 +206,14 @@ def translate_unit(session: Session, block, unit) -> tuple[str, list[str], bool]
 # A batch answer is all-or-nothing per line: what comes back clean is kept, and
 # what does not is simply not there, so the caller retranslates it on its own.
 def translate_batch(session: Session, batch: Batch) -> dict[int, str]:
-    reply = ask(session.engine, batch)
+    reply = ask(session, batch, thinking(session))
     answers = parse_answers(reply, batch.size)
+    thought = session.engine.thought
+    cut = thought is not None and thought.cut
     accepted = {}
     seen: list[str] = []
 
-    if not answers:
+    if not answers and not cut:
         session.reporter.unparsed(reply)
 
     for number, answer in answers.items():
@@ -203,7 +227,9 @@ def translate_batch(session: Session, batch: Batch) -> dict[int, str]:
     session.tally.batched(
         batch.size, len(answers), len(accepted), seen, max(answers, default=0)
     )
-    session.shrink(batch.size, len(answers))
+
+    if not cut:
+        session.shrink(batch.size, len(answers))
 
     return accepted
 
@@ -340,7 +366,7 @@ def rethought(
     single = Batch(batch.block, [unit])
 
     for step, think in enumerate(reasks(session), start=1):
-        candidate, problems = attempt(session.engine, single, step, issues, think)
+        candidate, problems = attempt(session, single, step, issues, think)
         trial = list(outcomes)
         trial[index] = (unit, candidate, "model", [], False)
 
@@ -360,22 +386,19 @@ def settled_few(
     unit, text, _, found, review = outcomes[index]
     many = sibling_text(outcomes, members, unit, PLURAL_LABEL, MANY)
 
-    if review or not many or text.strip() != many:
+    if session.args.think == THINK_OFF or review or not many or text.strip() != many:
         return outcomes[index]
 
     lang = batch.block.target_lang
-    issues = [Issue(ECHO_ISSUE, many)]
     single = Batch(batch.block, [unit])
+    candidate, problems = attempt(session, single, 1, [Issue(ECHO_ISSUE, many)], True)
 
-    for step, think in enumerate(reasks(session), start=1):
-        candidate, problems = attempt(session.engine, single, step, issues, think)
+    if problems or candidate.strip() == many:
+        return outcomes[index]
 
-        if not problems and candidate.strip() != many:
-            session.memory.remember(lang, unit.source, candidate, unit.category)
+    session.memory.remember(lang, unit.source, candidate, unit.category)
 
-            return (unit, candidate, "model", found, False)
-
-    return outcomes[index]
+    return (unit, candidate, "model", found, False)
 
 
 def wanted(unit, args) -> bool:
@@ -571,7 +594,7 @@ def run_file(path: Path, session: Session, budget: int | None, shape=None, outpu
 # The bench names an output of its own for every pass, so the caller may hand
 # in the (input, output) pairs instead of letting them be derived.
 def run(args, reporter, jobs=None) -> int:
-    engine = build_engine(args.backend, args.model, args.temperature)
+    engine = build_engine(args.backend, args.model, args.temperature, args.think_tokens)
     session = Session(engine, args, TranslationMemory(enabled=args.memory), reporter, Tally())
     shape = shape_for(args, engine.model)
 

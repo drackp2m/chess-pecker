@@ -163,11 +163,12 @@ trae, por idioma:
 ### La columna `prompt`
 
 Cada pasada guarda en su `.json` una huella de los prompts que vio (todos los de primer intento,
-tal como se mandan), otra del código del traductor y si se dejó razonar al modelo en los últimos
-intentos (`think`, que `--no-think` apaga). El informe la enseña en la columna `prompt`
-y avisa en negrita si no todas las filas coinciden: comparar dos modelos que vieron prompts
-distintos no mide sólo el modelo. Al cambiar las instrucciones, **un `--output` nuevo por
-experimento**:
+tal como se mandan) y otra del código del traductor. El informe enseña la primera en la columna
+`prompt` y avisa en negrita si no todas las filas coinciden: comparar dos modelos que vieron
+prompts distintos no mide sólo el modelo. El mismo `.json` dice si se dejó razonar al modelo
+(`think`: el modo de `--think` y su tope de tokens, como `"always 8192"`, o `false`), y lo que
+razonó queda al lado, en `<idioma>.<modelo>.thoughts.jsonl`. Al cambiar las instrucciones, **un
+`--output` nuevo por experimento**:
 
 ```sh
 uv run translate --bench --model gemma4-e4b-optiq,qwen35-9b -o bench-runs/base

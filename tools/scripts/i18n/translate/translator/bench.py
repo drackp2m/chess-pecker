@@ -15,6 +15,7 @@ from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 
+from .engine import THINK_ALWAYS, THINK_OFF
 from .environment import HostUnsupportedError
 from .models import DEFAULT_ALIAS, TRANSLATE, profile_for
 from .prompting import blocks_of, build_messages, is_pending
@@ -174,7 +175,7 @@ def shape_note(args, current: Pass) -> dict:
         "inject": current.inject,
         "batch": args.batch,
         "temperature": args.temperature,
-        "think": args.think,
+        "think": False if args.think == THINK_OFF else f"{args.think} {args.think_tokens}",
         "prompt": prompt_print(current, args),
         "code": code_print(),
     }
@@ -677,10 +678,19 @@ def header(plan: list[Pass], args, out: Path) -> list[str]:
         f"- Models: {', '.join(f'`{alias}`' for alias in aliases)}",
         f"- Passes written to: `{out}`",
         f"- Settings: temperature {args.temperature}, batch up to {args.batch}, "
-        f"thinking {'on the last try' if args.think else 'off'}, translation memory off",
+        f"thinking {thinking_of(args)}, translation memory off",
         f"- Code: `{code_print()}`",
         f"- Written: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
     ]
+
+
+def thinking_of(args) -> str:
+    if args.think == THINK_OFF:
+        return "off"
+
+    where = "on every call" if args.think == THINK_ALWAYS else "on the last try"
+
+    return f"up to {args.think_tokens} tokens {where}"
 
 
 def write_bench(path: Path, plan: list[Pass], args, reporter, out: Path) -> None:
