@@ -1,3 +1,26 @@
+# v1.34.0 (2026-10-22)
+
+## What's Changed
+
+### ✨ Features
+
+- add reasoning modes and log, keep the least broken retry ([ebbc79d](https://github.com/drackp2m/chess-pecker/commit/ebbc79dd60523397cfbe0feae7b08a87d220a2d4)) by Marc Jovaní González
+- add translator bench v2 with per-form plural and gender examples ([904607d](https://github.com/drackp2m/chess-pecker/commit/904607d16ccbd0fd9b13d3154ec0196b1c608efb)) by Marc Jovaní González
+- let the translator reason on its last try and settle sibling forms ([3dae214](https://github.com/drackp2m/chess-pecker/commit/3dae21431f94b84b3e2314cfc8b98f07eec4b906)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- find rows by the uuid they were born with after a push rekeys them ([d263323](https://github.com/drackp2m/chess-pecker/commit/d263323d6aee9109a575af02ae60719cf6dbbecb)) by Marc Jovaní González
+- keep pending a row that changed while its push was in flight ([feef661](https://github.com/drackp2m/chess-pecker/commit/feef6616bc2b4f3bbb70b56b80ee575a5b76c031)) by Marc Jovaní González
+- preload the friend list so the share modal opens without a jump ([7cc85fc](https://github.com/drackp2m/chess-pecker/commit/7cc85fcd13a4605cec626cba07acbf51abdf9b6e)) by Marc Jovaní González
+- seal bookmarks on the row as it is now, not on a stale copy ([8d88302](https://github.com/drackp2m/chess-pecker/commit/8d88302e9becbbdd9286d9f016f5211e46d16ad2)) by Marc Jovaní González
+
+### 📚 Documentation
+
+- record that reasoning on every call does not pay off ([94a37d9](https://github.com/drackp2m/chess-pecker/commit/94a37d911a8a2bb68081774cfb1542a1e78f691f)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.33.0...v1.34.0
+
 # v1.33.0 (2026-10-19)
 
 ## What's Changed
