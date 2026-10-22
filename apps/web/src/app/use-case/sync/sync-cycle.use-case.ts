@@ -49,6 +49,16 @@ export interface SyncCycleProgress {
 
 export type SyncReport = (progress: Partial<SyncCycleProgress>) => void;
 
+interface CatalogSweep {
+	readonly summary: SyncCatalogSummary | undefined;
+	readonly isTreeComplete: boolean;
+}
+
+interface LockedPass {
+	readonly phase: SyncPhase;
+	readonly sweep?: CatalogSweep;
+}
+
 /**
  * The codes where nothing ever ran: no network, a timeout, a gateway with nobody to ask. A
  * 500 is deliberately not here — the server did run, and will answer the same until fixed.
@@ -77,7 +87,15 @@ export class SyncCycleUseCase {
 
 	async execute(report: SyncReport): Promise<SyncPhase> {
 		try {
-			return await withExclusiveLock(SYNC_LOCK, () => this.run(report));
+			const pass = await withExclusiveLock(SYNC_LOCK, () => this.run(report));
+
+			// The catalogue goes last on purpose: ~22,000 exercises against the tree's dozens, and
+			// whoever watches the splash would rather have their own first.
+			if (undefined !== pass.sweep) {
+				await this.sweepCatalog(pass.sweep, report);
+			}
+
+			return pass.phase;
 		} catch (error) {
 			console.error('The sync pass ended in an error it did not expect', error);
 			report({ error: toErrorRef(error) });
@@ -103,7 +121,7 @@ export class SyncCycleUseCase {
 		});
 	}
 
-	private async run(report: SyncReport): Promise<SyncPhase> {
+	private async run(report: SyncReport): Promise<LockedPass> {
 		report({ phase: 'checking', error: null });
 		await this.heal();
 		await this.countPending(report);
@@ -112,10 +130,8 @@ export class SyncCycleUseCase {
 		// replicates anyway, being global.
 		if (!this.session.isAuthenticated()) {
 			report({ isReplicaComplete: await this.catalog.isSynced() });
-			await this.sweepCatalog(undefined, report);
-			report({ isReplicaComplete: await this.catalog.isSynced() });
 
-			return 'ready';
+			return { phase: 'ready', sweep: { summary: undefined, isTreeComplete: true } };
 		}
 
 		let status: SyncStatus;
@@ -125,7 +141,7 @@ export class SyncCycleUseCase {
 		} catch (error) {
 			report({ error: toErrorRef(error) });
 
-			return toFailurePhase(error);
+			return { phase: toFailurePhase(error) };
 		}
 
 		report({
@@ -137,7 +153,7 @@ export class SyncCycleUseCase {
 		return this.transfer(status, report);
 	}
 
-	private async transfer(status: SyncStatus, report: SyncReport): Promise<SyncPhase> {
+	private async transfer(status: SyncStatus, report: SyncReport): Promise<LockedPass> {
 		let cut = status.canPush ? await this.push(report) : false;
 
 		report({ phase: 'pulling' });
@@ -153,15 +169,10 @@ export class SyncCycleUseCase {
 
 		await this.mirrorShares(status);
 
-		// The catalogue goes last on purpose: ~22,000 exercises against the tree's dozens, and
-		// whoever watches the splash would rather have their own first.
-		await this.sweepCatalog(status.summary.catalog, report);
-
-		const swept = await this.catalog.isSynced(status.summary.catalog);
-
-		report({ isReplicaComplete: !pulled.interrupted && swept });
-
-		return cut || pulled.interrupted ? 'offline' : 'ready';
+		return {
+			phase: cut || pulled.interrupted ? 'offline' : 'ready',
+			sweep: { summary: status.summary.catalog, isTreeComplete: !pulled.interrupted },
+		};
 	}
 
 	/**
@@ -245,12 +256,14 @@ export class SyncCycleUseCase {
 	}
 
 	private async sweepCatalog(
-		catalog: SyncCatalogSummary | undefined,
+		{ summary, isTreeComplete }: CatalogSweep,
 		report: SyncReport,
 	): Promise<void> {
-		await this.catalog.run(catalog, (catalogDone, catalogTotal) => {
+		await this.catalog.run(summary, (catalogDone, catalogTotal) => {
 			report({ catalogDone, catalogTotal });
 		});
+
+		report({ isReplicaComplete: isTreeComplete && (await this.catalog.isSynced(summary)) });
 	}
 
 	private async countPending(report: SyncReport): Promise<void> {

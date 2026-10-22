@@ -8,6 +8,7 @@ import {
 import { PuzzleCatalogRepository } from '@app/repository/puzzle-catalog.repository';
 import { PuzzleRepository } from '@app/repository/puzzle.repository';
 import { PuzzleCacheUseCase } from '@app/use-case/puzzle-cache.use-case';
+import { CATALOG_LOCK, withExclusiveLock } from '@app/util/exclusive-lock';
 
 const PAGE_SIZE = 500;
 
@@ -34,7 +35,7 @@ export class PuzzleCatalogReplicaUseCase {
 	 * decision falls back to the local total, which cannot see a re-import.
 	 */
 	async run(summary?: SyncCatalogSummary, progress?: CatalogProgress): Promise<void> {
-		this.sweeping ??= this.sweep(summary, progress)
+		this.sweeping ??= withExclusiveLock(CATALOG_LOCK, () => this.sweep(summary, progress))
 			.catch(() => undefined)
 			.finally(() => {
 				this.sweeping = null;
