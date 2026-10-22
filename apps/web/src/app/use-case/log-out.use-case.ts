@@ -2,12 +2,14 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { PendingSyncModalComponent } from '@app/component/pending-sync-modal/pending-sync-modal.component';
+import { SyncPolicy } from '@app/definition/sync-policy.constant';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { ModalStore } from '@app/store/modal.store';
 import { SessionStore } from '@app/store/session.store';
 import { SyncStore } from '@app/store/sync.store';
 import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
+import { Async } from '@app/util/async';
 
 /**
  * Logging out, whole and in one place: ask whether anything exists only here, close against
@@ -45,7 +47,7 @@ export class LogOutUseCase {
 	 * pushed first: the modal only appears if that push could not manage everything.
 	 */
 	private async confirmPending(): Promise<boolean> {
-		await this.syncStore.flush();
+		await Async.within(this.syncStore.flush(), SyncPolicy.flushTimeoutMs);
 
 		if (!(await this.hasUnsaved())) {
 			return true;

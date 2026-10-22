@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, WritableSignal, computed, inject, signal } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import type {
@@ -33,8 +33,17 @@ import type {
 	UserSettingGetRoutes,
 	UserSettingPutRoutes,
 } from '@chesspecker/api-definitions';
-import { EmptyError, Observable, filter, firstValueFrom, takeUntil } from 'rxjs';
+import {
+	EmptyError,
+	Observable,
+	filter,
+	firstValueFrom,
+	takeUntil,
+	throwError,
+	timeout,
+} from 'rxjs';
 
+import { ApiPolicy } from '@app/definition/api-policy.constant';
 import { ApiCallOptions, ApiCaller } from '@app/definition/api-sdk.type';
 import { API_BASE_URL } from '@app/definition/api.constant';
 import { ConnectionStore } from '@app/store/connection.store';
@@ -135,7 +144,14 @@ export class ApiSdkService {
 	): Promise<unknown> {
 		const isWrite = IS_WRITE[verb];
 		const url = buildUrl(MODULE_SEGMENT[module], route, options.path);
-		const request = this.httpClient.request<unknown>(verb, url, toHttpOptions(isWrite, options));
+		const request = this.httpClient
+			.request<unknown>(verb, url, toHttpOptions(isWrite, options))
+			.pipe(
+				timeout({
+					first: ApiPolicy.requestTimeoutMs,
+					with: () => throwError(() => new HttpErrorResponse({ status: 0, url })),
+				}),
+			);
 		const answer = this.awaitAnswer(request, options.cancellable ?? !isWrite, `${verb} ${url}`);
 
 		return this.connectionStore.check(

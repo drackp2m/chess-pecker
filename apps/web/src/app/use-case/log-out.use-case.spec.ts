@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { LocalDataRepository, UnsavedCount } from '@app/repository/local-data.repository';
 import { ModalStore } from '@app/store/modal.store';
@@ -15,9 +15,12 @@ interface Options {
 	readonly countFails?: boolean;
 	readonly answer?: boolean;
 	readonly loggedOut?: boolean;
+	readonly flushHangs?: boolean;
 }
 
 const NOTHING_UNSAVED: UnsavedCount = { pending: 0, rejected: 0 };
+
+const NEVER_ANSWERS_MS = 10 * 60 * 1000;
 
 function configure(options: Options = {}) {
 	const order: string[] = [];
@@ -42,7 +45,7 @@ function configure(options: Options = {}) {
 		flush: vi.fn(() => {
 			order.push('flush');
 
-			return Promise.resolve();
+			return true === options.flushHangs ? new Promise<void>(() => undefined) : Promise.resolve();
 		}),
 	};
 	const bookmarks = {
@@ -156,5 +159,44 @@ describe('LogOutUseCase', () => {
 		expect(logged).toHaveBeenCalled();
 
 		logged.mockRestore();
+	});
+});
+
+describe('LogOutUseCase, when the last push never comes back', () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		TestBed.resetTestingModule();
+	});
+
+	it('does not hang when the last push never comes back', async () => {
+		const { logOut, sessionStore } = configure({ flushHangs: true });
+		const closing = logOut.execute();
+
+		await vi.advanceTimersByTimeAsync(NEVER_ANSWERS_MS);
+
+		await vi.waitFor(() => {
+			expect(sessionStore.logOut).toHaveBeenCalledTimes(1);
+		});
+		await expect(closing).resolves.toBe(true);
+	});
+
+	it('still says how many rows were left behind after giving up on the push', async () => {
+		const { logOut, localData, modalStore } = configure({
+			flushHangs: true,
+			unsaved: { pending: 3, rejected: 0 },
+			answer: true,
+		});
+
+		void logOut.execute();
+		await vi.advanceTimersByTimeAsync(NEVER_ANSWERS_MS);
+
+		await vi.waitFor(() => {
+			expect(modalStore.open).toHaveBeenCalledTimes(1);
+		});
+		expect(localData.countUnsavedSync).toHaveBeenCalledTimes(1);
 	});
 });
