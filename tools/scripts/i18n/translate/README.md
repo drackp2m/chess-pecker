@@ -434,7 +434,11 @@ thought and the answer. Measured on 21/10/2026 with
 languages, almost all ran out before answering, one fixed a unit (a Russian `few` form), and they
 added 26 minutes to a pass of 81 — two minutes or more per call on this Mac. Their empty answers
 also replaced the usable ones the earlier tries had, which is what keeping the least broken answer
-now prevents.
+now prevents. `--think always` with 8192 tokens, on 22/10/2026, did not pay either: in six hours
+it reached 56 of the 173 Russian units, which take 15 minutes without it. Every reasoning that ran
+out — all six batches and three single units, three times each — was the same lines over and over,
+which is what greedy decoding does to a thought, and the ones that finished changed words without
+fixing anything: one unit better but still wrong, one broken.
 
 The copy of the source is the one rejection a model may overrule. «A la primera», «Coronar a» and
 «torre blanca» are Catalan as much as Spanish, and the first Catalan bench left fifteen of them for
