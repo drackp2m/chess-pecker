@@ -85,9 +85,9 @@ export abstract class ThemedFieldDirective<TControl extends ThemedFieldControl>
 	@HostListener('input')
 	@HostListener('change')
 	onInput() {
-		const value = this.elementRef.nativeElement.value;
+		const control = this.elementRef.nativeElement;
 
-		if ('' === value) {
+		if ('' === control.value && !control.validity.badInput) {
 			this.renderer2.removeClass(this.wrapperElement, 'filled');
 		} else {
 			this.renderer2.addClass(this.wrapperElement, 'filled');

@@ -19,7 +19,6 @@ const selector =
 	selector,
 })
 export class InputDirective extends ThemedFieldDirective<HTMLInputElement> {
-	// FixMe => input are not filled when write text on type number
 	readonly type = input.required<InputDirectiveType>();
 
 	protected readonly wrapperClass = 'app-input';
