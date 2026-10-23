@@ -1,3 +1,31 @@
+# v1.34.1 (2026-10-23)
+
+## What's Changed
+
+### 🧪 Tests
+
+- sign the auth specs' JWTs with a faker and cover access tokens ([6b36705](https://github.com/drackp2m/chess-pecker/commit/6b367050e28a16fc26a78564ddc016b5d6053ff0)) by Marc Jovaní González
+
+### ♻️ Code Refactoring
+
+- pass the JWT secret to the strategy without keeping the service ([c9bc83a](https://github.com/drackp2m/chess-pecker/commit/c9bc83abebf896f6e6dbed3246328bb84762f836)) by Marc Jovaní González
+
+### 🐛 Bug Fixes
+
+- answer an exception built from a plain string instead of hanging ([9523161](https://github.com/drackp2m/chess-pecker/commit/9523161d2e81035671aa42fd9a4754babb9a0345)) by Marc Jovaní González
+- give up on a request that never answers, and on a stuck last push ([89bcdde](https://github.com/drackp2m/chess-pecker/commit/89bcdde095e64c11651bbf6efd22ffe4fae9fc05)) by Marc Jovaní González
+- keep a navigation from cutting the trainings the sync pulls ([d6ae8f0](https://github.com/drackp2m/chess-pecker/commit/d6ae8f049fe96a23f4f59252027aaaec3630201c)) by Marc Jovaní González
+- mark a number field as filled while it holds text it cannot parse ([a3d37d8](https://github.com/drackp2m/chess-pecker/commit/a3d37d8ecda91a2684f815e51e4d0aeac0fa30ca)) by Marc Jovaní González
+- size the chart off its layout box, not the splash-scaled one ([6a1b91c](https://github.com/drackp2m/chess-pecker/commit/6a1b91cce9bc274c2dde0f4c68d5479d3c594318)) by Marc Jovaní González
+- sweep the catalogue under its own lock, after the sync one ([92076e6](https://github.com/drackp2m/chess-pecker/commit/92076e67414067e8fd4f6155be157442a2e55a69)) by Marc Jovaní González
+- wipe the local data only once no sync pass holds the lock ([25d5456](https://github.com/drackp2m/chess-pecker/commit/25d5456ccea611e29fe10a8078ea2ef10e093e87)) by Marc Jovaní González
+
+### 🎒 Chores
+
+- make gemma4-12b-optiq the default translator and record bench v2 ([15226d7](https://github.com/drackp2m/chess-pecker/commit/15226d7bacd079fbf20be9568f4a472f52e6bebd)) by Marc Jovaní González
+
+**Full Changelog**: https://github.com/drackp2m/chess-pecker/compare/v1.34.0...v1.34.1
+
 # v1.34.0 (2026-10-22)
 
 ## What's Changed
