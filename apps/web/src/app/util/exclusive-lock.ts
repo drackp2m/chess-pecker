@@ -1,6 +1,8 @@
 /** The sync lock: one only, and for the whole cycle. */
 export const SYNC_LOCK = 'chesspecker-sync';
 
+export const CATALOG_LOCK = 'chesspecker-catalog';
+
 const queues = new Map<string, Promise<unknown>>();
 
 /**

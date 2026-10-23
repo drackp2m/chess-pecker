@@ -15,7 +15,7 @@ export class TrainingRepository {
 	private readonly apiSdk = inject(ApiSdkService);
 
 	async list(): Promise<readonly Training[]> {
-		return this.apiSdk.GET.training('');
+		return this.apiSdk.GET.training('', { cancellable: false });
 	}
 
 	async start(): Promise<Training> {
@@ -35,7 +35,11 @@ export class TrainingRepository {
 		uuid: string,
 		query: GetTrainingAttemptsRequest,
 	): Promise<TrainingAttemptHistory> {
-		return this.apiSdk.GET.training('/:uuid/attempt', { path: { uuid }, query });
+		return this.apiSdk.GET.training('/:uuid/attempt', {
+			path: { uuid },
+			query,
+			cancellable: false,
+		});
 	}
 
 	async finish(uuid: string): Promise<void> {

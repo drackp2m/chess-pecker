@@ -41,7 +41,7 @@ uv run translate --list-models
 uv run translate ../../../../translations/fr-FR.xlf --limit 20 --dry-run
 
 # Translate, with a model chosen by alias
-uv run translate ../../../../translations/fr-FR.xlf --model qwen35-9b
+uv run translate ../../../../translations/fr-FR.xlf --model gemma4-e4b-optiq
 ```
 
 Several inputs load the model once and go through them in series, which is the whole point of the
@@ -68,7 +68,7 @@ a file exported today translates the same way tomorrow.
 ## Choosing a model
 
 `--model` takes an alias from the table below or any Hugging Face repository id. The default is
-`gemma4-e4b-optiq`, which is what the bench of 30/08/2026 settled on.
+`gemma4-12b-optiq`, which is what the bench of 20/10/2026 settled on (_What the bench measured_).
 
 | Alias                | Repository                                               | On disk | Published  |
 | -------------------- | -------------------------------------------------------- | ------- | ---------- |
@@ -119,7 +119,7 @@ When they fit but a long prompt pushes the working set past the cap, the call fa
 
 Two things keep that second case away. The engine feeds the prompt to the model 512 tokens at a
 time instead of mlx-lm's 2048, and the size of that step is what sets the peak of a call; a model
-that trims its cache only feeds the new tail of each prompt anyway, so for the Gemmas it changes
+that trims its cache only feeds the new tail of each prompt anyway, so for one that does it changes
 almost nothing. And `sudo sysctl iogpu.wired_limit_mb=13312` raises the cap to 13 GB until the next
 restart (`=0` puts the default back): it is what mlx-lm itself suggests for a model close to the
 cap, and it is safe with nothing else running, but it does nothing for a model whose weights are
@@ -132,8 +132,8 @@ already over the cap.
 
 **The number that says a model is paging is `tokens/s`, not `units/min`.** A batch of one-word
 labels generates so few tokens that a crawling model still posts a respectable units/min; only
-tokens/s falls through the floor. Compare against 6.3 (`gemma4-e4b-optiq`) and 2.1
-(`gemma-12b-qat`) on Russian.
+tokens/s falls through the floor. Compare against 10.4 (`gemma4-e4b-optiq`), 3.0
+(`gemma4-12b-optiq`) and 1.1 (`bonsai2-27b`) on the Russian of the bench.
 
 ### Reading the names
 
@@ -159,7 +159,10 @@ Two more things separate them:
   cannot trim that, so the cache is rebuilt on every call and the shared head is re-read every time
   instead of once per scope. The run says so on stderr the first time it happens, and
   `prompt tokens/call` in the summary shows the cost — 1322 against gemma-12b-qat's 1469 for a
-  prompt a third the size. They are still worth measuring, just read that number first.
+  prompt a third the size. They are still worth measuring, just read that number first. On the
+  bench of 20/10/2026 the Gemma 4 passes fed 1300 to 1480 tokens per call as well, practically the
+  whole prompt: their `RotatingKVCache` seems to stop being trimmable past 1024 tokens, which is
+  still to be confirmed.
 
 If a candidate has no MLX conversion published, `mlx_lm.convert --hf-path <repo> -q` makes one
 locally.
@@ -193,7 +196,8 @@ MLX packs small enough for this Mac:
   `model_type: prism_hadamard_qwen35`, which mlx-lm learned in 0.32.0. Its 8.6 GB load fine, but on
   20/10/2026, with the prompt still fed 2048 tokens at a time, it ran out of GPU memory at its fifth
   batch of both Russian and English, the first with long texts (_The three big ones, and the wired
-  limit_).
+  limit_). Fed 512 at a time it runs to the end, and on Russian it broke as few units as the
+  default, at 4.8 units/min against 12.7 (_What the bench measured_).
 
 Three things to know before reading their rows. Neither card reports a single multilingual score.
 Their scores were taken **thinking**, and this tool turns thinking off, so they are
@@ -201,12 +205,69 @@ not the numbers this bench will see. And both are `qwen3_5` underneath, with the
 trimmed of _Reading the names_, so the whole prompt is processed again on every call, by a 27B:
 expect a slow first token, and read `tokens/s` before blaming the model.
 
+### What the bench measured
+
+The bench lives in `tools/scripts/i18n/bench/`, and its README says how it is built and scored:
+135 frozen keys, 14 of them ICU, which come out as 173 units in Russian and 153 in the other four
+languages. A unit counts as broken when it fails a critical check or a hand-written assertion;
+chrF only breaks ties. Every pass below ran with `--profile instruct`, no `--inject`, `--batch 10`,
+`--temperature 0`, and the translation memory and thinking off, and is kept in
+`bench-runs/<experiment>/`.
+
+**Four models on the same prompt** (`base`, 20/10/2026, rescored with the expectations of 21/10).
+Russian, over 164 assertions and 14 keys with forms:
+
+| Model              | Broken units | Assertions met | Forms right | chrF     | units/min | tokens/s |
+| ------------------ | ------------ | -------------- | ----------- | -------- | --------- | -------- |
+| `gemma4-12b-optiq` | **13**       | 142            | **6/14**    | **82.7** | 12.7      | 3.0      |
+| `bonsai2-27b`      | **13**       | **144**        | 3/14        | 79.5     | 4.8       | 1.1      |
+| `qwen35-9b`        | 17           | 138            | 2/14        | 76.0     | 19.4      | 5.0      |
+| `gemma4-e4b-optiq` | 23           | 130            | 2/14        | 77.8     | **41.6**  | **10.4** |
+
+In English, out of 153, `gemma4-e4b-optiq` and `bonsai2-27b` broke 0–1 units, `gemma4-12b-optiq`
+1 and `qwen35-9b` 13. Head to head on Russian, counting the units each one wins on what would ship
+broken, the 12B beats the E4B 14–3 (p = 0.013) and qwen 10–4 (p = 0.18), and ties with bonsai
+10–8 (p = 0.82). On English it beats qwen 13–1 (p = 0.002).
+
+- **`gemma4-12b-optiq` is the default.** It ties for the fewest broken units with the best chrF,
+  at a speed the real catalogue can afford: about 45 minutes per language.
+- **`bonsai2-27b`** breaks as little, but takes 2.7 times as long.
+- **`qwen35-9b`** is ruled out: the weakest English, and it copied the words of the notes'
+  examples into its answers («Партия сохранена» for «Te has rendido»).
+- **`gemma4-e4b-optiq`**, the previous default, is still three times faster and still worth it for
+  a quick look at a file. Its Russian is clearly worse.
+
+**Then the prompt, on the 12B.** One example per plural and gender form took the Russian from 13
+broken units to 6 and its forms from 6/14 to 10/14 (`ejemplos-3` beat `base` 7–0, p = 0.016). The
+examples bend words from outside the app, apples and books in `samples.py`, because with chess
+words the models copied them into the answers. The checks of _Validation and review_ did the rest
+— the model's own tokens, `¿` outside Spanish, the copy a model may confirm, the neutral form
+copied when the masculine and the feminine agree, the capital letter — and took Catalan from 8
+broken units to none.
+
+**The production pass** (`final`, 22/10/2026): the five languages in 68 minutes.
+
+| Language | Broken units | Major | Assertions met | Left for review | units/min |
+| -------- | ------------ | ----- | -------------- | --------------- | --------- |
+| `ru-RU`  | 6            | 0     | 155/164        | 3               | 11.8      |
+| `en-GB`  | 0            | 0     | 58/58          | 1               | 12.8      |
+| `fr-FR`  | 0            | 0     | 56/56          | 0               | 13.1      |
+| `ca-ES`  | 0            | 3     | 68/69          | 0               | 9.5       |
+| `hi-IN`  | 1            | 1     | 12/14          | 3               | 11.0      |
+
+What is left is mostly out of the prompt's reach. Three Russian `few` forms take the genitive
+plural where the singular goes, one neutral form copies the masculine, and two commands get
+`{piece}` in the nominative after a verb that wants the accusative, which only the app can fix.
+The Catalan majors are a «Mover a {square}» the model insisted on and two vocabulary choices, and
+the Hindi ones a black queen that agrees in the feminine and a «min» left in Latin letters.
+Reasoning was tried on top of this twice and did not pay (_Validation and review_).
+
 ### What the legacy bench measured
 
 These numbers come from the first bench, retired on 20/10/2026 and kept in
 `tools/scripts/i18n/bench/legacy`. They are chrF against a single reference over hand-picked units,
-which is exactly what the new bench stopped trusting, so read them as history: the next decision
-is taken on the new bench, with the checks of _Generating a model comparison_.
+which is exactly what the new bench stopped trusting, so read them as history: they chose the
+default that the new bench replaced.
 
 Two rounds on 30/08/2026, over the 39 English and 43 Russian units of the legacy bench.
 **Every pass ran with the same prompt shape** — `--profile instruct`, no `--inject` (nothing in the
@@ -227,11 +288,11 @@ to.
 
 Four things came out of it, and only one of them is a chrF column:
 
-- **`gemma4-e4b-optiq` is the one to use.** Its Russian is level with the best (69.1 against 69.6,
-  which is noise) and it is **three times faster**. Reading the units it loses on, almost all are
-  legitimate paraphrase — `Минимум` where the reference wrote `Не менее` — while the units it wins
-  are real mistakes by the other: `gemma-12b-qat` translated `al día` as `ежедневно`, _daily_,
-  and wrote `и N больше` for `y N más`, which is English grammar in Russian words. Its two
+- **`gemma4-e4b-optiq` was the one to use.** Its Russian was level with the best (69.1 against
+  69.6, which is noise) and it was **three times faster**. Reading the units it loses on, almost
+  all are legitimate paraphrase — `Минимум` where the reference wrote `Не менее` — while the units
+  it wins are real mistakes by the other: `gemma-12b-qat` translated `al día` as `ежедневно`,
+  _daily_, and wrote `и N больше` for `y N más`, which is English grammar in Russian words. Its two
   `[review]` units are both the glossary false positive the legacy bench README documents, not
   broken text.
 - **Six bits buy nothing.** `gemma-12b-qat-6bit` gains 1.8 points of English and loses 0.9 of
@@ -632,7 +693,7 @@ It runs on the host, from this directory, and `--bench` is the whole of it:
 
 ```sh
 node tools/scripts/i18n/bench/build.mjs              # devcontainer, from the repo root
-uv run translate --bench --model gemma4-e4b-optiq,qwen35-9b
+uv run translate --bench --model gemma4-12b-optiq,gemma4-e4b-optiq
 ```
 
 1. **What goes in.** `build.mjs` turns the frozen texts of `tools/scripts/i18n/bench/snapshot.json`

@@ -24,6 +24,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
 			});
 		} else if (exceptionResponse instanceof Object) {
 			response.status(status).json({ ...exceptionResponse, ip: request.ip });
+		} else {
+			response.status(status).json({
+				message: exceptionResponse,
+				statusCode: status,
+				ip: request.ip,
+			});
 		}
 	}
 }

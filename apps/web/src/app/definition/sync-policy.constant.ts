@@ -40,4 +40,6 @@ export const SyncPolicy = {
 	 * is a sample, since whoever reads it wants the pattern and not the inventory.
 	 */
 	rejectionSampleSize: 5,
+
+	flushTimeoutMs: 20 * 1000,
 } as const;

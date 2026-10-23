@@ -7,6 +7,7 @@ import { mock } from 'vitest-mock-extended';
 import { UnauthorizedException } from '../../../shared/exception/unauthorized-exception.exception';
 import { ConfigurationService } from '../../../shared/module/config/configuration.service';
 import { JwtFactory } from '../../../shared/module/config/factory/jwt.factory';
+import { JwtFaker } from '../factory/jwt.faker';
 
 import { CheckJwtTokenUseCase } from './check-jwt-token.use-case';
 import { CreateJwtAccessTokenUseCase } from './create-jwt-access-token.use-case';
@@ -15,9 +16,10 @@ import { RefreshSessionUseCase } from './refresh-session.use-case';
 import { SetJwtTokenUseCase } from './set-jwt-token.use-case';
 
 describe('RefreshSessionUseCase', () => {
-	// ToDo => create jwtFakerFactory;
-	const fakeRefreshToken =
-		'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2OTIwNTcyNDgsIm5iZiI6MTY5MjA1NzI0OCwiZXhwIjo0ODE2MjU5NjQ4LCJhdWQiOiJ0ZXN0LXJ1bm5lci1yZWZyZXNoLXRva2VuIiwiaXNzIjoidGVzdCIsInN1YiI6InVzZXItdXVpZCIsImp0aSI6InV1aWQifQ.NIX34s_7lJGlaEPRnoIj_mONQiwsoxgD9Q_NiS9pqG6c-R8k12IMNybKgVUlHt8eo7tsfh-eQsSt7oDXS_5Kkg';
+	const fakeRefreshToken = JwtFaker.makeOne(
+		{ sub: 'user-uuid', jti: 'uuid', iss: 'test', aud: 'test-runner-refresh-token' },
+		{ secret: 'secret' },
+	);
 
 	let module: TestingModule;
 	let useCase: RefreshSessionUseCase;

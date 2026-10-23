@@ -34,7 +34,7 @@ CATALOGUE = (
         "12B",
         "8.0 GB",
         added="2025-04-15",
-        note="The safety net: same Russian as the default, three times slower, nothing left for review.",
+        note="Gemma 3, runner-up of the legacy bench: the E4B OptiQ's Russian, three times slower.",
     ),
     Model(
         "gemma-12b-qat-6bit",
@@ -79,7 +79,7 @@ CATALOGUE = (
         "E4B",
         "7.5 GB",
         added="2026-06-13",
-        note="QAT plus per-layer bit allocation. Won the bench: best speed, Russian level with the best.",
+        note="Fastest by far, 41.6 units/min on Russian, but breaks 23 units there to the default's 13.",
     ),
     Model(
         "gemma4-e4b-8bit",
@@ -97,7 +97,7 @@ CATALOGUE = (
         "12B",
         "6.7 GB",
         added="2026-06-03",
-        note="The big sibling of the bench winner, flat 4-bit. Loads since mlx-lm 0.32. Unmeasured.",
+        note="Flat 4-bit twin of the default. Loads since mlx-lm 0.32. Unmeasured.",
     ),
     Model(
         "gemma4-12b-optiq",
@@ -106,7 +106,7 @@ CATALOGUE = (
         "12B",
         "9.0 GB",
         added="2026-06-15",
-        note="QAT plus per-layer bits, the recipe that won on the E4B. A stretch at 9 GB. Unmeasured.",
+        note="The default: fewest broken units and best chrF of bench v2, at 12.7 units/min. 9 GB.",
     ),
     Model(
         "qwen-14b",
@@ -125,7 +125,7 @@ CATALOGUE = (
         "9B",
         "6.0 GB",
         added="2026-03-02",
-        note="Best English of the bench. Linear attention: no prompt cache, see the README.",
+        note="Ruled out: weakest English of bench v2, and it copied the examples of the notes.",
     ),
     Model(
         "qwen35-9b-optiq",
@@ -152,7 +152,7 @@ CATALOGUE = (
         "27B",
         "8.6 GB",
         added="2026-09-16",
-        note="Qwen 3.8 27B in ternary weights. Linear attention: no prompt cache. Unmeasured.",
+        note="Qwen 3.8 27B in ternary weights. Ties the default on broken units, 2.7 times slower.",
     ),
     Model(
         "mistral-24b",
@@ -165,7 +165,7 @@ CATALOGUE = (
     ),
 )
 
-DEFAULT_ALIAS = "gemma4-e4b-optiq"
+DEFAULT_ALIAS = "gemma4-12b-optiq"
 ALIASES = tuple(model.alias for model in CATALOGUE)
 
 

@@ -23,7 +23,7 @@ examples:
   uv run translate --cache
 
   # One language, only what the source outgrew, with another model
-  uv run translate translations/fr-FR.xlf --only-stale --model qwen35-9b
+  uv run translate translations/fr-FR.xlf --only-stale --model gemma4-e4b-optiq
 
   # See what is really sent: two batches of ten, no model loaded
   uv run translate translations/fr-FR.xlf --limit 20 --dry-run
@@ -32,16 +32,16 @@ examples:
   uv run translate translations/fr-FR.xlf --model mlx-community/translategemma-12b-it-4bit
 
   # What two models made of the same file, and where they disagree
-  uv run translate fr-FR.qwen35-9b.xlf fr-FR.gemma4-e4b.xlf --compare
+  uv run translate fr-FR.gemma4-12b-optiq.xlf fr-FR.gemma4-e4b-optiq.xlf --compare
 
   # The same file through DeepL, to use as the yardstick of that comparison
   uv run translate translations/fr-FR.xlf --deepl
 
   # The whole bench through two models and DeepL, scored and tabulated
-  uv run translate --bench --model gemma-12b-qat,gemma4-e4b,deepl
+  uv run translate --bench --model gemma4-12b-optiq,gemma4-e4b-optiq,deepl
 
   # The same command once every pass is done: the report again, nothing retranslated
-  uv run translate --bench --model gemma-12b-qat,gemma4-e4b,deepl
+  uv run translate --bench --model gemma4-12b-optiq,gemma4-e4b-optiq,deepl
 """
 
 

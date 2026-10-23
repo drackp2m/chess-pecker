@@ -34,12 +34,17 @@ export function hostBorderWidth(): Signal<number> {
 
 	return observeSize(
 		() => host,
-		(element) => element.getBoundingClientRect().width,
+		(element, entry) => entry?.borderBoxSize[0]?.inlineSize ?? element.offsetWidth,
+		{ box: 'border-box' },
 	);
 }
 
 /** The first size is read straight off the element, so nothing waits a frame for the observer. */
-function observeSize(source: ElementSource, read: SizeReader): Signal<number> {
+function observeSize(
+	source: ElementSource,
+	read: SizeReader,
+	options?: ResizeObserverOptions,
+): Signal<number> {
 	const size = signal(0);
 	const destroyRef = inject(DestroyRef);
 
@@ -56,7 +61,7 @@ function observeSize(source: ElementSource, read: SizeReader): Signal<number> {
 			size.set(read(element, entry ?? null));
 		});
 
-		observer.observe(element);
+		observer.observe(element, options);
 
 		destroyRef.onDestroy(() => {
 			observer.disconnect();
