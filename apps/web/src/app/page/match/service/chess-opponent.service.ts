@@ -52,7 +52,7 @@ export class ChessOpponentService {
 		const next = ChessBoard.apply(position, move);
 		const isOpponentInCheck = ChessMoveGenerator.isInCheck(next, next.turn);
 
-		if (isOpponentInCheck && 0 === ChessMoveGenerator.legalMoves(next).length) {
+		if (isOpponentInCheck && !ChessMoveGenerator.hasLegalMove(next)) {
 			return CHECKMATE_SCORE;
 		}
 

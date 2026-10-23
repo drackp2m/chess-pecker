@@ -22,16 +22,23 @@ type Vectors = readonly (readonly [number, number])[];
 
 /** Generates the moves a side may actually play, castling and en passant included. */
 export abstract class ChessMoveGenerator {
-	static legalMoves(position: ChessPosition): ChessMove[] {
+	static legalMoves(
+		position: ChessPosition,
+		isWanted: (move: ChessMove) => boolean = () => true,
+	): ChessMove[] {
 		return this.pseudoLegalMoves(position).filter(
-			(move) => !this.leavesKingExposed(position, move),
+			(move) => isWanted(move) && !this.leavesKingExposed(position, move),
 		);
+	}
+
+	static hasLegalMove(position: ChessPosition): boolean {
+		return this.pseudoLegalMoves(position).some((move) => !this.leavesKingExposed(position, move));
 	}
 
 	static movesFrom(position: ChessPosition, index: number): ChessMove[] {
 		const from = ChessSquare.fromIndex(index);
 
-		return this.legalMoves(position).filter((move) => move.from === from);
+		return this.legalMoves(position, (move) => move.from === from);
 	}
 
 	static isInCheck(position: ChessPosition, color: PieceColor): boolean {
@@ -54,7 +61,7 @@ export abstract class ChessMoveGenerator {
 	 * No default on purpose: forgetting it is silent, and repetitions would never draw.
 	 */
 	static status(position: ChessPosition, history: readonly ChessPosition[]): MatchStatus {
-		if (0 === this.legalMoves(position).length) {
+		if (!this.hasLegalMove(position)) {
 			return this.isInCheck(position, position.turn) ? 'checkmate' : 'stalemate';
 		}
 

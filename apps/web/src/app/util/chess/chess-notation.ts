@@ -18,8 +18,6 @@ const LONG_PATTERN = /^([a-h][1-8])([a-h][1-8])([qrbn])?$/;
  */
 export abstract class ChessNotation {
 	/** Full SAN for a move about to be played from `position`, suffix included. */
-	// ToDo => one `describe` runs the move generator three times, each legality-checking
-	// against a copied board. Threading a precomputed `legalMoves` through removes two.
 	static describe(position: ChessPosition, move: ChessMove): string {
 		return this.describeBody(position, move) + this.suffix(position, move);
 	}
@@ -86,7 +84,8 @@ export abstract class ChessNotation {
 
 	/** Adds only as much of the origin square as is needed to stay unambiguous. */
 	private static disambiguate(position: ChessPosition, move: ChessMove): string {
-		const rivals = ChessMoveGenerator.legalMoves(position).filter(
+		const rivals = ChessMoveGenerator.legalMoves(
+			position,
 			(candidate) =>
 				candidate.piece === move.piece && candidate.to === move.to && candidate.from !== move.from,
 		);
@@ -116,7 +115,7 @@ export abstract class ChessNotation {
 			return '';
 		}
 
-		return 0 === ChessMoveGenerator.legalMoves(next).length ? '#' : '+';
+		return ChessMoveGenerator.hasLegalMove(next) ? '+' : '#';
 	}
 
 	private static parseCastling(notation: string): 'king' | 'queen' | undefined {
