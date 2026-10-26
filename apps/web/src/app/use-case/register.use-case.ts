@@ -14,11 +14,13 @@ export class RegisterUseCase {
 	private readonly sessionStore = inject(SessionStore);
 
 	async execute(request: RegisterRequest): Promise<boolean> {
-		if (undefined === (await this.localOwnerUseCase.read())) {
+		const owner = await this.localOwnerUseCase.read();
+
+		if (undefined === owner) {
 			return this.sessionStore.register(request);
 		}
 
-		if (!(await this.discardLocalDataUseCase.confirm())) {
+		if (!(await this.discardLocalDataUseCase.confirm({ action: 'register', owner }))) {
 			return false;
 		}
 

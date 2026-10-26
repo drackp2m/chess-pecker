@@ -99,6 +99,22 @@ describe('LogInUseCase', () => {
 		expect(discard.execute).not.toHaveBeenCalled();
 	});
 
+	it('offers to keep the work by signing up when nobody had claimed the device', async () => {
+		const { logIn, discard } = configure();
+
+		await logIn.execute(credentials('ada'));
+
+		expect(discard.confirm).toHaveBeenCalledWith({ action: 'log-in', owner: undefined });
+	});
+
+	it('names the account the device belongs to when another one logs in', async () => {
+		const { logIn, discard } = configure({ owner: adaStamp });
+
+		await logIn.execute(credentials('bob'));
+
+		expect(discard.confirm).toHaveBeenCalledWith({ action: 'log-in', owner: adaStamp });
+	});
+
 	it('clears a device nobody had claimed before adopting it', async () => {
 		const { logIn, discard, localOwner, hooks } = configure();
 

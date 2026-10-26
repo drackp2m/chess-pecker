@@ -45,6 +45,12 @@ export interface CommonI18nParams {
 	'01M0WDEDFAJ2PMX8BFXKKQFD0A': {
 		rejected: number;
 	};
+	'01M5MJ0EPA5E3862JD06CN4GKX': {
+		username: string;
+	};
+	'01M5MJ0EPBSNAZ9CEEJ6KRK3KT': {
+		username: string;
+	};
 	'01M08S2E7YMKHXMG6TBMMFGPP0': {
 		pending: number;
 	};

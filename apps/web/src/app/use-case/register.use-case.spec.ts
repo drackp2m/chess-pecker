@@ -77,6 +77,14 @@ describe('RegisterUseCase', () => {
 		expect(discard.execute).toHaveBeenCalledTimes(1);
 	});
 
+	it('names the account the device belongs to and says the warning comes from signing up', async () => {
+		const { register, discard } = configure({ owner: adaStamp });
+
+		await register.execute(request);
+
+		expect(discard.confirm).toHaveBeenCalledWith({ action: 'register', owner: adaStamp });
+	});
+
 	it('opens no account when the answer is no', async () => {
 		const { register, sessionStore, discard } = configure({ owner: adaStamp, confirmed: false });
 

@@ -19,7 +19,7 @@ import { ShareStore } from '@app/store/share.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
 import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
-import { DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
+import { DiscardContext, DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 import { SYNC_LOCK, withExclusiveLock } from '@app/util/exclusive-lock';
 
@@ -29,6 +29,8 @@ interface Options {
 	readonly puzzleSets?: number;
 	readonly answer?: boolean;
 }
+
+const LOGGING_IN: DiscardContext = { action: 'log-in', owner: undefined };
 
 const NOTHING_UNSAVED: UnsavedByEntity = Object.fromEntries(
 	SYNC_ENTITIES.map((entity): readonly [SyncEntity, UnsavedCount] => [entity, NO_UNSAVED]),
@@ -85,7 +87,12 @@ function configure(options: Options = {}) {
 		hasPending: vi.fn(() => Promise.resolve(false)),
 	};
 	const modalStore = {
-		open: vi.fn(() => Promise.resolve({ instance: { onClose$: of(options.answer ?? false) } })),
+		open: vi.fn(() =>
+			Promise.resolve({
+				instance: { onClose$: of(options.answer ?? false) },
+				setInput: vi.fn((_name: string, _value: unknown) => undefined),
+			}),
+		),
 	};
 	const store = (name: string) => ({
 		reset: vi.fn(() => {
@@ -136,7 +143,7 @@ describe('DiscardLocalDataUseCase.confirm', () => {
 	it('goes ahead without asking when there is nothing to lose', async () => {
 		const { discard, modalStore } = configure();
 
-		expect(await discard.confirm()).toBe(true);
+		expect(await discard.confirm(LOGGING_IN)).toBe(true);
 		expect(modalStore.open).not.toHaveBeenCalled();
 	});
 
@@ -144,7 +151,7 @@ describe('DiscardLocalDataUseCase.confirm', () => {
 		const unsaved = withAttempts({ pending: 3, rejected: 0 });
 		const { discard, modalStore } = configure({ unsaved, answer: true });
 
-		expect(await discard.confirm()).toBe(true);
+		expect(await discard.confirm(LOGGING_IN)).toBe(true);
 		expect(modalStore.open).toHaveBeenCalledTimes(1);
 	});
 
@@ -152,29 +159,41 @@ describe('DiscardLocalDataUseCase.confirm', () => {
 		const unsaved = withAttempts({ pending: 3, rejected: 0 });
 		const { discard } = configure({ unsaved, answer: false });
 
-		expect(await discard.confirm()).toBe(false);
+		expect(await discard.confirm(LOGGING_IN)).toBe(false);
 	});
 
 	it('asks about work the server refused, which is not pending any more', async () => {
 		const unsaved = withAttempts({ pending: 0, rejected: 2 });
 		const { discard, modalStore } = configure({ unsaved, answer: true });
 
-		expect(await discard.confirm()).toBe(true);
+		expect(await discard.confirm(LOGGING_IN)).toBe(true);
 		expect(modalStore.open).toHaveBeenCalledTimes(1);
 	});
 
 	it('counts an imported library as work worth asking about', async () => {
 		const { discard, modalStore } = configure({ puzzleSets: 1, answer: true });
 
-		expect(await discard.confirm()).toBe(true);
+		expect(await discard.confirm(LOGGING_IN)).toBe(true);
 		expect(modalStore.open).toHaveBeenCalledTimes(1);
+	});
+
+	it('tells the warning what is being done and whose the device is', async () => {
+		const unsaved = withAttempts({ pending: 3, rejected: 0 });
+		const { discard, modalStore } = configure({ unsaved, answer: true });
+
+		await discard.confirm({ action: 'register', owner: { uuid: 'uuid-ada', username: 'ada' } });
+
+		const modal = await modalStore.open.mock.results[0]?.value;
+
+		expect(modal?.setInput).toHaveBeenCalledWith('action', 'register');
+		expect(modal?.setInput).toHaveBeenCalledWith('owner', 'ada');
 	});
 
 	it('asks anyway when it cannot tell what the device holds', async () => {
 		const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 		const { discard, modalStore } = configure({ countFails: true, answer: false });
 
-		expect(await discard.confirm()).toBe(false);
+		expect(await discard.confirm(LOGGING_IN)).toBe(false);
 		expect(modalStore.open).toHaveBeenCalledTimes(1);
 		expect(logged).toHaveBeenCalled();
 

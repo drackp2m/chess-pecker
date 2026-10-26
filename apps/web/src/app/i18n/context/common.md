@@ -139,3 +139,7 @@ El marcador: la lista en la que el jugador guarda un ejercicio ya terminado. Só
 ## SHARE_*
 
 Compartir un ejercicio ya terminado con un amigo, que aquí es un reto: quien lo recibe lo resuelve y después se comparan los resultados de todos los que hayan participado. `SHARE` es la etiqueta accesible del icono, no se ve en pantalla. `SHARE_FRIEND` es la etiqueta de un selector, una palabra. `SHARE_MESSAGE` es opcional y `SHARE_MESSAGE_PLACEHOLDER` lo dice sin ordenar nada. En `SHARE_SENT`, `{username}` puede ser más de un nombre separado por comas. `SHARE_CHALLENGE_RECEIVED` y `SHARE_CHALLENGE_SOLVED` son avisos que llegan solos: `{username}` es siempre otra persona, nunca quien lee.
+
+## DISCARD_LOCAL_*
+
+El aviso que sale al iniciar sesión o crear una cuenta en un dispositivo que guarda progreso sin subir, que se borrará. `DISCARD_LOCAL_MESSAGE` es para el progreso que se entrenó sin cuenta y `DISCARD_LOCAL_KEEP_BY_REGISTERING` lo acompaña: crear una cuenta lo conserva. `DISCARD_LOCAL_OWNED_LOG_IN` y `DISCARD_LOCAL_OWNED_REGISTER` son para el de otra cuenta, cuya sesión caducó sin cerrarla: `{username}` es el nombre de esa cuenta, que puede ser o no la de quien lee, y «ella» es siempre la cuenta, nunca una persona.

@@ -17,7 +17,10 @@ export class LogInUseCase {
 	async execute(request: LoginRequest): Promise<boolean> {
 		const owner = await this.localOwnerUseCase.read();
 
-		if (owner?.username !== request.username && !(await this.discardLocalDataUseCase.confirm())) {
+		if (
+			owner?.username !== request.username &&
+			!(await this.discardLocalDataUseCase.confirm({ action: 'log-in', owner }))
+		) {
 			return false;
 		}
 

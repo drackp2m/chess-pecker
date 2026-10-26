@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { anonymousGuard } from '@app/guard/anonymous.guard';
 import { authenticatedGuard } from '@app/guard/authenticated.guard';
 import { introGuard } from '@app/guard/intro.guard';
 import { MainLayout } from '@app/layout/main/main.layout';
@@ -20,10 +21,12 @@ export const APP_ROUTES: Routes = [
 			},
 			{
 				path: 'register',
+				canActivate: [anonymousGuard],
 				loadChildren: () => import('./page/auth/register.routes'),
 			},
 			{
 				path: 'login',
+				canActivate: [anonymousGuard],
 				loadChildren: () => import('./page/auth/login.routes'),
 			},
 			{

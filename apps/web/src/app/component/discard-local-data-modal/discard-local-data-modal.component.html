@@ -1,13 +1,46 @@
 <div class="flex-col gap-4">
-	<p class="fs-sm color-contrast-mid">{{ I18n.common.DISCARD_LOCAL_MESSAGE | i18n }}</p>
+	@if (owner(); as username) {
+		<p class="fs-sm color-contrast-mid">
+			@if ('register' === action()) {
+				{{ I18n.common.DISCARD_LOCAL_OWNED_REGISTER | i18n: { username } }}
+			} @else {
+				{{ I18n.common.DISCARD_LOCAL_OWNED_LOG_IN | i18n: { username } }}
+			}
+		</p>
+	} @else {
+		<p class="fs-sm color-contrast-mid">{{ I18n.common.DISCARD_LOCAL_MESSAGE | i18n }}</p>
+	}
+
+	@if (offersRegister()) {
+		<div class="flex-col gap-2">
+			<p class="fs-sm color-contrast-mid">
+				{{ I18n.common.DISCARD_LOCAL_KEEP_BY_REGISTERING | i18n }}
+			</p>
+
+			<button appThemed color="accent" (click)="register()">
+				{{ I18n.common.CREATE_ACCOUNT | i18n }}
+			</button>
+		</div>
+	}
 
 	<div class="flex-row gap-2">
 		<button appThemed class="flex-grow" (click)="dismiss()">
 			{{ I18n.common.CANCEL | i18n }}
 		</button>
 
-		<button appThemed class="flex-grow" color="accent" (click)="confirm()">
-			{{ I18n.common.LOG_IN | i18n }}
-		</button>
+		@if ('register' === action()) {
+			<button appThemed class="flex-grow" color="accent" (click)="confirm()">
+				{{ I18n.common.CREATE_ACCOUNT | i18n }}
+			</button>
+		} @else {
+			<button
+				appThemed
+				class="flex-grow"
+				[color]="offersRegister() ? 'contrast-mid' : 'accent'"
+				(click)="confirm()"
+			>
+				{{ I18n.common.LOG_IN | i18n }}
+			</button>
+		}
 	</div>
 </div>

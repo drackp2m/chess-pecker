@@ -1,7 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { DiscardLocalDataModalComponent } from '@app/component/discard-local-data-modal/discard-local-data-modal.component';
+import {
+	DiscardAction,
+	DiscardLocalDataModalComponent,
+} from '@app/component/discard-local-data-modal/discard-local-data-modal.component';
+import { LocalOwner } from '@app/definition/model/setting/local-owner.type';
 import { Resettable } from '@app/definition/resettable.interface';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
@@ -15,6 +19,11 @@ import { TrainingStore } from '@app/store/training.store';
 import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 import { SYNC_LOCK, withExclusiveLock } from '@app/util/exclusive-lock';
+
+export interface DiscardContext {
+	readonly action: DiscardAction;
+	readonly owner: LocalOwner | undefined;
+}
 
 @Injectable({
 	providedIn: 'root',
@@ -39,12 +48,15 @@ export class DiscardLocalDataUseCase {
 		inject(TrainingStore),
 	];
 
-	async confirm(): Promise<boolean> {
+	async confirm(context: DiscardContext): Promise<boolean> {
 		if (!(await this.hasLocalWork())) {
 			return true;
 		}
 
 		const modal = await this.modalStore.open(DiscardLocalDataModalComponent);
+
+		modal.setInput('action', context.action);
+		modal.setInput('owner', context.owner?.username ?? null);
 
 		return firstValueFrom(modal.instance.onClose$);
 	}
