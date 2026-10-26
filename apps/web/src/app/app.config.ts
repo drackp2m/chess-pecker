@@ -18,6 +18,7 @@ import { SyncStore } from '@app/store/sync.store';
 import { SingleEntryLocationStrategy } from '@app/strategy/single-entry-location.strategy';
 import { TemplatePageTitleStrategy } from '@app/strategy/template-file-title.strategy';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
+import { LostSessionNoticeUseCase } from '@app/use-case/lost-session-notice.use-case';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
@@ -41,7 +42,13 @@ export const appConfig: ApplicationConfig = {
 			sessionStore.watch();
 			syncStore.watch();
 
-			void sessionStore.restore().then(() => syncStore.start());
+			const lostSessionNotice = inject(LostSessionNoticeUseCase);
+
+			void sessionStore.restore().then(() => {
+				void lostSessionNotice.check();
+
+				return syncStore.start();
+			});
 		}),
 		provideRouter(
 			APP_ROUTES,

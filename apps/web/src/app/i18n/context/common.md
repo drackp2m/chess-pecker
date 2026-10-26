@@ -143,3 +143,7 @@ Compartir un ejercicio ya terminado con un amigo, que aquí es un reto: quien lo
 ## DISCARD_LOCAL_*
 
 El aviso que sale al iniciar sesión o crear una cuenta en un dispositivo que guarda progreso sin subir, que se borrará. `DISCARD_LOCAL_MESSAGE` es para el progreso que se entrenó sin cuenta y `DISCARD_LOCAL_KEEP_BY_REGISTERING` lo acompaña: crear una cuenta lo conserva. `DISCARD_LOCAL_OWNED_LOG_IN` y `DISCARD_LOCAL_OWNED_REGISTER` son para el de otra cuenta, cuya sesión caducó sin cerrarla: `{username}` es el nombre de esa cuenta, que puede ser o no la de quien lee, y «ella» es siempre la cuenta, nunca una persona.
+
+## SESSION_LOST
+
+Aviso fijo al abrir la app cuando el dispositivo es de una cuenta cuya sesión caducó sin cerrarla: lo entrenado se queda en el dispositivo y no se sube. `{username}` es el nombre de esa cuenta. Lleva un botón con `LOG_IN`.
