@@ -14,6 +14,9 @@ export interface TrainingI18nParams {
 	'training.01KZJ895MC1C5VZ1E3FZ1P1HZ7': {
 		size: number;
 	};
+	'training.01M624SYX2WFYH91NAMYPKRAJC': {
+		max: number;
+	};
 	'training.01KZJ895MCES8B5ZMR3HTB09M0': {
 		index: number;
 		status: string;

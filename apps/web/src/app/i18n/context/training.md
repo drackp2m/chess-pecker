@@ -38,6 +38,14 @@ Encabezado. El jugador se compromete a un ritmo, a cuántos ejercicios va a hace
 
 Etiqueta de un campo numérico: ejercicios al día.
 
+## PACE_REQUIRED, PACE_TOO_FEW, PACE_TOO_MANY
+
+Mensajes de error bajo el campo de ejercicios al día, cortos y sin culpa. `{max}` es el máximo que admite el campo, hoy 100.
+
+## END_DATE_*
+
+`END_DATE_LABEL` es la etiqueta de un campo de fecha: el día en que el jugador quiere terminar el primer ciclo, no el entrenamiento entero. Va junto al de ejercicios al día y se calculan el uno al otro. El resto son sus mensajes de error: la fecha falta, está a menos de dos semanas o a más de seis meses.
+
 ## CYCLE_*
 
 Los ciclos del entrenamiento. `{index}` es el número del ciclo empezando por 1. En `CYCLE_TIMES` y `CYCLE_TARGET` los tiempos son duraciones ya formateadas por la aplicación: llegan hechas dentro del parámetro y no se tocan. `CYCLE_INCOMPLETE` es el aviso de un ciclo al que le faltan ejercicios en este dispositivo: `{stored}` son los que hay y `{expected}` los que debería tener. No es culpa del jugador y tiene arreglo, así que el tono es de aviso, no de alarma.

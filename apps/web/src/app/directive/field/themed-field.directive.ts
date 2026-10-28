@@ -11,6 +11,8 @@ import {
 	inject,
 	input,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgControl } from '@angular/forms';
 
 import { elementOffsetHeight, elementOffsetWidth } from '@app/util/element-size';
 import { createTypedElement } from '@app/util/renderer';
@@ -37,6 +39,7 @@ export abstract class ThemedFieldDirective<TControl extends ThemedFieldControl>
 	protected readonly wrapperElement: HTMLDivElement = this.createWrapper();
 
 	private readonly destroyRef = inject(DestroyRef);
+	private readonly ngControl = inject(NgControl, { optional: true, self: true });
 
 	private readonly labelSpanElement: HTMLSpanElement = this.createLabelMeasure();
 	private readonly labelElement: HTMLLabelElement = this.createLabel();
@@ -85,12 +88,10 @@ export abstract class ThemedFieldDirective<TControl extends ThemedFieldControl>
 	@HostListener('input')
 	@HostListener('change')
 	onInput() {
-		const control = this.elementRef.nativeElement;
-
-		if ('' === control.value && !control.validity.badInput) {
-			this.renderer2.removeClass(this.wrapperElement, 'filled');
-		} else {
+		if (this.isFilled(this.elementRef.nativeElement)) {
 			this.renderer2.addClass(this.wrapperElement, 'filled');
+		} else {
+			this.renderer2.removeClass(this.wrapperElement, 'filled');
 		}
 	}
 
@@ -102,11 +103,22 @@ export abstract class ThemedFieldDirective<TControl extends ThemedFieldControl>
 
 	ngAfterViewInit() {
 		this.observeDisabledChanges();
+		this.followFormValue();
 		this.onInput();
+	}
+
+	protected isFilled(control: TControl): boolean {
+		return '' !== control.value || control.validity.badInput;
 	}
 
 	protected setCSSVariable(name: string, value: string) {
 		this.wrapperElement.style.setProperty(name, value);
+	}
+
+	private followFormValue(): void {
+		this.ngControl?.valueChanges?.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+			this.onInput();
+		});
 	}
 
 	/**

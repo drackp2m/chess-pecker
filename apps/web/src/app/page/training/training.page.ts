@@ -1,5 +1,20 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+	Component,
+	DestroyRef,
+	OnInit,
+	computed,
+	effect,
+	inject,
+	signal,
+	untracked,
+} from '@angular/core';
+import {
+	AbstractControl,
+	FormControl,
+	FormGroup,
+	ReactiveFormsModule,
+	Validators,
+} from '@angular/forms';
 import type { CycleProgress, TrainingStatus } from '@chesspecker/api-definitions';
 import { firstValueFrom } from 'rxjs';
 
@@ -23,6 +38,12 @@ import { PageLoadStore } from '@app/store/page-load.store';
 import { TrainingStore } from '@app/store/training.store';
 import { CyclePaceDay, cyclePaceSeries } from '@app/util/activity-grid';
 import { diffLabelDays, zoneDayLabel } from '@app/util/timezone-date';
+import {
+	GoalLimits,
+	createGoalForm,
+	goalDateBounds,
+	linkGoalFields,
+} from '@app/util/training-goal';
 
 const DAILY_RANGE_DAYS = 14;
 const DEFAULT_SET_SIZE = 1000;
@@ -141,14 +162,27 @@ export class TrainingPage implements OnInit {
 		}),
 	});
 
-	// ToDo => the goal only offers exercises per day; `SetTrainingGoalRequestDto` also takes
-	// an `endDate`, missing here because `InputDirective` has no date type yet.
-	readonly paceForm = new FormGroup({
-		puzzlesPerDay: new FormControl(DEFAULT_PUZZLES_PER_DAY, {
-			nonNullable: true,
-			validators: [Validators.required, Validators.min(1)],
-		}),
-	});
+	readonly goalLimits = GoalLimits;
+	readonly goalBounds = goalDateBounds();
+	readonly paceForm = createGoalForm(DEFAULT_PUZZLES_PER_DAY);
+
+	private readonly destroyRef = inject(DestroyRef);
+
+	constructor() {
+		const link = linkGoalFields(this.paceForm, () => this.setSizeForGoal());
+
+		this.destroyRef.onDestroy(() => {
+			link.unsubscribe();
+		});
+
+		effect(() => {
+			if (0 < (this.store.progress()?.setSize ?? 0)) {
+				untracked(() => {
+					this.fillEndDateOnce();
+				});
+			}
+		});
+	}
 
 	ngOnInit(): void {
 		this.store.clearError();
@@ -166,9 +200,21 @@ export class TrainingPage implements OnInit {
 	}
 
 	savePace(): void {
-		if (this.paceForm.valid) {
-			void this.store.setGoal({ puzzlesPerDay: this.paceForm.getRawValue().puzzlesPerDay });
+		if (this.paceForm.invalid) {
+			this.paceForm.markAllAsTouched();
+
+			return;
 		}
+
+		void this.store.setGoal(this.paceForm.getRawValue());
+	}
+
+	fieldError(control: AbstractControl): string | null {
+		if (control.pristine && control.untouched) {
+			return null;
+		}
+
+		return Object.keys(control.errors ?? {})[0] ?? null;
 	}
 
 	startCycle(): void {
@@ -251,6 +297,18 @@ export class TrainingPage implements OnInit {
 				drift: signed(day.drift),
 			}),
 		};
+	}
+
+	private setSizeForGoal(): number {
+		const fixed = this.store.progress()?.setSize ?? 0;
+
+		return 0 < fixed ? fixed : this.setForm.controls.size.value;
+	}
+
+	private fillEndDateOnce(): void {
+		if ('' === this.paceForm.controls.endDate.value) {
+			this.paceForm.controls.puzzlesPerDay.updateValueAndValidity();
+		}
 	}
 }
 
