@@ -19,7 +19,6 @@ from .models import TRANSLATE, profile_for, summary, table
 from .prompting import (
     GENDER_LABEL,
     PLURAL_LABEL,
-    REVIEW_SUB_STATE,
     Batch,
     blocks_of,
     build_messages,
@@ -28,6 +27,7 @@ from .prompting import (
     group_id,
     is_pending,
     parse_answers,
+    review_sub_state,
 )
 from .report import GAVE_UP, Record, Reporter, Tally, write_report
 from .scoring import name_of
@@ -491,7 +491,7 @@ def seed_memory(root, memory, source_lang, target_lang) -> None:
 
 def apply_unit(unit, text: str, review: bool) -> None:
     replace_target(unit.segment, build_target(unit.source_element, text))
-    set_state(unit.segment, "translated", REVIEW_SUB_STATE if review else None)
+    set_state(unit.segment, "translated", review_sub_state(unit) if review else None)
 
 
 def show_prompts(batch: Batch, reporter) -> None:

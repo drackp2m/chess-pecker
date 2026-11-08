@@ -11,10 +11,11 @@ from pathlib import Path
 
 import requests
 
-from .prompting import REVIEW_SUB_STATE, blocks_of, check_forms, is_pending
+from .prompting import blocks_of, check_forms, is_pending, review_sub_state
 from .report import Record
 from .validate import validate
 from .xliff_io import (
+    FALLBACK_SUB_STATE_PREFIX,
     build_target,
     ensure_parent,
     find_files,
@@ -141,7 +142,7 @@ class Client:
         except (KeyError, TypeError) as exc:
             raise DeeplError(f"Unexpected answer from DeepL: {answer}") from exc
 
-    def make_glossary(self, terms, source: str, target: str) -> str | None:
+    def make_glossary(self, terms, source: str, target: str, prefix: str) -> str | None:
         pairs = {term.source: term.target for term in terms if term.source and term.target}
 
         if not pairs or source not in GLOSSARY_LANGS or target not in GLOSSARY_LANGS:
@@ -150,7 +151,7 @@ class Client:
         answer = self.post(
             "/glossaries",
             {
-                "name": f"chesspecker-{source}-{target}",
+                "name": f"{prefix}-{source}-{target}",
                 "source_lang": source,
                 "target_lang": target,
                 "entries": "\n".join(f"{key}\t{value}" for key, value in pairs.items()),
@@ -194,7 +195,7 @@ def issues_of(unit, block, text: str, lang: str) -> list[str]:
 
 def store(unit, text: str, review: bool) -> None:
     replace_target(unit.segment, build_target(unit.source_element, text))
-    set_state(unit.segment, "translated", REVIEW_SUB_STATE if review else None)
+    set_state(unit.segment, "translated", review_sub_state(unit) if review else None)
 
 
 def write_batch(batch: list, texts: list[str], reporter, lang: str, done: int, pending: int) -> int:
@@ -233,7 +234,8 @@ def translate_file(
     jobs, terms = units_of(root, args.scope, args.only_stale)
     jobs = jobs if budget is None else jobs[:budget]
     langs = (code_of(source_lang, False), code_of(target_lang, True))
-    glossary = None if args.no_glossary else client.make_glossary(terms, *langs)
+    prefix = next((unit.sub_state_prefix for _, unit in jobs), FALLBACK_SUB_STATE_PREFIX)
+    glossary = None if args.no_glossary else client.make_glossary(terms, *langs, prefix)
 
     reporter.file_started(path, output, len(jobs), len(jobs))
     reporter.say(f"  DeepL {langs[0]} → {langs[1]}" + ("  (with glossary)" if glossary else ""))

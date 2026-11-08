@@ -56,10 +56,15 @@ resumes from that file. Ctrl-C is safe: what is already translated is on disk.
 
 ### What counts as pending
 
-A unit is pending when its `<target>` is empty, or when the export marked it
-`subState="chesspecker:outdated"` — the source changed after it was last translated. `--only-stale`
+A unit is pending when its `<target>` is empty, or when the export marked it with an `outdated`
+sub-state — the source changed after it was last translated. `--only-stale`
 narrows the run to the second kind, `--scope <name>` to one scope, `--limit N` to the next N units
 across every file.
+
+A sub-state is read by what follows its colon, so `outdated` and `review` count under any prefix.
+The prefix written on `review` is the one the export left in the `subStatePrefix` note of each
+`<file>` (`xliffPrefix` in `i18n.config.json`), or `translate` when the file has none; it also
+names the DeepL glossary.
 
 Everything the model needs travels inside the XLIFF: the `<file>` notes (`app`, `language`, `scope`,
 `glossary`) and the unit's own notes (`context`, `term`, `param`). Nothing is read from the repo, so
@@ -478,7 +483,7 @@ A rejected answer is retried with the reason attached, then with an example. Of 
 answers, the one kept is the least broken — an empty one never wins, then the fewest hard
 failures, then the fewest failures, the later on a tie —, so a last try that goes worse does not
 throw away a usable one. What still fails is salvaged — dropped markers are re-attached — and the
-segment is written with `subState="chesspecker:review"` and listed at the end of the run. Nothing
+segment is written with a `review` sub-state and listed at the end of the run. Nothing
 dubious is ever passed off as good.
 
 **Reasoning is off unless `--think` is given.** With it, that last try and the re-asks of the
@@ -680,7 +685,7 @@ Three things make the comparison fair rather than decorative:
   models are told to use. DeepL only supports glossaries between its main languages: `ca-ES` and
   `hi-IN` translate fine but get no glossary, and the run says so. `--no-glossary` turns it off.
 - **The same checks run on the answer.** The output goes through the same validator, so a unit
-  where DeepL broke a rule is marked `chesspecker:review` and listed at the end, just like a model
+  where DeepL broke a rule is marked `review` and listed at the end, just like a model
   run. A reference is not a ground truth, and this is what keeps that visible.
 
 Units are sent 50 at a time, progress is saved after every request, and the summary ends with the

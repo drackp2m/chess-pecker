@@ -18,15 +18,16 @@ from .xliff_io import (
     segment_source,
     segment_target,
     source_to_prompt_text,
-    sub_state_of,
+    sub_state_prefix_of,
+    sub_state_value,
     target_is_empty,
     target_to_prompt_text,
 )
 
 OPEN, CLOSE = "⟦", "⟧"
 INJECTIONS = ("none", "terms", "full")
-OUTDATED_SUB_STATE = "chesspecker:outdated"
-REVIEW_SUB_STATE = "chesspecker:review"
+OUTDATED = "outdated"
+REVIEW = "review"
 ANSWER_RE = re.compile(r"^\s*(\d{1,3})\s*[.)\]:>–-]?\s*(.*\S)\s*$")
 
 CORE_RULES = """\
@@ -195,6 +196,7 @@ class Unit:
     notes: dict[str, list[str]]
     previous: str
     outdated: bool
+    sub_state_prefix: str
 
     @property
     def key(self) -> str:
@@ -585,7 +587,7 @@ def fenced(block: Block, unit: Unit) -> bool:
     return block.profile == INSTRUCT or injected(unit, block.injection) != unit.source
 
 
-def unit_of(element, scope: str) -> Unit | None:
+def unit_of(element, scope: str, prefix: str) -> Unit | None:
     segment = first_segment(element)
 
     if segment is None:
@@ -613,8 +615,17 @@ def unit_of(element, scope: str) -> Unit | None:
         markers=expected_markers_for(source_element),
         notes=notes_of(element),
         previous=previous,
-        outdated=sub_state_of(segment) == OUTDATED_SUB_STATE,
+        outdated=sub_state_value(segment) == OUTDATED,
+        sub_state_prefix=prefix,
     )
+
+
+def review_sub_state(unit: Unit) -> str:
+    return f"{unit.sub_state_prefix}:{REVIEW}"
+
+
+def is_review(segment) -> bool:
+    return sub_state_value(segment) == REVIEW
 
 
 def is_pending(unit: Unit) -> bool:
@@ -637,7 +648,8 @@ def blocks_of(
         profile=profile,
         injection=injection,
     )
-    units = [unit_of(element, scope) for element in find_units(file_element)]
+    prefix = sub_state_prefix_of(file_element)
+    units = [unit_of(element, scope, prefix) for element in find_units(file_element)]
 
     return block, [unit for unit in units if unit is not None]
 

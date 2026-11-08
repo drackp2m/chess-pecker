@@ -10,10 +10,10 @@ from pathlib import Path
 from .compare import chrf
 from .context import contains_word
 from .placeholders import PH_RE
-from .prompting import REVIEW_SUB_STATE, blocks_of
+from .prompting import blocks_of, is_review
 from .samples import traces_of
 from .validate import base_of, validate
-from .xliff_io import NS, find_files, get_languages, ph_map, read_xliff, sub_state_of
+from .xliff_io import NS, find_files, get_languages, ph_map, read_xliff
 
 CRITICAL = "critical"
 MAJOR = "major"
@@ -213,7 +213,7 @@ def answer_of(block, unit) -> Answer:
         shown_target=shown(unit.previous, unit),
         terms=tuple(unit.terms),
         keep=block.keep,
-        review=sub_state_of(unit.segment) == REVIEW_SUB_STATE,
+        review=is_review(unit.segment),
     )
 
 

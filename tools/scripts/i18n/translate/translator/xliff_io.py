@@ -12,6 +12,8 @@ from .placeholders import PH_RE
 
 XLIFF_NS = "urn:oasis:names:tc:xliff:document:2.0"
 NS = {"x": XLIFF_NS}
+SUB_STATE_PREFIX_NOTE = "subStatePrefix"
+FALLBACK_SUB_STATE_PREFIX = "translate"
 
 
 def local_name(element) -> str:
@@ -315,6 +317,16 @@ def state_of(segment) -> str:
 
 def sub_state_of(segment) -> str | None:
     return segment.get("subState")
+
+
+def sub_state_value(segment) -> str | None:
+    sub_state = sub_state_of(segment)
+
+    return None if sub_state is None else sub_state.rpartition(":")[2]
+
+
+def sub_state_prefix_of(file_element) -> str:
+    return note_text(notes_of(file_element), SUB_STATE_PREFIX_NOTE) or FALLBACK_SUB_STATE_PREFIX
 
 
 def set_state(segment, state: str, sub_state: str | None = None) -> None:
