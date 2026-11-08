@@ -3,12 +3,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { collectUsages, readScopes } from '@chesspecker/i18n-cli/catalogue/collect.mjs';
-import { DEFAULTS } from '@chesspecker/i18n-cli/catalogue/config.mjs';
-import { readContext, termsIn } from '@chesspecker/i18n-cli/catalogue/context.mjs';
-import { hashOf } from '@chesspecker/i18n-cli/catalogue/freshness.mjs';
-import { buildExport } from '@chesspecker/i18n-cli/transfer/build.mjs';
-import { buildXliff } from '@chesspecker/i18n-cli/transfer/xliff.mjs';
+import { collectUsages, readScopes } from '@drackp2m/transloco-ulid-cli/catalogue/collect.mjs';
+import { DEFAULTS } from '@drackp2m/transloco-ulid-cli/catalogue/config.mjs';
+import { readContext, termsIn } from '@drackp2m/transloco-ulid-cli/catalogue/context.mjs';
+import { hashOf } from '@drackp2m/transloco-ulid-cli/catalogue/freshness.mjs';
+import { buildExport } from '@drackp2m/transloco-ulid-cli/transfer/build.mjs';
+import { buildXliff } from '@drackp2m/transloco-ulid-cli/transfer/xliff.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const ICU_FILE = 'bench-icu';

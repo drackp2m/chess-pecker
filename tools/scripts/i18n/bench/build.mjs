@@ -5,10 +5,10 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { readScopes } from '@chesspecker/i18n-cli/catalogue/collect.mjs';
-import { DEFAULTS } from '@chesspecker/i18n-cli/catalogue/config.mjs';
-import { readContext } from '@chesspecker/i18n-cli/catalogue/context.mjs';
-import { buildExport } from '@chesspecker/i18n-cli/transfer/build.mjs';
+import { readScopes } from '@drackp2m/transloco-ulid-cli/catalogue/collect.mjs';
+import { DEFAULTS } from '@drackp2m/transloco-ulid-cli/catalogue/config.mjs';
+import { readContext } from '@drackp2m/transloco-ulid-cli/catalogue/context.mjs';
+import { buildExport } from '@drackp2m/transloco-ulid-cli/transfer/build.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(DIR, '..', '..', '..', '..');
