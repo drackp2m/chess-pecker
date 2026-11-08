@@ -1,0 +1,8 @@
+{
+	"i18nDir": "apps/web/src/app/i18n",
+	"sourceDirs": ["apps/web/src"],
+	"languageFile": "apps/web/src/app/definition/language.type.ts",
+	"rootScope": "common",
+	"importAlias": "@app/i18n",
+	"xliffPrefix": "chesspecker"
+}
