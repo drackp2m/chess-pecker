@@ -5,7 +5,7 @@ An i18n-ally-flavoured VSCode extension for this repo's transloco setup. It reso
 `keys.ts` → NAME → ULID, `<lang>.json` → ULID → text.
 
 It has no dependencies and no build step: the collectors are loaded straight from
-`tools/scripts/i18n/` at runtime, so the extension and `pnpm i18n:check` can never drift.
+`libs/i18n-cli/src/` at runtime, so the extension and `pnpm i18n:check` can never drift.
 
 ## Features
 
@@ -137,7 +137,7 @@ Opening the repo natively instead (no container) is the same command against `~/
 | `translocoUlidI18n.transferDir`         | `translations` | Where the XLIFF export lands and the import dialog opens.                                                         |
 
 The language file is the single source of both lists — the same one `pnpm i18n:check` reads through
-`tools/scripts/i18n/catalogue/config.mjs`. It is parsed on every reload and nothing is guessed: a
+`libs/i18n-cli/src/catalogue/config.mjs`. It is parsed on every reload and nothing is guessed: a
 file that is not there, a `LANGUAGES` that is empty or holds something that is not a language tag, a
 `DEFAULT_LANGUAGE` missing or absent from `LANGUAGES`, a `langs` naming a language the file does not
 declare or leaving the source language out, a `displayLang` outside the resolved set — each one stops

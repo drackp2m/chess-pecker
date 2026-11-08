@@ -28,4 +28,5 @@
 /tools/scripts/i18n/translate/bench-runs
 /libs/api-definitions/node_modules
 /libs/api-definitions/dist
+/libs/i18n-cli/node_modules
 Dockerfile

@@ -3,12 +3,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { collectUsages, readScopes } from '../../catalogue/collect.mjs';
-import { DEFAULTS } from '../../catalogue/config.mjs';
-import { readContext, termsIn } from '../../catalogue/context.mjs';
-import { hashOf } from '../../catalogue/freshness.mjs';
-import { buildExport } from '../../transfer/build.mjs';
-import { buildXliff } from '../../transfer/xliff.mjs';
+import { collectUsages, readScopes } from '@chesspecker/i18n-cli/catalogue/collect.mjs';
+import { DEFAULTS } from '@chesspecker/i18n-cli/catalogue/config.mjs';
+import { readContext, termsIn } from '@chesspecker/i18n-cli/catalogue/context.mjs';
+import { hashOf } from '@chesspecker/i18n-cli/catalogue/freshness.mjs';
+import { buildExport } from '@chesspecker/i18n-cli/transfer/build.mjs';
+import { buildXliff } from '@chesspecker/i18n-cli/transfer/xliff.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const ICU_FILE = 'bench-icu';

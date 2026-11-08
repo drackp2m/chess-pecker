@@ -8,7 +8,7 @@ const VERSION = '1.3.0';
 const LABEL = 'unit';
 const SLOW_TEST_MS = 300;
 const TICK_MS = 100;
-const DEFAULT_PATTERNS = ['tools/scripts/**/*.test.mjs'];
+const DEFAULT_PATTERNS = ['tools/scripts/**/*.test.mjs', 'libs/i18n-cli/src/**/*.test.mjs'];
 const FRAME = /^\s*at (?:(?<method>.+?) \()?(?<file>[^()]+?):(?<line>\d+):(?<column>\d+)\)?$/u;
 
 const live = true === process.stdout.isTTY;

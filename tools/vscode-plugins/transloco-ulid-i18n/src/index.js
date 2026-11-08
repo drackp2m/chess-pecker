@@ -3,7 +3,7 @@ const { pathToFileURL } = require('node:url');
 
 const settings = require('./settings');
 
-const SCRIPTS_DIR = path.join('tools', 'scripts', 'i18n');
+const SCRIPTS_DIR = path.join('libs', 'i18n-cli', 'src');
 
 const loadModule = (root, file) => import(pathToFileURL(path.join(root, SCRIPTS_DIR, file)).href);
 
