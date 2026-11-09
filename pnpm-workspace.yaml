@@ -12,3 +12,4 @@ allowBuilds:
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
   - '@angular/*'
+  - '@drackp2m/*'

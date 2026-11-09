@@ -167,8 +167,8 @@ importers:
   .:
     devDependencies:
       '@drackp2m/transloco-ulid-cli':
-        specifier: workspace:*
-        version: link:libs/i18n-cli
+        specifier: 0.1.0
+        version: 0.1.0(typescript@6.0.3)
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.9.1(jiti@2.6.1)(supports-color@10.2.2))
@@ -474,16 +474,6 @@ importers:
       zod:
         specifier: ^4.5.4
         version: 4.5.4
-    devDependencies:
-      typescript:
-        specifier: 6.0.3
-        version: 6.0.3
-
-  libs/i18n-cli:
-    dependencies:
-      '@messageformat/parser':
-        specifier: 5.1.1
-        version: 5.1.1
     devDependencies:
       typescript:
         specifier: 6.0.3
@@ -1021,6 +1011,13 @@ packages:
     engines: {node: '>=20.19.0'}
     peerDependencies:
       postcss-selector-parser: ^7.1.1
+
+  '@drackp2m/transloco-ulid-cli@0.1.0':
+    resolution: {integrity: sha512-+rSQ+MmsfCWj+3sv0qY3odI2vGdDgX4gJ+dSKhMVXc8HTTbD3DAtd8mkBCjHnNDmztKR3kZmI0P+AtijoV02YQ==}
+    engines: {node: '>=22'}
+    hasBin: true
+    peerDependencies:
+      typescript: '>=5.0.0'
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -8417,6 +8414,11 @@ snapshots:
   '@csstools/selector-specificity@6.0.0(postcss-selector-parser@7.1.5)':
     dependencies:
       postcss-selector-parser: 7.1.5
+
+  '@drackp2m/transloco-ulid-cli@0.1.0(typescript@6.0.3)':
+    dependencies:
+      '@messageformat/parser': 5.1.1
+      typescript: 6.0.3
 
   '@emnapi/core@1.10.0':
     dependencies:

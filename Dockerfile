@@ -28,7 +28,6 @@ COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=node:node apps/web/package.json ./apps/web/
 COPY --chown=node:node apps/api/package.json ./apps/api/
 COPY --chown=node:node libs/api-definitions/package.json ./libs/api-definitions/
-COPY --chown=node:node libs/i18n-cli/package.json ./libs/i18n-cli/
 COPY --chown=node:node patches ./patches
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
