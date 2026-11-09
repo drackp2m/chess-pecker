@@ -6,12 +6,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { readScopes } from '@drackp2m/transloco-ulid-cli/catalogue/collect.mjs';
-import { DEFAULTS } from '@drackp2m/transloco-ulid-cli/catalogue/config.mjs';
+import { readDefaults } from '@drackp2m/transloco-ulid-cli/catalogue/config.mjs';
 import { readContext } from '@drackp2m/transloco-ulid-cli/catalogue/context.mjs';
 import { buildExport } from '@drackp2m/transloco-ulid-cli/transfer/build.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(DIR, '..', '..', '..', '..');
+const DEFAULTS = readDefaults();
 const LIVE_I18N = path.resolve(ROOT, DEFAULTS.i18nDir);
 const ROOT_SCOPE = 'common';
 

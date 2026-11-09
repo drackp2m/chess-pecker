@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { collectUsages, readScopes } from '@drackp2m/transloco-ulid-cli/catalogue/collect.mjs';
-import { DEFAULTS } from '@drackp2m/transloco-ulid-cli/catalogue/config.mjs';
+import { readDefaults } from '@drackp2m/transloco-ulid-cli/catalogue/config.mjs';
 import { readContext, termsIn } from '@drackp2m/transloco-ulid-cli/catalogue/context.mjs';
 import { hashOf } from '@drackp2m/transloco-ulid-cli/catalogue/freshness.mjs';
 import { buildExport } from '@drackp2m/transloco-ulid-cli/transfer/build.mjs';
@@ -174,7 +174,7 @@ function report(lang, files, gold, wanted) {
 	return 0 === holes.length;
 }
 
-const options = { ...DEFAULTS };
+const options = { ...readDefaults() };
 const scopes = readScopes(options);
 const context = readContext(options);
 const { usages } = collectUsages(options.sourceDirs);

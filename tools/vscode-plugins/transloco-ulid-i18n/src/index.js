@@ -143,7 +143,8 @@ class I18nIndex {
 	async readWorkspace() {
 		const modules = await this.loadModules();
 		const { collect, config, params } = modules;
-		const languageFile = settings.languageFile(this.root, config.DEFAULTS);
+		const defaults = config.readDefaults();
+		const languageFile = settings.languageFile(this.root, defaults);
 
 		this.languageFile = languageFile;
 
@@ -155,8 +156,8 @@ class I18nIndex {
 		this.langs = settings.resolveLangs(langs, defaultLang);
 		this.defaultLang = defaultLang;
 		this.displayLang = settings.resolveDisplayLang(this.langs, defaultLang);
-		this.i18nDir = path.join(this.root, config.DEFAULTS.i18nDir);
-		this.sourceDirs = config.DEFAULTS.sourceDirs.map((dir) => path.join(this.root, dir));
+		this.i18nDir = path.join(this.root, defaults.i18nDir);
+		this.sourceDirs = defaults.sourceDirs.map((dir) => path.join(this.root, dir));
 
 		const scopes = collect.readScopes({ i18nDir: this.i18nDir, langs: this.langs });
 
