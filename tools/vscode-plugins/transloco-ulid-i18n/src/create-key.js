@@ -1,32 +1,31 @@
-const { randomBytes } = require('node:crypto');
-const { readFileSync } = require('node:fs');
+const { existsSync, readFileSync } = require('node:fs');
 
 const vscode = require('vscode');
 
 const { NEW_SCOPE, createScope } = require('./create-scope');
+const { importEdit } = require('./imports');
 const { ensureTemplateSetup } = require('./setup');
 
-const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-const KEY_NAME = /^[A-Z][A-Z0-9_]*$/;
-const PARAM_NAME = /^[a-zA-Z][a-zA-Z0-9_]*$/;
-const KEYS_END = '} as const;';
+const SOURCE_LANGUAGES = new Set(['html', 'typescript']);
+const QUOTED = /^(['"`])([\s\S]*)\1$/;
+const REQUIRED = 'Required';
+const NEEDS_CLI = 'Create translation key needs @drackp2m/transloco-ulid-cli 0.2.0 or later';
 
-function encodeTime(time) {
-	let result = '';
+async function loadAdd(index) {
+	try {
+		const [rules, plan] = await Promise.all([
+			index.load('add/rules.mjs'),
+			index.load('add/plan.mjs'),
+		]);
 
-	for (let index = 0; 10 > index; index += 1) {
-		result = ALPHABET[time % 32] + result;
-		time = Math.floor(time / 32);
+		return { rules, plan };
+	} catch (error) {
+		throw new Error(NEEDS_CLI, { cause: error });
 	}
-
-	return result;
 }
 
-function ulid() {
-	const random = [...randomBytes(16)].map((byte) => ALPHABET[byte % 32]).join('');
-
-	return encodeTime(Date.now()) + random;
-}
+const rawScopeOf = (index, name) =>
+	index.rawScopes.find((scope) => scope.name === name) ?? { name, keys: null };
 
 async function pickScope(index, document) {
 	const names = index.scopeNames();
@@ -44,131 +43,144 @@ async function pickScope(index, document) {
 	return NEW_SCOPE === picked ? createScope(index) : picked;
 }
 
-async function askName(index, scope) {
+async function askName(index, rules, scope) {
 	return vscode.window.showInputBox({
 		title: `New key in ${scope}`,
 		placeHolder: 'SECTION_TITLE',
-		validateInput: (value) => {
-			if (!KEY_NAME.test(value)) {
-				return 'Use SCREAMING_SNAKE_CASE';
-			}
-
-			return null === index.entry(scope, value) ? null : `${value} already exists`;
-		},
+		validateInput: (value) => rules.keyNameProblem(rawScopeOf(index, scope), value),
 	});
 }
 
 async function askKind() {
 	const picked = await vscode.window.showQuickPick(
 		[
-			{ label: 'Texto', kind: 'plain' },
+			{ label: 'Text', kind: 'plain' },
 			{ label: 'Plural', kind: 'plural' },
 		],
-		{ title: 'Tipo de clave' },
+		{ title: 'Key kind' },
 	);
 
 	return picked?.kind ?? null;
 }
 
-async function askPluralArgument(name) {
-	const argument = await vscode.window.showInputBox({
-		title: `${name} · parámetro plural`,
+async function askPluralArgument(rules, name) {
+	return vscode.window.showInputBox({
+		title: `${name} · plural param`,
 		value: 'count',
-		validateInput: (value) => (PARAM_NAME.test(value) ? null : 'Usa un nombre de parámetro válido'),
+		validateInput: (value) => rules.paramNameProblem(value),
 	});
-
-	return argument;
 }
 
-async function askPluralForms(index, name, seed, categories) {
-	const forms = new Map();
+function validateForm(rules, argument, category, text) {
+	const problem = rules.formProblem(argument, category, text);
 
-	for (const category of categories) {
+	if (null !== problem) {
+		return problem;
+	}
+
+	const [stray] = rules.strayParamsIn(rules.pluralSource(argument, new Map([[category, text]])));
+
+	return undefined === stray
+		? null
+		: { message: rules.strayMessage(stray), severity: vscode.InputBoxValidationSeverity.Warning };
+}
+
+async function askPluralForms({ index, rules, name, argument, seed }) {
+	const forms = new Map();
+	let previous = '';
+
+	for (const category of rules.formsToAsk(index.defaultLang)) {
+		const start = '' === seed ? previous : seed;
 		const value = await vscode.window.showInputBox({
 			title: `${name} · ${index.defaultLang} · ${category}`,
-			value: categories[0] === category ? seed : '',
-			prompt: 'Obligatorio',
-		});
-
-		if (undefined === value || '' === value.trim()) {
-			return null;
-		}
-
-		forms.set(category, value);
-	}
-
-	return forms;
-}
-
-async function askPluralTexts(index, name, seed) {
-	const argument = await askPluralArgument(name);
-
-	if (undefined === argument) {
-		return null;
-	}
-
-	const { requiredCategoriesOf } = await index.load('catalogue/plurals.mjs');
-	const categories = requiredCategoriesOf(index.defaultLang) ?? ['one', 'other'];
-	const forms = await askPluralForms(index, name, seed, categories);
-
-	if (null === forms) {
-		return null;
-	}
-
-	const texts = new Map(index.langs.map((lang) => [lang, '']));
-	const branches = categories.map((category) => `${category} {${forms.get(category)}}`).join(' ');
-	const source = `{${argument}, plural, ${branches}}`;
-
-	texts.set(index.defaultLang, source);
-
-	return texts;
-}
-
-async function askTexts(index, name, seed) {
-	const texts = new Map();
-
-	for (const lang of index.langs) {
-		const value = await vscode.window.showInputBox({
-			title: `${name} · ${lang}`,
-			value: lang === index.defaultLang ? seed : '',
-			prompt: lang === index.defaultLang ? 'Required' : 'Optional',
+			value: start,
+			valueSelection: [start.length, start.length],
+			prompt: `Write # for the number of {${argument}}`,
+			validateInput: (text) => validateForm(rules, argument, category, text),
 		});
 
 		if (undefined === value) {
 			return null;
 		}
 
-		texts.set(lang, value);
+		forms.set(category, value);
+		previous = value;
 	}
 
-	return texts;
+	return forms;
 }
 
-function editKeysFile(edit, scope, name, id) {
-	const lines = readFileSync(scope.keysFile, 'utf8').split('\n');
-	const end = lines.findIndex((line) => line.startsWith(KEYS_END));
+async function askPluralText(index, rules, name, seed) {
+	const argument = await askPluralArgument(rules, name);
 
-	if (-1 === end) {
-		throw new Error(`Cannot find "${KEYS_END}" in ${scope.keysFile}`);
+	if (undefined === argument) {
+		return null;
 	}
 
-	const position = new vscode.Position(end, 0);
-	const value = scope.prefixed ? `${scope.name}.${id}` : id;
-	const entry = `\t${name}: '${value}',\n`;
+	const forms = await askPluralForms({ index, rules, name, argument, seed });
 
-	edit.insert(vscode.Uri.file(scope.keysFile), position, entry);
+	return null === forms ? null : rules.pluralSource(argument, forms);
 }
 
-function editTranslation(edit, translation, id, text) {
-	if (!translation.exists || null === translation.data) {
-		throw new Error(`Cannot write ${translation.file}`);
+async function askText(index, rules, name, seed) {
+	const value = await vscode.window.showInputBox({
+		title: `${name} · ${index.defaultLang}`,
+		value: seed,
+		valueSelection: [seed.length, seed.length],
+		prompt: REQUIRED,
+		validateInput: (text) => rules.textProblems(text, index.defaultLang)[0] ?? null,
+	});
+
+	return value ?? null;
+}
+
+function seedOf(editor) {
+	if (undefined === editor || editor.selection.isEmpty) {
+		return '';
 	}
 
-	const content = `${JSON.stringify({ ...translation.data, [id]: text }, null, '\t')}\n`;
-	const lines = readFileSync(translation.file, 'utf8').split('\n');
-	const whole = new vscode.Range(0, 0, lines.length, 0);
+	const text = editor.document.getText(editor.selection).trim();
 
-	edit.replace(vscode.Uri.file(translation.file), whole, content);
+	return 'typescript' === editor.document.languageId ? text.replace(QUOTED, '$2') : text;
+}
+
+async function askKey(index, rules, editor) {
+	const scopeName = await pickScope(index, editor?.document);
+
+	if (null === scopeName) {
+		return null;
+	}
+
+	const name = await askName(index, rules, scopeName);
+	const kind = undefined === name ? null : await askKind();
+
+	if (null === kind) {
+		return null;
+	}
+
+	const seed = seedOf(editor);
+	const text =
+		'plural' === kind
+			? await askPluralText(index, rules, name, seed)
+			: await askText(index, rules, name, seed);
+
+	return null === text ? null : { scopeName, name, text, editor };
+}
+
+function planOf(index, plan, { scopeName, name, text }) {
+	const planned = plan.planKey({
+		scope: rawScopeOf(index, scopeName),
+		name,
+		text,
+		langs: index.langs,
+		defaultLang: index.defaultLang,
+	});
+
+	if (0 !== planned.problems.length) {
+		throw new Error(planned.problems.join('; '));
+	}
+
+	return planned;
 }
 
 function reference(document, scope, name) {
@@ -177,29 +189,69 @@ function reference(document, scope, name) {
 	return 'html' === document?.languageId ? `{{ ${expression} | i18n }}` : expression;
 }
 
-function buildEdit(index, scopeName, name, texts, editor) {
-	const scope = index.scopes.get(scopeName);
+function paramNamesOf(index, text) {
+	const { message, config } = index.modules;
+
+	return [...message.paramsOf(text).keys()].filter((param) => !config.AMBIENT_PARAMS.has(param));
+}
+
+function pipeSnippet(scopeName, name, params) {
+	const snippet = new vscode.SnippetString().appendText(`{{ I18n.${scopeName}.${name} | i18n: { `);
+
+	params.forEach((param, order) => {
+		snippet.appendText(`${0 === order ? '' : ', '}${param}: `);
+		snippet.appendTabstop(order + 1);
+	});
+
+	return snippet.appendText(' } }}');
+}
+
+function referenceEdits(edit, index, editor, scopeName, name) {
+	const { document, selection } = editor;
+
+	edit.replace(document.uri, selection, reference(document, scopeName, name));
+
+	if ('typescript' !== document.languageId) {
+		return;
+	}
+
+	const { i18n, app } = index.aliases;
+	const change = importEdit(document, i18n, `import { I18n } from '${i18n}';`, app);
+
+	if (null !== change) {
+		edit.replace(document.uri, change.range, change.newText);
+	}
+}
+
+function wholeRange(file) {
+	const open = vscode.workspace.textDocuments.find((document) => document.uri.fsPath === file);
+	const lines = open?.lineCount ?? readFileSync(file, 'utf8').split('\n').length;
+
+	return new vscode.Range(0, 0, lines, 0);
+}
+
+function buildEdit(index, planned, { scopeName, name, text, editor }) {
 	const edit = new vscode.WorkspaceEdit();
-	const id = ulid();
-	const files = [scope.keysFile, ...index.langs.map((lang) => scope.translations.get(lang).file)];
+	const existing = planned.writes.filter((write) => existsSync(write.file));
 
-	editKeysFile(edit, scope, name, id);
-
-	for (const lang of index.langs) {
-		const text = texts.get(lang);
-
-		if ('' !== text.trim()) {
-			editTranslation(edit, scope.translations.get(lang), id, text);
-		}
+	for (const write of existing) {
+		edit.replace(vscode.Uri.file(write.file), wholeRange(write.file), write.content);
 	}
 
-	if (undefined !== editor && false === editor.selection.isEmpty) {
-		const value = reference(editor.document, scopeName, name);
+	const inserted = undefined !== editor && SOURCE_LANGUAGES.has(editor.document.languageId);
+	const params = paramNamesOf(index, text);
+	const snippet =
+		inserted && 'html' === editor.document.languageId && 0 !== params.length
+			? pipeSnippet(scopeName, name, params)
+			: null;
 
-		edit.replace(editor.document.uri, editor.selection, value);
+	if (inserted && null === snippet) {
+		referenceEdits(edit, index, editor, scopeName, name);
 	}
 
-	return { edit, files };
+	const created = planned.writes.filter((write) => !existing.includes(write));
+
+	return { edit, saved: existing.map((write) => write.file), created, inserted, snippet };
 }
 
 async function save(files) {
@@ -210,54 +262,77 @@ async function save(files) {
 	}
 }
 
-async function askKeyTexts(index, name, kind, editor) {
-	const selected = false === editor?.selection.isEmpty;
-	const seed = selected ? editor.document.getText(editor.selection).trim() : '';
-	const texts =
-		'plural' === kind ? await askPluralTexts(index, name, seed) : await askTexts(index, name, seed);
+async function writeAll(built) {
+	await vscode.workspace.applyEdit(built.edit);
+	await save(built.saved);
 
-	return { selected, texts };
+	for (const write of built.created) {
+		await vscode.workspace.fs.writeFile(
+			vscode.Uri.file(write.file),
+			Buffer.from(write.content, 'utf8'),
+		);
+	}
+}
+
+async function placeReference(index, editor, built) {
+	if (null !== built.snippet) {
+		await editor.insertSnippet(built.snippet, editor.selection);
+	}
+
+	if (built.inserted && 'html' === editor.document.languageId) {
+		await ensureTemplateSetup(editor.document.uri, index.aliases);
+	}
+}
+
+async function revealText(file, id) {
+	const document = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
+	const marker = `"${id}": `;
+	const line = Math.max(
+		document
+			.getText()
+			.split('\n')
+			.findIndex((text) => text.includes(marker)),
+		0,
+	);
+	const found = document.lineAt(line).text.indexOf(marker);
+	const position = new vscode.Position(line, -1 === found ? 0 : found + marker.length);
+
+	await vscode.window.showTextDocument(document, {
+		selection: new vscode.Range(position, position),
+	});
+}
+
+async function announce(index, { scopeName, name }, planned) {
+	const file = index.scopes.get(scopeName)?.translations.get(index.defaultLang)?.file;
+	const action = `Open ${index.defaultLang}.json`;
+	const message = [`i18n: ${scopeName}.${name} created`, ...planned.warnings].join('. ');
+	const picked =
+		0 === planned.warnings.length
+			? await vscode.window.showInformationMessage(message, action)
+			: await vscode.window.showWarningMessage(message, action);
+
+	if (action === picked && undefined !== file) {
+		await revealText(file, planned.ulid);
+	}
 }
 
 async function createKey(index, annotations) {
-	const editor = vscode.window.activeTextEditor;
-	const scope = await pickScope(index, editor?.document);
+	const { rules, plan } = await loadAdd(index);
+	const key = await askKey(index, rules, vscode.window.activeTextEditor);
 
-	if (null === scope) {
+	if (null === key) {
 		return;
 	}
 
-	const name = await askName(index, scope);
+	const planned = planOf(index, plan, key);
+	const built = buildEdit(index, planned, key);
 
-	if (undefined === name) {
-		return;
-	}
-
-	const kind = await askKind();
-
-	if (null === kind) {
-		return;
-	}
-
-	const { selected, texts } = await askKeyTexts(index, name, kind, editor);
-
-	if (null === texts) {
-		return;
-	}
-
-	const { edit, files } = buildEdit(index, scope, name, texts, editor);
-
-	await vscode.workspace.applyEdit(edit);
-	await save(files);
-
-	if (selected && 'html' === editor.document.languageId) {
-		await ensureTemplateSetup(editor.document.uri);
-	}
-
+	await writeAll(built);
+	await placeReference(index, key.editor, built);
 	await index.reload();
 
 	annotations.refreshAll();
-	vscode.window.showInformationMessage(`i18n: ${scope}.${name} created`);
+	void announce(index, key, planned);
 }
 
-module.exports = { createKey, ulid };
+module.exports = { createKey };

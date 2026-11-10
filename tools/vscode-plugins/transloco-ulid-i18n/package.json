@@ -58,10 +58,20 @@
 		"configuration": {
 			"title": "Transloco ULID i18n",
 			"properties": {
+				"translocoUlidI18n.cliDir": {
+					"type": "string",
+					"default": "",
+					"markdownDescription": "Folder holding the `@drackp2m/transloco-ulid-cli` modules (its `src/`). Relative paths resolve from the workspace root. Empty means the copy installed in the workspace's `node_modules`, so the extension always runs the same version as `transloco-ulid check`."
+				},
+				"translocoUlidI18n.pipeImport": {
+					"type": "string",
+					"default": "@app/pipe/i18n.pipe",
+					"markdownDescription": "Module the `I18nPipe` is imported from when a template starts using a key. The catalogue import comes from `importAlias` in `i18n.config.json`."
+				},
 				"translocoUlidI18n.languageFile": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "File declaring `LANGUAGES` and `DEFAULT_LANGUAGE`, read the way `pnpm i18n:check` reads it. Relative paths resolve from the workspace root. Empty means `apps/web/src/app/definition/language.type.ts`. Anything missing or malformed in it stops the extension and is reported in the *Transloco ULID i18n* output channel."
+					"markdownDescription": "File declaring `LANGUAGES` and `DEFAULT_LANGUAGE`, read the way `transloco-ulid check` reads it. Relative paths resolve from the workspace root. Empty means the `languageFile` of `i18n.config.json`. Anything missing or malformed in it stops the extension and is reported in the *Transloco ULID i18n* output channel."
 				},
 				"translocoUlidI18n.langs": {
 					"type": "array",

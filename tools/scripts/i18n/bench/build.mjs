@@ -100,7 +100,7 @@ function build(base) {
 
 	const langs = [DEFAULTS.defaultLang];
 	const scopes = readScopes({ i18nDir: base, langs, rootScope: ROOT_SCOPE });
-	const context = readContext({ i18nDir: LIVE_I18N });
+	const context = readContext({ i18nDir: LIVE_I18N, notesLang: DEFAULTS.notesLang });
 
 	for (const lang of snapshot.langs) {
 		const document = exportFor(lang, base, scopes, context);

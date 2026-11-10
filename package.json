@@ -10,10 +10,12 @@
 		"lint": "node tools/scripts/lint/lint.mjs --max-warnings 0",
 		"lint:fix": "node tools/scripts/lint/lint.mjs --fix --max-warnings 0 --verbose",
 		"i18n:check": "transloco-ulid check",
+		"i18n:add": "transloco-ulid add",
 		"i18n:export": "transloco-ulid export",
 		"i18n:import": "transloco-ulid import",
 		"i18n:clear": "transloco-ulid clear",
 		"i18n:state": "transloco-ulid state",
+		"i18n:notes": "transloco-ulid notes",
 		"test:tools": "node tools/scripts/test/tools-test.mjs",
 		"test:lock": "node tools/scripts/test-lock/index.mjs",
 		"test:lock:select": "node tools/scripts/test-lock/index.mjs --select",
@@ -28,7 +30,7 @@
 		"prepare": "node .husky/prepare.mjs"
 	},
 	"devDependencies": {
-		"@drackp2m/transloco-ulid-cli": "0.1.0",
+		"@drackp2m/transloco-ulid-cli": "0.2.0",
 		"@eslint/js": "10.0.1",
 		"@resvg/resvg-js": "2.6.2",
 		"@semantic-release/changelog": "7.0.0",

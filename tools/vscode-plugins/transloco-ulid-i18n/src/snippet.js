@@ -2,7 +2,6 @@ const vscode = require('vscode');
 
 const { importEdit } = require('./imports');
 
-const I18N_ALIAS = '@app/i18n';
 const INTERPOLATION = '{{ I18n.$0 | i18n }}';
 const EXPRESSION = 'I18n.$0';
 
@@ -39,7 +38,7 @@ function htmlSnippet(document, prefix) {
 	return item;
 }
 
-function typescriptSnippet(document) {
+function typescriptSnippet(document, aliases) {
 	const item = new vscode.CompletionItem(
 		{ label: 'i18n', description: EXPRESSION },
 		vscode.CompletionItemKind.Snippet,
@@ -48,15 +47,17 @@ function typescriptSnippet(document) {
 	item.insertText = new vscode.SnippetString(EXPRESSION);
 	item.detail = 'transloco key + import';
 	item.additionalTextEdits = [
-		importEdit(document, I18N_ALIAS, `import { I18n } from '${I18N_ALIAS}';`),
+		importEdit(document, aliases.i18n, `import { I18n } from '${aliases.i18n}';`, aliases.app),
 	].filter((edit) => null !== edit);
 
 	return item;
 }
 
-function snippetItems(document, prefix) {
+function snippetItems(document, prefix, aliases) {
 	const item =
-		'html' === document.languageId ? htmlSnippet(document, prefix) : typescriptSnippet(document);
+		'html' === document.languageId
+			? htmlSnippet(document, prefix)
+			: typescriptSnippet(document, aliases);
 
 	if (null === item) {
 		return [];

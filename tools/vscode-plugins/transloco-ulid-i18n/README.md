@@ -4,16 +4,21 @@ An i18n-ally-flavoured VSCode extension for this repo's transloco setup. It reso
 `I18n.<scope>.<KEY>` (and `<Scope>I18n.KEY`) through the same chain the CLI uses:
 `keys.ts` → NAME → ULID, `<lang>.json` → ULID → text.
 
-It has no dependencies and no build step: the collectors are loaded straight from
-`node_modules/@drackp2m/transloco-ulid-cli/src/` at runtime, so the extension and `pnpm i18n:check` can never drift.
+It has no dependencies and no build step: the collectors are loaded at runtime from the
+`@drackp2m/transloco-ulid-cli` installed in the workspace, so the extension and
+`transloco-ulid check` can never drift. The workspace needs that package as a devDependency and its
+`i18n.config.json` at the root, which is where the catalogue paths, the import alias, the XLIFF
+sub-state prefix and the language of the export notes come from.
 
 ## Features
 
 - **Inline text** — the `displayLang` translation rendered _in place of_ the key usage: the key
   itself collapses to the text and nothing else does, so a trailing `| i18n` stays where it is and
   a `.ts` and an `.html` usage line up the same way. Put the cursor inside and the real source
-  comes back, so it stays editable. The text only stands in for what would really be rendered, so
-  what gets swallowed depends on what follows the key:
+  comes back, so it stays editable. An ICU message shows one of its forms, `other` for a plural and
+  `male` for a gender select, followed by the forms it picked: `… elementos ‹other›`. The text only
+  stands in for what would really be rendered, so what gets swallowed depends on what follows the
+  key:
 
   | Usage                              | Shown as                          |
   | ---------------------------------- | --------------------------------- |
@@ -47,7 +52,7 @@ It has no dependencies and no build step: the collectors are loaded straight fro
 
   A single target opens straight away; several open the peek list. The key name also answers
   **Find all references** (`shift+alt+F12`), which is the better view when a key is used in a
-  dozen places. The usage scan reads `apps/web/src` from disk and overlays the unsaved editors, so
+  dozen places. The usage scan reads the `sourceDirs` of `i18n.config.json` from disk and overlays the unsaved editors, so
   a key you just typed is already there.
 
 - **Diagnostics** — one per usage, the worst thing true of it first: an undeclared key is an error
@@ -58,8 +63,10 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   squiggle stays on the source characters the inline text stands in for, so under a collapsed usage
   only its tail shows past the text — the mark is deliberately quiet, and the message is in the
   Problems panel and on hover.
-- **Findings** — everything `pnpm i18n:check` reports, published as problems _on the i18n files
-  themselves_ and refreshed whenever any of them changes. It is the same `buildFindings()` the CLI
+- **Findings** — everything `transloco-ulid check` reports, published as problems _on the i18n files
+  themselves_ and refreshed whenever any of them changes, or as you type in a `<lang>.json` that is
+  not saved yet: with the CLI 0.2.0 or later, an unsaved catalogue editor is read through its
+  `parseTranslation()` instead of from disk. It is the same `buildFindings()` the CLI
   calls, with the finding type as the diagnostic code, so a stale `params.ts`, a param added to one
   language and not the other, an orphan ULID, a scope missing from the barrel or a key nobody uses is
   underlined where it lives, without waiting for the commit hook. It runs over the whole workspace,
@@ -77,16 +84,30 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   the generated `<scope>/params.ts`.
 - **Snippet** — typing `i18n` expands to `{{ I18n.| | i18n }}` in HTML (to `I18n.|` when the cursor
   already is inside an interpolation) and to `I18n.|` in TypeScript. The TypeScript one adds
-  `import { I18n } from '@app/i18n';`; the HTML one patches the sibling component instead, adding the
-  same import, `protected readonly I18n = I18n;` and `I18nPipe` in `imports`. It leaves that file
+  `import { I18n } from '<importAlias>';`; the HTML one patches the sibling component instead, adding the
+  same import, `protected readonly I18n = I18n;` and `I18nPipe`, imported from `pipeImport`, in
+  `imports`. It leaves that file
   dirty on purpose, and it never touches `provideI18nScope` — a scoped key still needs it by hand.
-- **Create key** — `i18n: Create translation key` picks a scope, asks for the name and whether the
-  key is plain text or a plural. A plural asks for its parameter and the source `one` and `other`
-  forms, then writes the ICU automatically. It generates the ULID and writes `keys.ts` plus every
-  `<lang>.json`; target languages remain empty until translated. With text selected it works as an
-  extract: the selection seeds the default language and is replaced by
-  `{{ I18n.scope.KEY | i18n }}` in HTML — wiring the sibling component up like the snippet does — or
-  `I18n.scope.KEY` in TypeScript.
+- **Create key** — `i18n: Create translation key` is `transloco-ulid add` with a picker in front,
+  so it needs the CLI 0.2.0 or later and says so otherwise: the rules and the writing both come
+  from the CLI's `add/` modules. It picks a scope, asks for the name and whether the key is plain
+  text or a plural. A plural asks for its parameter and for every form the source language needs
+  (`one` and `other` in Spanish, four in Russian, `other` alone in Japanese), each one starting from
+  the selection, or from the previous form when nothing is selected, then writes the ICU. A text
+  that does not pass the rules `check` applies to the source language cannot be accepted, and a
+  plural form that never counts with `#` (or `{count}`) but names another parameter gets a warning
+  while you type, since `{total} retos` under `count` is usually a typo for `# retos`; Enter still
+  accepts it, because `Un reto de {name}` is legitimate. Only the source language is asked for: it
+  generates the ULID and writes `keys.ts` plus every `<lang>.json`, the target languages with an
+  empty slot that stays a warning until the translator fills it. The scope's `params.ts` takes the
+  new key's entry only when it was up to date before; one that already had pending changes is left
+  untouched, and the closing message says so, along with any warning above. In an `.html` or `.ts`
+  editor the reference lands at the cursor, or replaces the selection, which then seeds the default
+  language (without its quotes in TypeScript): `{{ I18n.scope.KEY | i18n }}` in HTML, wiring the
+  sibling component up like the snippet does, or `I18n.scope.KEY` in TypeScript, with its `I18n`
+  import. In HTML a key that takes parameters comes as `{{ I18n.scope.KEY | i18n: { count: | } }}`,
+  with a tab stop on each value; `gender` is left out, since the pipe adds it. The closing message
+  offers to open the default language file on the new text.
 - **Create scope** — the scope picker ends in `New scope…`: it writes `<name>/keys.ts`, an empty
   `<name>/params.ts` and an empty `<name>/<lang>.json` per language, and registers the scope in
   `i18n/index.ts` twice — the import plus the camelCased property in the `I18n` barrel, which is what
@@ -103,7 +124,7 @@ It has no dependencies and no build step: the collectors are loaded straight fro
   declared yet are offered in a multi-select — the ones you tick are appended to `keys.ts` (named
   from the exported note, or slugged from the source text) with their source written to the default
   language. Placeholders that changed shape in the target are reported without blocking the rest.
-  Both commands run the same code as `pnpm i18n:export` / `pnpm i18n:import`.
+  Both commands run the same code as `transloco-ulid export` / `transloco-ulid import`.
 
 ## Running it
 
@@ -127,16 +148,18 @@ Opening the repo natively instead (no container) is the same command against `~/
 
 ## Settings
 
-| Setting                                 | Default        | Meaning                                                                                                           |
-| --------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `translocoUlidI18n.languageFile`        | `''`           | Where `LANGUAGES` and `DEFAULT_LANGUAGE` are declared; empty uses `apps/web/src/app/definition/language.type.ts`. |
-| `translocoUlidI18n.langs`               | `[]`           | Languages to resolve; empty uses every language of `LANGUAGES`.                                                   |
-| `translocoUlidI18n.displayLang`         | `''`           | Language shown over the keys; empty uses `DEFAULT_LANGUAGE`.                                                      |
-| `translocoUlidI18n.inlineText`          | `true`         | Show the inline translation.                                                                                      |
-| `translocoUlidI18n.inlineTextMaxLength` | `60`           | Where the inline text is ellipsised.                                                                              |
-| `translocoUlidI18n.transferDir`         | `translations` | Where the XLIFF export lands and the import dialog opens.                                                         |
+| Setting                                 | Default               | Meaning                                                                                                     |
+| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `translocoUlidI18n.cliDir`              | `''`                  | Folder with the CLI modules; empty uses the `@drackp2m/transloco-ulid-cli` installed in the workspace.      |
+| `translocoUlidI18n.pipeImport`          | `@app/pipe/i18n.pipe` | Module `I18nPipe` is imported from when a template starts using a key.                                      |
+| `translocoUlidI18n.languageFile`        | `''`                  | Where `LANGUAGES` and `DEFAULT_LANGUAGE` are declared; empty uses the `languageFile` of `i18n.config.json`. |
+| `translocoUlidI18n.langs`               | `[]`                  | Languages to resolve; empty uses every language of `LANGUAGES`.                                             |
+| `translocoUlidI18n.displayLang`         | `''`                  | Language shown over the keys; empty uses `DEFAULT_LANGUAGE`.                                                |
+| `translocoUlidI18n.inlineText`          | `true`                | Show the inline translation.                                                                                |
+| `translocoUlidI18n.inlineTextMaxLength` | `60`                  | Where the inline text is ellipsised.                                                                        |
+| `translocoUlidI18n.transferDir`         | `translations`        | Where the XLIFF export lands and the import dialog opens.                                                   |
 
-The language file is the single source of both lists — the same one `pnpm i18n:check` reads through
+The language file is the single source of both lists — the same one `transloco-ulid check` reads through
 `@drackp2m/transloco-ulid-cli/src/catalogue/config.mjs`. It is parsed on every reload and nothing is guessed: a
 file that is not there, a `LANGUAGES` that is empty or holds something that is not a language tag, a
 `DEFAULT_LANGUAGE` missing or absent from `LANGUAGES`, a `langs` naming a language the file does not

@@ -4,8 +4,6 @@ const vscode = require('vscode');
 
 const { importEdit } = require('./imports');
 
-const PIPE_ALIAS = '@app/pipe/i18n.pipe';
-const I18N_ALIAS = '@app/i18n';
 const CLASS_BODY = /export class \w+[^{]*\{/;
 const COMPONENT_HEAD = /@Component\(\{\n/;
 const DECORATOR_PROPERTY = /^\t(?:selector|templateUrl|styleUrl):[^\n]*\n/gm;
@@ -61,18 +59,25 @@ function fieldEdit(document) {
 			);
 }
 
-function componentEdits(document) {
+function componentEdits(document, aliases) {
 	const usesPipe = /\bI18nPipe\b/.test(document.getText());
 
 	return [
-		usesPipe ? null : importEdit(document, PIPE_ALIAS, `import { I18nPipe } from '${PIPE_ALIAS}';`),
+		usesPipe
+			? null
+			: importEdit(
+					document,
+					aliases.pipe,
+					`import { I18nPipe } from '${aliases.pipe}';`,
+					aliases.app,
+				),
 		usesPipe ? null : pipeArrayEdit(document),
-		importEdit(document, I18N_ALIAS, `import { I18n } from '${I18N_ALIAS}';`),
+		importEdit(document, aliases.i18n, `import { I18n } from '${aliases.i18n}';`, aliases.app),
 		fieldEdit(document),
 	].filter((edit) => null !== edit && undefined !== edit);
 }
 
-async function ensureTemplateSetup(uri) {
+async function ensureTemplateSetup(uri, aliases) {
 	const file = uri.fsPath.replace(/\.html$/, '.ts');
 
 	if (!existsSync(file)) {
@@ -80,7 +85,7 @@ async function ensureTemplateSetup(uri) {
 	}
 
 	const document = await vscode.workspace.openTextDocument(file);
-	const edits = componentEdits(document);
+	const edits = componentEdits(document, aliases);
 
 	if (0 === edits.length) {
 		return;

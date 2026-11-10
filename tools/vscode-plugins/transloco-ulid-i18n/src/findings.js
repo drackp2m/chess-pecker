@@ -51,6 +51,34 @@ function toDiagnostic(cache, severityOf, item) {
 	return diagnostic;
 }
 
+function unsavedTexts() {
+	return new Map(
+		vscode.workspace.textDocuments
+			.filter((document) => document.isDirty && 'file' === document.uri.scheme)
+			.map((document) => [document.uri.fsPath, document.getText()]),
+	);
+}
+
+function withUnsaved(scopes, parseTranslation) {
+	const texts = undefined === parseTranslation ? new Map() : unsavedTexts();
+
+	if (0 === texts.size) {
+		return scopes;
+	}
+
+	const overlay = (translation) =>
+		texts.has(translation.file)
+			? { file: translation.file, ...parseTranslation(texts.get(translation.file)) }
+			: translation;
+
+	return scopes.map((scope) => ({
+		...scope,
+		translations: new Map(
+			[...scope.translations].map(([lang, translation]) => [lang, overlay(translation)]),
+		),
+	}));
+}
+
 function groupByFile(items) {
 	const byFile = new Map();
 
@@ -104,12 +132,13 @@ class Findings {
 		const { usages, commented } = collect.collectUsages(this.index.sourceDirs);
 
 		return checks.buildFindings({
-			scopes: this.index.rawScopes,
+			scopes: withUnsaved(this.index.rawScopes, collect.parseTranslation),
 			usages,
 			commented,
 			langs: this.index.langs,
 			defaultLang: this.index.defaultLang,
 			i18nDir: this.index.i18nDir,
+			notesLang: this.index.notesLang,
 		});
 	}
 

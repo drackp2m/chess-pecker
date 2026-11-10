@@ -71,6 +71,21 @@ function watchSources({ usages, findings }) {
 	return [watcher, vscode.workspace.onDidChangeTextDocument(invalidate)];
 }
 
+function watchCatalogueEdits({ index, findings }) {
+	const onEdit = (document) => {
+		const file = document.uri.fsPath;
+
+		if (file.endsWith('.json') && file.startsWith(`${index.i18nDir}${path.sep}`)) {
+			findings.schedule();
+		}
+	};
+
+	return [
+		vscode.workspace.onDidChangeTextDocument((event) => onEdit(event.document)),
+		vscode.workspace.onDidCloseTextDocument(onEdit),
+	];
+}
+
 function watchEditors(annotations) {
 	let timer = null;
 
@@ -115,7 +130,7 @@ function registerCommands(state) {
 			vscode.commands.registerCommand(`translocoUlidI18n.${name}`, run(task)),
 		),
 		vscode.commands.registerCommand('translocoUlidI18n.ensureTemplateSetup', (uri) =>
-			run(() => ensureTemplateSetup(uri))(),
+			run(() => ensureTemplateSetup(uri, state.index.aliases))(),
 		),
 	];
 }
@@ -142,6 +157,7 @@ function subscriptionsOf(state) {
 		watchTranslations(state),
 		...watchLanguageFile(state),
 		...watchSources(state),
+		...watchCatalogueEdits(state),
 		...watchEditors(annotations),
 		...registerCommands(state),
 		vscode.workspace.onDidChangeConfiguration((event) => {

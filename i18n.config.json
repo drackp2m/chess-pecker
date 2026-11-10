@@ -4,5 +4,6 @@
 	"languageFile": "apps/web/src/app/definition/language.type.ts",
 	"rootScope": "common",
 	"importAlias": "@app/i18n",
-	"xliffPrefix": "chesspecker"
+	"xliffPrefix": "chesspecker",
+	"notesLang": "es"
 }

@@ -91,16 +91,22 @@ function barrelParamsEdit(document, name) {
 	);
 }
 
-function barrelEdits(document, name) {
-	const constant = `@app/i18n/${name}/keys`;
-	const params = `@app/i18n/${name}/params`;
+function barrelEdits(document, name, aliases) {
+	const constant = `${aliases.i18n}/${name}/keys`;
+	const params = `${aliases.i18n}/${name}/params`;
 
 	return [
-		importEdit(document, constant, `import { ${toPascalCase(name)}I18n } from '${constant}';`),
+		importEdit(
+			document,
+			constant,
+			`import { ${toPascalCase(name)}I18n } from '${constant}';`,
+			aliases.app,
+		),
 		importEdit(
 			document,
 			params,
 			`import type { ${toPascalCase(name)}I18nParams } from '${params}';`,
+			aliases.app,
 		),
 		barrelPropertyEdit(document, name),
 		barrelParamsEdit(document, name),
@@ -112,7 +118,7 @@ async function editBarrel(index, name) {
 	const document = await vscode.workspace.openTextDocument(vscode.Uri.file(file));
 	const edit = new vscode.WorkspaceEdit();
 
-	edit.set(document.uri, barrelEdits(document, name));
+	edit.set(document.uri, barrelEdits(document, name, index.aliases));
 
 	await vscode.workspace.applyEdit(edit);
 	await document.save();

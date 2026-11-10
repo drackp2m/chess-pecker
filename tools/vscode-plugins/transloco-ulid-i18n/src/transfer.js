@@ -47,7 +47,7 @@ async function revealed(written, outDir) {
 	const action = await vscode.window.showInformationMessage(message, 'Reveal');
 
 	if ('Reveal' === action) {
-		await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(written[0]));
+		await vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(written[0]));
 	}
 }
 
@@ -63,6 +63,8 @@ async function writeExports(index, langs, missingOnly, outDir) {
 		langs: index.langs,
 		i18nDir: index.i18nDir,
 		root: index.root,
+		xliffPrefix: index.xliffPrefix,
+		notesLang: index.notesLang,
 		filter: missingOnly ? 'missing' : 'all',
 	};
 

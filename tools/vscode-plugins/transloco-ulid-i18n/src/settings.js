@@ -14,6 +14,18 @@ const inlineTextMaxLength = () => read('inlineTextMaxLength', 60);
 
 const transferDir = () => read('transferDir', 'translations');
 
+const pipeImport = () => String(read('pipeImport', '@app/pipe/i18n.pipe')).trim();
+
+function cliDir(root) {
+	const configured = String(read('cliDir', '')).trim();
+
+	if ('' === configured) {
+		return null;
+	}
+
+	return path.isAbsolute(configured) ? configured : path.join(root, configured);
+}
+
 function languageFile(root, defaults) {
 	const configured = String(read('languageFile', '')).trim();
 
@@ -83,9 +95,11 @@ function resolveDisplayLang(langs, defaultLang) {
 }
 
 module.exports = {
+	cliDir,
 	inlineText,
 	inlineTextMaxLength,
 	languageFile,
+	pipeImport,
 	readLanguages,
 	resolveDisplayLang,
 	resolveLangs,

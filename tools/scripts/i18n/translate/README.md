@@ -68,7 +68,11 @@ names the DeepL glossary.
 
 Everything the model needs travels inside the XLIFF: the `<file>` notes (`app`, `language`, `scope`,
 `glossary`) and the unit's own notes (`context`, `term`, `param`). Nothing is read from the repo, so
-a file exported today translates the same way tomorrow.
+a file exported today translates the same way tomorrow. The notes the CLI writes itself (the
+`examples` of a plural form, the `gender-note`, the `No traducir nunca:` line of `glossary`) come in
+Spanish because `i18n.config.json` sets `"notesLang": "es"` and `context/notes.es.json` translates
+the CLI's English template: the prompts quote them as they are, and `context.py` reads `keep` from
+that line.
 
 ## Choosing a model
 

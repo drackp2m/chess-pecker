@@ -37,38 +37,37 @@ function inlineLabel(index, usage) {
 	}
 
 	try {
-		const representative = representativeText(index, text);
-		const max = Math.max(inlineTextMaxLength() - 2, 1);
+		const { text: representative, forms } = representativeOf(index, text);
 
-		return representative === text
-			? shorten(text, inlineTextMaxLength())
-			: `${shorten(representative, max)} *`;
+		if (0 === forms.length) {
+			return shorten(text, inlineTextMaxLength());
+		}
+
+		const marker = ` ‹${forms.join(', ')}›`;
+
+		return `${shorten(representative, Math.max(inlineTextMaxLength() - marker.length, 1))}${marker}`;
 	} catch {
 		return INVALID;
 	}
 }
 
-function representativeText(index, text) {
+function representativeOf(index, text) {
 	const { leavesOf, paramsOf } = index.modules.message;
 	const dimensions = [...paramsOf(text)].filter(([, param]) => 'plain' !== param.type);
 
 	if (0 === dimensions.length) {
-		return text;
+		return { text, forms: [] };
 	}
 
-	const preferred = dimensions.map(([name, param]) => {
-		const key =
-			'select' === param.type && 'gender' === name && param.cases.includes('male')
-				? 'male'
-				: 'other';
-
-		return `${param.type}:${key}`;
-	});
+	const forms = dimensions.map(([name, param]) =>
+		'select' === param.type && 'gender' === name && param.cases.includes('male') ? 'male' : 'other',
+	);
+	const preferred = dimensions.map(([, param], order) => `${param.type}:${forms[order]}`);
 	const leaf = leavesOf(text).find(({ path: value }) =>
 		value.every((segment, order) => segment === preferred[order]),
 	);
 
-	return leaf?.text ?? text;
+	return undefined === leaf ? { text, forms: [] } : { text: leaf.text, forms };
 }
 
 function revealed(range, selections) {

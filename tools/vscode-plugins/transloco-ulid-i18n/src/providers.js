@@ -150,7 +150,9 @@ function completionsFor(index, context) {
 		return keyItems(index, index.toKebabCase(scope), context);
 	}
 
-	return BARREL_SCOPE.test(prefix) ? scopeItems(index) : snippetItems(document, prefix);
+	return BARREL_SCOPE.test(prefix)
+		? scopeItems(index)
+		: snippetItems(document, prefix, index.aliases);
 }
 
 function completionContext(document, position) {

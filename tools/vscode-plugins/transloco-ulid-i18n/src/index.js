@@ -3,13 +3,39 @@ const { pathToFileURL } = require('node:url');
 
 const settings = require('./settings');
 
-const SCRIPTS_DIR = path.join('node_modules', '@drackp2m', 'transloco-ulid-cli', 'src');
+const CLI_PACKAGE = '@drackp2m/transloco-ulid-cli';
 
-const loadModule = (root, file) => import(pathToFileURL(path.join(root, SCRIPTS_DIR, file)).href);
+const loadModule = (dir, file) => import(pathToFileURL(path.join(dir, file)).href);
+
+const appPrefixOf = (alias) => `${alias.split('/')[0]}/`;
+
+function cliDirOf(root) {
+	const configured = settings.cliDir(root);
+
+	if (null !== configured) {
+		return configured;
+	}
+
+	const entry = `${CLI_PACKAGE}/catalogue/config.mjs`;
+
+	try {
+		return path.dirname(path.dirname(require.resolve(entry, { paths: [root] })));
+	} catch (error) {
+		throw new Error(
+			`${CLI_PACKAGE} is not installed in ${root}: add it as a devDependency or set translocoUlidI18n.cliDir`,
+			{ cause: error },
+		);
+	}
+}
 
 class I18nIndex {
 	constructor(root) {
 		this.root = root;
+		this.cliDir = '';
+		this.aliases = { i18n: '', pipe: '', app: '' };
+		this.rootScope = '';
+		this.xliffPrefix = '';
+		this.notesLang = undefined;
 		this.langs = [];
 		this.defaultLang = '';
 		this.displayLang = '';
@@ -120,7 +146,7 @@ class I18nIndex {
 	}
 
 	load(file) {
-		return loadModule(this.root, file);
+		return loadModule(this.cliDir, file);
 	}
 
 	async loadModules() {
@@ -134,32 +160,48 @@ class I18nIndex {
 			'catalogue/message.mjs',
 		];
 		const [checks, collect, config, findings, icu, params, message] = await Promise.all(
-			files.map((file) => loadModule(this.root, file)),
+			files.map((file) => loadModule(this.cliDir, file)),
 		);
 
 		return { checks, collect, config, findings, icu, params, message };
 	}
 
-	async readWorkspace() {
-		const modules = await this.loadModules();
-		const { collect, config, params } = modules;
-		const defaults = config.readDefaults();
-		const languageFile = settings.languageFile(this.root, defaults);
+	applyConfig(config, modules) {
+		const { langs, defaultLang } = settings.readLanguages(modules.config, this.languageFile);
 
-		this.languageFile = languageFile;
-
-		const { langs, defaultLang } = settings.readLanguages(config, languageFile);
-
-		this.modules = modules;
-		this.toKebabCase = config.toKebabCase;
-		this.patterns = collect.USAGE_PATTERNS;
 		this.langs = settings.resolveLangs(langs, defaultLang);
 		this.defaultLang = defaultLang;
 		this.displayLang = settings.resolveDisplayLang(this.langs, defaultLang);
-		this.i18nDir = path.join(this.root, defaults.i18nDir);
-		this.sourceDirs = defaults.sourceDirs.map((dir) => path.join(this.root, dir));
+		this.i18nDir = path.join(config.root, config.i18nDir);
+		this.sourceDirs = config.sourceDirs.map((dir) => path.join(config.root, dir));
+		this.rootScope = config.rootScope;
+		this.xliffPrefix = config.xliffPrefix;
+		this.notesLang = config.notesLang;
+		this.aliases = {
+			i18n: config.importAlias,
+			pipe: settings.pipeImport(),
+			app: appPrefixOf(config.importAlias),
+		};
+	}
 
-		const scopes = collect.readScopes({ i18nDir: this.i18nDir, langs: this.langs });
+	async readWorkspace() {
+		this.cliDir = cliDirOf(this.root);
+
+		const modules = await this.loadModules();
+		const { collect, config: configModule, params } = modules;
+		const config = configModule.loadConfig(this.root);
+
+		this.languageFile = settings.languageFile(config.root, config);
+		this.applyConfig(config, modules);
+		this.modules = modules;
+		this.toKebabCase = configModule.toKebabCase;
+		this.patterns = collect.USAGE_PATTERNS;
+
+		const scopes = collect.readScopes({
+			i18nDir: this.i18nDir,
+			langs: this.langs,
+			rootScope: this.rootScope,
+		});
 
 		this.rawScopes = scopes;
 		this.scopes = new Map(scopes.map((scope) => [scope.name, this.toScope(scope)]));
