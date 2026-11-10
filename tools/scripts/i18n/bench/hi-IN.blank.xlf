@@ -40,6 +40,7 @@ peón → प्यादा
 coronar → प्रमोट — promocionar un peón que llega a la última fila
 sesión → सत्र — la sesión iniciada contra el API, guardada en una cookie
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="01KZCMJMZJP7DHE9CDMSHCGZE3">
 			<notes>
@@ -687,7 +688,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `PENDING_SYNC_TITLE` es el título y no lleva número. En `PENDING_SYNC_MESSAGE`, `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.</note>
 				<note category="term">ejercicio → अभ्यास, sesión → सत्र</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «# ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: «# ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.»</note>
 				<note category="srcHash">5a84ac735159</note>
 			</notes>
@@ -706,7 +707,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `PENDING_SYNC_TITLE` es el título y no lleva número. En `PENDING_SYNC_MESSAGE`, `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.</note>
 				<note category="term">ejercicio → अभ्यास, sesión → सत्र</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «# ejercicio de este dispositivo todavía no ha llegado al servidor. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: «# ejercicios de este dispositivo todavía no han llegado al servidor. Al cerrar sesión se borran, y no hay forma de recuperarlos.»</note>
 				<note category="srcHash">5a84ac735159</note>
 			</notes>
@@ -725,7 +726,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `PENDING_SYNC_TITLE` es el título y no lleva número. En `PENDING_SYNC_MESSAGE`, `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.</note>
 				<note category="term">ejercicio → अभ्यास, sesión → सत्र</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «El servidor rechazó # ejercicio de este dispositivo y no se va a reintentar. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: «El servidor rechazó # ejercicios de este dispositivo y no se van a reintentar. Al cerrar sesión se borran, y no hay forma de recuperarlos.»</note>
 				<note category="srcHash">62b9053b9af4</note>
 			</notes>
@@ -744,7 +745,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Diálogo que sale al cerrar sesión con ejercicios sin subir. Es la advertencia más seria de la aplicación: al cerrar sesión se pierden de verdad. `PENDING_SYNC_TITLE` es el título y no lleva número. En `PENDING_SYNC_MESSAGE`, `{pending}` es el número de ejercicios en peligro. `PENDING_SYNC_REJECTED` es el otro caso, que sale junto al anterior o solo: `{rejected}` son los que el servidor ya rechazó y no se reintentan, y que se borran igual.</note>
 				<note category="term">ejercicio → अभ्यास, sesión → सत्र</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «El servidor rechazó # ejercicio de este dispositivo y no se va a reintentar. Al cerrar sesión se borra, y no hay forma de recuperarlo.» · other: «El servidor rechazó # ejercicios de este dispositivo y no se van a reintentar. Al cerrar sesión se borran, y no hay forma de recuperarlos.»</note>
 				<note category="srcHash">62b9053b9af4</note>
 			</notes>
@@ -800,6 +801,7 @@ Reglas que valen para todos los idiomas:
 Las etiquetas de campo son sustantivos escuetos, sin dos puntos ni punto final. Los párrafos explican qué se guarda y por qué, así que la traducción no puede recortar la explicación.</note>
 			<note category="glossary">sesión → सत्र — la sesión iniciada contra el API, guardada en una cookie
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="auth.01KZJ895M8350P0W0JZJ1T22F6">
 			<notes>
@@ -896,7 +898,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="param">{length}: number</note>
 				<note category="context">La contraseña y el mínimo de caracteres que se pide. `{length}` es un número.</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «Al menos # carácter.» · other: «Al menos # caracteres.»</note>
 				<note category="srcHash">84b71838b820</note>
 			</notes>
@@ -914,7 +916,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="param">{length}: number</note>
 				<note category="context">La contraseña y el mínimo de caracteres que se pide. `{length}` es un número.</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «Al menos # carácter.» · other: «Al menos # caracteres.»</note>
 				<note category="srcHash">84b71838b820</note>
 			</notes>
@@ -970,6 +972,7 @@ Reglas que valen para todos los idiomas:
 			<note category="glossary">ejercicio → अभ्यास — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
 hecho → पूर्ण — un ejercicio que llegó a un final, sea cual sea: a la primera, tras fallar o con la solución vista. Es la suma de los tres, y lo que la precisión divide
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="dashboard.450807Y5ZBDPF1ARZJCTNNMHEM#plural:one">
 			<notes>
@@ -978,7 +981,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">El calendario de actividad, el cuadrito de días al estilo de las contribuciones de GitHub. `ACTIVITY_LEGEND_LESS` y `ACTIVITY_LEGEND_MORE` son los dos extremos de la leyenda de color: una palabra cada uno. `ACTIVITY_RANGE_MONTHS` es una etiqueta de botón muy apretada: `{months}` seguido de la inicial de «mes» del idioma de destino, sin espacio.</note>
 				<note category="term">ejercicio → अभ्यास, hecho → पूर्ण</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «# ejercicio hecho en el periodo elegido» · other: «# ejercicios hechos en el periodo elegido»</note>
 				<note category="srcHash">0cfe41cfcca8</note>
 			</notes>
@@ -997,7 +1000,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">El calendario de actividad, el cuadrito de días al estilo de las contribuciones de GitHub. `ACTIVITY_LEGEND_LESS` y `ACTIVITY_LEGEND_MORE` son los dos extremos de la leyenda de color: una palabra cada uno. `ACTIVITY_RANGE_MONTHS` es una etiqueta de botón muy apretada: `{months}` seguido de la inicial de «mes» del idioma de destino, sin espacio.</note>
 				<note category="term">ejercicio → अभ्यास, hecho → पूर्ण</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «# ejercicio hecho en el periodo elegido» · other: «# ejercicios hechos en el periodo elegido»</note>
 				<note category="srcHash">0cfe41cfcca8</note>
 			</notes>
@@ -1016,7 +1019,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">El calendario de actividad, el cuadrito de días al estilo de las contribuciones de GitHub. `ACTIVITY_LEGEND_LESS` y `ACTIVITY_LEGEND_MORE` son los dos extremos de la leyenda de color: una palabra cada uno. `ACTIVITY_RANGE_MONTHS` es una etiqueta de botón muy apretada: `{months}` seguido de la inicial de «mes» del idioma de destino, sin espacio.</note>
 				<note category="term">ejercicio → अभ्यास, hecho → पूर्ण</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «# ejercicio hecho el {date}» · other: «# ejercicios hechos el {date}»</note>
 				<note category="srcHash">ab26b0ba0cb6</note>
 			</notes>
@@ -1036,7 +1039,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">El calendario de actividad, el cuadrito de días al estilo de las contribuciones de GitHub. `ACTIVITY_LEGEND_LESS` y `ACTIVITY_LEGEND_MORE` son los dos extremos de la leyenda de color: una palabra cada uno. `ACTIVITY_RANGE_MONTHS` es una etiqueta de botón muy apretada: `{months}` seguido de la inicial de «mes» del idioma de destino, sin espacio.</note>
 				<note category="term">ejercicio → अभ्यास, hecho → पूर्ण</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «# ejercicio hecho el {date}» · other: «# ejercicios hechos el {date}»</note>
 				<note category="srcHash">ab26b0ba0cb6</note>
 			</notes>
@@ -1076,6 +1079,7 @@ ciclo → चक्र — una vuelta entera al conjunto; se numeran desde 1. Es
 ejercicio → अभ्यास — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
 precisión → सटीकता — los ejercicios resueltos a la primera divididos por los hechos, en porcentaje; nunca la precisión de una medida o de un instrumento
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="intro.01M0R9S83BZC0SV2ESMWRS5TFZ#gender:male">
 			<notes>
@@ -1084,7 +1088,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 
 `PURPOSE_*` es el paso de apertura y el único que habla de la aplicación en sí y no del método: «Chess Pecker» es el nombre del producto y se deja tal cual en cualquier idioma. «Woodpecker» tampoco se traduce nunca, ni se translitera. Un «ciclo» es una vuelta entera al conjunto de ejercicios, y es el concepto que no se puede perder por el camino: se repite el **mismo** conjunto, cada ciclo más rápido. `LEVEL_BODY_1` habla del ELO, que se deja tal cual.</note>
 				<note category="category">gender:male</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «hombre»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Masculino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Bienvenido a Chess Pecker» · female: «Bienvenida a Chess Pecker» · other: «Te damos la bienvenida a Chess Pecker»</note>
 				<note category="srcHash">2752a6f92949</note>
 			</notes>
@@ -1100,7 +1104,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 
 `PURPOSE_*` es el paso de apertura y el único que habla de la aplicación en sí y no del método: «Chess Pecker» es el nombre del producto y se deja tal cual en cualquier idioma. «Woodpecker» tampoco se traduce nunca, ni se translitera. Un «ciclo» es una vuelta entera al conjunto de ejercicios, y es el concepto que no se puede perder por el camino: se repite el **mismo** conjunto, cada ciclo más rápido. `LEVEL_BODY_1` habla del ELO, que se deja tal cual.</note>
 				<note category="category">gender:female</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «mujer»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Femenino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Bienvenido a Chess Pecker» · female: «Bienvenida a Chess Pecker» · other: «Te damos la bienvenida a Chess Pecker»</note>
 				<note category="srcHash">2752a6f92949</note>
 			</notes>
@@ -1116,7 +1120,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 
 `PURPOSE_*` es el paso de apertura y el único que habla de la aplicación en sí y no del método: «Chess Pecker» es el nombre del producto y se deja tal cual en cualquier idioma. «Woodpecker» tampoco se traduce nunca, ni se translitera. Un «ciclo» es una vuelta entera al conjunto de ejercicios, y es el concepto que no se puede perder por el camino: se repite el **mismo** conjunto, cada ciclo más rápido. `LEVEL_BODY_1` habla del ELO, que se deja tal cual.</note>
 				<note category="category">gender:other</note>
-				<note category="gender-note">quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Otro» como género en los ajustes o no eligió ninguno: no le supongas un género ni juntes dos terminaciones con una barra o un paréntesis; reformula la frase para que nada en ella dependa del género de esa persona</note>
 				<note category="siblings">es-ES · male: «Bienvenido a Chess Pecker» · female: «Bienvenida a Chess Pecker» · other: «Te damos la bienvenida a Chess Pecker»</note>
 				<note category="srcHash">2752a6f92949</note>
 			</notes>
@@ -1179,6 +1183,7 @@ partida → बाज़ी — una partida de ajedrez contra la máquina; nunca
 bando → पक्ष — el color con el que se juega, blancas o negras; nunca una banda, una franja ni un lado del tablero
 tablas → ड्रॉ
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="match.01KZJ895MBS2HDHRSR83E1EN5M">
 			<notes>
@@ -1279,7 +1284,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">MatchI18n.RESIGNED</note>
 				<note category="context">La partida ha terminado porque el jugador se ha rendido. Mismo tono seco que `CHECKMATE_*`.</note>
 				<note category="category">gender:male</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «hombre»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Masculino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Te has rendido» · female: «Te has rendido» · other: «Te has rendido»</note>
 				<note category="srcHash">d9b5d48603bd</note>
 			</notes>
@@ -1293,7 +1298,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">MatchI18n.RESIGNED</note>
 				<note category="context">La partida ha terminado porque el jugador se ha rendido. Mismo tono seco que `CHECKMATE_*`.</note>
 				<note category="category">gender:female</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «mujer»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Femenino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Te has rendido» · female: «Te has rendido» · other: «Te has rendido»</note>
 				<note category="srcHash">d9b5d48603bd</note>
 			</notes>
@@ -1307,7 +1312,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">MatchI18n.RESIGNED</note>
 				<note category="context">La partida ha terminado porque el jugador se ha rendido. Mismo tono seco que `CHECKMATE_*`.</note>
 				<note category="category">gender:other</note>
-				<note category="gender-note">quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Otro» como género en los ajustes o no eligió ninguno: no le supongas un género ni juntes dos terminaciones con una barra o un paréntesis; reformula la frase para que nada en ella dependa del género de esa persona</note>
 				<note category="siblings">es-ES · male: «Te has rendido» · female: «Te has rendido» · other: «Te has rendido»</note>
 				<note category="srcHash">d9b5d48603bd</note>
 			</notes>
@@ -1354,6 +1359,7 @@ juego libre → फ्री प्ले — mover las piezas de los dos bandos
 tablero → बोर्ड
 sesión → सत्र — la sesión iniciada contra el API, guardada en una cookie
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="profile.01KZJ895M9S6NRNRF6EH38YVR2">
 			<notes>
@@ -1441,6 +1447,7 @@ El ciclo de un ejercicio es siempre el mismo: se pide una jugada, si es la buena
 			<note category="glossary">conjunto → सेट — los ejercicios que se fijan una vez y se repiten en todos los ciclos; nunca «bloque» ni «lote»
 ejercicio → अभ्यास — el ejercicio táctico que se resuelve, la unidad de trabajo de la aplicación; nunca ejercicio físico, y siempre la misma palabra, no alternando con problema o puzle
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="puzzle.01KZJ895MC41534M6SMAPZ8D0G">
 			<notes>
@@ -1487,7 +1494,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Resultado de la importación. `{loaded}` son los ejercicios que entraron y `{skipped}` las filas del CSV que no se pudieron leer y se descartaron.</note>
 				<note category="term">ejercicio → अभ्यास</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «Cargado # ejercicio.» · other: «Cargados # ejercicios.»</note>
 				<note category="srcHash">a31207a89174</note>
 			</notes>
@@ -1506,7 +1513,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Resultado de la importación. `{loaded}` son los ejercicios que entraron y `{skipped}` las filas del CSV que no se pudieron leer y se descartaron.</note>
 				<note category="term">ejercicio → अभ्यास</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «Cargado # ejercicio.» · other: «Cargados # ejercicios.»</note>
 				<note category="srcHash">a31207a89174</note>
 			</notes>
@@ -1561,6 +1568,7 @@ jugada → चाल — un movimiento de un solo bando (ply), no una partida en
 tablero → बोर्ड
 torre → हाथी — la pieza de ajedrez; nunca una torre de edificio
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="setting.01M1AGM7HWDSF69TQHTNXDCCE4">
 			<notes>
@@ -1660,7 +1668,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="param">{count}: number</note>
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido. «Al día» es «sincronizado, sin nada pendiente», nunca «por día» ni «cada día».</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «# rechazada» · other: «# rechazadas»</note>
 				<note category="srcHash">1d7530ce720b</note>
 			</notes>
@@ -1678,7 +1686,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="param">{count}: number</note>
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido. «Al día» es «sincronizado, sin nada pendiente», nunca «por día» ni «cada día».</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «# rechazada» · other: «# rechazadas»</note>
 				<note category="srcHash">1d7530ce720b</note>
 			</notes>
@@ -1697,7 +1705,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido. «Al día» es «sincronizado, sin nada pendiente», nunca «por día» ni «cada día».</note>
 				<note category="context">`{count}` es un número de filas guardadas en este dispositivo, y puede ser 0.</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «# fila aquí» · other: «# filas aquí»</note>
 				<note category="srcHash">7f5d7003a427</note>
 			</notes>
@@ -1716,7 +1724,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido. «Al día» es «sincronizado, sin nada pendiente», nunca «por día» ni «cada día».</note>
 				<note category="context">`{count}` es un número de filas guardadas en este dispositivo, y puede ser 0.</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «# fila aquí» · other: «# filas aquí»</note>
 				<note category="srcHash">7f5d7003a427</note>
 			</notes>
@@ -1773,7 +1781,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido. «Al día» es «sincronizado, sin nada pendiente», nunca «por día» ni «cada día».</note>
 				<note category="context">Algo lleva demasiados días sin subir. `{days}` es un número de días.</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «Algo lleva más de # día esperando.» · other: «Algo lleva más de # días esperando.»</note>
 				<note category="srcHash">9917433e0448</note>
 			</notes>
@@ -1792,7 +1800,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">Estado de la sincronización. **Subir** es siempre del dispositivo al servidor y **bajar** del servidor al dispositivo: no vale «sincronizar» para una sola dirección, porque la página distingue las dos. Una fila «rechazada» es un cambio que el servidor no aceptó y que sigue aquí esperando; no es un cambio perdido. «Al día» es «sincronizado, sin nada pendiente», nunca «por día» ni «cada día».</note>
 				<note category="context">Algo lleva demasiados días sin subir. `{days}` es un número de días.</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «Algo lleva más de # día esperando.» · other: «Algo lleva más de # días esperando.»</note>
 				<note category="srcHash">9917433e0448</note>
 			</notes>
@@ -1867,6 +1875,7 @@ error → गलती — una jugada equivocada dentro de un ejercicio, no el e
 pista → संकेत — la ayuda que señala la pieza que hay que mover
 línea → लाइन — la secuencia de jugadas que resuelve el ejercicio; nunca una línea de texto ni una fila, ni la línea geométrica del tablero
 No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN, CSV, PWA</note>
+			<note category="subStatePrefix">chesspecker</note>
 		</notes>
 		<unit id="training.01KZJ895MCX6HDWAJMFPNCEYAM">
 			<notes>
@@ -1886,7 +1895,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">El conjunto de ejercicios. Se elige una vez, se fija y ya no cambia: todos los ciclos recorren ese mismo conjunto. `{size}` es el número de ejercicios que tiene.</note>
 				<note category="term">ciclo → चक्र, ejercicio → अभ्यास</note>
 				<note category="category">plural:one</note>
-				<note category="examples">se usa con 0, 1</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 0, 1</note>
 				<note category="siblings">es-ES · one: «Ya hay # ejercicio fijado para todos los ciclos.» · other: «Ya hay # ejercicios fijados para todos los ciclos.»</note>
 				<note category="srcHash">80bf1e037b5f</note>
 			</notes>
@@ -1905,7 +1914,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="context">El conjunto de ejercicios. Se elige una vez, se fija y ya no cambia: todos los ciclos recorren ese mismo conjunto. `{size}` es el número de ejercicios que tiene.</note>
 				<note category="term">ciclo → चक्र, ejercicio → अभ्यास</note>
 				<note category="category">plural:other</note>
-				<note category="examples">se usa con 2, 3, 4, 5, 6…</note>
+				<note category="examples">la aplicación usa esta forma cuando el número es 2, 3, 4, 5, 6…</note>
 				<note category="siblings">es-ES · one: «Ya hay # ejercicio fijado para todos los ciclos.» · other: «Ya hay # ejercicios fijados para todos los ciclos.»</note>
 				<note category="srcHash">80bf1e037b5f</note>
 			</notes>
@@ -2054,7 +2063,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">TrainingI18n.GAVE_UP_WATCHING</note>
 				<note category="context">El jugador se ha rendido y la aplicación va a reproducirle la solución. «Mira cómo iba» es una invitación a mirar, no una orden.</note>
 				<note category="category">gender:male</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «hombre»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Masculino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Te has rendido. Mira cómo iba.» · female: «Te has rendido. Mira cómo iba.» · other: «Te has rendido. Mira cómo iba.»</note>
 				<note category="srcHash">49f919b7372d</note>
 			</notes>
@@ -2068,7 +2077,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">TrainingI18n.GAVE_UP_WATCHING</note>
 				<note category="context">El jugador se ha rendido y la aplicación va a reproducirle la solución. «Mira cómo iba» es una invitación a mirar, no una orden.</note>
 				<note category="category">gender:female</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «mujer»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Femenino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Te has rendido. Mira cómo iba.» · female: «Te has rendido. Mira cómo iba.» · other: «Te has rendido. Mira cómo iba.»</note>
 				<note category="srcHash">49f919b7372d</note>
 			</notes>
@@ -2082,7 +2091,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">TrainingI18n.GAVE_UP_WATCHING</note>
 				<note category="context">El jugador se ha rendido y la aplicación va a reproducirle la solución. «Mira cómo iba» es una invitación a mirar, no una orden.</note>
 				<note category="category">gender:other</note>
-				<note category="gender-note">quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Otro» como género en los ajustes o no eligió ninguno: no le supongas un género ni juntes dos terminaciones con una barra o un paréntesis; reformula la frase para que nada en ella dependa del género de esa persona</note>
 				<note category="siblings">es-ES · male: «Te has rendido. Mira cómo iba.» · female: «Te has rendido. Mira cómo iba.» · other: «Te has rendido. Mira cómo iba.»</note>
 				<note category="srcHash">49f919b7372d</note>
 			</notes>
@@ -2096,7 +2105,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">TrainingI18n.GAVE_UP_LINE</note>
 				<note category="term">línea → लाइन</note>
 				<note category="category">gender:male</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «hombre»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Masculino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Te has rendido. Esa era la línea.» · female: «Te has rendido. Esa era la línea.» · other: «Te has rendido. Esa era la línea.»</note>
 				<note category="srcHash">254ce8d9a78f</note>
 			</notes>
@@ -2110,7 +2119,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">TrainingI18n.GAVE_UP_LINE</note>
 				<note category="term">línea → लाइन</note>
 				<note category="category">gender:female</note>
-				<note category="gender-note">quien usa la aplicación ha elegido «mujer»</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Femenino» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género</note>
 				<note category="siblings">es-ES · male: «Te has rendido. Esa era la línea.» · female: «Te has rendido. Esa era la línea.» · other: «Te has rendido. Esa era la línea.»</note>
 				<note category="srcHash">254ce8d9a78f</note>
 			</notes>
@@ -2124,7 +2133,7 @@ No traducir nunca: Chess Pecker, Chesspecker, Woodpecker, Lichess, ELO, FEN, PGN
 				<note category="key">TrainingI18n.GAVE_UP_LINE</note>
 				<note category="term">línea → लाइन</note>
 				<note category="category">gender:other</note>
-				<note category="gender-note">quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar</note>
+				<note category="gender-note">la aplicación usa esta forma con quien eligió «Otro» como género en los ajustes o no eligió ninguno: no le supongas un género ni juntes dos terminaciones con una barra o un paréntesis; reformula la frase para que nada en ella dependa del género de esa persona</note>
 				<note category="siblings">es-ES · male: «Te has rendido. Esa era la línea.» · female: «Te has rendido. Esa era la línea.» · other: «Te has rendido. Esa era la línea.»</note>
 				<note category="srcHash">254ce8d9a78f</note>
 			</notes>

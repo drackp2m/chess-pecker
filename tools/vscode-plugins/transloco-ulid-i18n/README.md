@@ -93,7 +93,9 @@ sub-state prefix and the language of the export notes come from.
   from the CLI's `add/` modules. It picks a scope, asks for the name and whether the key is plain
   text or a plural. A plural asks for its parameter and for every form the source language needs
   (`one` and `other` in Spanish, four in Russian, `other` alone in Japanese), each one starting from
-  the selection, or from the previous form when nothing is selected, then writes the ICU. A text
+  the selection, or from the previous form when nothing is selected, then writes the ICU. Each
+  form's prompt shows what `#` brings over `{count}`: the number the way the source language writes
+  it (`10.000`, `1,5`) instead of raw (`10000`, `1.5`). A text
   that does not pass the rules `check` applies to the source language cannot be accepted, and a
   plural form that never counts with `#` (or `{count}`) but names another parameter gets a warning
   while you type, since `{total} retos` under `count` is usually a typo for `# retos`; Enter still

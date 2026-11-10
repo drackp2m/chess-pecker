@@ -67,8 +67,8 @@ GENDER_RULES = """\
 ## Género
 - Esta frase se escribe para una persona concreta, y su nota dice para quién.
 - Haz concordar con ella todo lo que el idioma de destino marque en género.
-- Si la nota dice que no se ha especificado, dale la vuelta a la frase para que no haya nada que \
-concordar: no inventes terminaciones que el idioma no tenga.
+- Si la nota pide que nada dependa del género, dale la vuelta a la frase para que no haya nada \
+que concordar: no inventes terminaciones que el idioma no tenga.
 - Las otras formas de la misma frase van aparte: no las metas aquí ni las juntes con barras.\
 """
 

@@ -85,8 +85,17 @@ function validateForm(rules, argument, category, text) {
 		: { message: rules.strayMessage(stray), severity: vscode.InputBoxValidationSeverity.Warning };
 }
 
+function numberHint(argument, lang) {
+	const { format } = new Intl.NumberFormat(lang);
+	const param = `{${argument}}`;
+	const local = `${format(10000)} · ${format(1.5)}`;
+
+	return `# shows ${param} the ${lang} way (${local}); ${param} shows it raw (10000 · 1.5)`;
+}
+
 async function askPluralForms({ index, rules, name, argument, seed }) {
 	const forms = new Map();
+	const hint = numberHint(argument, index.defaultLang);
 	let previous = '';
 
 	for (const category of rules.formsToAsk(index.defaultLang)) {
@@ -95,7 +104,7 @@ async function askPluralForms({ index, rules, name, argument, seed }) {
 			title: `${name} · ${index.defaultLang} · ${category}`,
 			value: start,
 			valueSelection: [start.length, start.length],
-			prompt: `Write # for the number of {${argument}}`,
+			prompt: hint,
 			validateInput: (text) => validateForm(rules, argument, category, text),
 		});
 

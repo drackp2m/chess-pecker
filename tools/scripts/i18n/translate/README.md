@@ -355,9 +355,10 @@ the call:
 - **The plural rules.** `## Formas plurales` is sent only when the call carries a form of a plural,
   and it says the generic part — write this one as the target language would say it with those
   numbers, keep the number as a marker, leave the sister forms alone. Which numbers select _this_
-  form is per text, so it travels as a note under it (`- Forma «few»: se usa con 2, 3, 4, 22…`),
-  the same split `## Marcadores` already has with its per-marker lines. When only some of the texts
-  in the call are forms, one more line says so, so the rest are not read as plurals. Without this
+  form is per text, so it travels as a note under it
+  (`- Forma «few»: la aplicación usa esta forma cuando el número es 2, 3, 4, 22, 23…`), the same
+  split `## Marcadores` already has with its per-marker lines. When only some of the texts in the
+  call are forms, one more line says so, so the rest are not read as plurals. Without this
   the fan-out is pointless: the model sees the same Spanish sentence four times with nothing to
   tell the copies apart, and answers the same thing four times. Knowing the numbers was not
   enough, though: the first bench of 20/10/2026 had every model write «1,5 упражнений» and
@@ -382,8 +383,9 @@ the call:
   gender select: agree with the person the form is written for, and — the counter-intuitive half —
   when there is no gender to agree with, turn the sentence around rather than invent an ending the
   language does not have. Which person _this_ form is for is per text, so it goes under it
-  (`- Género: quien usa la aplicación ha elegido «mujer».`), and in a language that does not mark
-  gender the same note says there is only one form and no concordance to make. The category name is
+  (`- Género: la aplicación usa esta forma con quien eligió «Femenino» como género en los
+ajustes: …`), and in a language that does not mark gender the same note says there is only one
+  form and no concordance to make. The category name is
   left out of that line on purpose: a `select` case is named by us and means nothing to a
   translator, and printing it would put `- Género «other»` next to `- Forma «other»` on a key that
   branches on both, which are two unrelated things. The two sections stack: a string that branches

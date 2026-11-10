@@ -1,13 +1,13 @@
 {
-	"pluralExactly": "se usa exactamente con {value}",
-	"pluralNumbers": "se usa con {numbers}",
-	"pluralDecimals": "se usa con los decimales: {numbers}",
+	"pluralExactly": "la aplicación usa esta forma sólo cuando el número es exactamente {value}",
+	"pluralNumbers": "la aplicación usa esta forma cuando el número es {numbers}",
+	"pluralDecimals": "la aplicación usa esta forma sólo con decimales como {numbers}: nunca con un número entero",
 	"decimalPoint": ",",
-	"genderChosen": "quien usa la aplicación ha elegido «{gender}»",
-	"genderMale": "hombre",
-	"genderFemale": "mujer",
-	"genderUnspecified": "quien usa la aplicación no lo ha dicho. No inventes una terminación: reformula la frase para que no haya nada que concordar",
-	"genderless": "el idioma de destino no marca género, así que ésta es la única forma: escríbela sin concordancia de género",
+	"genderChosen": "la aplicación usa esta forma con quien eligió «{gender}» como género en los ajustes: haz que todo lo que se refiera a esa persona concuerde con ese género",
+	"genderMale": "Masculino",
+	"genderFemale": "Femenino",
+	"genderUnspecified": "la aplicación usa esta forma con quien eligió «Otro» como género en los ajustes o no eligió ninguno: no le supongas un género ni juntes dos terminaciones con una barra o un paréntesis; reformula la frase para que nada en ella dependa del género de esa persona",
+	"genderless": "el idioma de destino no marca el género gramatical, así que todo el mundo ve esta misma forma, sea cual sea el género que eligió: escríbela sin concordancia de género",
 	"neverTranslate": "No traducir nunca: {terms}",
-	"outdated": "el original cambió después de traducir esto — el destino de abajo es la traducción antigua"
+	"outdated": "el original cambió después de traducir esto: el destino de abajo es la traducción antigua, así que ajústala al original nuevo en vez de conservarla"
 }
