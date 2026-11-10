@@ -30,7 +30,7 @@
 		"prepare": "node .husky/prepare.mjs"
 	},
 	"devDependencies": {
-		"@drackp2m/transloco-ulid-cli": "0.2.0",
+		"@drackp2m/transloco-ulid-cli": "0.2.1",
 		"@eslint/js": "10.0.1",
 		"@resvg/resvg-js": "2.6.2",
 		"@semantic-release/changelog": "7.0.0",

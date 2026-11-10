@@ -100,7 +100,12 @@ class I18nIndex {
 				return [];
 			}
 
-			return problems(String(translation.text), lang).map((problem) => ({ lang, ...problem }));
+			const langs = lang === this.defaultLang ? this.langs : [lang];
+
+			return problems(String(translation.text), lang, { langs }).map((problem) => ({
+				lang,
+				...problem,
+			}));
 		});
 	}
 

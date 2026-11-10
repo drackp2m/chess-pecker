@@ -137,7 +137,7 @@ async function askText(index, rules, name, seed) {
 		value: seed,
 		valueSelection: [seed.length, seed.length],
 		prompt: REQUIRED,
-		validateInput: (text) => rules.textProblems(text, index.defaultLang)[0] ?? null,
+		validateInput: (text) => rules.textProblems(text, index.defaultLang, index.langs)[0] ?? null,
 	});
 
 	return value ?? null;
