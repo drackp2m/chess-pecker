@@ -12,31 +12,11 @@ El título de la pestaña del navegador mientras se lee la presentación. No apa
 
 Etiqueta accesible del indicador de puntos. No se ve en pantalla, sólo la lee un lector de pantalla.
 
-## SKIP
-
-## CLOSE
-
-## BACK
-
-## NEXT
-
-## START
+## SKIP, CLOSE, BACK, NEXT, START
 
 Los botones. `SKIP` sale de la presentación la primera vez; `CLOSE` es el mismo botón cuando ya se ha leído y se vuelve a ella como ayuda. `START` cierra el último paso y lleva al inicio. Etiquetas muy cortas, imperativas, sin punto.
 
-## PURPOSE_*
-
-## PATTERNS_*
-
-## REPEAT_*
-
-## RECOGNISE_*
-
-## MISTAKES_*
-
-## SPEED_*
-
-## LEVEL_*
+## PURPOSE__, PATTERNS__, REPEAT__, RECOGNISE__, MISTAKES__, SPEED__, LEVEL_*
 
 Los siete pasos, cada uno con su título y uno o dos párrafos. Los `_TITLE` son enunciados cortos, sin punto final, y encabezan la pantalla. Los `_BODY` son párrafos completos, con punto.
 

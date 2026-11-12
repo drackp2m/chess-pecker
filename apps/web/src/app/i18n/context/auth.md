@@ -12,15 +12,11 @@ Dice que la sesión vive en una cookie y sobrevive a una recarga. «Chess Pecker
 
 El nombre de usuario, que es lo que identifica a una persona en la aplicación. Se traduce igual aquí que en el scope `profile`.
 
-## PASSWORD
-
-## PASSWORD_MIN_LENGTH
+## PASSWORD, PASSWORD_MIN_LENGTH
 
 La contraseña y el mínimo de caracteres que se pide. `{length}` es un número.
 
-## LOGGING_IN
-
-## CREATING_ACCOUNT
+## LOGGING_IN, CREATING_ACCOUNT
 
 Estados de un botón mientras la petición está en marcha. Gerundio y puntos suspensivos, que se conservan como el carácter «…».
 
@@ -28,10 +24,6 @@ Estados de un botón mientras la petición está en marcha. Gerundio y puntos su
 
 Etiqueta del campo de correo. Que sea opcional es parte de la etiqueta y va entre paréntesis, igual que en el original.
 
-## NO_ACCOUNT_YET
-
-## ALREADY_REGISTERED
-
-## CREATE_ONE
+## NO_ACCOUNT_YET, ALREADY_REGISTERED, CREATE_ONE
 
 Preguntas que llevan a la otra pantalla, con el enlace justo detrás. La pregunta y el enlace se leen seguidos, así que tienen que encajar gramaticalmente uno detrás del otro.

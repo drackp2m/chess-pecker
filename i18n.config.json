@@ -5,5 +5,6 @@
 	"rootScope": "common",
 	"importAlias": "@app/i18n",
 	"xliffPrefix": "chesspecker",
-	"notesLang": "es"
+	"notesLang": "es",
+	"pipe": "i18n"
 }
