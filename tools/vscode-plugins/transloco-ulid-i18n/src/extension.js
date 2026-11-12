@@ -9,7 +9,8 @@ const { i18nDefinitionProvider, i18nReferenceProvider } = require('./navigation'
 const { fail, report } = require('./output');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
 const { ensureTemplateSetup } = require('./setup');
-const { exportTranslations, importTranslations } = require('./transfer');
+const { STATUS_VIEW, StatusView, openKey } = require('./status-view');
+const { exportPending, exportTranslations, importTranslations } = require('./transfer');
 const { UsageIndex } = require('./usages');
 
 const { I18nIndex } = require('./index');
@@ -24,6 +25,7 @@ async function reload(state, notify) {
 	}
 
 	state.annotations.refreshAll();
+	state.status.refresh();
 	state.findings.schedule();
 
 	return error;
@@ -114,16 +116,20 @@ function commandTable(state) {
 		reload: () => reload(state, true),
 		toggleInlineText: () => toggleInlineText(annotations),
 		exportTranslations: () => exportTranslations(index),
+		exportPending: (node) => exportPending(index, node),
 		importTranslations: () => importTranslations(index, annotations),
+		openKey: (row) => openKey(index, row),
 	};
 }
 
 function registerCommands(state) {
-	const run = (task) => () => {
-		task().catch((error) =>
-			vscode.window.showErrorMessage(`Transloco ULID i18n: ${error.message}`),
-		);
-	};
+	const run =
+		(task) =>
+		(...args) => {
+			task(...args).catch((error) =>
+				vscode.window.showErrorMessage(`Transloco ULID i18n: ${error.message}`),
+			);
+		};
 
 	return [
 		...Object.entries(commandTable(state)).map(([name, task]) =>
@@ -143,6 +149,14 @@ async function toggleInlineText(annotations) {
 	annotations.refreshAll();
 }
 
+function showStatus({ status, findings }) {
+	return [
+		status,
+		vscode.window.createTreeView(STATUS_VIEW, { treeDataProvider: status, showCollapseAll: true }),
+		findings.onDidChange(() => status.refresh()),
+	];
+}
+
 function subscriptionsOf(state) {
 	const { index, annotations, usages, findings } = state;
 
@@ -159,6 +173,7 @@ function subscriptionsOf(state) {
 		...watchSources(state),
 		...watchCatalogueEdits(state),
 		...watchEditors(annotations),
+		...showStatus(state),
 		...registerCommands(state),
 		vscode.workspace.onDidChangeConfiguration((event) => {
 			if (event.affectsConfiguration('translocoUlidI18n')) {
@@ -176,11 +191,13 @@ async function activate(context) {
 	}
 
 	const index = new I18nIndex(folder.uri.fsPath);
+	const findings = new Findings(index);
 	const state = {
 		index,
 		annotations: new Annotations(index),
 		usages: new UsageIndex(index),
-		findings: new Findings(index),
+		findings,
+		status: new StatusView(index, findings),
 	};
 
 	await reload(state, true);

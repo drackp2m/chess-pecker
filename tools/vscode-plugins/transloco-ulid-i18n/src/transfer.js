@@ -30,16 +30,17 @@ async function pickLangs(index) {
 	return picked?.map(({ label }) => label) ?? null;
 }
 
-async function pickScope() {
-	const picked = await vscode.window.showQuickPick(
-		[
-			{ label: 'Every string', missingOnly: false, description: 'the whole catalogue' },
-			{ label: 'Only untranslated', missingOnly: true, description: 'what has no target yet' },
-		],
-		{ title: 'What to export' },
-	);
+const FILTERS = [
+	{ label: 'Every string', filter: 'all', description: 'the whole catalogue' },
+	{ label: 'Pending', filter: 'pending', description: 'untranslated and outdated' },
+	{ label: 'Only untranslated', filter: 'missing', description: 'what has no target yet' },
+	{ label: 'Only outdated', filter: 'stale', description: 'what the source changed under' },
+];
 
-	return picked?.missingOnly ?? null;
+async function pickFilter() {
+	const picked = await vscode.window.showQuickPick(FILTERS, { title: 'What to export' });
+
+	return picked?.filter ?? null;
 }
 
 async function revealed(written, outDir) {
@@ -51,7 +52,7 @@ async function revealed(written, outDir) {
 	}
 }
 
-async function writeExports(index, langs, missingOnly, outDir) {
+async function writeExports(index, langs, { filter, only, outDir }) {
 	const [transfer, collect] = await Promise.all([
 		index.load('transfer/build.mjs'),
 		index.load('catalogue/collect.mjs'),
@@ -65,7 +66,8 @@ async function writeExports(index, langs, missingOnly, outDir) {
 		root: index.root,
 		xliffPrefix: index.xliffPrefix,
 		notesLang: index.notesLang,
-		filter: missingOnly ? 'missing' : 'all',
+		filter,
+		...(null === only ? {} : { only: [only] }),
 	};
 
 	return langs
@@ -81,14 +83,18 @@ async function exportTranslations(index) {
 		return;
 	}
 
-	const missingOnly = await pickScope();
+	const filter = await pickFilter();
 
-	if (null === missingOnly) {
+	if (null === filter) {
 		return;
 	}
 
+	await exportWith(index, langs, { filter, only: null });
+}
+
+async function exportWith(index, langs, { filter, only }) {
 	const outDir = transferDir(index.root);
-	const written = await writeExports(index, langs, missingOnly, outDir);
+	const written = await writeExports(index, langs, { filter, only, outDir });
 
 	if (0 === written.length) {
 		vscode.window.showInformationMessage('i18n: nothing to export');
@@ -97,6 +103,16 @@ async function exportTranslations(index) {
 	}
 
 	await revealed(written, outDir);
+}
+
+async function exportPending(index, node) {
+	const lang = node?.language?.lang;
+
+	if (undefined === lang) {
+		return;
+	}
+
+	await exportWith(index, [lang], { filter: 'pending', only: node.scope ?? null });
 }
 
 // Import writes the JSON and keys.ts files straight to disk, so an unsaved
@@ -197,4 +213,4 @@ async function importTranslations(index, annotations) {
 	report(plan, written, accepted);
 }
 
-module.exports = { exportTranslations, importTranslations };
+module.exports = { exportPending, exportTranslations, importTranslations };

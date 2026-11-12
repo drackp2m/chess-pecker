@@ -10,8 +10,8 @@
 			"label": "Chess Pecker App",
 			"protocol": "https",
 			"onAutoForward": "notify",
-			"requireLocalPort": true,
-		},
+			"requireLocalPort": true
+		}
 	},
 	"overrideCommand": false,
 	"customizations": {

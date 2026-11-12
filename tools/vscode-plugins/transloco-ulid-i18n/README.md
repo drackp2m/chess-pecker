@@ -73,6 +73,20 @@ sub-state prefix and the language of the export notes come from.
   so those problems show up in the panel even with no i18n file open. Severity is the CLI's
   `severityOf`, except that a missing or empty translation is lowered to a warning: the commit hook
   is the gate, the editor is where the work is still being done.
+- **Status view** — the Transloco ULID icon in the activity bar opens a tree of where the catalogue
+  stands. **Languages** has a line per target language, with a ring in place of its icon — green for
+  what is up to date, amber for what is translated but outdated or never sealed, grey for the rest —
+  and both figures beside it: `60 % up to date · 83 % translated`, rounded down, so 100 % means every
+  key. Under each language come the four states `transloco-ulid state` counts (up to date, outdated,
+  never sealed, untranslated), and under each state its keys, with the source text next to the name;
+  clicking one opens that language's file on the key, or the source language's when the key is not
+  in it yet. **Scopes** repeats the same per scope. **Checks** groups by type what
+  `transloco-ulid check` reports besides the pending translations, which are already counted above,
+  and each finding opens where it lives. The last line is the CLI version the extension is running,
+  and opens `i18n.config.json`. The title bar holds create key, export, import and reload, and a
+  language with work left has an **Export pending** button that writes its untranslated and outdated
+  strings — only that scope's when it is under **Scopes**. The view refreshes with the findings, the
+  sealed hashes in `state/` included.
 - **Completion** — scopes after `I18n.`, keys after `I18n.dashboard.` and while the key is half
   typed, each row showing its `displayLang` text on the right. A key that takes params completes
   with them: picking `PROGRAM_CURRENT_SCANS` inside `{{ I18n.dashboard.| | i18n }}` leaves
@@ -116,9 +130,9 @@ sub-state prefix and the language of the export notes come from.
   feeds completion back, and the import plus the member in the `I18nParams` union, which is what
   types the pipe. The component still needs its
   `provideI18nScope('<name>')` by hand, which will only accept the scope once it has its first key.
-- **Export / import** — `i18n: Export translations to XLIFF` picks the target languages and whether
-  to send everything or only what has no target yet, and writes one bilingual **XLIFF 2.0** file per
-  language into `translations/`. Each unit carries the ULID as its `id`, the constant
+- **Export / import** — `i18n: Export translations to XLIFF` picks the target languages and what to
+  send — everything, everything pending, only what has no target yet or only what is outdated — and
+  writes one bilingual **XLIFF 2.0** file per language into `translations/`. Each unit carries the ULID as its `id`, the constant
   (`AuthI18n.USERNAME`), where it is used and the declared param types as notes, and every
   `{{ param }}` as an `<originalData>`/`<ph>` pair, so a translator gets an atomic placeholder chip
   instead of braces they can typo. `i18n: Import translations from XLIFF` reads them back: existing

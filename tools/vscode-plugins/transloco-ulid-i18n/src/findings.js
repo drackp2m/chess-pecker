@@ -94,6 +94,9 @@ class Findings {
 		this.index = index;
 		this.diagnostics = vscode.languages.createDiagnosticCollection('transloco-ulid-i18n-files');
 		this.timer = null;
+		this.items = [];
+		this.changed = new vscode.EventEmitter();
+		this.onDidChange = this.changed.event;
 	}
 
 	dispose() {
@@ -102,6 +105,7 @@ class Findings {
 		}
 
 		this.diagnostics.dispose();
+		this.changed.dispose();
 	}
 
 	schedule() {
@@ -116,16 +120,27 @@ class Findings {
 		const { checks, collect, findings } = this.index.modules ?? {};
 
 		if (undefined === checks || 0 === this.index.rawScopes.length) {
-			this.diagnostics.clear();
+			this.settle([], null);
 
 			return;
 		}
 
 		try {
-			this.publish(this.collectFindings(checks, collect), findings.severityOf);
+			this.settle(this.collectFindings(checks, collect), findings.severityOf);
 		} catch {
-			this.diagnostics.clear();
+			this.settle([], null);
 		}
+	}
+
+	settle(items, severityOf) {
+		if (null === severityOf) {
+			this.diagnostics.clear();
+		} else {
+			this.publish(items, severityOf);
+		}
+
+		this.items = items;
+		this.changed.fire(undefined);
 	}
 
 	collectFindings(checks, collect) {

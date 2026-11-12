@@ -40,6 +40,7 @@ class I18nIndex {
 		this.defaultLang = '';
 		this.displayLang = '';
 		this.languageFile = '';
+		this.configFile = '';
 		this.i18nDir = '';
 		this.sourceDirs = [];
 		this.scopes = new Map();
@@ -163,12 +164,13 @@ class I18nIndex {
 			'check/icu.mjs',
 			'catalogue/params.mjs',
 			'catalogue/message.mjs',
+			'catalogue/freshness.mjs',
 		];
-		const [checks, collect, config, findings, icu, params, message] = await Promise.all(
+		const [checks, collect, config, findings, icu, params, message, freshness] = await Promise.all(
 			files.map((file) => loadModule(this.cliDir, file)),
 		);
 
-		return { checks, collect, config, findings, icu, params, message };
+		return { checks, collect, config, findings, icu, params, message, freshness };
 	}
 
 	applyConfig(config, modules) {
@@ -197,6 +199,7 @@ class I18nIndex {
 		const config = configModule.loadConfig(this.root);
 
 		this.languageFile = settings.languageFile(config.root, config);
+		this.configFile = path.join(config.root, configModule.CONFIG_FILE ?? 'i18n.config.json');
 		this.applyConfig(config, modules);
 		this.modules = modules;
 		this.toKebabCase = configModule.toKebabCase;

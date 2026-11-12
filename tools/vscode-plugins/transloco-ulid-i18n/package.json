@@ -24,12 +24,14 @@
 			{
 				"command": "translocoUlidI18n.createKey",
 				"title": "Create translation key",
-				"category": "i18n"
+				"category": "i18n",
+				"icon": "$(add)"
 			},
 			{
 				"command": "translocoUlidI18n.reload",
 				"title": "Reload translation index",
-				"category": "i18n"
+				"category": "i18n",
+				"icon": "$(refresh)"
 			},
 			{
 				"command": "translocoUlidI18n.toggleInlineText",
@@ -39,14 +41,90 @@
 			{
 				"command": "translocoUlidI18n.exportTranslations",
 				"title": "Export translations to XLIFF",
-				"category": "i18n"
+				"category": "i18n",
+				"icon": "$(cloud-upload)"
 			},
 			{
 				"command": "translocoUlidI18n.importTranslations",
 				"title": "Import translations from XLIFF",
+				"category": "i18n",
+				"icon": "$(cloud-download)"
+			},
+			{
+				"command": "translocoUlidI18n.exportPending",
+				"title": "Export pending translations",
+				"category": "i18n",
+				"icon": "$(cloud-upload)"
+			},
+			{
+				"command": "translocoUlidI18n.openKey",
+				"title": "Open translation",
 				"category": "i18n"
 			}
 		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "translocoUlidI18n",
+					"title": "Transloco ULID",
+					"icon": "media/activity.svg"
+				}
+			]
+		},
+		"views": {
+			"translocoUlidI18n": [
+				{
+					"id": "translocoUlidI18n.status",
+					"name": "Status"
+				}
+			]
+		},
+		"menus": {
+			"view/title": [
+				{
+					"command": "translocoUlidI18n.createKey",
+					"when": "view == translocoUlidI18n.status",
+					"group": "navigation@1"
+				},
+				{
+					"command": "translocoUlidI18n.exportTranslations",
+					"when": "view == translocoUlidI18n.status",
+					"group": "navigation@2"
+				},
+				{
+					"command": "translocoUlidI18n.importTranslations",
+					"when": "view == translocoUlidI18n.status",
+					"group": "navigation@3"
+				},
+				{
+					"command": "translocoUlidI18n.reload",
+					"when": "view == translocoUlidI18n.status",
+					"group": "navigation@4"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "translocoUlidI18n.exportPending",
+					"when": "view == translocoUlidI18n.status && viewItem == languagePending",
+					"group": "inline"
+				},
+				{
+					"command": "translocoUlidI18n.exportPending",
+					"when": "view == translocoUlidI18n.status && viewItem == languagePending",
+					"group": "export"
+				}
+			],
+			"commandPalette": [
+				{
+					"command": "translocoUlidI18n.exportPending",
+					"when": "false"
+				},
+				{
+					"command": "translocoUlidI18n.openKey",
+					"when": "false"
+				}
+			]
+		},
 		"configurationDefaults": {
 			"[html]": {
 				"editor.suggest.showWords": false
