@@ -1,5 +1,3 @@
-const path = require('node:path');
-
 const vscode = require('vscode');
 
 const { STATUSES, buildStatus } = require('./status-data');
@@ -32,19 +30,12 @@ function rootNodes(snapshot) {
 		return [{ kind: 'error', message: snapshot.error }];
 	}
 
-	const broken = snapshot.stateErrors.map(({ file, message }) => ({
-		kind: 'error',
-		message: `${path.basename(file)}: ${message}`,
-		file,
-	}));
-
-	return [...broken, ...SECTIONS.map((kind) => ({ kind, snapshot }))];
+	return SECTIONS.map((kind) => ({ kind, snapshot }));
 }
 
 class StatusView {
-	constructor(index, findings) {
+	constructor(index) {
 		this.index = index;
-		this.findings = findings;
 		this.snapshot = null;
 		this.changed = new vscode.EventEmitter();
 		this.onDidChangeTreeData = this.changed.event;
@@ -66,16 +57,12 @@ class StatusView {
 	}
 
 	build() {
-		const { freshness, findings } = this.index.modules ?? {};
-
-		if (null !== this.index.error || undefined === freshness) {
+		if (null !== this.index.error || null === this.index.api) {
 			return { error: this.index.error ?? 'The translation index is not loaded yet' };
 		}
 
 		try {
-			const { items: found } = this.findings;
-
-			return buildStatus(this.index, { freshness, items: found, severityOf: findings.severityOf });
+			return buildStatus(this.index);
 		} catch (error) {
 			return { error: error instanceof Error ? error.message : String(error) };
 		}

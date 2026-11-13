@@ -171,6 +171,7 @@ function checkItem({ group }) {
 	const item = new vscode.TreeItem(group.type, Collapsed);
 
 	item.description = String(group.items.length);
+	item.tooltip = group.meaning;
 	item.iconPath = SEVERITY_LOOK[group.severity].icon;
 
 	return item;

@@ -24,9 +24,7 @@ async function reload(state, notify) {
 		(true === notify ? fail : report)([error]);
 	}
 
-	state.annotations.refreshAll();
-	state.status.refresh();
-	state.findings.schedule();
+	state.findings.show();
 
 	return error;
 }
@@ -58,33 +56,33 @@ function watchLanguageFile(state) {
 	return [watcher];
 }
 
-function watchSources({ usages, findings }) {
+const SOURCE_FILE = /\.(?:ts|html)$/;
+
+function watchSources({ findings }) {
 	const watcher = vscode.workspace.createFileSystemWatcher('**/*.{ts,html}');
-	const invalidate = () => usages.invalidate();
-	const onChange = () => {
-		usages.invalidate();
-		findings.schedule();
-	};
+	const onChange = () => findings.schedule({ sources: true });
 
 	watcher.onDidChange(onChange);
 	watcher.onDidCreate(onChange);
 	watcher.onDidDelete(onChange);
 
-	return [watcher, vscode.workspace.onDidChangeTextDocument(invalidate)];
+	return [watcher];
 }
 
-function watchCatalogueEdits({ index, findings }) {
+function watchEdits({ index, findings }) {
 	const onEdit = (document) => {
 		const file = document.uri.fsPath;
+		const sources = SOURCE_FILE.test(file);
 
-		if (file.endsWith('.json') && file.startsWith(`${index.i18nDir}${path.sep}`)) {
-			findings.schedule();
+		if (sources || file.startsWith(`${index.i18nDir}${path.sep}`)) {
+			findings.schedule({ sources });
 		}
 	};
 
 	return [
 		vscode.workspace.onDidChangeTextDocument((event) => onEdit(event.document)),
 		vscode.workspace.onDidCloseTextDocument(onEdit),
+		vscode.workspace.onDidOpenTextDocument(() => findings.show()),
 	];
 }
 
@@ -104,7 +102,6 @@ function watchEditors(annotations) {
 		vscode.window.onDidChangeTextEditorSelection((event) => annotations.repaint(event.textEditor)),
 		vscode.workspace.onDidChangeTextDocument((event) => schedule(event.document)),
 		vscode.workspace.onDidOpenTextDocument((document) => annotations.refresh(document)),
-		vscode.workspace.onDidCloseTextDocument((document) => annotations.clear(document)),
 	];
 }
 
@@ -149,11 +146,14 @@ async function toggleInlineText(annotations) {
 	annotations.refreshAll();
 }
 
-function showStatus({ status, findings }) {
+function showStatus({ status, findings, annotations }) {
 	return [
 		status,
 		vscode.window.createTreeView(STATUS_VIEW, { treeDataProvider: status, showCollapseAll: true }),
-		findings.onDidChange(() => status.refresh()),
+		findings.onDidChange(() => {
+			status.refresh();
+			annotations.refreshAll();
+		}),
 	];
 }
 
@@ -171,7 +171,7 @@ function subscriptionsOf(state) {
 		watchTranslations(state),
 		...watchLanguageFile(state),
 		...watchSources(state),
-		...watchCatalogueEdits(state),
+		...watchEdits(state),
 		...watchEditors(annotations),
 		...showStatus(state),
 		...registerCommands(state),
@@ -197,7 +197,7 @@ async function activate(context) {
 		annotations: new Annotations(index),
 		usages: new UsageIndex(index),
 		findings,
-		status: new StatusView(index, findings),
+		status: new StatusView(index),
 	};
 
 	await reload(state, true);

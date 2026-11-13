@@ -139,7 +139,7 @@
 				"translocoUlidI18n.cliDir": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Folder holding the `@drackp2m/transloco-ulid-cli` modules (its `src/`). Relative paths resolve from the workspace root. Empty means the copy installed in the workspace's `node_modules`, so the extension always runs the same version as `transloco-ulid check`."
+					"markdownDescription": "Folder holding the `api.mjs` of `@drackp2m/transloco-ulid-cli` (its `src/`). Relative paths resolve from the workspace root. Empty means the copy installed in the workspace's `node_modules`, so the extension always runs the same version as `transloco-ulid check`."
 				},
 				"translocoUlidI18n.pipeImport": {
 					"type": "string",

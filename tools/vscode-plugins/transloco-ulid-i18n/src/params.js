@@ -1,6 +1,7 @@
 const vscode = require('vscode');
 
-const PIPE_AHEAD = /^(\s*\|\s*i18n\b)(?!\s*:)(\s*\}\})?/;
+const pipeAhead = (pipe) =>
+	new RegExp(`^(\\s*\\|\\s*${pipe.replace(/[$]/g, '\\$&')}(?![\\w$]))(?!\\s*:)(\\s*\\}\\})?`);
 const REF_CALL = /\bi18nRef\(\s*[\w.]*$/;
 const REF_AHEAD = /^\s*\)/;
 
@@ -10,8 +11,8 @@ function paramsObject(params) {
 	return `{ ${fields.join(', ')} }`;
 }
 
-function pipeInsertion(key, params, suffix) {
-	const match = PIPE_AHEAD.exec(suffix);
+function pipeInsertion(key, params, suffix, pipeName) {
+	const match = pipeAhead(pipeName).exec(suffix);
 
 	if (null === match) {
 		return null;
@@ -27,12 +28,12 @@ function pipeInsertion(key, params, suffix) {
 	return { text: `${key}${pipe}${args}${close}$0`, ahead: ahead.length };
 }
 
-function insertion(key, params, prefix, suffix) {
+function insertion(key, params, { prefix, suffix }, pipe) {
 	if (0 !== params.length && REF_CALL.test(prefix) && REF_AHEAD.test(suffix)) {
 		return { text: `${key}, ${paramsObject(params)}$0`, ahead: 0 };
 	}
 
-	return pipeInsertion(key, params, suffix);
+	return pipeInsertion(key, params, suffix, pipe);
 }
 
 function replaceRange(document, position, ahead) {
@@ -42,7 +43,7 @@ function replaceRange(document, position, ahead) {
 }
 
 function applyInsertion(index, scope, key, item, context) {
-	const insert = insertion(key, index.paramsOf(scope, key), context.prefix, context.suffix);
+	const insert = insertion(key, index.paramsOf(scope, key), context, index.pipe);
 
 	if (null === insert) {
 		return;

@@ -9,21 +9,6 @@ const { ensureTemplateSetup } = require('./setup');
 const SOURCE_LANGUAGES = new Set(['html', 'typescript']);
 const QUOTED = /^(['"`])([\s\S]*)\1$/;
 const REQUIRED = 'Required';
-const NEEDS_CLI = 'Create translation key needs @drackp2m/transloco-ulid-cli 0.2.0 or later';
-
-async function loadAdd(index) {
-	try {
-		const [rules, plan] = await Promise.all([
-			index.load('add/rules.mjs'),
-			index.load('add/plan.mjs'),
-		]);
-
-		return { rules, plan };
-	} catch (error) {
-		throw new Error(NEEDS_CLI, { cause: error });
-	}
-}
-
 const rawScopeOf = (index, name) =>
 	index.rawScopes.find((scope) => scope.name === name) ?? { name, keys: null };
 
@@ -43,11 +28,11 @@ async function pickScope(index, document) {
 	return NEW_SCOPE === picked ? createScope(index) : picked;
 }
 
-async function askName(index, rules, scope) {
+async function askName(index, scope) {
 	return vscode.window.showInputBox({
 		title: `New key in ${scope}`,
 		placeHolder: 'SECTION_TITLE',
-		validateInput: (value) => rules.keyNameProblem(rawScopeOf(index, scope), value),
+		validateInput: (value) => index.api.keyNameProblem(rawScopeOf(index, scope), value),
 	});
 }
 
@@ -63,26 +48,26 @@ async function askKind() {
 	return picked?.kind ?? null;
 }
 
-async function askPluralArgument(rules, name) {
+async function askPluralArgument(index, name) {
 	return vscode.window.showInputBox({
 		title: `${name} · plural param`,
 		value: 'count',
-		validateInput: (value) => rules.paramNameProblem(value),
+		validateInput: (value) => index.api.paramNameProblem(value),
 	});
 }
 
-function validateForm(rules, argument, category, text) {
-	const problem = rules.formProblem(argument, category, text);
+function validateForm(api, argument, category, text) {
+	const problem = api.formProblem(argument, category, text);
 
 	if (null !== problem) {
 		return problem;
 	}
 
-	const [stray] = rules.strayParamsIn(rules.pluralSource(argument, new Map([[category, text]])));
+	const doubt = api.formDoubt(argument, category, text);
 
-	return undefined === stray
+	return null === doubt
 		? null
-		: { message: rules.strayMessage(stray), severity: vscode.InputBoxValidationSeverity.Warning };
+		: { message: doubt, severity: vscode.InputBoxValidationSeverity.Warning };
 }
 
 function numberHint(argument, lang) {
@@ -93,19 +78,19 @@ function numberHint(argument, lang) {
 	return `# shows ${param} the ${lang} way (${local}); ${param} shows it raw (10000 · 1.5)`;
 }
 
-async function askPluralForms({ index, rules, name, argument, seed }) {
+async function askPluralForms({ index, name, argument, seed }) {
 	const forms = new Map();
 	const hint = numberHint(argument, index.defaultLang);
 	let previous = '';
 
-	for (const category of rules.formsToAsk(index.defaultLang)) {
+	for (const category of index.api.formsToAsk(index.defaultLang)) {
 		const start = '' === seed ? previous : seed;
 		const value = await vscode.window.showInputBox({
 			title: `${name} · ${index.defaultLang} · ${category}`,
 			value: start,
 			valueSelection: [start.length, start.length],
 			prompt: hint,
-			validateInput: (text) => validateForm(rules, argument, category, text),
+			validateInput: (text) => validateForm(index.api, argument, category, text),
 		});
 
 		if (undefined === value) {
@@ -119,25 +104,26 @@ async function askPluralForms({ index, rules, name, argument, seed }) {
 	return forms;
 }
 
-async function askPluralText(index, rules, name, seed) {
-	const argument = await askPluralArgument(rules, name);
+async function askPluralText(index, name, seed) {
+	const argument = await askPluralArgument(index, name);
 
 	if (undefined === argument) {
 		return null;
 	}
 
-	const forms = await askPluralForms({ index, rules, name, argument, seed });
+	const forms = await askPluralForms({ index, name, argument, seed });
 
-	return null === forms ? null : rules.pluralSource(argument, forms);
+	return null === forms ? null : index.api.pluralSource(argument, forms);
 }
 
-async function askText(index, rules, name, seed) {
+async function askText(index, name, seed) {
 	const value = await vscode.window.showInputBox({
 		title: `${name} · ${index.defaultLang}`,
 		value: seed,
 		valueSelection: [seed.length, seed.length],
 		prompt: REQUIRED,
-		validateInput: (text) => rules.textProblems(text, index.defaultLang, index.langs)[0] ?? null,
+		validateInput: (text) =>
+			index.api.textProblems(text, index.defaultLang, index.langs)[0] ?? null,
 	});
 
 	return value ?? null;
@@ -153,14 +139,14 @@ function seedOf(editor) {
 	return 'typescript' === editor.document.languageId ? text.replace(QUOTED, '$2') : text;
 }
 
-async function askKey(index, rules, editor) {
+async function askKey(index, editor) {
 	const scopeName = await pickScope(index, editor?.document);
 
 	if (null === scopeName) {
 		return null;
 	}
 
-	const name = await askName(index, rules, scopeName);
+	const name = await askName(index, scopeName);
 	const kind = undefined === name ? null : await askKind();
 
 	if (null === kind) {
@@ -169,15 +155,13 @@ async function askKey(index, rules, editor) {
 
 	const seed = seedOf(editor);
 	const text =
-		'plural' === kind
-			? await askPluralText(index, rules, name, seed)
-			: await askText(index, rules, name, seed);
+		'plural' === kind ? await askPluralText(index, name, seed) : await askText(index, name, seed);
 
 	return null === text ? null : { scopeName, name, text, editor };
 }
 
-function planOf(index, plan, { scopeName, name, text }) {
-	const planned = plan.planKey({
+function planOf(index, { scopeName, name, text }) {
+	const planned = index.api.planKey({
 		scope: rawScopeOf(index, scopeName),
 		name,
 		text,
@@ -192,20 +176,15 @@ function planOf(index, plan, { scopeName, name, text }) {
 	return planned;
 }
 
-function reference(document, scope, name) {
+function reference(document, scope, name, pipe) {
 	const expression = `I18n.${scope}.${name}`;
 
-	return 'html' === document?.languageId ? `{{ ${expression} | i18n }}` : expression;
+	return 'html' === document?.languageId ? `{{ ${expression} | ${pipe} }}` : expression;
 }
 
-function paramNamesOf(index, text) {
-	const { message, config } = index.modules;
-
-	return [...message.paramsOf(text).keys()].filter((param) => !config.AMBIENT_PARAMS.has(param));
-}
-
-function pipeSnippet(scopeName, name, params) {
-	const snippet = new vscode.SnippetString().appendText(`{{ I18n.${scopeName}.${name} | i18n: { `);
+function pipeSnippet(pipe, scopeName, name, params) {
+	const opening = `{{ I18n.${scopeName}.${name} | ${pipe}: { `;
+	const snippet = new vscode.SnippetString().appendText(opening);
 
 	params.forEach((param, order) => {
 		snippet.appendText(`${0 === order ? '' : ', '}${param}: `);
@@ -218,7 +197,7 @@ function pipeSnippet(scopeName, name, params) {
 function referenceEdits(edit, index, editor, scopeName, name) {
 	const { document, selection } = editor;
 
-	edit.replace(document.uri, selection, reference(document, scopeName, name));
+	edit.replace(document.uri, selection, reference(document, scopeName, name, index.pipe));
 
 	if ('typescript' !== document.languageId) {
 		return;
@@ -239,7 +218,7 @@ function wholeRange(file) {
 	return new vscode.Range(0, 0, lines, 0);
 }
 
-function buildEdit(index, planned, { scopeName, name, text, editor }) {
+function buildEdit(index, planned, { scopeName, name, editor }) {
 	const edit = new vscode.WorkspaceEdit();
 	const existing = planned.writes.filter((write) => existsSync(write.file));
 
@@ -248,10 +227,10 @@ function buildEdit(index, planned, { scopeName, name, text, editor }) {
 	}
 
 	const inserted = undefined !== editor && SOURCE_LANGUAGES.has(editor.document.languageId);
-	const params = paramNamesOf(index, text);
+	const { params } = planned;
 	const snippet =
 		inserted && 'html' === editor.document.languageId && 0 !== params.length
-			? pipeSnippet(scopeName, name, params)
+			? pipeSnippet(index.pipe, scopeName, name, params)
 			: null;
 
 	if (inserted && null === snippet) {
@@ -326,14 +305,13 @@ async function announce(index, { scopeName, name }, planned) {
 }
 
 async function createKey(index, annotations) {
-	const { rules, plan } = await loadAdd(index);
-	const key = await askKey(index, rules, vscode.window.activeTextEditor);
+	const key = await askKey(index, vscode.window.activeTextEditor);
 
 	if (null === key) {
 		return;
 	}
 
-	const planned = planOf(index, plan, key);
+	const planned = planOf(index, key);
 	const built = buildEdit(index, planned, key);
 
 	await writeAll(built);

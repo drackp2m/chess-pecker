@@ -1,9 +1,5 @@
-const { readFileSync } = require('node:fs');
-const path = require('node:path');
-
 const STATUSES = ['fresh', 'stale', 'unknown', 'missing'];
 const SEVERITIES = ['error', 'warning', 'info'];
-const SETTLED_TYPES = new Set(['missing-translation', 'empty-translation', 'stale-translation']);
 
 const emptyKeys = () => Object.fromEntries(STATUSES.map((status) => [status, []]));
 
@@ -27,69 +23,46 @@ function languagesOf(targets, rows) {
 	return [...byLang.values()];
 }
 
-function scopeOf(scope, { index, freshness, targets }) {
-	const state = freshness.readState(index.i18nDir, scope.name);
-	const options = { langs: index.langs, defaultLang: index.defaultLang };
-	const rows = freshness
-		.freshnessOf(scope, state, options)
-		.map((row) => ({ ...row, scope: scope.name }));
-	const isUlid = index.modules.config.isUlid;
+function scopeOf(scope, { index, targets }) {
+	const rows = index.analysis.freshness.filter((row) => row.scope === scope.name);
 
 	return {
 		name: scope.name,
-		keys: scope.keys.entries.filter((entry) => isUlid(entry.ulid)).length,
+		keys: scope.keys.entries.filter((entry) => index.api.isUlid(entry.ulid)).length,
 		rows,
 		languages: languagesOf(targets, rows),
-		stateError: null === state.error ? null : { file: state.file, message: state.error },
 	};
 }
 
-function checksOf(items, severityOf) {
+const ruleOf = ({ severity, meaning }) => ({ severity, meaning });
+
+function checksOf(items) {
 	const byType = new Map();
 
-	for (const item of items.filter((entry) => !SETTLED_TYPES.has(entry.type))) {
-		if (!byType.has(item.type)) {
-			byType.set(item.type, []);
-		}
-
-		byType.get(item.type).push(item);
+	for (const item of items.filter((entry) => 'pending' !== entry.group)) {
+		byType.set(item.type, [...(byType.get(item.type) ?? []), item]);
 	}
 
 	const rank = (group) => SEVERITIES.indexOf(group.severity);
 
 	return [...byType]
-		.map(([type, list]) => ({ type, severity: severityOf(type), items: list }))
+		.map(([type, items]) => ({ type, ...ruleOf(items[0]), items }))
 		.sort((left, right) => rank(left) - rank(right) || right.items.length - left.items.length);
 }
 
-function cliVersionOf(cliDir) {
-	try {
-		const file = path.join(path.dirname(cliDir), 'package.json');
-		const manifest = JSON.parse(readFileSync(file, 'utf8'));
-
-		return 'string' === typeof manifest.version ? manifest.version : null;
-	} catch {
-		return null;
-	}
-}
-
-function buildStatus(index, { freshness, items, severityOf }) {
+function buildStatus(index) {
 	const targets = index.langs.filter((lang) => lang !== index.defaultLang);
 	const scopes = index.rawScopes
 		.filter((scope) => scope.keys)
-		.map((scope) => scopeOf(scope, { index, freshness, targets }));
+		.map((scope) => scopeOf(scope, { index, targets }));
 
 	return {
 		source: index.defaultLang,
 		keys: scopes.reduce((sum, scope) => sum + scope.keys, 0),
-		languages: languagesOf(
-			targets,
-			scopes.flatMap((scope) => scope.rows),
-		),
+		languages: languagesOf(targets, index.analysis.freshness),
 		scopes,
-		checks: checksOf(items, severityOf),
-		stateErrors: scopes.map((scope) => scope.stateError).filter((error) => null !== error),
-		cliVersion: cliVersionOf(index.cliDir),
+		checks: checksOf(index.analysis.findings),
+		cliVersion: index.api.CLI_VERSION,
 		configFile: index.configFile,
 	};
 }

@@ -17,7 +17,7 @@ function transferDir(root) {
 }
 
 function showProblems(problems) {
-	reveal(problems.map(({ file, message }) => `${file}  ${message}`));
+	reveal(problems.map(({ file, message, type }) => `${file}  ${message}  ${type}`));
 }
 
 async function pickLangs(index) {
@@ -52,28 +52,20 @@ async function revealed(written, outDir) {
 	}
 }
 
-async function writeExports(index, langs, { filter, only, outDir }) {
-	const [transfer, collect] = await Promise.all([
-		index.load('transfer/build.mjs'),
-		index.load('catalogue/collect.mjs'),
-	]);
-	const { usages } = collect.collectUsages(index.sourceDirs);
+function writeExports(index, langs, { filter, only, outDir }) {
+	const { api, project, analysis } = index;
 	const base = {
-		scopes: index.rawScopes,
-		defaultLang: index.defaultLang,
-		langs: index.langs,
-		i18nDir: index.i18nDir,
-		root: index.root,
-		xliffPrefix: index.xliffPrefix,
-		notesLang: index.notesLang,
+		...project,
+		scopes: analysis.scopes,
+		usages: analysis.sources.usages,
 		filter,
 		...(null === only ? {} : { only: [only] }),
 	};
 
 	return langs
-		.map((lang) => transfer.buildExport({ ...base, lang, usages }))
+		.map((lang) => api.buildExport({ ...base, lang }))
 		.filter((document) => 0 !== document.total)
-		.map((document) => transfer.writeExport(document, outDir).file);
+		.map((document) => api.writeExport(document, outDir).file);
 }
 
 async function exportTranslations(index) {
@@ -94,7 +86,7 @@ async function exportTranslations(index) {
 
 async function exportWith(index, langs, { filter, only }) {
 	const outDir = transferDir(index.root);
-	const written = await writeExports(index, langs, { filter, only, outDir });
+	const written = writeExports(index, langs, { filter, only, outDir });
 
 	if (0 === written.length) {
 		vscode.window.showInformationMessage('i18n: nothing to export');
@@ -143,12 +135,10 @@ async function pickNewKeys(added) {
 	return picked?.map(({ entry }) => entry) ?? null;
 }
 
-async function readDocuments(index, uris) {
-	const xliff = await index.load('transfer/xliff.mjs');
-
+function readDocuments(index, uris) {
 	return uris.map((uri) => ({
 		file: uri.fsPath,
-		xliff: xliff.readXliff(readFileSync(uri.fsPath, 'utf8')),
+		xliff: index.api.readXliff(readFileSync(uri.fsPath, 'utf8')),
 	}));
 }
 
@@ -191,22 +181,15 @@ async function importTranslations(index, annotations) {
 		return;
 	}
 
-	const merge = await index.load('transfer/merge.mjs');
-	const documents = await readDocuments(index, uris);
-	const base = {
-		scopes: index.rawScopes,
-		defaultLang: index.defaultLang,
-		langs: index.langs,
-		i18nDir: index.i18nDir,
-	};
-	const plan = merge.planImport({ ...base, documents });
+	const base = { ...index.project, scopes: index.rawScopes };
+	const plan = index.api.planImport({ ...base, documents: readDocuments(index, uris) });
 	const accepted = await pickNewKeys(plan.added);
 
 	if (null === accepted) {
 		return;
 	}
 
-	const written = merge.applyImport({ ...base, plan, accepted });
+	const written = index.api.applyImport({ ...base, plan, accepted });
 
 	await index.reload();
 	annotations.refreshAll();

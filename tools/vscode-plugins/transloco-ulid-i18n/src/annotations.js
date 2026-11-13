@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 
 const { inlineText, inlineTextMaxLength } = require('./settings');
-const { shorten, usageDisplay, usageRange } = require('./util');
+const { shorten, usageDisplay } = require('./util');
 
 const SUPPORTED = new Set(['typescript', 'html']);
 const MISSING = '⚠️ missing translation';
@@ -37,7 +37,7 @@ function inlineLabel(index, usage) {
 	}
 
 	try {
-		const { text: representative, forms } = representativeOf(index, text);
+		const { text: representative, forms } = index.api.representativeOf(text);
 
 		if (0 === forms.length) {
 			return shorten(text, inlineTextMaxLength());
@@ -49,25 +49,6 @@ function inlineLabel(index, usage) {
 	} catch {
 		return INVALID;
 	}
-}
-
-function representativeOf(index, text) {
-	const { leavesOf, paramsOf } = index.modules.message;
-	const dimensions = [...paramsOf(text)].filter(([, param]) => 'plain' !== param.type);
-
-	if (0 === dimensions.length) {
-		return { text, forms: [] };
-	}
-
-	const forms = dimensions.map(([name, param]) =>
-		'select' === param.type && 'gender' === name && param.cases.includes('male') ? 'male' : 'other',
-	);
-	const preferred = dimensions.map(([, param], order) => `${param.type}:${forms[order]}`);
-	const leaf = leavesOf(text).find(({ path: value }) =>
-		value.every((segment, order) => segment === preferred[order]),
-	);
-
-	return undefined === leaf ? { text, forms: [] } : { text: leaf.text, forms };
 }
 
 function revealed(range, selections) {
@@ -98,7 +79,7 @@ function decorationsFor(index, editor, usages) {
 
 	for (const usage of usages) {
 		const label = inlineLabel(index, usage);
-		const { range, mode } = usageDisplay(editor.document, usage);
+		const { range, mode } = usageDisplay(editor.document, usage, index.pipe);
 
 		if (null === label || 'bare' === mode) {
 			continue;
@@ -114,132 +95,23 @@ function decorationsFor(index, editor, usages) {
 	return groups;
 }
 
-function unknownKeyDiagnostic(index, document, usage) {
-	const scope = index.scopes.get(usage.scope);
-	const where = undefined === scope ? `scope "${usage.scope}"` : scope.keysFile;
-	const message = `"${usage.key}" is not declared in ${where}`;
-	const diagnostic = new vscode.Diagnostic(
-		usageRange(document, usage),
-		message,
-		vscode.DiagnosticSeverity.Error,
-	);
-
-	diagnostic.code = 'unknown-key';
-
-	return diagnostic;
-}
-
-function pipeDiagnostic(document, usage) {
-	if ('bare' !== usageDisplay(document, usage).mode) {
-		return null;
-	}
-
-	const detail = 'is interpolated without "| i18n", so the key itself is what renders';
-	const message = `${usage.scope}.${usage.key} ${detail}`;
-	const diagnostic = new vscode.Diagnostic(
-		usageRange(document, usage),
-		message,
-		vscode.DiagnosticSeverity.Error,
-	);
-
-	diagnostic.code = 'missing-pipe';
-
-	return diagnostic;
-}
-
-function missingDiagnostic(index, document, usage) {
-	const entry = index.entry(usage.scope, usage.key);
-	const missing = index.langs.filter(
-		(lang) => index.translation(usage.scope, entry.ulid, lang).missing,
-	);
-
-	if (!missing.length) {
-		return null;
-	}
-
-	const message = `No ${missing.join(', ')} translation for ${usage.scope}.${usage.key}`;
-	const diagnostic = new vscode.Diagnostic(
-		usageRange(document, usage),
-		message,
-		vscode.DiagnosticSeverity.Warning,
-	);
-
-	diagnostic.code = 'missing-translation';
-
-	return diagnostic;
-}
-
-function icuDiagnostic(index, document, usage) {
-	const entry = index.entry(usage.scope, usage.key);
-	const problems = index.icuProblems(usage.scope, entry.ulid);
-
-	if (0 === problems.length) {
-		return null;
-	}
-
-	const message = problems.map(({ lang, message: detail }) => `${lang}: ${detail}`).join('; ');
-	const diagnostic = new vscode.Diagnostic(
-		usageRange(document, usage),
-		message,
-		vscode.DiagnosticSeverity.Error,
-	);
-
-	diagnostic.code = 'icu-message';
-
-	return diagnostic;
-}
-
-function diagnosticFor(index, document, usage) {
-	if (null === index.entry(usage.scope, usage.key)) {
-		return unknownKeyDiagnostic(index, document, usage);
-	}
-
-	return (
-		pipeDiagnostic(document, usage) ??
-		icuDiagnostic(index, document, usage) ??
-		missingDiagnostic(index, document, usage)
-	);
-}
-
 class Annotations {
 	constructor(index) {
 		this.index = index;
-		this.diagnostics = vscode.languages.createDiagnosticCollection('transloco-ulid-i18n');
-	}
-
-	clear(document) {
-		this.diagnostics.delete(document.uri);
 	}
 
 	dispose() {
-		this.diagnostics.dispose();
+		hiddenType.dispose();
+		inlineType.dispose();
+		ghostType.dispose();
 	}
 
 	refresh(document) {
-		if (undefined === document || !SUPPORTED.has(document.languageId)) {
-			return;
-		}
-
-		const usages = this.index.findUsages(document.getText());
-		const diagnostics = usages
-			.map((usage) => diagnosticFor(this.index, document, usage))
-			.filter((diagnostic) => null !== diagnostic);
-
-		this.diagnostics.set(document.uri, diagnostics);
-
 		for (const editor of vscode.window.visibleTextEditors) {
 			if (editor.document === document) {
-				this.paint(editor, usages);
+				this.repaint(editor);
 			}
 		}
-	}
-
-	paint(editor, usages) {
-		const groups = decorationsFor(this.index, editor, usages);
-
-		editor.setDecorations(hiddenType, groups.hidden);
-		editor.setDecorations(inlineType, groups.inline);
-		editor.setDecorations(ghostType, groups.ghost);
 	}
 
 	repaint(editor) {
@@ -247,12 +119,18 @@ class Annotations {
 			return;
 		}
 
-		this.paint(editor, this.index.findUsages(editor.document.getText()));
+		const { document } = editor;
+		const usages = this.index.findUsages(document.getText(), document.uri.fsPath);
+		const groups = decorationsFor(this.index, editor, usages);
+
+		editor.setDecorations(hiddenType, groups.hidden);
+		editor.setDecorations(inlineType, groups.inline);
+		editor.setDecorations(ghostType, groups.ghost);
 	}
 
 	refreshAll() {
 		for (const editor of vscode.window.visibleTextEditors) {
-			this.refresh(editor.document);
+			this.repaint(editor);
 		}
 	}
 }

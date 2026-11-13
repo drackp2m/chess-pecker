@@ -1,54 +1,144 @@
+const { existsSync } = require('node:fs');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
 const settings = require('./settings');
 
 const CLI_PACKAGE = '@drackp2m/transloco-ulid-cli';
-
-const loadModule = (dir, file) => import(pathToFileURL(path.join(dir, file)).href);
+const CLI_ENTRY = 'api.mjs';
+const API_VERSIONS = [1];
+const NEEDED = `${CLI_PACKAGE} 0.4.0 or later`;
 
 const appPrefixOf = (alias) => `${alias.split('/')[0]}/`;
 
-function cliDirOf(root) {
+function installed(root, request) {
+	try {
+		return require.resolve(request, { paths: [root] });
+	} catch {
+		return null;
+	}
+}
+
+function configuredEntry(dir) {
+	const entry = path.join(dir, CLI_ENTRY);
+
+	if (!existsSync(entry)) {
+		throw new Error(`translocoUlidI18n.cliDir has no ${CLI_ENTRY}: ${NEEDED} is needed`);
+	}
+
+	return entry;
+}
+
+function entryOf(root) {
 	const configured = settings.cliDir(root);
 
 	if (null !== configured) {
-		return configured;
+		return configuredEntry(configured);
 	}
 
-	const entry = `${CLI_PACKAGE}/catalogue/config.mjs`;
+	const entry = installed(root, CLI_PACKAGE);
 
-	try {
-		return path.dirname(path.dirname(require.resolve(entry, { paths: [root] })));
-	} catch (error) {
-		throw new Error(
-			`${CLI_PACKAGE} is not installed in ${root}: add it as a devDependency or set translocoUlidI18n.cliDir`,
-			{ cause: error },
-		);
+	if (null !== entry) {
+		return entry;
 	}
+
+	if (null !== installed(root, `${CLI_PACKAGE}/catalogue/config.mjs`)) {
+		throw new Error(`the package installed in ${root} is too old: ${NEEDED} is needed`);
+	}
+
+	const fix = 'add it as a devDependency or set translocoUlidI18n.cliDir';
+
+	throw new Error(`${CLI_PACKAGE} is not installed in ${root}: ${fix}`);
+}
+
+async function loadApi(root) {
+	const entry = entryOf(root);
+	const api = await import(pathToFileURL(entry).href);
+
+	if (!API_VERSIONS.includes(api.API_VERSION)) {
+		const theirs = `${CLI_PACKAGE} ${api.CLI_VERSION} speaks API ${api.API_VERSION}`;
+		const ours = `this extension speaks ${API_VERSIONS.join(', ')}`;
+
+		throw new Error(`${theirs} and ${ours}: update whichever is behind`);
+	}
+
+	return { api, cliDir: path.dirname(entry) };
+}
+
+function projectOf(api, root) {
+	const base = api.loadProject(root);
+	const languageFile = settings.languageFile(base.root, base);
+	const { langs, defaultLang } = settings.readLanguages(api, languageFile);
+
+	return { ...base, languageFile, langs: settings.resolveLangs(langs, defaultLang), defaultLang };
+}
+
+const EMPTY_ANALYSIS = {
+	scopes: [],
+	sources: { usages: new Map(), commented: new Map(), bare: [], sites: [] },
+	findings: [],
+	freshness: [],
+	tally: new Map(),
+	params: new Map(),
+};
+
+function toScope(scope) {
+	const entries = scope.keys?.entries ?? [];
+
+	return {
+		name: scope.name,
+		dir: scope.dir,
+		keysFile: scope.keysFile,
+		prefixed: scope.prefixed,
+		constName: scope.keys?.constName ?? null,
+		entries: new Map(entries.map((entry) => [entry.name, entry])),
+		translations: scope.translations,
+	};
 }
 
 class I18nIndex {
 	constructor(root) {
 		this.root = root;
+		this.api = null;
 		this.cliDir = '';
+		this.project = null;
 		this.aliases = { i18n: '', pipe: '', app: '' };
-		this.rootScope = '';
-		this.xliffPrefix = '';
-		this.notesLang = undefined;
-		this.langs = [];
-		this.defaultLang = '';
 		this.displayLang = '';
-		this.languageFile = '';
-		this.configFile = '';
-		this.i18nDir = '';
-		this.sourceDirs = [];
+		this.analysis = EMPTY_ANALYSIS;
 		this.scopes = new Map();
-		this.rawScopes = [];
-		this.modules = null;
-		this.patterns = [];
-		this.declaredParams = new Map();
 		this.error = null;
+	}
+
+	get langs() {
+		return this.project?.langs ?? [];
+	}
+
+	get defaultLang() {
+		return this.project?.defaultLang ?? '';
+	}
+
+	get i18nDir() {
+		return this.project?.i18nDir ?? '';
+	}
+
+	get sourceDirs() {
+		return this.project?.sourceDirs ?? [];
+	}
+
+	get languageFile() {
+		return this.project?.languageFile ?? '';
+	}
+
+	get configFile() {
+		return this.project?.configFile ?? '';
+	}
+
+	get pipe() {
+		return this.project?.pipe ?? '';
+	}
+
+	get rawScopes() {
+		return this.analysis.scopes;
 	}
 
 	entry(scopeName, keyName) {
@@ -61,53 +151,14 @@ class I18nIndex {
 		return [...entries].find((entry) => entry.ulid === ulid) ?? null;
 	}
 
-	findUsages(text) {
-		const usages = [];
-
-		for (const pattern of this.patterns) {
-			for (const match of text.matchAll(pattern)) {
-				const [expression, scopeToken, key] = match;
-
-				usages.push({
-					scope: this.toKebabCase(scopeToken),
-					key,
-					start: match.index,
-					end: match.index + expression.length,
-				});
-			}
-		}
-
-		return usages.sort((left, right) => left.start - right.start);
+	findUsages(text, file) {
+		return this.api?.usagesIn(text, file, { pipe: this.pipe }) ?? [];
 	}
 
 	paramsOf(scopeName, keyName) {
-		const entry = this.entry(scopeName, keyName);
-		const declared = this.declaredParams.get(entry?.value);
+		const declared = this.analysis.params.get(this.entry(scopeName, keyName)?.value);
 
 		return undefined === declared ? [] : [...declared].map(([name, type]) => ({ name, type }));
-	}
-
-	icuProblems(scopeName, ulid) {
-		const problems = this.modules?.icu?.messageProblems;
-
-		if (undefined === problems) {
-			return [];
-		}
-
-		return this.langs.flatMap((lang) => {
-			const translation = this.translation(scopeName, ulid, lang);
-
-			if (translation.missing) {
-				return [];
-			}
-
-			const langs = lang === this.defaultLang ? this.langs : [lang];
-
-			return problems(String(translation.text), lang, { langs }).map((problem) => ({
-				lang,
-				...problem,
-			}));
-		});
 	}
 
 	keysOf(scopeName) {
@@ -120,11 +171,19 @@ class I18nIndex {
 			this.error = null;
 		} catch (error) {
 			this.error = error instanceof Error ? error.message : String(error);
-			this.scopes = new Map();
-			this.rawScopes = [];
+			this.take(EMPTY_ANALYSIS);
 		}
 
 		return this.error;
+	}
+
+	analyse(options) {
+		this.take(this.api.analyse(this.project, options));
+	}
+
+	take(analysis) {
+		this.analysis = analysis;
+		this.scopes = new Map(analysis.scopes.map((scope) => [scope.name, toScope(scope)]));
 	}
 
 	scopeAt(dir) {
@@ -133,6 +192,10 @@ class I18nIndex {
 
 	scopeNames() {
 		return [...this.scopes.keys()];
+	}
+
+	toKebabCase(name) {
+		return this.api.toKebabCase(name);
 	}
 
 	translation(scopeName, ulid, lang) {
@@ -151,95 +214,20 @@ class I18nIndex {
 		};
 	}
 
-	load(file) {
-		return loadModule(this.cliDir, file);
-	}
-
-	async loadModules() {
-		const files = [
-			'check/rules.mjs',
-			'catalogue/collect.mjs',
-			'catalogue/config.mjs',
-			'check/findings.mjs',
-			'check/icu.mjs',
-			'catalogue/params.mjs',
-			'catalogue/message.mjs',
-			'catalogue/freshness.mjs',
-		];
-		const [checks, collect, config, findings, icu, params, message, freshness] = await Promise.all(
-			files.map((file) => loadModule(this.cliDir, file)),
-		);
-
-		return { checks, collect, config, findings, icu, params, message, freshness };
-	}
-
-	applyConfig(config, modules) {
-		const { langs, defaultLang } = settings.readLanguages(modules.config, this.languageFile);
-
-		this.langs = settings.resolveLangs(langs, defaultLang);
-		this.defaultLang = defaultLang;
-		this.displayLang = settings.resolveDisplayLang(this.langs, defaultLang);
-		this.i18nDir = path.join(config.root, config.i18nDir);
-		this.sourceDirs = config.sourceDirs.map((dir) => path.join(config.root, dir));
-		this.rootScope = config.rootScope;
-		this.xliffPrefix = config.xliffPrefix;
-		this.notesLang = config.notesLang;
-		this.aliases = {
-			i18n: config.importAlias,
-			pipe: settings.pipeImport(),
-			app: appPrefixOf(config.importAlias),
-		};
-	}
-
 	async readWorkspace() {
-		this.cliDir = cliDirOf(this.root);
+		const { api, cliDir } = await loadApi(this.root);
+		const project = projectOf(api, this.root);
 
-		const modules = await this.loadModules();
-		const { collect, config: configModule, params } = modules;
-		const config = configModule.loadConfig(this.root);
-
-		this.languageFile = settings.languageFile(config.root, config);
-		this.configFile = path.join(config.root, configModule.CONFIG_FILE ?? 'i18n.config.json');
-		this.applyConfig(config, modules);
-		this.modules = modules;
-		this.toKebabCase = configModule.toKebabCase;
-		this.patterns = collect.USAGE_PATTERNS;
-
-		const scopes = collect.readScopes({
-			i18nDir: this.i18nDir,
-			langs: this.langs,
-			rootScope: this.rootScope,
-		});
-
-		this.rawScopes = scopes;
-		this.scopes = new Map(scopes.map((scope) => [scope.name, this.toScope(scope)]));
-		this.declaredParams = this.readParams(params, scopes);
-	}
-
-	readParams(params, scopes) {
-		const declared = new Map();
-
-		for (const scope of scopes) {
-			for (const [key, fields] of params.readDeclaredParams(params.paramsFile(scope.dir))) {
-				declared.set(key, fields);
-			}
-		}
-
-		return declared;
-	}
-
-	toScope(scope) {
-		const entries = scope.keys?.entries ?? [];
-
-		return {
-			name: scope.name,
-			dir: scope.dir,
-			keysFile: scope.keysFile,
-			prefixed: scope.prefixed,
-			constName: scope.keys?.constName ?? null,
-			entries: new Map(entries.map((entry) => [entry.name, entry])),
-			translations: scope.translations,
+		this.api = api;
+		this.cliDir = cliDir;
+		this.project = project;
+		this.displayLang = settings.resolveDisplayLang(project.langs, project.defaultLang);
+		this.aliases = {
+			i18n: project.importAlias,
+			pipe: settings.pipeImport(),
+			app: appPrefixOf(project.importAlias),
 		};
+		this.analyse({});
 	}
 }
 

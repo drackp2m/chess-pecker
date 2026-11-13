@@ -4,9 +4,11 @@ An i18n-ally-flavoured VSCode extension for this repo's transloco setup. It reso
 `I18n.<scope>.<KEY>` (and `<Scope>I18n.KEY`) through the same chain the CLI uses:
 `keys.ts` → NAME → ULID, `<lang>.json` → ULID → text.
 
-It has no dependencies and no build step: the collectors are loaded at runtime from the
-`@drackp2m/transloco-ulid-cli` installed in the workspace, so the extension and
-`transloco-ulid check` can never drift. The workspace needs that package as a devDependency and its
+It has no dependencies and no build step, and no rule of its own: it imports the
+`@drackp2m/transloco-ulid-cli` installed in the workspace by its name and builds on what that
+package exports, so the extension and `transloco-ulid check` can never drift. It needs the CLI
+0.4.0 or later, checks the `API_VERSION` the package declares and says so when the two do not
+match. The workspace needs that package as a devDependency and its
 `i18n.config.json` at the root, which is where the catalogue paths, the import alias, the XLIFF
 sub-state prefix and the language of the export notes come from.
 
@@ -55,24 +57,24 @@ sub-state prefix and the language of the export notes come from.
   dozen places. The usage scan reads the `sourceDirs` of `i18n.config.json` from disk and overlays the unsaved editors, so
   a key you just typed is already there.
 
-- **Diagnostics** — one per usage, the worst thing true of it first: an undeclared key is an error
-  in `.ts` and `.html`, a key interpolated without `| i18n` is an error too (the key is what
-  renders, so the page is wrong), an invalid ICU message is reported with the failing language, and
-  only then is a key still untranslated reported — a warning, because it is work left to do rather
-  than a mistake, raised whenever any language is missing the string, the displayed one or not. The
-  squiggle stays on the source characters the inline text stands in for, so under a collapsed usage
-  only its tail shows past the text — the mark is deliberately quiet, and the message is in the
-  Problems panel and on hover.
-- **Findings** — everything `transloco-ulid check` reports, published as problems _on the i18n files
-  themselves_ and refreshed whenever any of them changes, or as you type in a `<lang>.json` that is
-  not saved yet: with the CLI 0.2.0 or later, an unsaved catalogue editor is read through its
-  `parseTranslation()` instead of from disk. It is the same `buildFindings()` the CLI
-  calls, with the finding type as the diagnostic code, so a stale `params.ts`, a param added to one
-  language and not the other, an orphan ULID, a scope missing from the barrel or a key nobody uses is
-  underlined where it lives, without waiting for the commit hook. It runs over the whole workspace,
-  so those problems show up in the panel even with no i18n file open. Severity is the CLI's
-  `severityOf`, except that a missing or empty translation is lowered to a warning: the commit hook
-  is the gate, the editor is where the work is still being done.
+- **Diagnostics** — everything `transloco-ulid check` reports, and nothing else: the extension has
+  no rules of its own. It asks the CLI for one analysis of the whole workspace, `analyse()`, and
+  publishes each finding where the CLI places it, with the finding type as the diagnostic code. So
+  a stale `params.ts`, a param added to one language and not the other, an orphan ULID or a key
+  nobody uses is underlined in the i18n file where it lives, and a key the catalogue does not
+  declare (`unknown-key`) or one interpolated without the pipe (`missing-pipe`) is underlined in
+  the template or the `.ts` that writes it — all of it in the Problems panel even with no file
+  open. The pipe is the `pipe` of `i18n.config.json`.
+- **At the usage** — what the catalogue says about a key is shown again on every usage of it in an
+  open `.ts` or `.html`: a broken ICU message, a param that does not match, a translation still
+  missing or outdated. It is the same finding, pointing back at the line of the file that can fix
+  it, and several languages with the same problem are one diagnostic that lists them.
+- **Unsaved editors count** — the analysis reads every dirty editor in place of the file on disk,
+  whatever it is: a `<lang>.json`, `keys.ts`, a template, a context file. It runs again a moment
+  after you stop typing, walking the sources only when a `.ts` or `.html` changed.
+- **Severity** is the CLI's, except that pending translation work (`missing-translation`,
+  `empty-translation`, `stale-translation`) is never more than a warning: the commit hook is the
+  gate, the editor is where the work is still being done.
 - **Status view** — the Transloco ULID icon in the activity bar opens a tree of where the catalogue
   stands. **Languages** has a line per target language, with a ring in place of its icon — green for
   what is up to date, amber for what is translated but outdated or never sealed, grey for the rest —
@@ -103,8 +105,7 @@ sub-state prefix and the language of the export notes come from.
   `imports`. It leaves that file
   dirty on purpose, and it never touches `provideI18nScope` — a scoped key still needs it by hand.
 - **Create key** — `i18n: Create translation key` is `transloco-ulid add` with a picker in front,
-  so it needs the CLI 0.2.0 or later and says so otherwise: the rules and the writing both come
-  from the CLI's `add/` modules. It picks a scope, asks for the name and whether the key is plain
+  so the rules and the writing both come from the CLI. It picks a scope, asks for the name and whether the key is plain
   text or a plural. A plural asks for its parameter and for every form the source language needs
   (`one` and `other` in Spanish, four in Russian, `other` alone in Japanese), each one starting from
   the selection, or from the previous form when nothing is selected, then writes the ICU. Each
@@ -164,16 +165,16 @@ Opening the repo natively instead (no container) is the same command against `~/
 
 ## Settings
 
-| Setting                                 | Default               | Meaning                                                                                                     |
-| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `translocoUlidI18n.cliDir`              | `''`                  | Folder with the CLI modules; empty uses the `@drackp2m/transloco-ulid-cli` installed in the workspace.      |
-| `translocoUlidI18n.pipeImport`          | `@app/pipe/i18n.pipe` | Module `I18nPipe` is imported from when a template starts using a key.                                      |
-| `translocoUlidI18n.languageFile`        | `''`                  | Where `LANGUAGES` and `DEFAULT_LANGUAGE` are declared; empty uses the `languageFile` of `i18n.config.json`. |
-| `translocoUlidI18n.langs`               | `[]`                  | Languages to resolve; empty uses every language of `LANGUAGES`.                                             |
-| `translocoUlidI18n.displayLang`         | `''`                  | Language shown over the keys; empty uses `DEFAULT_LANGUAGE`.                                                |
-| `translocoUlidI18n.inlineText`          | `true`                | Show the inline translation.                                                                                |
-| `translocoUlidI18n.inlineTextMaxLength` | `60`                  | Where the inline text is ellipsised.                                                                        |
-| `translocoUlidI18n.transferDir`         | `translations`        | Where the XLIFF export lands and the import dialog opens.                                                   |
+| Setting                                 | Default               | Meaning                                                                                                                 |
+| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `translocoUlidI18n.cliDir`              | `''`                  | Folder with the CLI's `api.mjs` (its `src/`); empty uses the `@drackp2m/transloco-ulid-cli` installed in the workspace. |
+| `translocoUlidI18n.pipeImport`          | `@app/pipe/i18n.pipe` | Module `I18nPipe` is imported from when a template starts using a key.                                                  |
+| `translocoUlidI18n.languageFile`        | `''`                  | Where `LANGUAGES` and `DEFAULT_LANGUAGE` are declared; empty uses the `languageFile` of `i18n.config.json`.             |
+| `translocoUlidI18n.langs`               | `[]`                  | Languages to resolve; empty uses every language of `LANGUAGES`.                                                         |
+| `translocoUlidI18n.displayLang`         | `''`                  | Language shown over the keys; empty uses `DEFAULT_LANGUAGE`.                                                            |
+| `translocoUlidI18n.inlineText`          | `true`                | Show the inline translation.                                                                                            |
+| `translocoUlidI18n.inlineTextMaxLength` | `60`                  | Where the inline text is ellipsised.                                                                                    |
+| `translocoUlidI18n.transferDir`         | `translations`        | Where the XLIFF export lands and the import dialog opens.                                                               |
 
 The language file is the single source of both lists — the same one `transloco-ulid check` reads through
 `@drackp2m/transloco-ulid-cli/src/catalogue/config.mjs`. It is parsed on every reload and nothing is guessed: a

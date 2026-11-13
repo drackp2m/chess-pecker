@@ -2,7 +2,7 @@ const vscode = require('vscode');
 
 const { importEdit } = require('./imports');
 
-const INTERPOLATION = '{{ I18n.$0 | i18n }}';
+const interpolationOf = (pipe) => `{{ I18n.$0 | ${pipe} }}`;
 const EXPRESSION = 'I18n.$0';
 
 function inTag(prefix) {
@@ -17,17 +17,19 @@ function inInterpolation(prefix) {
 	return -1 !== open && open > prefix.lastIndexOf('}}');
 }
 
-function htmlSnippet(document, prefix) {
+function htmlSnippet(document, prefix, pipe) {
 	if (inTag(prefix)) {
 		return null;
 	}
 
+	const text = inInterpolation(prefix) ? EXPRESSION : interpolationOf(pipe);
+
 	const item = new vscode.CompletionItem(
-		{ label: 'i18n', description: inInterpolation(prefix) ? EXPRESSION : INTERPOLATION },
+		{ label: 'i18n', description: text },
 		vscode.CompletionItemKind.Snippet,
 	);
 
-	item.insertText = new vscode.SnippetString(inInterpolation(prefix) ? EXPRESSION : INTERPOLATION);
+	item.insertText = new vscode.SnippetString(text);
 	item.detail = 'transloco key + component wiring';
 	item.command = {
 		command: 'translocoUlidI18n.ensureTemplateSetup',
@@ -53,10 +55,10 @@ function typescriptSnippet(document, aliases) {
 	return item;
 }
 
-function snippetItems(document, prefix, aliases) {
+function snippetItems(document, prefix, { aliases, pipe }) {
 	const item =
 		'html' === document.languageId
-			? htmlSnippet(document, prefix)
+			? htmlSnippet(document, prefix, pipe)
 			: typescriptSnippet(document, aliases);
 
 	if (null === item) {

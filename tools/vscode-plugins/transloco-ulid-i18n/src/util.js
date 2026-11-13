@@ -31,10 +31,12 @@ function locate(file, needle) {
 	return new vscode.Location(vscode.Uri.file(file), new vscode.Position(line, character));
 }
 
-const TRANSLOCO_PIPE = /^\s*\|\s*i18n\b/;
-const TRANSLOCO_PIPE_ANYWHERE = /\|\s*i18n\b/;
 const INTERPOLATION_OPEN = '{{';
 const INTERPOLATION_CLOSE = '}}';
+
+const escaped = (name) => name.replace(/[$]/g, '\\$&');
+
+const pipedNext = (after, pipe) => new RegExp(`^\\s*\\|\\s*${escaped(pipe)}(?![\\w$])`).test(after);
 
 function insideInterpolation(text, start) {
 	const opened = text.lastIndexOf(INTERPOLATION_OPEN, start);
@@ -42,27 +44,20 @@ function insideInterpolation(text, start) {
 	return -1 !== opened && opened > text.lastIndexOf(INTERPOLATION_CLOSE, start);
 }
 
-function pipedLater(after) {
-	const closed = after.indexOf(INTERPOLATION_CLOSE);
-
-	return TRANSLOCO_PIPE_ANYWHERE.test(-1 === closed ? after : after.slice(0, closed));
-}
-
-function usageDisplay(document, usage) {
+function usageDisplay(document, usage, pipe) {
 	const text = document.getText();
-	const after = text.slice(usage.end);
-	const [pipe] = TRANSLOCO_PIPE.exec(after) ?? [];
 	const range = usageRange(document, usage);
 
-	if (undefined !== pipe || 'html' !== document.languageId) {
-		return { range, mode: 'collapse' };
+	if (usage.bare) {
+		return { range, mode: 'bare' };
 	}
 
-	if (!insideInterpolation(text, usage.start)) {
-		return { range, mode: 'collapse' };
-	}
+	const collapses =
+		'html' !== document.languageId ||
+		pipedNext(text.slice(usage.end), pipe) ||
+		!insideInterpolation(text, usage.start);
 
-	return { range, mode: pipedLater(after) ? 'ghost' : 'bare' };
+	return { range, mode: collapses ? 'collapse' : 'ghost' };
 }
 
 function shorten(text, max) {
@@ -76,7 +71,7 @@ function usageAt(index, document, position) {
 
 	return (
 		index
-			.findUsages(document.getText())
+			.findUsages(document.getText(), document.uri.fsPath)
 			.find((usage) => offset >= usage.start && offset <= usage.end) ?? null
 	);
 }
