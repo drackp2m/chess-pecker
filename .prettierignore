@@ -29,3 +29,6 @@
 /libs/api-definitions/node_modules
 /libs/api-definitions/dist
 Dockerfile
+# Read by transloco-ulid as data: Prettier would turn two group patterns in one heading
+# ("## A_*, B_*") into emphasis ("## A__, B__"), and the keys would lose their context.
+apps/web/src/app/i18n/context/*.md
