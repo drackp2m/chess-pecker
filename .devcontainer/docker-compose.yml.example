@@ -15,3 +15,6 @@ services:
       - .docker/.zsh_history:/home/node/.zsh_history
       - .docker/.p10k.zsh:/home/node/.p10k.zsh
       - .docker/zsh-syntax-highlighting:/home/node/zsh-syntax-highlighting
+      - .docker/.claude:/home/node/.claude
+    environment:
+      CLAUDE_CONFIG_DIR: /home/node/.claude
