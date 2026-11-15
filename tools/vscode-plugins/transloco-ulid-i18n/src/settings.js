@@ -14,7 +14,17 @@ const inlineTextMaxLength = () => read('inlineTextMaxLength', 60);
 
 const transferDir = () => read('transferDir', 'translations');
 
-const pipeImport = () => String(read('pipeImport', '@app/pipe/i18n.pipe')).trim();
+const pipeImport = () => String(read('pipeImport', '@jsverse/transloco')).trim();
+
+const pipeClass = () => String(read('pipeClass', 'TranslocoPipe')).trim();
+
+function keyFunctions() {
+	const configured = read('keyFunctions', ['translate']);
+
+	return Array.isArray(configured)
+		? configured.map((name) => String(name).trim()).filter(Boolean)
+		: [];
+}
 
 function cliDir(root) {
 	const configured = String(read('cliDir', '')).trim();
@@ -98,7 +108,9 @@ module.exports = {
 	cliDir,
 	inlineText,
 	inlineTextMaxLength,
+	keyFunctions,
 	languageFile,
+	pipeClass,
 	pipeImport,
 	readLanguages,
 	resolveDisplayLang,

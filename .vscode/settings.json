@@ -1,0 +1,5 @@
+{
+	"translocoUlidI18n.pipeImport": "@app/pipe/i18n.pipe",
+	"translocoUlidI18n.pipeClass": "I18nPipe",
+	"translocoUlidI18n.keyFunctions": ["i18nRef"]
+}

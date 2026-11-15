@@ -102,7 +102,7 @@ class I18nIndex {
 		this.api = null;
 		this.cliDir = '';
 		this.project = null;
-		this.aliases = { i18n: '', pipe: '', app: '' };
+		this.aliases = { i18n: '', pipe: '', pipeClass: '', app: '' };
 		this.displayLang = '';
 		this.analysis = EMPTY_ANALYSIS;
 		this.scopes = new Map();
@@ -225,6 +225,7 @@ class I18nIndex {
 		this.aliases = {
 			i18n: project.importAlias,
 			pipe: settings.pipeImport(),
+			pipeClass: settings.pipeClass(),
 			app: appPrefixOf(project.importAlias),
 		};
 		this.analyse({});

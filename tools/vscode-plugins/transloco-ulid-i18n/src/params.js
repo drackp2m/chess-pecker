@@ -1,8 +1,12 @@
 const vscode = require('vscode');
 
+const settings = require('./settings');
+
 const pipeAhead = (pipe) =>
 	new RegExp(`^(\\s*\\|\\s*${pipe.replace(/[$]/g, '\\$&')}(?![\\w$]))(?!\\s*:)(\\s*\\}\\})?`);
-const REF_CALL = /\bi18nRef\(\s*[\w.]*$/;
+const escaped = (name) => name.replace(/[$]/g, '\\$&');
+const keyCall = (names) =>
+	0 === names.length ? null : new RegExp(`\\b(?:${names.map(escaped).join('|')})\\(\\s*[\\w.]*$`);
 const REF_AHEAD = /^\s*\)/;
 
 function paramsObject(params) {
@@ -29,7 +33,9 @@ function pipeInsertion(key, params, suffix, pipeName) {
 }
 
 function insertion(key, params, { prefix, suffix }, pipe) {
-	if (0 !== params.length && REF_CALL.test(prefix) && REF_AHEAD.test(suffix)) {
+	const call = keyCall(settings.keyFunctions());
+
+	if (0 !== params.length && call?.test(prefix) && REF_AHEAD.test(suffix)) {
 		return { text: `${key}, ${paramsObject(params)}$0`, ahead: 0 };
 	}
 

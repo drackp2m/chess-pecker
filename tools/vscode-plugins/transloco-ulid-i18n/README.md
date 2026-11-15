@@ -96,12 +96,12 @@ sub-state prefix and the language of the export notes come from.
   with a tabstop on every type — <kbd>tab</kbd> through them replacing each with the real expression,
   and a last one _after_ the `}}`, so the next key is one keystroke away. That last jump happens for
   every key, params or not, whenever the completion can see the whole `| i18n }}` on the line. Inside
-  `i18nRef(I18n.dashboard.|)` it appends `, { … }` the same way. The types are the ones declared in
+  a call to one of `keyFunctions`, such as `translate(I18n.dashboard.|)`, it appends `, { … }` the same way. The types are the ones declared in
   the generated `<scope>/params.ts`.
 - **Snippet** — typing `i18n` expands to `{{ I18n.| | i18n }}` in HTML (to `I18n.|` when the cursor
   already is inside an interpolation) and to `I18n.|` in TypeScript. The TypeScript one adds
   `import { I18n } from '<importAlias>';`; the HTML one patches the sibling component instead, adding the
-  same import, `protected readonly I18n = I18n;` and `I18nPipe`, imported from `pipeImport`, in
+  same import, `protected readonly I18n = I18n;` and `pipeClass`, imported from `pipeImport`, in
   `imports`. It leaves that file
   dirty on purpose, and it never touches `provideI18nScope` — a scoped key still needs it by hand.
 - **Create key** — `i18n: Create translation key` is `transloco-ulid add` with a picker in front,
@@ -165,16 +165,18 @@ Opening the repo natively instead (no container) is the same command against `~/
 
 ## Settings
 
-| Setting                                 | Default               | Meaning                                                                                                                 |
-| --------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `translocoUlidI18n.cliDir`              | `''`                  | Folder with the CLI's `api.mjs` (its `src/`); empty uses the `@drackp2m/transloco-ulid-cli` installed in the workspace. |
-| `translocoUlidI18n.pipeImport`          | `@app/pipe/i18n.pipe` | Module `I18nPipe` is imported from when a template starts using a key.                                                  |
-| `translocoUlidI18n.languageFile`        | `''`                  | Where `LANGUAGES` and `DEFAULT_LANGUAGE` are declared; empty uses the `languageFile` of `i18n.config.json`.             |
-| `translocoUlidI18n.langs`               | `[]`                  | Languages to resolve; empty uses every language of `LANGUAGES`.                                                         |
-| `translocoUlidI18n.displayLang`         | `''`                  | Language shown over the keys; empty uses `DEFAULT_LANGUAGE`.                                                            |
-| `translocoUlidI18n.inlineText`          | `true`                | Show the inline translation.                                                                                            |
-| `translocoUlidI18n.inlineTextMaxLength` | `60`                  | Where the inline text is ellipsised.                                                                                    |
-| `translocoUlidI18n.transferDir`         | `translations`        | Where the XLIFF export lands and the import dialog opens.                                                               |
+| Setting                                 | Default              | Meaning                                                                                                                 |
+| --------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `translocoUlidI18n.cliDir`              | `''`                 | Folder with the CLI's `api.mjs` (its `src/`); empty uses the `@drackp2m/transloco-ulid-cli` installed in the workspace. |
+| `translocoUlidI18n.pipeImport`          | `@jsverse/transloco` | Module `pipeClass` is imported from when a template starts using a key.                                                 |
+| `translocoUlidI18n.pipeClass`           | `TranslocoPipe`      | Pipe class added to the component's `imports` when a template starts using a key.                                       |
+| `translocoUlidI18n.keyFunctions`        | `['translate']`      | Functions called as `fn(key, params)`, inside which completing a key appends its parameters.                            |
+| `translocoUlidI18n.languageFile`        | `''`                 | Where `LANGUAGES` and `DEFAULT_LANGUAGE` are declared; empty uses the `languageFile` of `i18n.config.json`.             |
+| `translocoUlidI18n.langs`               | `[]`                 | Languages to resolve; empty uses every language of `LANGUAGES`.                                                         |
+| `translocoUlidI18n.displayLang`         | `''`                 | Language shown over the keys; empty uses `DEFAULT_LANGUAGE`.                                                            |
+| `translocoUlidI18n.inlineText`          | `true`               | Show the inline translation.                                                                                            |
+| `translocoUlidI18n.inlineTextMaxLength` | `60`                 | Where the inline text is ellipsised.                                                                                    |
+| `translocoUlidI18n.transferDir`         | `translations`       | Where the XLIFF export lands and the import dialog opens.                                                               |
 
 The language file is the single source of both lists — the same one `transloco-ulid check` reads through
 `@drackp2m/transloco-ulid-cli/src/catalogue/config.mjs`. It is parsed on every reload and nothing is guessed: a

@@ -22,7 +22,7 @@ function decoratorInsertPoint(text) {
 	return null === head ? null : head.index + head[0].length;
 }
 
-function pipeArrayEdit(document) {
+function pipeArrayEdit(document, pipeClass) {
 	const text = document.getText();
 	const match = IMPORTS_ARRAY.exec(text);
 
@@ -31,14 +31,14 @@ function pipeArrayEdit(document) {
 
 		return null === offset
 			? null
-			: vscode.TextEdit.insert(document.positionAt(offset), '\timports: [I18nPipe],\n');
+			: vscode.TextEdit.insert(document.positionAt(offset), `\timports: [${pipeClass}],\n`);
 	}
 
 	const separator = '' === match[1].trim() ? '' : ', ';
 
 	return vscode.TextEdit.insert(
 		document.positionAt(match.index + match[0].length - 1),
-		`${separator}I18nPipe`,
+		`${separator}${pipeClass}`,
 	);
 }
 
@@ -59,19 +59,17 @@ function fieldEdit(document) {
 			);
 }
 
+const mentions = (text, name) => new RegExp(`\\b${name.replace(/[$]/g, '\\$&')}\\b`).test(text);
+
 function componentEdits(document, aliases) {
-	const usesPipe = /\bI18nPipe\b/.test(document.getText());
+	const { pipe, pipeClass } = aliases;
+	const usesPipe = mentions(document.getText(), pipeClass);
 
 	return [
 		usesPipe
 			? null
-			: importEdit(
-					document,
-					aliases.pipe,
-					`import { I18nPipe } from '${aliases.pipe}';`,
-					aliases.app,
-				),
-		usesPipe ? null : pipeArrayEdit(document),
+			: importEdit(document, pipe, `import { ${pipeClass} } from '${pipe}';`, aliases.app),
+		usesPipe ? null : pipeArrayEdit(document, pipeClass),
 		importEdit(document, aliases.i18n, `import { I18n } from '${aliases.i18n}';`, aliases.app),
 		fieldEdit(document),
 	].filter((edit) => null !== edit && undefined !== edit);

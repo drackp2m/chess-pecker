@@ -143,8 +143,23 @@
 				},
 				"translocoUlidI18n.pipeImport": {
 					"type": "string",
-					"default": "@app/pipe/i18n.pipe",
-					"markdownDescription": "Module the `I18nPipe` is imported from when a template starts using a key. The catalogue import comes from `importAlias` in `i18n.config.json`."
+					"default": "@jsverse/transloco",
+					"markdownDescription": "Module `#translocoUlidI18n.pipeClass#` is imported from when a template starts using a key. The catalogue import comes from `importAlias` in `i18n.config.json`."
+				},
+				"translocoUlidI18n.pipeClass": {
+					"type": "string",
+					"default": "TranslocoPipe",
+					"markdownDescription": "Class of the translating pipe, added to the component's `imports` when a template starts using a key. The name used in templates is `pipe` in `i18n.config.json`."
+				},
+				"translocoUlidI18n.keyFunctions": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"translate"
+					],
+					"markdownDescription": "Functions that take a key and then its parameters, as `translate(I18n.auth.LOG_IN, { … })`. Completing a key with parameters inside one of their calls appends `, { … }`."
 				},
 				"translocoUlidI18n.languageFile": {
 					"type": "string",
