@@ -19,7 +19,7 @@
 				},
 				{
 					"name": "style",
-					"description": "Add missing tests or correcting existing failing test.",
+					"description": "Changes that do not affect the meaning of the code.",
 					"emoji": "🎨",
 					"code": "🎨"
 				},
