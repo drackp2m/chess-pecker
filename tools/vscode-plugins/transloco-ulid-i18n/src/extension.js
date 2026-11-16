@@ -6,11 +6,13 @@ const { Annotations } = require('./annotations');
 const { createKey } = require('./create-key');
 const { Findings } = require('./findings');
 const { i18nDefinitionProvider, i18nReferenceProvider } = require('./navigation');
-const { fail, report } = require('./output');
+const { fail, report, show } = require('./output');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
 const { searchKeys } = require('./search');
 const { ensureTemplateSetup } = require('./setup');
+const actions = require('./status-actions');
 const { askFilter } = require('./status-filter');
+const { seal } = require('./status-seal');
 const { STATUS_VIEW, StatusView, openKey } = require('./status-view');
 const { exportPending, exportTranslations, importTranslations } = require('./transfer');
 const { UsageIndex } = require('./usages');
@@ -108,11 +110,20 @@ function watchEditors(annotations) {
 }
 
 function commandTable(state) {
-	const { index, annotations, status } = state;
+	const { index, annotations, status, usages } = state;
 
 	return {
 		filter: () => askFilter(status),
 		clearFilter: async () => void status.setFilter(''),
+		showPending: async () => status.setPendingOnly(true),
+		showAll: async () => status.setPendingOnly(false),
+		copyReference: (node) => actions.copyReference(node),
+		copyUlid: (node) => actions.copyUlid(node),
+		findUsages: (node) => actions.findUsages(index, usages, node),
+		openDeclaration: (node) => actions.openDeclaration(index, node),
+		openConfig: () => actions.openConfig(index),
+		showOutput: async () => show(),
+		seal: (node) => seal(index, node),
 		collapseAll: async () => status.setFold('collapsed'),
 		expandAll: async () => status.setFold('expanded'),
 		search: () => searchKeys(index),

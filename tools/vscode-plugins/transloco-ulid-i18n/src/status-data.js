@@ -1,4 +1,5 @@
-const STATUSES = ['fresh', 'stale', 'unknown', 'missing'];
+const STATUSES = ['missing', 'stale', 'unknown', 'fresh'];
+const PENDING = ['missing', 'stale'];
 const SEVERITIES = ['error', 'warning', 'info'];
 
 const emptyKeys = () => Object.fromEntries(STATUSES.map((status) => [status, []]));
@@ -11,7 +12,9 @@ function progressOf(keys) {
 	return { total, fresh: keys.fresh.length, translated: total - keys.missing.length };
 }
 
-const pendingOf = (keys) => keys.stale.length + keys.missing.length;
+const pendingOf = (keys) => PENDING.reduce((sum, status) => sum + keys[status].length, 0);
+
+const withProblems = (entries) => entries.filter((entry) => 0 !== entry.problems.length).length;
 
 const mergedKeys = (languages) =>
 	Object.fromEntries(
@@ -28,11 +31,38 @@ function languagesOf(targets, rows) {
 	return [...byLang.values()];
 }
 
-function scopeOf(scope, { index, targets }) {
+const rank = ({ severity }) => SEVERITIES.indexOf(severity);
+
+const aboutSource = (index) => (finding) =>
+	null !== finding.ulid &&
+	(finding.lang === index.defaultLang || (null === finding.lang && 'pending' !== finding.group));
+
+function sourceProblems(index) {
+	const byKey = new Map();
+
+	for (const finding of index.analysis.findings.filter(aboutSource(index))) {
+		const id = `${finding.scope}.${finding.ulid}`;
+
+		byKey.set(id, [...(byKey.get(id) ?? []), finding]);
+	}
+
+	for (const findings of byKey.values()) {
+		findings.sort((left, right) => rank(left) - rank(right));
+	}
+
+	return byKey;
+}
+
+function scopeOf(scope, { index, targets, problems }) {
 	const rows = index.analysis.freshness.filter((row) => row.scope === scope.name);
 	const entries = scope.keys.entries
 		.filter((entry) => index.api.isUlid(entry.ulid))
-		.map(({ name, ulid }) => ({ scope: scope.name, name, ulid }));
+		.map(({ name, ulid }) => ({
+			scope: scope.name,
+			name,
+			ulid,
+			problems: problems.get(`${scope.name}.${ulid}`) ?? [],
+		}));
 
 	return {
 		name: scope.name,
@@ -52,8 +82,6 @@ function checksOf(items) {
 		byType.set(item.type, [...(byType.get(item.type) ?? []), item]);
 	}
 
-	const rank = (group) => SEVERITIES.indexOf(group.severity);
-
 	return [...byType]
 		.map(([type, items]) => ({ type, ...ruleOf(items[0]), items }))
 		.sort((left, right) => rank(left) - rank(right) || right.items.length - left.items.length);
@@ -61,9 +89,10 @@ function checksOf(items) {
 
 function buildStatus(index) {
 	const targets = index.langs.filter((lang) => lang !== index.defaultLang);
+	const problems = sourceProblems(index);
 	const scopes = index.rawScopes
 		.filter((scope) => scope.keys)
-		.map((scope) => scopeOf(scope, { index, targets }));
+		.map((scope) => scopeOf(scope, { index, targets, problems }));
 
 	return {
 		source: index.defaultLang,
@@ -77,6 +106,7 @@ function buildStatus(index) {
 }
 
 module.exports = {
+	PENDING,
 	STATUSES,
 	SEVERITIES,
 	buildStatus,
@@ -84,4 +114,5 @@ module.exports = {
 	pendingOf,
 	percentOf,
 	progressOf,
+	withProblems,
 };

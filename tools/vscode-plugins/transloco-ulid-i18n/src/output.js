@@ -26,10 +26,12 @@ function reveal(lines) {
 	report(lines).show(true);
 }
 
+const show = () => output().show(true);
+
 function fail(message) {
 	reveal([message]);
 
 	void vscode.window.showErrorMessage(`${NAME}: ${message}`);
 }
 
-module.exports = { fail, report, reveal };
+module.exports = { fail, report, reveal, show };

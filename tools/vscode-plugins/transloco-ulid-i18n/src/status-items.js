@@ -9,8 +9,10 @@ const {
 	pendingOf,
 	percentOf,
 	progressOf,
+	withProblems,
 } = require('./status-data');
 const { ringIcon } = require('./status-icon');
+const { isSealable, rowsOf } = require('./status-seal');
 const { count, shorten } = require('./util');
 
 const SOURCE_PREVIEW = 50;
@@ -22,13 +24,22 @@ const themed = (icon, color) =>
 	new vscode.ThemeIcon(icon, undefined === color ? undefined : new vscode.ThemeColor(color));
 
 const STATUS_LOOK = {
-	fresh: { label: 'Up to date', icon: themed('pass', 'testing.iconPassed') },
-	stale: { label: 'Outdated', icon: themed('warning', 'problemsWarningIcon.foreground') },
-	unknown: { label: 'Never sealed', icon: themed('question') },
 	missing: {
 		label: 'Untranslated',
-		icon: themed('circle-large-outline', 'problemsErrorIcon.foreground'),
+		tint: '#f14c4c',
+		icon: themed('warning', 'problemsErrorIcon.foreground'),
 	},
+	stale: {
+		label: 'Outdated',
+		tint: '#cca700',
+		icon: themed('warning', 'problemsWarningIcon.foreground'),
+	},
+	unknown: {
+		label: 'Never sealed',
+		tint: '#8c8c8c',
+		icon: themed('question', 'descriptionForeground'),
+	},
+	fresh: { label: 'Up to date', tint: '#73c991', icon: themed('pass', 'testing.iconPassed') },
 };
 
 const SEVERITY_LOOK = {
@@ -48,39 +59,48 @@ function openCommand(file, line, col) {
 	};
 }
 
-function describe({ total, fresh, translated }) {
-	if (0 === total) {
-		return 'no keys';
+function describe(keys) {
+	const pending = pendingOf(keys);
+
+	if (0 !== pending) {
+		return `${pending} pending`;
 	}
 
-	if (0 === translated) {
-		return 'nothing translated';
-	}
+	return 0 === keys.unknown.length ? 'up to date' : `${keys.unknown.length} never sealed`;
+}
 
-	const upToDate = `${percentOf(fresh, total)} % up to date`;
+const shareOf = ({ total, fresh, translated }) =>
+	`${percentOf(fresh, total)} % up to date · ${percentOf(translated, total)} % translated`;
 
-	return fresh === translated
-		? upToDate
-		: `${upToDate} · ${percentOf(translated, total)} % translated`;
+function markdown(blocks) {
+	const tooltip = new vscode.MarkdownString(blocks.join('\n\n'), true);
+
+	tooltip.supportHtml = true;
+
+	return tooltip;
+}
+
+function statusLine(status, total) {
+	const { label, tint, icon } = STATUS_LOOK[status];
+
+	return `<span style="color:${tint};">$(${icon.id})</span> ${total} ${label.toLowerCase()}`;
 }
 
 function languageTooltip(language, scope, progress) {
 	const where = null === scope ? '' : ` · ${scope}`;
-	const lines = STATUSES.filter((status) => 0 !== language.keys[status].length).map((status) => {
-		const { label, icon } = STATUS_LOOK[status];
-
-		return `$(${icon.id}) ${language.keys[status].length} ${label.toLowerCase()}`;
-	});
+	const lines = STATUSES.filter((status) => 0 !== language.keys[status].length).map((status) =>
+		statusLine(status, language.keys[status].length),
+	);
 	const header = `**${language.lang}**${where} · ${count(progress.total, 'key')}`;
 
-	return new vscode.MarkdownString(`${header}\n\n${lines.join('  \n')}`, true);
+	return markdown([header, shareOf(progress), lines.join('  \n')]);
 }
 
 function languageItem({ language, scope }) {
-	const progress = progressOf(language.keys);
+	const progress = language.progress ?? progressOf(language.keys);
 	const item = new vscode.TreeItem(language.lang, Collapsed);
 
-	item.description = describe(progress);
+	item.description = describe(language.keys);
 	item.iconPath = ringIcon(progress);
 	item.tooltip = languageTooltip(language, scope, progress);
 	item.contextValue =
@@ -94,6 +114,7 @@ function statusItem({ status, language }) {
 
 	item.description = String(language.keys[status].length);
 	item.iconPath = STATUS_LOOK[status].icon;
+	item.contextValue = isSealable({ status }) ? 'statusSealable' : 'status';
 
 	return item;
 }
@@ -118,27 +139,34 @@ function keyItem({ row }, index) {
 	item.description = `${row.scope} · ${shorten(text ?? '', SOURCE_PREVIEW)}`;
 	item.tooltip = keyTooltip(index, row);
 	item.command = { command: 'translocoUlidI18n.openKey', title: 'Open', arguments: [row] };
+	item.contextValue = isSealable(row) ? 'keySealable' : 'key';
 
 	return item;
 }
 
 function scopeItem({ scope }) {
-	const progress = progressOf(mergedKeys(scope.languages));
+	const progress = scope.progress ?? progressOf(mergedKeys(scope.languages));
 	const item = new vscode.TreeItem(scope.name, Collapsed);
-	const share = 0 === progress.total ? [] : [describe(progress)];
 	const langs = count(scope.languages.length, 'target language');
+	const header = `**${scope.name}** · ${count(scope.keys, 'key')} in ${langs}`;
 
-	item.description = [...share, count(scope.keys, 'key')].join(' · ');
-	item.tooltip = `${count(scope.keys, 'key')} in ${langs}`;
-	item.iconPath = themed('symbol-namespace');
+	item.description = count(scope.keys, 'key');
+	item.tooltip = markdown(0 === progress.total ? [header] : [header, shareOf(progress)]);
+	item.iconPath = ringIcon(progress);
+	item.contextValue = 0 === rowsOf({ kind: 'scope', scope }).length ? 'scope' : 'scopeSealable';
 
 	return item;
 }
 
+const troubled = (total) => (0 === total ? [] : [`${total} with problems`]);
+
 function sourceItem({ snapshot }) {
 	const item = new vscode.TreeItem('Source', Collapsed);
+	const problems = snapshot.scopes.reduce((sum, scope) => sum + withProblems(scope.entries), 0);
 
-	item.description = `${snapshot.source} · ${count(snapshot.keys, 'key')}`;
+	item.description = [snapshot.source, count(snapshot.keys, 'key'), ...troubled(problems)].join(
+		' · ',
+	);
 	item.tooltip = `Every key with its text in ${snapshot.source}, the source language`;
 	item.iconPath = themed('book');
 
@@ -148,10 +176,14 @@ function sourceItem({ snapshot }) {
 function sourceScopeItem({ scope }) {
 	const item = new vscode.TreeItem(scope.name, Collapsed);
 
-	item.description = count(scope.entries.length, 'key');
+	item.description = troubled(withProblems(scope.entries)).join('');
 	item.iconPath = themed('symbol-namespace');
 
 	return item;
+}
+
+function problemLines({ problems }) {
+	return problems.map(({ severity, message }) => `${SEVERITY_LOOK[severity].word}: ${message}`);
 }
 
 function sourceKeyItem({ entry, lang }, index) {
@@ -159,9 +191,18 @@ function sourceKeyItem({ entry, lang }, index) {
 	const text = String(index.translation(entry.scope, entry.ulid, lang).text ?? '').trim();
 	const label = `\`${entry.scope}.${entry.name}\` · ${entry.ulid}`;
 	const shown = '' === text ? '(empty)' : text;
+	const [worst] = entry.problems;
 
 	item.description = shorten(shown, TEXT_PREVIEW);
-	item.tooltip = new vscode.MarkdownString(`${label}\n\n`).appendText(shown);
+	item.tooltip = new vscode.MarkdownString(`${label}\n\n`).appendText(
+		[shown, ...problemLines(entry)].join('\n\n'),
+	);
+	item.contextValue = 'key';
+
+	if (undefined !== worst) {
+		item.iconPath = SEVERITY_LOOK[worst.severity].icon;
+	}
+
 	item.command = {
 		command: 'translocoUlidI18n.openKey',
 		title: 'Open',
@@ -173,18 +214,18 @@ function sourceKeyItem({ entry, lang }, index) {
 
 function languagesItem({ snapshot }) {
 	const item = new vscode.TreeItem('Languages', Expanded);
-	const scopes = count(snapshot.scopes.length, 'scope');
 
-	item.description = `${snapshot.source} · ${count(snapshot.keys, 'key')} · ${scopes}`;
+	item.description = count(snapshot.languages.length, 'item');
 	item.tooltip = `Every target language against ${snapshot.source}, the source language`;
 	item.iconPath = themed('globe');
 
 	return item;
 }
 
-function scopesItem() {
+function scopesItem({ snapshot }) {
 	const item = new vscode.TreeItem('Scopes', Collapsed);
 
+	item.description = count(snapshot.scopes.length, 'item');
 	item.iconPath = themed('list-tree');
 
 	return item;
@@ -248,24 +289,10 @@ function aboutItem({ snapshot }, index) {
 	return item;
 }
 
-function errorItem({ message, file }) {
-	const item = new vscode.TreeItem(message, None);
-
-	item.tooltip = message;
-	item.iconPath = SEVERITY_LOOK.error.icon;
-	item.command =
-		undefined === file
-			? { command: 'translocoUlidI18n.reload', title: 'Reload' }
-			: openCommand(file);
-
-	return item;
-}
-
 module.exports = {
 	about: aboutItem,
 	check: checkItem,
 	checks: checksItem,
-	error: errorItem,
 	finding: findingItem,
 	key: keyItem,
 	language: languageItem,

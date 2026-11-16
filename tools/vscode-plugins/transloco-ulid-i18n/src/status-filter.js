@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 
 const { folded, matchOf, recordsOf } = require('./search');
-const { STATUSES, pendingOf } = require('./status-data');
+const { PENDING, STATUSES, mergedKeys, pendingOf, progressOf } = require('./status-data');
 const { count } = require('./util');
 
 const DEBOUNCE = 150;
@@ -76,6 +76,49 @@ function filterStatus(snapshot, index, value) {
 	};
 }
 
+function pendingKeys(keys) {
+	return Object.fromEntries(
+		STATUSES.map((status) => [status, PENDING.includes(status) ? keys[status] : []]),
+	);
+}
+
+function pendingLanguages(languages) {
+	return languages
+		.map((language) => ({
+			...language,
+			progress: progressOf(language.keys),
+			keys: pendingKeys(language.keys),
+		}))
+		.filter((language) => 0 !== pendingOf(language.keys));
+}
+
+function pendingScope(scope) {
+	const languages = pendingLanguages(scope.languages);
+	const rows = Object.values(mergedKeys(languages)).flat();
+	const wanted = new Set(rows.map(({ ulid }) => ulid));
+	const entries = scope.entries.filter((entry) => wanted.has(entry.ulid));
+
+	return {
+		...scope,
+		progress: progressOf(mergedKeys(scope.languages)),
+		keys: entries.length,
+		entries,
+		languages,
+	};
+}
+
+function pendingStatus(snapshot) {
+	const scopes = snapshot.scopes.map(pendingScope).filter((scope) => 0 !== scope.keys);
+
+	return {
+		...snapshot,
+		keys: scopes.reduce((sum, scope) => sum + scope.keys, 0),
+		languages: pendingLanguages(snapshot.languages),
+		scopes,
+		pendingOnly: true,
+	};
+}
+
 function summaryOf(filter) {
 	if (undefined === filter) {
 		return undefined;
@@ -88,8 +131,17 @@ function summaryOf(filter) {
 		: parts.filter((part) => !part.startsWith('0 ')).join(' · ');
 }
 
-function messageOf(filter) {
-	return undefined === filter ? undefined : `“${filter.value}” · ${summaryOf(filter)}`;
+function messageOf({ error, filter, pendingOnly }) {
+	if (undefined !== error) {
+		return error;
+	}
+
+	const parts = [
+		...(undefined === filter ? [] : [`“${filter.value}” · ${summaryOf(filter)}`]),
+		...(true === pendingOnly ? ['only untranslated and outdated'] : []),
+	];
+
+	return 0 === parts.length ? undefined : parts.join(' · ');
 }
 
 function askFilter(status) {
@@ -120,4 +172,4 @@ function askFilter(status) {
 	});
 }
 
-module.exports = { askFilter, filterStatus, messageOf };
+module.exports = { askFilter, filterStatus, messageOf, pendingStatus };

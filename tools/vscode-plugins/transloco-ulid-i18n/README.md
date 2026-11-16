@@ -90,16 +90,32 @@ sub-state prefix and the language of the export notes come from.
 - **Status view** — the Transloco ULID icon in the activity bar opens a tree of where the catalogue
   stands. **Languages** has a line per target language, with a ring in place of its icon — green for
   what is up to date, amber for what is translated but outdated or never sealed, grey for the rest —
-  and both figures beside it: `60 % up to date · 83 % translated`, rounded down, so 100 % means every
-  key. Under each language come the four states `transloco-ulid state` counts (up to date, outdated,
-  never sealed, untranslated), and under each state its keys, with the source text next to the name;
-  clicking one opens that language's file on the key, or the source language's when the key is not
-  in it yet. **Scopes** repeats the same per scope, each scope with the same two figures over all
-  its target languages. **Source** lists every scope and, under it, every key with its text in the
-  source language; clicking one opens that file on the key. **Checks** groups by type what
+  and the work left beside it, always as a count: `12 pending` (untranslated plus outdated),
+  `3 never sealed` when that is all there is, or `up to date`. The two percentages,
+  `60 % up to date · 83 % translated`, rounded down so 100 % means every key, are in the tooltip.
+  Under each language come the four states `transloco-ulid state` counts, the ones asking for work
+  first (untranslated, outdated, never sealed, up to date), and under each state its keys, with the
+  source text next to the name; clicking one opens that language's file on the key, or the source
+  language's when the key is not in it yet. **Scopes** repeats the same per scope, each scope with
+  the ring of all its target languages, its number of keys and the percentages in the tooltip.
+  **Source** lists every scope and, under it, every key with its text in the source language;
+  clicking one opens that file on the key. A key the CLI has something to say about in the source
+  language — an unused key, a broken ICU message, a stray plural parameter — takes the icon of its
+  worst finding and lists them in its tooltip, and the scope and the section count how many keys
+  are in that case. A key row, here or under a language, has a context menu: find usages, go to
+  `keys.ts`, copy the `I18n.scope.KEY` reference, copy the ULID. An outdated or never sealed
+  translation also has **Seal as up to date**, and so do the Outdated and Never sealed lines of a
+  language (every row under them) and a scope (all of its outdated and never sealed ones): it is
+  `transloco-ulid state --adopt` for exactly those translations, for a source change that did not
+  affect them or a translation fixed by hand. More than one asks first, a translation with a broken
+  message or mismatched parameters is left out and listed in the output channel, and it needs the
+  CLI 0.5.0 or later. **Checks** groups by type what
   `transloco-ulid check` reports besides the pending translations, which are already counted above,
   and each finding opens where it lives. The last line is the CLI version the extension is running,
-  and opens `i18n.config.json`. The title bar holds filter, search and a button that collapses
+  and opens `i18n.config.json`. When the catalogue cannot be loaded the view shows the reason and
+  buttons to reload, open `i18n.config.json` or show the output channel. The title bar holds filter,
+  a toggle that leaves only what is untranslated or outdated (never sealed is not pending: it has a
+  translation and nothing says the source moved), search and a button that collapses
   everything while anything is open and opens every branch (and every list of up to 20 rows) once
   all is collapsed; create key, export, import and reload are in its `…` menu. A language with work
   left has an **Export pending** button that writes its untranslated and outdated strings — every

@@ -54,7 +54,7 @@ export class GetTrainingProgressUseCase {
 				undefined === goal
 					? null
 					: { puzzlesPerDay: goal.puzzlesPerDay ?? null, endDate: goal.endDate ?? null },
-			// ToDo => the estimate ignores the two things that would personalise it: the
+			// ToDo => the estimate ignores the two things that would personalize it: the
 			// calibration average, and the goal's `endDate`, so a date-only goal estimates `null`.
 			estimatedFirstCycleDays:
 				undefined === goal?.puzzlesPerDay || 0 === setSize

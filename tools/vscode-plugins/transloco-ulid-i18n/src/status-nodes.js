@@ -37,10 +37,11 @@ const FILLED = {
 
 function rootNodes(snapshot) {
 	if (undefined !== snapshot.error) {
-		return [{ kind: 'error', message: snapshot.error }];
+		return [];
 	}
 
-	const shown = (kind) => undefined === snapshot.filter || (FILLED[kind]?.(snapshot) ?? true);
+	const whole = undefined === snapshot.filter && true !== snapshot.pendingOnly;
+	const shown = (kind) => whole || (FILLED[kind]?.(snapshot) ?? true);
 
 	return SECTIONS.filter(shown).map((kind) => ({ kind, snapshot }));
 }

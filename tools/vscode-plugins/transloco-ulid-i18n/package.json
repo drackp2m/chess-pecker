@@ -34,6 +34,18 @@
 				"icon": "$(clear-all)"
 			},
 			{
+				"command": "translocoUlidI18n.showPending",
+				"title": "Show only untranslated and outdated",
+				"category": "i18n",
+				"icon": "$(tasklist)"
+			},
+			{
+				"command": "translocoUlidI18n.showAll",
+				"title": "Show every state",
+				"category": "i18n",
+				"icon": "$(list-flat)"
+			},
+			{
 				"command": "translocoUlidI18n.collapseAll",
 				"title": "Collapse all",
 				"category": "i18n",
@@ -90,6 +102,42 @@
 				"command": "translocoUlidI18n.openKey",
 				"title": "Open translation",
 				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.copyReference",
+				"title": "Copy key reference",
+				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.copyUlid",
+				"title": "Copy ULID",
+				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.findUsages",
+				"title": "Find usages",
+				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.openDeclaration",
+				"title": "Go to keys.ts",
+				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.openConfig",
+				"title": "Open i18n.config.json",
+				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.showOutput",
+				"title": "Show the output channel",
+				"category": "i18n"
+			},
+			{
+				"command": "translocoUlidI18n.seal",
+				"title": "Seal as up to date",
+				"category": "i18n",
+				"icon": "$(verified)"
 			}
 		],
 		"viewsContainers": {
@@ -109,6 +157,13 @@
 				}
 			]
 		},
+		"viewsWelcome": [
+			{
+				"view": "translocoUlidI18n.status",
+				"contents": "The translation catalogue could not be loaded. The reason is in the line above and in the output channel.\n[Reload](command:translocoUlidI18n.reload)\n[Open i18n.config.json](command:translocoUlidI18n.openConfig)\n[Show the output channel](command:translocoUlidI18n.showOutput)",
+				"when": "translocoUlidI18n.failed"
+			}
+		],
 		"menus": {
 			"view/title": [
 				{
@@ -122,19 +177,29 @@
 					"group": "navigation@1"
 				},
 				{
+					"command": "translocoUlidI18n.showPending",
+					"when": "view == translocoUlidI18n.status && !translocoUlidI18n.pendingOnly",
+					"group": "navigation@2"
+				},
+				{
+					"command": "translocoUlidI18n.showAll",
+					"when": "view == translocoUlidI18n.status && translocoUlidI18n.pendingOnly",
+					"group": "navigation@2"
+				},
+				{
 					"command": "translocoUlidI18n.search",
 					"when": "view == translocoUlidI18n.status",
-					"group": "navigation@2"
+					"group": "navigation@3"
 				},
 				{
 					"command": "translocoUlidI18n.collapseAll",
 					"when": "view == translocoUlidI18n.status && translocoUlidI18n.opened",
-					"group": "navigation@3"
+					"group": "navigation@4"
 				},
 				{
 					"command": "translocoUlidI18n.expandAll",
 					"when": "view == translocoUlidI18n.status && !translocoUlidI18n.opened",
-					"group": "navigation@3"
+					"group": "navigation@4"
 				},
 				{
 					"command": "translocoUlidI18n.createKey",
@@ -167,6 +232,31 @@
 					"command": "translocoUlidI18n.exportPending",
 					"when": "view == translocoUlidI18n.status && viewItem == languagePending",
 					"group": "export"
+				},
+				{
+					"command": "translocoUlidI18n.findUsages",
+					"when": "view == translocoUlidI18n.status && viewItem =~ /^key/",
+					"group": "1_go@1"
+				},
+				{
+					"command": "translocoUlidI18n.openDeclaration",
+					"when": "view == translocoUlidI18n.status && viewItem =~ /^key/",
+					"group": "1_go@2"
+				},
+				{
+					"command": "translocoUlidI18n.copyReference",
+					"when": "view == translocoUlidI18n.status && viewItem =~ /^key/",
+					"group": "2_copy@1"
+				},
+				{
+					"command": "translocoUlidI18n.copyUlid",
+					"when": "view == translocoUlidI18n.status && viewItem =~ /^key/",
+					"group": "2_copy@2"
+				},
+				{
+					"command": "translocoUlidI18n.seal",
+					"when": "view == translocoUlidI18n.status && viewItem =~ /Sealable$/",
+					"group": "3_seal@1"
 				}
 			],
 			"commandPalette": [
@@ -188,6 +278,34 @@
 				},
 				{
 					"command": "translocoUlidI18n.openKey",
+					"when": "false"
+				},
+				{
+					"command": "translocoUlidI18n.copyReference",
+					"when": "false"
+				},
+				{
+					"command": "translocoUlidI18n.copyUlid",
+					"when": "false"
+				},
+				{
+					"command": "translocoUlidI18n.findUsages",
+					"when": "false"
+				},
+				{
+					"command": "translocoUlidI18n.openDeclaration",
+					"when": "false"
+				},
+				{
+					"command": "translocoUlidI18n.showPending",
+					"when": "!translocoUlidI18n.pendingOnly"
+				},
+				{
+					"command": "translocoUlidI18n.showAll",
+					"when": "translocoUlidI18n.pendingOnly"
+				},
+				{
+					"command": "translocoUlidI18n.seal",
 					"when": "false"
 				}
 			]

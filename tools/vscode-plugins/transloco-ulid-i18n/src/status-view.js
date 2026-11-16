@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 
 const { buildStatus } = require('./status-data');
-const { filterStatus, messageOf } = require('./status-filter');
+const { filterStatus, messageOf, pendingStatus } = require('./status-filter');
 const items = require('./status-items');
 const { childrenOf, folded, isSection, rootNodes, segmentOf } = require('./status-nodes');
 const { locate } = require('./util');
@@ -9,6 +9,8 @@ const { locate } = require('./util');
 const VIEW = 'translocoUlidI18n.status';
 const FILTERING = 'translocoUlidI18n.filtering';
 const OPENED = 'translocoUlidI18n.opened';
+const PENDING_ONLY = 'translocoUlidI18n.pendingOnly';
+const FAILED = 'translocoUlidI18n.failed';
 const { Expanded } = vscode.TreeItemCollapsibleState;
 
 const setContext = (key, value) => void vscode.commands.executeCommand('setContext', key, value);
@@ -19,6 +21,7 @@ class StatusView {
 		this.snapshot = null;
 		this.view = null;
 		this.filter = '';
+		this.pendingOnly = false;
 		this.fold = 'default';
 		this.generation = 0;
 		this.seen = new Set();
@@ -66,6 +69,14 @@ class StatusView {
 		return this.current().filter;
 	}
 
+	setPendingOnly(pendingOnly) {
+		this.pendingOnly = pendingOnly;
+		this.regenerate();
+		this.snapshot = null;
+		setContext(PENDING_ONLY, pendingOnly);
+		this.changed.fire(undefined);
+	}
+
 	regenerate() {
 		this.generation += 1;
 		this.seen.clear();
@@ -75,9 +86,10 @@ class StatusView {
 	current() {
 		if (null === this.snapshot) {
 			this.snapshot = this.build();
+			setContext(FAILED, undefined !== this.snapshot.error);
 
 			if (null !== this.view) {
-				this.view.message = messageOf(this.snapshot.filter);
+				this.view.message = messageOf(this.snapshot);
 			}
 		}
 
@@ -90,9 +102,10 @@ class StatusView {
 		}
 
 		try {
-			const snapshot = buildStatus(this.index);
+			const whole = buildStatus(this.index);
+			const snapshot = '' === this.filter ? whole : filterStatus(whole, this.index, this.filter);
 
-			return '' === this.filter ? snapshot : filterStatus(snapshot, this.index, this.filter);
+			return this.pendingOnly ? pendingStatus(snapshot) : snapshot;
 		} catch (error) {
 			return { error: error instanceof Error ? error.message : String(error) };
 		}
