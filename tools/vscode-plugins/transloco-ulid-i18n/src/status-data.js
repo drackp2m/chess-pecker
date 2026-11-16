@@ -13,6 +13,11 @@ function progressOf(keys) {
 
 const pendingOf = (keys) => keys.stale.length + keys.missing.length;
 
+const mergedKeys = (languages) =>
+	Object.fromEntries(
+		STATUSES.map((status) => [status, languages.flatMap((language) => language.keys[status])]),
+	);
+
 function languagesOf(targets, rows) {
 	const byLang = new Map(targets.map((lang) => [lang, { lang, keys: emptyKeys() }]));
 
@@ -25,10 +30,14 @@ function languagesOf(targets, rows) {
 
 function scopeOf(scope, { index, targets }) {
 	const rows = index.analysis.freshness.filter((row) => row.scope === scope.name);
+	const entries = scope.keys.entries
+		.filter((entry) => index.api.isUlid(entry.ulid))
+		.map(({ name, ulid }) => ({ scope: scope.name, name, ulid }));
 
 	return {
 		name: scope.name,
-		keys: scope.keys.entries.filter((entry) => index.api.isUlid(entry.ulid)).length,
+		keys: entries.length,
+		entries,
 		rows,
 		languages: languagesOf(targets, rows),
 	};
@@ -67,4 +76,12 @@ function buildStatus(index) {
 	};
 }
 
-module.exports = { STATUSES, SEVERITIES, buildStatus, pendingOf, percentOf, progressOf };
+module.exports = {
+	STATUSES,
+	SEVERITIES,
+	buildStatus,
+	mergedKeys,
+	pendingOf,
+	percentOf,
+	progressOf,
+};

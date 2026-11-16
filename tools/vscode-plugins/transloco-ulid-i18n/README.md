@@ -40,7 +40,9 @@ sub-state prefix and the language of the export notes come from.
   generated `<scope>/params.ts`, and the raw `scope.ULID` value.
 - **Go to definition** — `ctrl+click` a key to jump to its line in each `<lang>.json`. The jump to
   `keys.ts` is not listed: TypeScript and the Angular language service already resolve the property
-  themselves, and listing it again only put the same line in the peek twice.
+  themselves, and listing it again only put the same line in the peek twice. The `displayLang`
+  entry is handed over first, here and in the jumps below, which makes it the primary result for
+  `editor.gotoLocation.multipleDefinitions`; the peek list itself is sorted by VS Code, by file path.
 - **Navigation inside the i18n files** — the same `ctrl+click` keeps working once you are there, so
   every file of a scope is one hop from the others:
 
@@ -57,6 +59,15 @@ sub-state prefix and the language of the export notes come from.
   dozen places. The usage scan reads the `sourceDirs` of `i18n.config.json` from disk and overlays the unsaved editors, so
   a key you just typed is already there.
 
+- **Search** — `i18n: Search translation keys`, also the magnifier in the title bar of the status
+  view, finds a key by its name (`no moves` finds `NO_MOVES_YET`), by its ULID (four characters are
+  enough, and the `scope.` of a `keys.ts` value is ignored) or by its text in any language, ignoring
+  case and accents. Each row shows the key with its scope and ULID and, under it, its text in the
+  `displayLang` the title names, or the text that matched with its language code before it. Names
+  come first, then ULIDs, then texts, the `displayLang` ones ahead of the rest. Choosing a row opens
+  where it matched: `keys.ts` on the key for a name or a ULID, that `<lang>.json` on the text for a
+  translation.
+
 - **Diagnostics** — everything `transloco-ulid check` reports, and nothing else: the extension has
   no rules of its own. It asks the CLI for one analysis of the whole workspace, `analyse()`, and
   publishes each finding where the CLI places it, with the finding type as the diagnostic code. So
@@ -68,7 +79,8 @@ sub-state prefix and the language of the export notes come from.
 - **At the usage** — what the catalogue says about a key is shown again on every usage of it in an
   open `.ts` or `.html`: a broken ICU message, a param that does not match, a translation still
   missing or outdated. It is the same finding, pointing back at the line of the file that can fix
-  it, and several languages with the same problem are one diagnostic that lists them.
+  it, and several languages with the same problem are one diagnostic that lists them. Only here
+  does a diagnostic name its language, `[en-GB]`: in an i18n file the file name already says it.
 - **Unsaved editors count** — the analysis reads every dirty editor in place of the file on disk,
   whatever it is: a `<lang>.json`, `keys.ts`, a template, a context file. It runs again a moment
   after you stop typing, walking the sources only when a `.ts` or `.html` changed.
@@ -82,13 +94,26 @@ sub-state prefix and the language of the export notes come from.
   key. Under each language come the four states `transloco-ulid state` counts (up to date, outdated,
   never sealed, untranslated), and under each state its keys, with the source text next to the name;
   clicking one opens that language's file on the key, or the source language's when the key is not
-  in it yet. **Scopes** repeats the same per scope. **Checks** groups by type what
+  in it yet. **Scopes** repeats the same per scope, each scope with the same two figures over all
+  its target languages. **Source** lists every scope and, under it, every key with its text in the
+  source language; clicking one opens that file on the key. **Checks** groups by type what
   `transloco-ulid check` reports besides the pending translations, which are already counted above,
   and each finding opens where it lives. The last line is the CLI version the extension is running,
-  and opens `i18n.config.json`. The title bar holds create key, export, import and reload, and a
-  language with work left has an **Export pending** button that writes its untranslated and outdated
-  strings — only that scope's when it is under **Scopes**. The view refreshes with the findings, the
-  sealed hashes in `state/` included.
+  and opens `i18n.config.json`. The title bar holds filter, search and a button that collapses
+  everything while anything is open and opens every branch (and every list of up to 20 rows) once
+  all is collapsed; create key, export, import and reload are in its `…` menu. A language with work
+  left has an **Export pending** button that writes its untranslated and outdated strings — every
+  one of them, whatever the filter shows, and only that scope's when it is under **Scopes**. The
+  view refreshes with the findings, the sealed hashes in `state/` included.
+- **Filter** — the funnel in the title bar of the view, or Cmd+F (Ctrl+F) with the view
+  focused, opens a box that narrows the tree as you type. A key stays when the search above would
+  find it — by name, ULID or text in any language — and so does every finding about it, or whose
+  message holds the text, so `is empty` leaves only the empty translations. Branches with nothing
+  left disappear, the counts and percentages are those of what is left, every branch opens and so
+  does every list of up to 20 keys or findings, and the line over the tree repeats the filter with
+  what it found. Enter, Escape or clicking elsewhere closes the box and keeps the filter; the clear
+  button next to the funnel, or emptying the box, removes it. VS Code's own find in the tree stays on
+  Cmd+Opt+F (Ctrl+Alt+F).
 - **Completion** — scopes after `I18n.`, keys after `I18n.dashboard.` and while the key is half
   typed, each row showing its `displayLang` text on the right. A key that takes params completes
   with them: picking `PROGRAM_CURRENT_SCANS` inside `{{ I18n.dashboard.| | i18n }}` leaves

@@ -5,10 +5,9 @@ const vscode = require('vscode');
 
 const { reveal } = require('./output');
 const settings = require('./settings');
+const { count } = require('./util');
 
 const XLIFF_FILTERS = { XLIFF: ['xlf', 'xliff'] };
-
-const count = (value, word) => `${value} ${word}${1 === value ? '' : 's'}`;
 
 function transferDir(root) {
 	const configured = settings.transferDir();

@@ -71,7 +71,7 @@ function relatedOf(findings) {
 	return findings.slice(0, RELATED_LIMIT).map((finding) => {
 		const location = new vscode.Location(vscode.Uri.file(finding.file), rangeOf(finding).start);
 
-		return new vscode.DiagnosticRelatedInformation(location, worded(finding));
+		return new vscode.DiagnosticRelatedInformation(location, finding.message);
 	});
 }
 
@@ -175,7 +175,7 @@ class Findings {
 		for (const finding of this.items) {
 			const range = ranges.get(placeOf(finding.file, finding)) ?? rangeOf(finding);
 
-			add(finding.file, diagnosticOf(range, worded(finding), finding));
+			add(finding.file, diagnosticOf(range, finding.message, finding));
 		}
 
 		for (const { file, diagnostic } of this.projected(open)) {

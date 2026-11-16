@@ -2,7 +2,7 @@ const vscode = require('vscode');
 
 const { applyInsertion } = require('./params');
 const { snippetItems } = require('./snippet');
-const { SELECTOR, locate, shorten, usageAt, usageRange } = require('./util');
+const { SELECTOR, displayFirst, locate, shorten, usageAt, usageRange } = require('./util');
 
 const MISSING = '⚠️ _missing translation_';
 const MISSING_DESCRIPTION = '⚠️ missing translation';
@@ -76,7 +76,7 @@ function definitionTargets(index, usage) {
 		return [];
 	}
 
-	return index.langs
+	return displayFirst(index)
 		.map((lang) => locate(index.translation(usage.scope, entry.ulid, lang).file, entry.ulid))
 		.filter((target) => null !== target);
 }

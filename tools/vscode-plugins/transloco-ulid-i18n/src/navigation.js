@@ -3,6 +3,8 @@ const path = require('node:path');
 
 const vscode = require('vscode');
 
+const { displayFirst } = require('./util');
+
 const I18N_SELECTOR = [
 	{ scheme: 'file', language: 'typescript' },
 	{ scheme: 'file', language: 'json' },
@@ -97,7 +99,12 @@ function jsonLocation(file, ulid, part) {
 	return spanLocation(file, line, from, valueLength(lines[line], from));
 }
 
-function translationTargets(index, scope, ulid, { langs = index.langs, part = 'key' } = {}) {
+function translationTargets(
+	index,
+	scope,
+	ulid,
+	{ langs = displayFirst(index), part = 'key' } = {},
+) {
 	return langs
 		.map((lang) => jsonLocation(index.translation(scope.name, ulid, lang).file, ulid, part))
 		.filter((target) => null !== target);
@@ -106,7 +113,7 @@ function translationTargets(index, scope, ulid, { langs = index.langs, part = 'k
 function keyTargets(index, scope, ulid) {
 	const entry = index.entryByUlid(scope.name, ulid);
 	const lines = null === entry ? null : fileLines(scope.keysFile);
-	const line = null === lines ? -1 : lineOf(lines, `${entry.name}:`);
+	const line = null === lines ? -1 : lineOf(lines, entry.ulid);
 
 	if (-1 === line) {
 		return [];
@@ -165,7 +172,7 @@ function langTargets(index, { scope, lang }, line, position) {
 
 	const [, indent, key, middle, value] = match;
 	const ulid = ulidOf(key);
-	const langs = index.langs.filter((entry) => entry !== lang);
+	const langs = displayFirst(index).filter((entry) => entry !== lang);
 
 	return hitAt(position, [
 		{ start: indent.length, length: key.length, resolve: () => keyTargets(index, scope, ulid) },
@@ -229,4 +236,4 @@ function i18nReferenceProvider(index, usages) {
 	});
 }
 
-module.exports = { i18nDefinitionProvider, i18nReferenceProvider };
+module.exports = { i18nDefinitionProvider, i18nReferenceProvider, jsonLocation, keyTargets };

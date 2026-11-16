@@ -1,42 +1,29 @@
 const vscode = require('vscode');
 
-const { STATUSES, buildStatus } = require('./status-data');
+const { buildStatus } = require('./status-data');
+const { filterStatus, messageOf } = require('./status-filter');
 const items = require('./status-items');
+const { childrenOf, folded, isSection, rootNodes, segmentOf } = require('./status-nodes');
 const { locate } = require('./util');
 
 const VIEW = 'translocoUlidI18n.status';
-const SECTIONS = ['languages', 'scopes', 'checks', 'about'];
+const FILTERING = 'translocoUlidI18n.filtering';
+const OPENED = 'translocoUlidI18n.opened';
+const { Expanded } = vscode.TreeItemCollapsibleState;
 
-const CHILDREN = {
-	languages: ({ snapshot }) =>
-		snapshot.languages.map((language) => ({ kind: 'language', language, scope: null })),
-	scopes: ({ snapshot }) => snapshot.scopes.map((scope) => ({ kind: 'scope', scope })),
-	scope: ({ scope }) =>
-		scope.languages.map((language) => ({ kind: 'language', language, scope: scope.name })),
-	language: ({ language, scope }) =>
-		STATUSES.filter((status) => 0 !== language.keys[status].length).map((status) => ({
-			kind: 'status',
-			status,
-			language,
-			scope,
-		})),
-	status: ({ status, language }) => language.keys[status].map((row) => ({ kind: 'key', row })),
-	checks: ({ snapshot }) => snapshot.checks.map((group) => ({ kind: 'check', group })),
-	check: ({ group }) => group.items.map((finding) => ({ kind: 'finding', finding })),
-};
-
-function rootNodes(snapshot) {
-	if (undefined !== snapshot.error) {
-		return [{ kind: 'error', message: snapshot.error }];
-	}
-
-	return SECTIONS.map((kind) => ({ kind, snapshot }));
-}
+const setContext = (key, value) => void vscode.commands.executeCommand('setContext', key, value);
 
 class StatusView {
 	constructor(index) {
 		this.index = index;
 		this.snapshot = null;
+		this.view = null;
+		this.filter = '';
+		this.fold = 'default';
+		this.generation = 0;
+		this.seen = new Set();
+		this.open = new Set();
+		this.opened = null;
 		this.changed = new vscode.EventEmitter();
 		this.onDidChangeTreeData = this.changed.event;
 	}
@@ -45,13 +32,54 @@ class StatusView {
 		this.changed.dispose();
 	}
 
+	attach(view) {
+		this.view = view;
+		view.onDidExpandElement(({ element }) => this.toggled(element, true));
+		view.onDidCollapseElement(({ element }) => this.toggled(element, false));
+
+		return view;
+	}
+
 	refresh() {
 		this.snapshot = null;
 		this.changed.fire(undefined);
 	}
 
+	setFold(fold) {
+		this.fold = fold;
+		this.regenerate();
+		this.changed.fire(undefined);
+	}
+
+	setFilter(value) {
+		const filter = value.trim();
+
+		if (filter !== this.filter) {
+			this.filter = filter;
+			this.fold = '' === filter ? 'default' : 'expanded';
+			this.regenerate();
+			this.snapshot = null;
+			setContext(FILTERING, '' !== filter);
+			this.changed.fire(undefined);
+		}
+
+		return this.current().filter;
+	}
+
+	regenerate() {
+		this.generation += 1;
+		this.seen.clear();
+		this.open.clear();
+	}
+
 	current() {
-		this.snapshot = this.snapshot ?? this.build();
+		if (null === this.snapshot) {
+			this.snapshot = this.build();
+
+			if (null !== this.view) {
+				this.view.message = messageOf(this.snapshot.filter);
+			}
+		}
 
 		return this.snapshot;
 	}
@@ -62,18 +90,64 @@ class StatusView {
 		}
 
 		try {
-			return buildStatus(this.index);
+			const snapshot = buildStatus(this.index);
+
+			return '' === this.filter ? snapshot : filterStatus(snapshot, this.index, this.filter);
 		} catch (error) {
 			return { error: error instanceof Error ? error.message : String(error) };
 		}
 	}
 
 	getChildren(node) {
-		return undefined === node ? rootNodes(this.current()) : (CHILDREN[node.kind]?.(node) ?? []);
+		const children = undefined === node ? rootNodes(this.current()) : childrenOf(node);
+		const parent = node?.path ?? `g${this.generation}`;
+		const placed = children.map((child, position) => ({
+			...child,
+			path: `${parent}/${segmentOf(child, position)}`,
+		}));
+
+		if (undefined === node) {
+			this.prune(new Set(placed.map(({ path }) => path)));
+		}
+
+		return placed;
 	}
 
 	getTreeItem(node) {
-		return items[node.kind](node, this.index);
+		const item = folded(this.fold, items[node.kind](node, this.index), node);
+
+		item.id = node.path;
+
+		if (isSection(node) && !this.seen.has(node.path)) {
+			this.seen.add(node.path);
+			this.toggled(node, Expanded === item.collapsibleState);
+		}
+
+		return item;
+	}
+
+	prune(paths) {
+		for (const tracked of [this.seen, this.open]) {
+			[...tracked].filter((path) => !paths.has(path)).forEach((path) => tracked.delete(path));
+		}
+
+		this.publishOpened();
+	}
+
+	toggled(node, expanded) {
+		if (isSection(node)) {
+			this.open[expanded ? 'add' : 'delete'](node.path);
+			this.publishOpened();
+		}
+	}
+
+	publishOpened() {
+		const opened = 0 !== this.open.size;
+
+		if (opened !== this.opened) {
+			this.opened = opened;
+			setContext(OPENED, opened);
+		}
 	}
 }
 

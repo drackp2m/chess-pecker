@@ -60,6 +60,14 @@ function usageDisplay(document, usage, pipe) {
 	return { range, mode: collapses ? 'collapse' : 'ghost' };
 }
 
+const count = (value, word) => `${value} ${word}${1 === value ? '' : 's'}`;
+
+function displayFirst({ langs, displayLang }) {
+	return langs.includes(displayLang)
+		? [displayLang, ...langs.filter((lang) => lang !== displayLang)]
+		: langs;
+}
+
 function shorten(text, max) {
 	const flat = String(text).replace(/\s+/g, ' ').trim();
 
@@ -80,4 +88,13 @@ function usageRange(document, usage) {
 	return new vscode.Range(document.positionAt(usage.start), document.positionAt(usage.end));
 }
 
-module.exports = { SELECTOR, locate, shorten, usageAt, usageDisplay, usageRange };
+module.exports = {
+	SELECTOR,
+	count,
+	displayFirst,
+	locate,
+	shorten,
+	usageAt,
+	usageDisplay,
+	usageRange,
+};

@@ -8,7 +8,9 @@ const { Findings } = require('./findings');
 const { i18nDefinitionProvider, i18nReferenceProvider } = require('./navigation');
 const { fail, report } = require('./output');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
+const { searchKeys } = require('./search');
 const { ensureTemplateSetup } = require('./setup');
+const { askFilter } = require('./status-filter');
 const { STATUS_VIEW, StatusView, openKey } = require('./status-view');
 const { exportPending, exportTranslations, importTranslations } = require('./transfer');
 const { UsageIndex } = require('./usages');
@@ -106,9 +108,14 @@ function watchEditors(annotations) {
 }
 
 function commandTable(state) {
-	const { index, annotations } = state;
+	const { index, annotations, status } = state;
 
 	return {
+		filter: () => askFilter(status),
+		clearFilter: async () => void status.setFilter(''),
+		collapseAll: async () => status.setFold('collapsed'),
+		expandAll: async () => status.setFold('expanded'),
+		search: () => searchKeys(index),
 		createKey: () => createKey(index, annotations),
 		reload: () => reload(state, true),
 		toggleInlineText: () => toggleInlineText(annotations),
@@ -149,7 +156,7 @@ async function toggleInlineText(annotations) {
 function showStatus({ status, findings, annotations }) {
 	return [
 		status,
-		vscode.window.createTreeView(STATUS_VIEW, { treeDataProvider: status, showCollapseAll: true }),
+		status.attach(vscode.window.createTreeView(STATUS_VIEW, { treeDataProvider: status })),
 		findings.onDidChange(() => {
 			status.refresh();
 			annotations.refreshAll();

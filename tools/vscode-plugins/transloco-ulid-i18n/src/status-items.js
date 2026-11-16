@@ -2,11 +2,19 @@ const path = require('node:path');
 
 const vscode = require('vscode');
 
-const { SEVERITIES, STATUSES, pendingOf, percentOf, progressOf } = require('./status-data');
+const {
+	SEVERITIES,
+	STATUSES,
+	mergedKeys,
+	pendingOf,
+	percentOf,
+	progressOf,
+} = require('./status-data');
 const { ringIcon } = require('./status-icon');
-const { shorten } = require('./util');
+const { count, shorten } = require('./util');
 
 const SOURCE_PREVIEW = 50;
+const TEXT_PREVIEW = 70;
 const MESSAGE_PREVIEW = 80;
 const { Collapsed, Expanded, None } = vscode.TreeItemCollapsibleState;
 
@@ -28,8 +36,6 @@ const SEVERITY_LOOK = {
 	warning: { word: 'warning', icon: themed('warning', 'problemsWarningIcon.foreground') },
 	info: { word: 'note', icon: themed('info', 'problemsInfoIcon.foreground') },
 };
-
-const count = (value, word) => `${value} ${word}${1 === value ? '' : 's'}`;
 
 function openCommand(file, line, col) {
 	const position = new vscode.Position(Math.max((line ?? 1) - 1, 0), Math.max((col ?? 1) - 1, 0));
@@ -77,7 +83,8 @@ function languageItem({ language, scope }) {
 	item.description = describe(progress);
 	item.iconPath = ringIcon(progress);
 	item.tooltip = languageTooltip(language, scope, progress);
-	item.contextValue = 0 === pendingOf(language.keys) ? 'language' : 'languagePending';
+	item.contextValue =
+		0 === (language.pending ?? pendingOf(language.keys)) ? 'language' : 'languagePending';
 
 	return item;
 }
@@ -116,10 +123,50 @@ function keyItem({ row }, index) {
 }
 
 function scopeItem({ scope }) {
+	const progress = progressOf(mergedKeys(scope.languages));
+	const item = new vscode.TreeItem(scope.name, Collapsed);
+	const share = 0 === progress.total ? [] : [describe(progress)];
+	const langs = count(scope.languages.length, 'target language');
+
+	item.description = [...share, count(scope.keys, 'key')].join(' · ');
+	item.tooltip = `${count(scope.keys, 'key')} in ${langs}`;
+	item.iconPath = themed('symbol-namespace');
+
+	return item;
+}
+
+function sourceItem({ snapshot }) {
+	const item = new vscode.TreeItem('Source', Collapsed);
+
+	item.description = `${snapshot.source} · ${count(snapshot.keys, 'key')}`;
+	item.tooltip = `Every key with its text in ${snapshot.source}, the source language`;
+	item.iconPath = themed('book');
+
+	return item;
+}
+
+function sourceScopeItem({ scope }) {
 	const item = new vscode.TreeItem(scope.name, Collapsed);
 
-	item.description = count(scope.keys, 'key');
+	item.description = count(scope.entries.length, 'key');
 	item.iconPath = themed('symbol-namespace');
+
+	return item;
+}
+
+function sourceKeyItem({ entry, lang }, index) {
+	const item = new vscode.TreeItem(entry.name, None);
+	const text = String(index.translation(entry.scope, entry.ulid, lang).text ?? '').trim();
+	const label = `\`${entry.scope}.${entry.name}\` · ${entry.ulid}`;
+	const shown = '' === text ? '(empty)' : text;
+
+	item.description = shorten(shown, TEXT_PREVIEW);
+	item.tooltip = new vscode.MarkdownString(`${label}\n\n`).appendText(shown);
+	item.command = {
+		command: 'translocoUlidI18n.openKey',
+		title: 'Open',
+		arguments: [{ ...entry, lang }],
+	};
 
 	return item;
 }
@@ -183,8 +230,7 @@ function findingItem({ finding }, index) {
 	const where = path.relative(index.root, file);
 
 	item.description = Number.isInteger(finding.line) ? `${where}:${finding.line}` : where;
-	item.tooltip =
-		'string' === typeof finding.lang ? `${finding.message} [${finding.lang}]` : finding.message;
+	item.tooltip = finding.message;
 	item.command = openCommand(file, finding.line, finding.col);
 
 	return item;
@@ -226,5 +272,8 @@ module.exports = {
 	languages: languagesItem,
 	scope: scopeItem,
 	scopes: scopesItem,
+	source: sourceItem,
+	sourceKey: sourceKeyItem,
+	sourceScope: sourceScopeItem,
 	status: statusItem,
 };

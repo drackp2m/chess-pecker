@@ -22,6 +22,36 @@
 	"contributes": {
 		"commands": [
 			{
+				"command": "translocoUlidI18n.filter",
+				"title": "Filter keys and checks",
+				"category": "i18n",
+				"icon": "$(filter)"
+			},
+			{
+				"command": "translocoUlidI18n.clearFilter",
+				"title": "Clear the filter",
+				"category": "i18n",
+				"icon": "$(clear-all)"
+			},
+			{
+				"command": "translocoUlidI18n.collapseAll",
+				"title": "Collapse all",
+				"category": "i18n",
+				"icon": "$(collapse-all)"
+			},
+			{
+				"command": "translocoUlidI18n.expandAll",
+				"title": "Expand all",
+				"category": "i18n",
+				"icon": "$(expand-all)"
+			},
+			{
+				"command": "translocoUlidI18n.search",
+				"title": "Search translation keys",
+				"category": "i18n",
+				"icon": "$(search)"
+			},
+			{
 				"command": "translocoUlidI18n.createKey",
 				"title": "Create translation key",
 				"category": "i18n",
@@ -75,31 +105,56 @@
 			"translocoUlidI18n": [
 				{
 					"id": "translocoUlidI18n.status",
-					"name": "Status"
+					"name": "Transloco ULID"
 				}
 			]
 		},
 		"menus": {
 			"view/title": [
 				{
-					"command": "translocoUlidI18n.createKey",
+					"command": "translocoUlidI18n.filter",
 					"when": "view == translocoUlidI18n.status",
+					"group": "navigation@0"
+				},
+				{
+					"command": "translocoUlidI18n.clearFilter",
+					"when": "view == translocoUlidI18n.status && translocoUlidI18n.filtering",
 					"group": "navigation@1"
 				},
 				{
-					"command": "translocoUlidI18n.exportTranslations",
+					"command": "translocoUlidI18n.search",
 					"when": "view == translocoUlidI18n.status",
 					"group": "navigation@2"
 				},
 				{
+					"command": "translocoUlidI18n.collapseAll",
+					"when": "view == translocoUlidI18n.status && translocoUlidI18n.opened",
+					"group": "navigation@3"
+				},
+				{
+					"command": "translocoUlidI18n.expandAll",
+					"when": "view == translocoUlidI18n.status && !translocoUlidI18n.opened",
+					"group": "navigation@3"
+				},
+				{
+					"command": "translocoUlidI18n.createKey",
+					"when": "view == translocoUlidI18n.status",
+					"group": "1_keys@1"
+				},
+				{
+					"command": "translocoUlidI18n.exportTranslations",
+					"when": "view == translocoUlidI18n.status",
+					"group": "2_transfer@1"
+				},
+				{
 					"command": "translocoUlidI18n.importTranslations",
 					"when": "view == translocoUlidI18n.status",
-					"group": "navigation@3"
+					"group": "2_transfer@2"
 				},
 				{
 					"command": "translocoUlidI18n.reload",
 					"when": "view == translocoUlidI18n.status",
-					"group": "navigation@4"
+					"group": "3_index@1"
 				}
 			],
 			"view/item/context": [
@@ -116,6 +171,18 @@
 			],
 			"commandPalette": [
 				{
+					"command": "translocoUlidI18n.clearFilter",
+					"when": "translocoUlidI18n.filtering"
+				},
+				{
+					"command": "translocoUlidI18n.collapseAll",
+					"when": "false"
+				},
+				{
+					"command": "translocoUlidI18n.expandAll",
+					"when": "false"
+				},
+				{
 					"command": "translocoUlidI18n.exportPending",
 					"when": "false"
 				},
@@ -125,6 +192,14 @@
 				}
 			]
 		},
+		"keybindings": [
+			{
+				"command": "translocoUlidI18n.filter",
+				"key": "ctrl+f",
+				"mac": "cmd+f",
+				"when": "focusedView == translocoUlidI18n.status"
+			}
+		],
 		"configurationDefaults": {
 			"[html]": {
 				"editor.suggest.showWords": false
