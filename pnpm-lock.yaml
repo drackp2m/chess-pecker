@@ -167,8 +167,8 @@ importers:
   .:
     devDependencies:
       '@drackp2m/transloco-ulid-cli':
-        specifier: 0.4.0
-        version: 0.4.0(typescript@6.0.3)
+        specifier: 0.4.1
+        version: 0.4.1(typescript@6.0.3)
       '@eslint/js':
         specifier: 10.0.1
         version: 10.0.1(eslint@10.9.1(jiti@2.6.1)(supports-color@10.2.2))
@@ -1012,8 +1012,8 @@ packages:
     peerDependencies:
       postcss-selector-parser: ^7.1.1
 
-  '@drackp2m/transloco-ulid-cli@0.4.0':
-    resolution: {integrity: sha512-PvFM+obWJFefmUIhuzoI5cE1YX9k8xyPX8ebirCwd5cTzvYtG+5AhVYy4EYO2faQS66fkk9bh99Oq1UHq4rpCw==}
+  '@drackp2m/transloco-ulid-cli@0.4.1':
+    resolution: {integrity: sha512-hxDXB38S2BFBnsghB4mOZJzYaSnDglQGpzurdS8CRu7Nh6OfrRkKOlrA/EXOXUGUMUo4oLmTHueeUTAVODnwEw==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
@@ -8416,7 +8416,7 @@ snapshots:
     dependencies:
       postcss-selector-parser: 7.1.5
 
-  '@drackp2m/transloco-ulid-cli@0.4.0(typescript@6.0.3)':
+  '@drackp2m/transloco-ulid-cli@0.4.1(typescript@6.0.3)':
     dependencies:
       '@messageformat/parser': 5.1.1
       typescript: 6.0.3
