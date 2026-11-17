@@ -268,7 +268,13 @@
 			"term": "marcador",
 			"group": "contenido",
 			"note": "la lista en la que el jugador guarda un ejercicio ya terminado, y el icono que lo hace; sólo una lista por ejercicio. Nunca el marcador de una partida ni un rotulador",
-			"translations": {}
+			"translations": {
+				"en-GB": "bookmark",
+				"ru-RU": "закладка",
+				"hi-IN": "बुकमार्क",
+				"fr-FR": "signet",
+				"ca-ES": "marcador"
+			}
 		},
 		{
 			"term": "jugada",
@@ -519,11 +525,11 @@
 			"group": "social",
 			"note": "un ejercicio ya terminado que se manda a uno o varios amigos para que lo resuelvan y comparar después los resultados. Nunca «desafío» ni «duelo»",
 			"translations": {
-				"en-GB": "",
-				"ru-RU": "",
-				"hi-IN": "",
-				"fr-FR": "",
-				"ca-ES": ""
+				"en-GB": "challenge",
+				"ru-RU": "вызов",
+				"hi-IN": "चुनौती",
+				"fr-FR": "défi",
+				"ca-ES": "repte"
 			}
 		}
 	],
