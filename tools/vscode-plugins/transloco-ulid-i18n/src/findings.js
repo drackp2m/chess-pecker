@@ -1,3 +1,5 @@
+const { readFileSync } = require('node:fs');
+
 const vscode = require('vscode');
 
 const { report } = require('./output');
@@ -7,6 +9,7 @@ const LINE_END = Number.MAX_SAFE_INTEGER;
 const RELATED_LIMIT = 6;
 const SOURCE_LANGUAGES = new Set(['typescript', 'html']);
 const PROJECTED_GROUPS = new Set(['pending', 'message']);
+const FADED_TYPES = new Set(['unused-key']);
 
 const SEVERITIES = {
 	error: vscode.DiagnosticSeverity.Error,
@@ -103,6 +106,36 @@ function projectedOn(range, usage, findings) {
 	});
 }
 
+function linesOf(file) {
+	const open = vscode.workspace.textDocuments.find(
+		(document) => 'file' === document.uri.scheme && file === document.uri.fsPath,
+	);
+
+	try {
+		return (open?.getText() ?? readFileSync(file, 'utf8')).split('\n');
+	} catch {
+		return [];
+	}
+}
+
+function entryRange(lines, ulid) {
+	const needle = `"${ulid}"`;
+	const line = lines.findIndex((content) => content.includes(needle));
+
+	return -1 === line ? null : new vscode.Range(line, lines[line].indexOf(needle), line, LINE_END);
+}
+
+function fadedOn(range, finding) {
+	const diagnostic = new vscode.Diagnostic(range, finding.message, vscode.DiagnosticSeverity.Hint);
+
+	diagnostic.code = finding.type;
+	diagnostic.source = 'i18n';
+	diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
+	diagnostic.relatedInformation = relatedOf([finding]);
+
+	return diagnostic;
+}
+
 const isSource = (document) =>
 	'file' === document.uri.scheme && SOURCE_LANGUAGES.has(document.languageId);
 
@@ -178,7 +211,7 @@ class Findings {
 			add(finding.file, diagnosticOf(range, finding.message, finding));
 		}
 
-		for (const { file, diagnostic } of this.projected(open)) {
+		for (const { file, diagnostic } of [...this.projected(open), ...this.faded()]) {
 			add(file, diagnostic);
 		}
 
@@ -210,6 +243,29 @@ class Findings {
 					diagnostic,
 				})),
 			);
+	}
+
+	translationFiles(scopeName) {
+		const translations = this.index.scopes.get(scopeName)?.translations.values() ?? [];
+
+		return [...translations].map(({ file }) => file);
+	}
+
+	faded() {
+		const read = new Map();
+		const lines = (file) => read.get(file) ?? read.set(file, linesOf(file)).get(file);
+
+		return this.items
+			.filter(({ type, ulid }) => FADED_TYPES.has(type) && null !== ulid)
+			.flatMap((finding) =>
+				this.translationFiles(finding.scope).map((file) => ({
+					file,
+					range: entryRange(lines(file), finding.ulid),
+					finding,
+				})),
+			)
+			.filter(({ range }) => null !== range)
+			.map(({ file, range, finding }) => ({ file, diagnostic: fadedOn(range, finding) }));
 	}
 }
 

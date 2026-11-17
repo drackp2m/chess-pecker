@@ -81,6 +81,10 @@ sub-state prefix and the language of the export notes come from.
   missing or outdated. It is the same finding, pointing back at the line of the file that can fix
   it, and several languages with the same problem are one diagnostic that lists them. Only here
   does a diagnostic name its language, `[en-GB]`: in an i18n file the file name already says it.
+- **Dead entries** — a key nobody uses (`unused-key`) is one warning, on its line of `keys.ts`. Its
+  entry in every `<lang>.json` is only greyed out, as unused code is: a hint that stays out of the
+  Problems panel and links back to the key. So a usage broken by a refactor is one problem to fix,
+  and a key that is really dead shows as such in every file that still carries its text.
 - **Unsaved editors count** — the analysis reads every dirty editor in place of the file on disk,
   whatever it is: a `<lang>.json`, `keys.ts`, a template, a context file. It runs again a moment
   after you stop typing, walking the sources only when a `.ts` or `.html` changed.
