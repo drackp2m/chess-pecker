@@ -3,8 +3,6 @@ const path = require('node:path');
 
 const vscode = require('vscode');
 
-const { displayFirst } = require('./util');
-
 const I18N_SELECTOR = [
 	{ scheme: 'file', language: 'typescript' },
 	{ scheme: 'file', language: 'json' },
@@ -103,7 +101,7 @@ function translationTargets(
 	index,
 	scope,
 	ulid,
-	{ langs = displayFirst(index), part = 'key' } = {},
+	{ langs = [index.displayLang], part = 'key' } = {},
 ) {
 	return langs
 		.map((lang) => jsonLocation(index.translation(scope.name, ulid, lang).file, ulid, part))
@@ -172,7 +170,7 @@ function langTargets(index, { scope, lang }, line, position) {
 
 	const [, indent, key, middle, value] = match;
 	const ulid = ulidOf(key);
-	const langs = displayFirst(index).filter((entry) => entry !== lang);
+	const langs = index.langs.filter((entry) => entry !== lang);
 
 	return hitAt(position, [
 		{ start: indent.length, length: key.length, resolve: () => keyTargets(index, scope, ulid) },

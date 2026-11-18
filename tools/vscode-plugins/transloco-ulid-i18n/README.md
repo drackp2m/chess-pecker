@@ -40,17 +40,16 @@ sub-state prefix and the language of the export notes come from.
   generated `<scope>/params.ts`, and the raw `scope.ULID` value.
 - **Go to definition** — `ctrl+click` a key to jump to its line in each `<lang>.json`. The jump to
   `keys.ts` is not listed: TypeScript and the Angular language service already resolve the property
-  themselves, and listing it again only put the same line in the peek twice. The `displayLang`
-  entry is handed over first, here and in the jumps below, which makes it the primary result for
-  `editor.gotoLocation.multipleDefinitions`; the peek list itself is sorted by VS Code, by file path.
+  themselves, and listing it again only put the same line in the peek twice. Which entry the peek
+  opens on is VS Code's choice, not the order the targets are handed over in.
 - **Navigation inside the i18n files** — the same `ctrl+click` keeps working once you are there, so
   every file of a scope is one hop from the others:
 
   | File          | Clicking on…                   | Goes to                              |
   | ------------- | ------------------------------ | ------------------------------------ |
   | `keys.ts`     | the name (`LOG_OUT`)           | every `.ts` / `.html` that uses it   |
-  | `keys.ts`     | the value (`'scope.ULID'`)     | that ULID in each `<lang>.json`      |
-  | `params.ts`   | the entry key (`'scope.ULID'`) | that ULID in each `<lang>.json`      |
+  | `keys.ts`     | the value (`'scope.ULID'`)     | that ULID in the `displayLang` file  |
+  | `params.ts`   | the entry key (`'scope.ULID'`) | that ULID in the `displayLang` file  |
   | `<lang>.json` | the ULID                       | its line in `keys.ts`                |
   | `<lang>.json` | the text                       | the same text in the other languages |
 
