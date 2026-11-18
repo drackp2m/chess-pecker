@@ -5,6 +5,7 @@ const vscode = require('vscode');
 const {
 	SEVERITIES,
 	STATUSES,
+	UNUSED,
 	mergedKeys,
 	pendingOf,
 	percentOf,
@@ -40,6 +41,11 @@ const STATUS_LOOK = {
 		icon: themed('question', 'descriptionForeground'),
 	},
 	fresh: { label: 'Up to date', tint: '#73c991', icon: themed('pass', 'testing.iconPassed') },
+	unused: {
+		label: 'Unused',
+		tint: '#8c8c8c',
+		icon: themed('circle-slash', 'disabledForeground'),
+	},
 };
 
 const SEVERITY_LOOK = {
@@ -92,8 +98,10 @@ function languageTooltip(language, scope, progress) {
 		statusLine(status, language.keys[status].length),
 	);
 	const header = `**${language.lang}**${where} · ${count(progress.total, 'key')}`;
+	const unused = language.keys[UNUSED]?.length ?? 0;
+	const aside = 0 === unused ? [] : [`${statusLine(UNUSED, unused)}, not counted`];
 
-	return markdown([header, shareOf(progress), lines.join('  \n')]);
+	return markdown([header, shareOf(progress), [...lines, ...aside].join('  \n')]);
 }
 
 function languageItem({ language, scope }) {
@@ -109,12 +117,20 @@ function languageItem({ language, scope }) {
 	return item;
 }
 
+function statusContext(status) {
+	if (UNUSED === status) {
+		return 'statusUnused';
+	}
+
+	return isSealable({ status }) ? 'statusSealable' : 'status';
+}
+
 function statusItem({ status, language }) {
 	const item = new vscode.TreeItem(STATUS_LOOK[status].label, Collapsed);
 
 	item.description = String(language.keys[status].length);
 	item.iconPath = STATUS_LOOK[status].icon;
-	item.contextValue = isSealable({ status }) ? 'statusSealable' : 'status';
+	item.contextValue = statusContext(status);
 
 	return item;
 }
@@ -150,7 +166,7 @@ function scopeItem({ scope }) {
 	const langs = count(scope.languages.length, 'target language');
 	const header = `**${scope.name}** · ${count(scope.keys, 'key')} in ${langs}`;
 
-	item.description = count(scope.keys, 'key');
+	item.description = [count(scope.keys, 'key'), ...unusedPart(scope.unused)].join(' · ');
 	item.tooltip = markdown(0 === progress.total ? [header] : [header, shareOf(progress)]);
 	item.iconPath = ringIcon(progress);
 	item.contextValue = 0 === rowsOf({ kind: 'scope', scope }).length ? 'scope' : 'scopeSealable';
@@ -160,15 +176,21 @@ function scopeItem({ scope }) {
 
 const troubled = (total) => (0 === total ? [] : [`${total} with problems`]);
 
+const unusedPart = (total) => (0 === total || undefined === total ? [] : [`${total} unused`]);
+
 function sourceItem({ snapshot }) {
 	const item = new vscode.TreeItem('Source', Collapsed);
 	const problems = snapshot.scopes.reduce((sum, scope) => sum + withProblems(scope.entries), 0);
 
-	item.description = [snapshot.source, count(snapshot.keys, 'key'), ...troubled(problems)].join(
-		' · ',
-	);
+	item.description = [
+		snapshot.source,
+		count(snapshot.keys, 'key'),
+		...troubled(problems),
+		...unusedPart(snapshot.unused),
+	].join(' · ');
 	item.tooltip = `Every key with its text in ${snapshot.source}, the source language`;
 	item.iconPath = themed('book');
+	item.contextValue = 0 === (snapshot.unused ?? 0) ? 'source' : 'sourceUnused';
 
 	return item;
 }
@@ -176,8 +198,11 @@ function sourceItem({ snapshot }) {
 function sourceScopeItem({ scope }) {
 	const item = new vscode.TreeItem(scope.name, Collapsed);
 
-	item.description = troubled(withProblems(scope.entries)).join('');
+	item.description = [...troubled(withProblems(scope.entries)), ...unusedPart(scope.unused)].join(
+		' · ',
+	);
 	item.iconPath = themed('symbol-namespace');
+	item.contextValue = 0 === (scope.unused ?? 0) ? 'sourceScope' : 'sourceScopeUnused';
 
 	return item;
 }

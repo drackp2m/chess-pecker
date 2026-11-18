@@ -11,6 +11,7 @@ const FILTERING = 'translocoUlidI18n.filtering';
 const OPENED = 'translocoUlidI18n.opened';
 const PENDING_ONLY = 'translocoUlidI18n.pendingOnly';
 const FAILED = 'translocoUlidI18n.failed';
+const HAS_UNUSED = 'translocoUlidI18n.hasUnused';
 const { Expanded } = vscode.TreeItemCollapsibleState;
 
 const setContext = (key, value) => void vscode.commands.executeCommand('setContext', key, value);
@@ -87,6 +88,7 @@ class StatusView {
 		if (null === this.snapshot) {
 			this.snapshot = this.build();
 			setContext(FAILED, undefined !== this.snapshot.error);
+			setContext(HAS_UNUSED, 0 !== (this.snapshot.unused ?? 0));
 
 			if (null !== this.view) {
 				this.view.message = messageOf(this.snapshot);

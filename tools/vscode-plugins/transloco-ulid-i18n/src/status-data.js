@@ -1,8 +1,10 @@
 const STATUSES = ['missing', 'stale', 'unknown', 'fresh'];
+const UNUSED = 'unused';
+const SHOWN = [...STATUSES, UNUSED];
 const PENDING = ['missing', 'stale'];
 const SEVERITIES = ['error', 'warning', 'info'];
 
-const emptyKeys = () => Object.fromEntries(STATUSES.map((status) => [status, []]));
+const emptyKeys = () => Object.fromEntries(SHOWN.map((status) => [status, []]));
 
 const percentOf = (part, total) => (0 === total ? 0 : Math.floor((part * 100) / total));
 
@@ -18,14 +20,23 @@ const withProblems = (entries) => entries.filter((entry) => 0 !== entry.problems
 
 const mergedKeys = (languages) =>
 	Object.fromEntries(
-		STATUSES.map((status) => [status, languages.flatMap((language) => language.keys[status])]),
+		SHOWN.map((status) => [status, languages.flatMap((language) => language.keys[status] ?? [])]),
 	);
 
-function languagesOf(targets, rows) {
+const unusedOf = (findings) =>
+	new Set(
+		findings
+			.filter(({ type, ulid }) => 'unused-key' === type && null !== ulid)
+			.map(({ scope, ulid }) => `${scope}.${ulid}`),
+	);
+
+function languagesOf(targets, rows, unused) {
 	const byLang = new Map(targets.map((lang) => [lang, { lang, keys: emptyKeys() }]));
 
 	for (const row of rows) {
-		byLang.get(row.lang)?.keys[row.status]?.push(row);
+		const status = unused.has(`${row.scope}.${row.ulid}`) ? UNUSED : row.status;
+
+		byLang.get(row.lang)?.keys[status]?.push(row);
 	}
 
 	return [...byLang.values()];
@@ -53,7 +64,7 @@ function sourceProblems(index) {
 	return byKey;
 }
 
-function scopeOf(scope, { index, targets, problems }) {
+function scopeOf(scope, { index, targets, problems, unused }) {
 	const rows = index.analysis.freshness.filter((row) => row.scope === scope.name);
 	const entries = scope.keys.entries
 		.filter((entry) => index.api.isUlid(entry.ulid))
@@ -69,7 +80,8 @@ function scopeOf(scope, { index, targets, problems }) {
 		keys: entries.length,
 		entries,
 		rows,
-		languages: languagesOf(targets, rows),
+		languages: languagesOf(targets, rows, unused),
+		unused: entries.filter((entry) => unused.has(`${scope.name}.${entry.ulid}`)).length,
 	};
 }
 
@@ -90,14 +102,16 @@ function checksOf(items) {
 function buildStatus(index) {
 	const targets = index.langs.filter((lang) => lang !== index.defaultLang);
 	const problems = sourceProblems(index);
+	const unused = unusedOf(index.analysis.findings);
 	const scopes = index.rawScopes
 		.filter((scope) => scope.keys)
-		.map((scope) => scopeOf(scope, { index, targets, problems }));
+		.map((scope) => scopeOf(scope, { index, targets, problems, unused }));
 
 	return {
 		source: index.defaultLang,
 		keys: scopes.reduce((sum, scope) => sum + scope.keys, 0),
-		languages: languagesOf(targets, index.analysis.freshness),
+		unused: scopes.reduce((sum, scope) => sum + scope.unused, 0),
+		languages: languagesOf(targets, index.analysis.freshness, unused),
 		scopes,
 		checks: checksOf(index.analysis.findings),
 		cliVersion: index.api.CLI_VERSION,
@@ -107,7 +121,9 @@ function buildStatus(index) {
 
 module.exports = {
 	PENDING,
+	SHOWN,
 	STATUSES,
+	UNUSED,
 	SEVERITIES,
 	buildStatus,
 	mergedKeys,

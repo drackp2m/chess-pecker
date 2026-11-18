@@ -4,6 +4,7 @@ const path = require('node:path');
 const vscode = require('vscode');
 
 const { reveal } = require('./output');
+const { unusedKeys } = require('./prune');
 const settings = require('./settings');
 const { count } = require('./util');
 
@@ -36,8 +37,10 @@ const FILTERS = [
 	{ label: 'Only outdated', filter: 'stale', description: 'what the source changed under' },
 ];
 
-async function pickFilter() {
-	const picked = await vscode.window.showQuickPick(FILTERS, { title: 'What to export' });
+async function pickFilter(index) {
+	const unused = unusedKeys(index).length;
+	const aside = 0 === unused ? '' : ` (${count(unused, 'unused key')} left out)`;
+	const picked = await vscode.window.showQuickPick(FILTERS, { title: `What to export${aside}` });
 
 	return picked?.filter ?? null;
 }
@@ -61,6 +64,7 @@ function buildExports(index, langs, { filter, only, unused }) {
 		...project,
 		scopes: analysis.scopes,
 		usages: analysis.sources.usages,
+		commented: analysis.sources.commented,
 		filter,
 		unused,
 		...(null === only ? {} : { only: [only] }),
@@ -92,7 +96,7 @@ async function exportTranslations(index) {
 		return;
 	}
 
-	const filter = await pickFilter();
+	const filter = await pickFilter(index);
 
 	if (null === filter) {
 		return;

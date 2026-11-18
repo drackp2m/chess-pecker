@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 
 const { folded, matchOf, recordsOf } = require('./search');
-const { PENDING, STATUSES, mergedKeys, pendingOf, progressOf } = require('./status-data');
+const { PENDING, SHOWN, mergedKeys, pendingOf, progressOf } = require('./status-data');
 const { count } = require('./util');
 
 const DEBOUNCE = 150;
@@ -24,7 +24,7 @@ function matchesOf(index, query) {
 function keepKeys(keys, wanted) {
 	const kept = (rows) => rows.filter((row) => wanted.has(keyOf(row.scope, row.ulid)));
 
-	return Object.fromEntries(STATUSES.map((status) => [status, kept(keys[status])]));
+	return Object.fromEntries(SHOWN.map((status) => [status, kept(keys[status] ?? [])]));
 }
 
 function keepLanguages(languages, wanted) {
@@ -34,7 +34,7 @@ function keepLanguages(languages, wanted) {
 			pending: pendingOf(language.keys),
 			keys: keepKeys(language.keys, wanted),
 		}))
-		.filter((language) => STATUSES.some((status) => 0 !== language.keys[status].length));
+		.filter((language) => SHOWN.some((status) => 0 !== language.keys[status].length));
 }
 
 function keepScopes(scopes, { wanted, counts }) {
@@ -78,7 +78,7 @@ function filterStatus(snapshot, index, value) {
 
 function pendingKeys(keys) {
 	return Object.fromEntries(
-		STATUSES.map((status) => [status, PENDING.includes(status) ? keys[status] : []]),
+		SHOWN.map((status) => [status, PENDING.includes(status) ? keys[status] : []]),
 	);
 }
 

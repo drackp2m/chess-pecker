@@ -93,6 +93,11 @@
 				"icon": "$(cloud-download)"
 			},
 			{
+				"command": "translocoUlidI18n.pruneUnused",
+				"title": "Remove unused keys…",
+				"category": "i18n"
+			},
+			{
 				"command": "translocoUlidI18n.exportPending",
 				"title": "Export pending translations",
 				"category": "i18n",
@@ -207,6 +212,11 @@
 					"group": "1_keys@1"
 				},
 				{
+					"command": "translocoUlidI18n.pruneUnused",
+					"when": "view == translocoUlidI18n.status && translocoUlidI18n.hasUnused",
+					"group": "1_keys@2"
+				},
+				{
 					"command": "translocoUlidI18n.exportTranslations",
 					"when": "view == translocoUlidI18n.status",
 					"group": "2_transfer@1"
@@ -257,6 +267,11 @@
 					"command": "translocoUlidI18n.seal",
 					"when": "view == translocoUlidI18n.status && viewItem =~ /Sealable$/",
 					"group": "3_seal@1"
+				},
+				{
+					"command": "translocoUlidI18n.pruneUnused",
+					"when": "view == translocoUlidI18n.status && viewItem =~ /Unused$/",
+					"group": "4_prune@1"
 				}
 			],
 			"commandPalette": [

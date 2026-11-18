@@ -8,6 +8,7 @@ const { Findings } = require('./findings');
 const { i18nDefinitionProvider, i18nReferenceProvider } = require('./navigation');
 const { fail, report, show } = require('./output');
 const { completionProvider, definitionProvider, hoverProvider } = require('./providers');
+const { pruneUnused } = require('./prune');
 const { searchKeys } = require('./search');
 const { ensureTemplateSetup } = require('./setup');
 const actions = require('./status-actions');
@@ -133,6 +134,7 @@ function commandTable(state) {
 		exportTranslations: () => exportTranslations(index),
 		exportPending: (node) => exportPending(index, node),
 		importTranslations: () => importTranslations(index, annotations),
+		pruneUnused: (node) => pruneUnused(index, annotations, node),
 		openKey: (row) => openKey(index, row),
 	};
 }

@@ -1,6 +1,6 @@
 const vscode = require('vscode');
 
-const { STATUSES } = require('./status-data');
+const { SHOWN } = require('./status-data');
 
 const SECTIONS = ['languages', 'scopes', 'source', 'checks', 'about'];
 const OPEN_LIMIT = 20;
@@ -13,7 +13,7 @@ const CHILDREN = {
 	scope: ({ scope }) =>
 		scope.languages.map((language) => ({ kind: 'language', language, scope: scope.name })),
 	language: ({ language, scope }) =>
-		STATUSES.filter((status) => 0 !== language.keys[status].length).map((status) => ({
+		SHOWN.filter((status) => 0 !== (language.keys[status]?.length ?? 0)).map((status) => ({
 			kind: 'status',
 			status,
 			language,

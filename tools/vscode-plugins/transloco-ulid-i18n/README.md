@@ -102,8 +102,12 @@ sub-state prefix and the language of the export notes come from.
   Under each language come the four states `transloco-ulid state` counts, the ones asking for work
   first (untranslated, outdated, never sealed, up to date), and under each state its keys, with the
   source text next to the name; clicking one opens that language's file on the key, or the source
-  language's when the key is not in it yet. **Scopes** repeats the same per scope, each scope with
-  the ring of all its target languages, its number of keys and the percentages in the tooltip.
+  language's when the key is not in it yet. A key nothing uses (`unused-key`; one only a comment
+  mentions is in use) still has its rows, but under a fifth line, **Unused**, after the four states:
+  it counts in none of them, nor in the ring, the pending count or the percentages, which are those
+  of what the export sends by default. The tooltip of the language says how many were left aside.
+  **Scopes** repeats the same per scope, each scope with the ring of all its target languages, its
+  number of keys (and how many are unused) and the percentages in the tooltip.
   **Source** lists every scope and, under it, every key with its text in the source language;
   clicking one opens that file on the key. A key the CLI has something to say about in the source
   language — an unused key, a broken ICU message, a stray plural parameter — takes the icon of its
@@ -123,7 +127,8 @@ sub-state prefix and the language of the export notes come from.
   a toggle that leaves only what is untranslated or outdated (never sealed is not pending: it has a
   translation and nothing says the source moved), search and a button that collapses
   everything while anything is open and opens every branch (and every list of up to 20 rows) once
-  all is collapsed; create key, export, import and reload are in its `…` menu. A language with work
+  all is collapsed; create key, remove unused keys (only while there is one), export, import and
+  reload are in its `…` menu. A language with work
   left has an **Export pending** button that writes its untranslated and outdated strings — every
   one of them, whatever the filter shows, and only that scope's when it is under **Scopes**. The
   view refreshes with the findings, the sealed hashes in `state/` included.
@@ -191,7 +196,17 @@ sub-state prefix and the language of the export notes come from.
   A key nothing uses stays out of the export: the command names the ones it would leave out and
   asks first, **Export them too** or **Leave them out**. Both commands run the same code as
   `transloco-ulid export` / `transloco-ulid import`; the export needs the CLI release that brought
-  `--include-unused` to leave anything out, and sends everything with an older one.
+  `--include-unused` to leave anything out, and sends everything with an older one. The picker of
+  what to export says how many unused keys it leaves out in its title.
+- **Remove unused keys** — `i18n: Remove unused keys…` is `transloco-ulid prune`: it lists the keys
+  nothing uses and asks, **Remove all** or **Select…**, a multi-select with every key ticked to
+  untick the ones to keep; dismissing it removes nothing. Each removed key loses its line in
+  `keys.ts`, every translation, its seals and its `params.ts` entry, the last only when that file
+  was in step before. A key only a comment mentions is kept. Besides the `…` menu, it is in the
+  context menu of the **Unused** lines, of the **Source** section and of a scope under it when they
+  have one — there for that scope only. The menu entry cannot carry the count, since VS Code fixes
+  menu titles in `package.json`: the count is in the description of those rows. It needs the CLI
+  0.5.0 or later and every i18n file saved.
 
 ## Running it
 
