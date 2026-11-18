@@ -1,4 +1,5 @@
 const { readFileSync } = require('node:fs');
+const path = require('node:path');
 
 const vscode = require('vscode');
 
@@ -9,7 +10,8 @@ const LINE_END = Number.MAX_SAFE_INTEGER;
 const RELATED_LIMIT = 6;
 const SOURCE_LANGUAGES = new Set(['typescript', 'html']);
 const PROJECTED_GROUPS = new Set(['pending', 'message']);
-const FADED_TYPES = new Set(['unused-key']);
+const FADED_TYPES = new Set(['unused-key', 'commented-usage']);
+const UNNECESSARY_TYPES = new Set(['orphan-translation']);
 
 const SEVERITIES = {
 	error: vscode.DiagnosticSeverity.Error,
@@ -34,6 +36,10 @@ function diagnosticOf(range, message, finding) {
 
 	diagnostic.code = finding.type;
 	diagnostic.source = 'i18n';
+
+	if (UNNECESSARY_TYPES.has(finding.type)) {
+		diagnostic.tags = [vscode.DiagnosticTag.Unnecessary];
+	}
 
 	return diagnostic;
 }
@@ -118,11 +124,26 @@ function linesOf(file) {
 	}
 }
 
-function entryRange(lines, ulid) {
-	const needle = `"${ulid}"`;
+function blockEnd(lines, line) {
+	if (lines[line].includes('}')) {
+		return line;
+	}
+
+	const end = lines.findIndex((content, at) => at > line && content.trimStart().startsWith('}'));
+
+	return -1 === end ? line : end;
+}
+
+function entryRange(lines, { needle, block }) {
 	const line = lines.findIndex((content) => content.includes(needle));
 
-	return -1 === line ? null : new vscode.Range(line, lines[line].indexOf(needle), line, LINE_END);
+	if (-1 === line) {
+		return null;
+	}
+
+	const start = Math.max(lines[line].search(/\S/), 0);
+
+	return new vscode.Range(line, start, block ? blockEnd(lines, line) : line, LINE_END);
 }
 
 function fadedOn(range, finding) {
@@ -245,10 +266,23 @@ class Findings {
 			);
 	}
 
-	translationFiles(scopeName) {
-		const translations = this.index.scopes.get(scopeName)?.translations.values() ?? [];
+	entriesOf({ scope: scopeName, ulid }) {
+		const scope = this.index.scopes.get(scopeName);
 
-		return [...translations].map(({ file }) => file);
+		if (undefined === scope) {
+			return [];
+		}
+
+		const translations = [...scope.translations.values()].map(({ file }) => ({
+			file,
+			needle: `"${ulid}"`,
+			block: false,
+		}));
+
+		return [
+			...translations,
+			{ file: path.join(scope.dir, 'params.ts'), needle: `.${ulid}'`, block: true },
+		];
 	}
 
 	faded() {
@@ -258,9 +292,9 @@ class Findings {
 		return this.items
 			.filter(({ type, ulid }) => FADED_TYPES.has(type) && null !== ulid)
 			.flatMap((finding) =>
-				this.translationFiles(finding.scope).map((file) => ({
-					file,
-					range: entryRange(lines(file), finding.ulid),
+				this.entriesOf(finding).map((entry) => ({
+					file: entry.file,
+					range: entryRange(lines(entry.file), entry),
 					finding,
 				})),
 			)

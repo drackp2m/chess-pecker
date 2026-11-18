@@ -51,20 +51,38 @@ async function revealed(written, outDir) {
 	}
 }
 
-function writeExports(index, langs, { filter, only, outDir }) {
+const NAMES_SHOWN = 5;
+const INCLUDE_UNUSED = 'Export them too';
+const LEAVE_UNUSED = 'Leave them out';
+
+function buildExports(index, langs, { filter, only, unused }) {
 	const { api, project, analysis } = index;
 	const base = {
 		...project,
 		scopes: analysis.scopes,
 		usages: analysis.sources.usages,
 		filter,
+		unused,
 		...(null === only ? {} : { only: [only] }),
 	};
 
-	return langs
-		.map((lang) => api.buildExport({ ...base, lang }))
-		.filter((document) => 0 !== document.total)
-		.map((document) => api.writeExport(document, outDir).file);
+	return langs.map((lang) => api.buildExport({ ...base, lang }));
+}
+
+function unusedOf(documents) {
+	const names = documents.flatMap(({ unused = [] }) =>
+		unused.map(({ scope, key }) => `${scope}.${key}`),
+	);
+
+	return [...new Set(names)];
+}
+
+async function askUnused(names) {
+	const shown = names.slice(0, NAMES_SHOWN).join(', ');
+	const more = names.length > NAMES_SHOWN ? ` and ${names.length - NAMES_SHOWN} more` : '';
+	const message = `i18n: ${count(names.length, 'key')} nobody uses left out: ${shown}${more}`;
+
+	return vscode.window.showWarningMessage(message, INCLUDE_UNUSED, LEAVE_UNUSED);
 }
 
 async function exportTranslations(index) {
@@ -83,9 +101,27 @@ async function exportTranslations(index) {
 	await exportWith(index, langs, { filter, only: null });
 }
 
-async function exportWith(index, langs, { filter, only }) {
+async function exportWith(index, langs, { filter, only, unused = false }) {
+	const documents = buildExports(index, langs, { filter, only, unused });
+	const names = unusedOf(documents);
+	const choice = unused || 0 === names.length ? LEAVE_UNUSED : await askUnused(names);
+
+	if (INCLUDE_UNUSED === choice) {
+		await exportWith(index, langs, { filter, only, unused: true });
+
+		return;
+	}
+
+	if (undefined !== choice) {
+		await writeAll(index, documents);
+	}
+}
+
+async function writeAll(index, documents) {
 	const outDir = transferDir(index.root);
-	const written = writeExports(index, langs, { filter, only, outDir });
+	const written = documents
+		.filter((document) => 0 !== document.total)
+		.map((document) => index.api.writeExport(document, outDir).file);
 
 	if (0 === written.length) {
 		vscode.window.showInformationMessage('i18n: nothing to export');

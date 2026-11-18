@@ -80,10 +80,13 @@ sub-state prefix and the language of the export notes come from.
   missing or outdated. It is the same finding, pointing back at the line of the file that can fix
   it, and several languages with the same problem are one diagnostic that lists them. Only here
   does a diagnostic name its language, `[en-GB]`: in an i18n file the file name already says it.
-- **Dead entries** — a key nobody uses (`unused-key`) is one warning, on its line of `keys.ts`. Its
-  entry in every `<lang>.json` is only greyed out, as unused code is: a hint that stays out of the
-  Problems panel and links back to the key. So a usage broken by a refactor is one problem to fix,
-  and a key that is really dead shows as such in every file that still carries its text.
+- **Dead entries** — a key nobody uses (`unused-key`), or only a comment does (`commented-usage`),
+  is one finding, on its line of `keys.ts`. Its entry in every `<lang>.json` and its block in
+  `params.ts` are only greyed out, as unused code is: a hint that stays out of the Problems panel and
+  links back to the key. So a usage broken by a refactor is one problem to fix, and a key that is
+  really dead shows as such in every file that still carries its text. An entry no key declares
+  (`orphan-translation`) is the same dead text the other way round: it keeps its warning and is
+  greyed out as well.
 - **Unsaved editors count** — the analysis reads every dirty editor in place of the file on disk,
   whatever it is: a `<lang>.json`, `keys.ts`, a template, a context file. It runs again a moment
   after you stop typing, walking the sources only when a `.ts` or `.html` changed.
@@ -185,7 +188,10 @@ sub-state prefix and the language of the export notes come from.
   declared yet are offered in a multi-select — the ones you tick are appended to `keys.ts` (named
   from the exported note, or slugged from the source text) with their source written to the default
   language. Placeholders that changed shape in the target are reported without blocking the rest.
-  Both commands run the same code as `transloco-ulid export` / `transloco-ulid import`.
+  A key nothing uses stays out of the export: the command names the ones it would leave out and
+  asks first, **Export them too** or **Leave them out**. Both commands run the same code as
+  `transloco-ulid export` / `transloco-ulid import`; the export needs the CLI release that brought
+  `--include-unused` to leave anything out, and sends everything with an older one.
 
 ## Running it
 
