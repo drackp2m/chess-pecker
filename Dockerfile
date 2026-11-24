@@ -58,8 +58,11 @@ RUN mkdir /home/node/.gnupg \
 
 CMD mkdir -p ~/.vscode-server/extensions \
 			&& rm -f ~/.vscode-server/extensions/drackp2m.transloco-ulid-i18n-* \
-			&& ver=$(node -p "require('./tools/vscode-plugins/transloco-ulid-i18n/package.json').version") \
-			&& ln -sfn "$PWD/tools/vscode-plugins/transloco-ulid-i18n" ~/.vscode-server/extensions/drackp2m.transloco-ulid-i18n-$ver \
+			&& ext=/usr/src/transloco-ulid-cli/vscode \
+			&& if [ -f "$ext/package.json" ]; then \
+				ver=$(node -p "require('$ext/package.json').version") \
+				&& ln -sfn "$ext" ~/.vscode-server/extensions/drackp2m.transloco-ulid-i18n-$ver; \
+			fi \
 			&& tail -f /dev/null
 
 
