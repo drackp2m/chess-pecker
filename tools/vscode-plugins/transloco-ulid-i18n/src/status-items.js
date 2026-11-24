@@ -10,7 +10,6 @@ const {
 	pendingOf,
 	percentOf,
 	progressOf,
-	withProblems,
 } = require('./status-data');
 const { ringIcon } = require('./status-icon');
 const { isSealable, rowsOf } = require('./status-seal');
@@ -49,9 +48,13 @@ const STATUS_LOOK = {
 };
 
 const SEVERITY_LOOK = {
-	error: { word: 'error', icon: themed('error', 'problemsErrorIcon.foreground') },
-	warning: { word: 'warning', icon: themed('warning', 'problemsWarningIcon.foreground') },
-	info: { word: 'note', icon: themed('info', 'problemsInfoIcon.foreground') },
+	error: { word: 'error', symbol: '✖', icon: themed('error', 'problemsErrorIcon.foreground') },
+	warning: {
+		word: 'warning',
+		symbol: '⚠',
+		icon: themed('warning', 'problemsWarningIcon.foreground'),
+	},
+	info: { word: 'note', symbol: 'ℹ', icon: themed('info', 'problemsInfoIcon.foreground') },
 };
 
 function openCommand(file, line, col) {
@@ -166,7 +169,7 @@ function scopeItem({ scope }) {
 	const langs = count(scope.languages.length, 'target language');
 	const header = `**${scope.name}** · ${count(scope.keys, 'key')} in ${langs}`;
 
-	item.description = [count(scope.keys, 'key'), ...unusedPart(scope.unused)].join(' · ');
+	item.description = count(scope.keys, 'key');
 	item.tooltip = markdown(0 === progress.total ? [header] : [header, shareOf(progress)]);
 	item.iconPath = ringIcon(progress);
 	item.contextValue = 0 === rowsOf({ kind: 'scope', scope }).length ? 'scope' : 'scopeSealable';
@@ -174,23 +177,11 @@ function scopeItem({ scope }) {
 	return item;
 }
 
-const troubled = (total) => (0 === total ? [] : [`${total} with problems`]);
-
-const unusedPart = (total) => (0 === total || undefined === total ? [] : [`${total} unused`]);
-
 function sourceItem({ snapshot }) {
 	const item = new vscode.TreeItem('Source', Collapsed);
-	const problems = snapshot.scopes.reduce((sum, scope) => sum + withProblems(scope.entries), 0);
-
-	item.description = [
-		snapshot.source,
-		count(snapshot.keys, 'key'),
-		...troubled(problems),
-		...unusedPart(snapshot.unused),
-	].join(' · ');
+	item.description = [snapshot.source, count(snapshot.keys, 'key')].join(' · ');
 	item.tooltip = `Every key with its text in ${snapshot.source}, the source language`;
 	item.iconPath = themed('book');
-	item.contextValue = 0 === (snapshot.unused ?? 0) ? 'source' : 'sourceUnused';
 
 	return item;
 }
@@ -198,11 +189,7 @@ function sourceItem({ snapshot }) {
 function sourceScopeItem({ scope }) {
 	const item = new vscode.TreeItem(scope.name, Collapsed);
 
-	item.description = [...troubled(withProblems(scope.entries)), ...unusedPart(scope.unused)].join(
-		' · ',
-	);
 	item.iconPath = themed('symbol-namespace');
-	item.contextValue = 0 === (scope.unused ?? 0) ? 'sourceScope' : 'sourceScopeUnused';
 
 	return item;
 }
@@ -217,16 +204,13 @@ function sourceKeyItem({ entry, lang }, index) {
 	const label = `\`${entry.scope}.${entry.name}\` · ${entry.ulid}`;
 	const shown = '' === text ? '(empty)' : text;
 	const [worst] = entry.problems;
+	const mark = undefined === worst ? '' : `${SEVERITY_LOOK[worst.severity].symbol} `;
 
-	item.description = shorten(shown, TEXT_PREVIEW);
+	item.description = `${mark}${shorten(shown, TEXT_PREVIEW)}`;
 	item.tooltip = new vscode.MarkdownString(`${label}\n\n`).appendText(
 		[shown, ...problemLines(entry)].join('\n\n'),
 	);
 	item.contextValue = 'key';
-
-	if (undefined !== worst) {
-		item.iconPath = SEVERITY_LOOK[worst.severity].icon;
-	}
 
 	item.command = {
 		command: 'translocoUlidI18n.openKey',
@@ -286,6 +270,7 @@ function checkItem({ group }) {
 	item.description = String(group.items.length);
 	item.tooltip = group.meaning;
 	item.iconPath = SEVERITY_LOOK[group.severity].icon;
+	item.contextValue = 'unused-key' === group.type ? 'checkUnused' : 'check';
 
 	return item;
 }

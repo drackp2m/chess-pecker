@@ -16,8 +16,6 @@ function progressOf(keys) {
 
 const pendingOf = (keys) => PENDING.reduce((sum, status) => sum + keys[status].length, 0);
 
-const withProblems = (entries) => entries.filter((entry) => 0 !== entry.problems.length).length;
-
 const mergedKeys = (languages) =>
 	Object.fromEntries(
 		SHOWN.map((status) => [status, languages.flatMap((language) => language.keys[status] ?? [])]),
@@ -130,5 +128,4 @@ module.exports = {
 	pendingOf,
 	percentOf,
 	progressOf,
-	withProblems,
 };

@@ -107,12 +107,11 @@ sub-state prefix and the language of the export notes come from.
   it counts in none of them, nor in the ring, the pending count or the percentages, which are those
   of what the export sends by default. The tooltip of the language says how many were left aside.
   **Scopes** repeats the same per scope, each scope with the ring of all its target languages, its
-  number of keys (and how many are unused) and the percentages in the tooltip.
+  number of keys and the percentages in the tooltip.
   **Source** lists every scope and, under it, every key with its text in the source language;
   clicking one opens that file on the key. A key the CLI has something to say about in the source
-  language — an unused key, a broken ICU message, a stray plural parameter — takes the icon of its
-  worst finding and lists them in its tooltip, and the scope and the section count how many keys
-  are in that case. A key row, here or under a language, has a context menu: find usages, go to
+  language — an unused key, a broken ICU message, a stray plural parameter — shows the symbol of its
+  worst finding (✖, ⚠ or ℹ) before its text and lists them in its tooltip; how many there are of each kind is in **Checks**. A key row, here or under a language, has a context menu: find usages, go to
   `keys.ts`, copy the `I18n.scope.KEY` reference, copy the ULID. An outdated or never sealed
   translation also has **Seal as up to date**, and so do the Outdated and Never sealed lines of a
   language (every row under them) and a scope (all of its outdated and never sealed ones): it is
@@ -203,10 +202,8 @@ sub-state prefix and the language of the export notes come from.
   untick the ones to keep; dismissing it removes nothing. Each removed key loses its line in
   `keys.ts`, every translation, its seals and its `params.ts` entry, the last only when that file
   was in step before. A key only a comment mentions is kept. Besides the `…` menu, it is in the
-  context menu of the **Unused** lines, of the **Source** section and of a scope under it when they
-  have one — there for that scope only. The menu entry cannot carry the count, since VS Code fixes
-  menu titles in `package.json`: the count is in the description of those rows. It needs the CLI
-  0.5.0 or later and every i18n file saved.
+  context menu of the `unused-key` group of **Checks**, whose count is beside it, and of the
+  **Unused** lines under a language. It needs the CLI 0.5.0 or later and every i18n file saved.
 
 ## Running it
 
