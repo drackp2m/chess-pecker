@@ -6,6 +6,7 @@ import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solve
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { I18n, i18nRef, provideI18nScope } from '@app/i18n';
+import { puzzleHeadline } from '@app/page/puzzle/store/puzzle/headline';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
@@ -33,7 +34,7 @@ export class PuzzlePage implements OnInit {
 
 	readonly csvDraft = signal('');
 
-	readonly headline = computed(() => this.describe());
+	readonly headline = computed(() => puzzleHeadline(this.store));
 
 	readonly counter = computed(() => {
 		const total = this.store.library.puzzles().length;
@@ -108,64 +109,5 @@ export class PuzzlePage implements OnInit {
 		} finally {
 			input.value = '';
 		}
-	}
-
-	private describe(): string {
-		if (this.store.isFreePlay()) {
-			return this.describeFreePlay();
-		}
-
-		if (this.store.isRevealing()) {
-			return I18n.puzzle.PLAYING_SOLUTION;
-		}
-
-		switch (this.store.outcome()) {
-			case 'idle':
-				return I18n.puzzle.LOAD_TO_BEGIN;
-			case 'opening':
-			case 'replying':
-				return I18n.common.OPPONENT_MOVING;
-			case 'failed':
-				return I18n.puzzle.WRONG_MOVE;
-			case 'solved':
-				return this.describeSolved();
-			case 'solving':
-				return 'white' === this.store.playerColor()
-					? I18n.common.FIND_MOVE_WHITE
-					: I18n.common.FIND_MOVE_BLACK;
-		}
-	}
-
-	/**
-	 * A free-play game ends like any other, though nothing is graded and the board stays
-	 * open: it is a sandbox, with nothing to lock down or record.
-	 */
-	private describeFreePlay(): string {
-		const status = this.store.freePlayStatus();
-
-		if ('checkmate' === status) {
-			// Whoever is to move is the one who has been mated.
-			return 'white' === this.store.position().turn
-				? I18n.common.CHECKMATE_BLACK_WINS
-				: I18n.common.CHECKMATE_WHITE_WINS;
-		}
-
-		if ('stalemate' === status) {
-			return I18n.common.STALEMATE;
-		}
-
-		if ('draw' === status) {
-			return I18n.common.DRAWN_POSITION;
-		}
-
-		return I18n.common.FREE_PLAY_HEADLINE;
-	}
-
-	private describeSolved(): string {
-		if ('revealed' === this.store.closure()) {
-			return I18n.puzzle.THAT_WAS_THE_LINE;
-		}
-
-		return 'failed' === this.store.result() ? I18n.puzzle.SOLVED_AFTER_MISS : I18n.puzzle.SOLVED;
 	}
 }

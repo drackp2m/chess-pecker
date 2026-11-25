@@ -6,6 +6,7 @@ import { PuzzleSolverComponent } from '@app/component/puzzle-solver/puzzle-solve
 import { BOARD_PRESENTER } from '@app/definition/board-presenter.interface';
 import { Puzzle } from '@app/definition/puzzle.type';
 import { I18n, provideI18nScope } from '@app/i18n';
+import { puzzleHeadline } from '@app/page/puzzle/store/puzzle/headline';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
 import { PuzzleLibraryStore } from '@app/page/puzzle/store/puzzle-library/puzzle-library.store';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
@@ -31,6 +32,7 @@ export class BookmarkListPage implements OnInit {
 	readonly store = inject(PuzzleStore);
 	readonly isLoading = signal(true);
 	readonly loadError = signal(false);
+	readonly headline = computed(() => puzzleHeadline(this.store));
 	readonly counter = computed(() => {
 		const total = this.store.library.puzzles().length;
 

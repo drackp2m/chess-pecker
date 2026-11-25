@@ -1,4 +1,21 @@
 section {
 	width: 100%;
 	max-width: 34rem;
+
+	.title {
+		span {
+			text-decoration: underline;
+			text-decoration-thickness: 2px;
+		}
+	}
+}
+
+.headline {
+	&.failed {
+		color: rgb(196 48 38);
+	}
+
+	&.solved {
+		color: var(--color-accent);
+	}
 }
