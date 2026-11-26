@@ -26,6 +26,29 @@ export default [
 			import('./bookmark-category.page').then(({ BookmarkCategoryPage }) => BookmarkCategoryPage),
 	},
 	{
+		path: 'challenges/received/solve/:uuid',
+		title: I18n.common.CHALLENGE_TITLE,
+		resolve: { i18n: resolveI18n('puzzle') },
+		loadComponent: () =>
+			import('./challenge-solve.page').then(({ ChallengeSolvePage }) => ChallengeSolvePage),
+	},
+	{
+		path: 'challenges/:direction/:uuid',
+		title: I18n.common.CHALLENGE_RESULTS,
+		resolve: { i18n: resolveI18n('puzzle') },
+		loadComponent: () =>
+			import('./challenge-result.page').then(({ ChallengeResultPage }) => ChallengeResultPage),
+	},
+	{
+		path: 'challenges/:direction',
+		title: I18n.common.CHALLENGE_TITLE,
+		resolve: { i18n: resolveI18n('puzzle') },
+		loadComponent: () =>
+			import('./challenge-category.page').then(
+				({ ChallengeCategoryPage }) => ChallengeCategoryPage,
+			),
+	},
+	{
 		path: '',
 		title: I18n.common.PROFILE,
 		resolve: { i18n: resolveI18n('profile') },

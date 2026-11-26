@@ -1,11 +1,11 @@
 import { Component, OnInit, computed, effect, inject, input, untracked } from '@angular/core';
-import type { PuzzleShareResultRequest } from '@chesspecker/api-definitions';
 import { firstValueFrom } from 'rxjs';
 
 import { ShareChoice, ShareModalComponent } from '@app/component/share-modal/share-modal.component';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { I18n, i18nRef } from '@app/i18n';
 import { PuzzleStore } from '@app/page/puzzle/store/puzzle/puzzle.store';
+import { puzzleShareResult } from '@app/page/puzzle/store/puzzle/share-result';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { PuzzleShareRepository } from '@app/repository/puzzle-share.repository';
 import { NotificationService } from '@app/service/notification.service';
@@ -83,7 +83,7 @@ export class ShareButtonComponent implements OnInit {
 
 	private async send(choice: ShareChoice): Promise<void> {
 		const puzzle = this.store.puzzle();
-		const result = this.buildResult();
+		const result = puzzleShareResult(this.store);
 
 		if (undefined === puzzle || undefined === result) {
 			return;
@@ -111,24 +111,5 @@ export class ShareButtonComponent implements OnInit {
 			console.error('Could not share the exercise', error);
 			this.notificationService.notify(i18nRef(I18n.common.SHARE_ERROR));
 		}
-	}
-
-	/**
-	 * ToDo => the standalone board runs no clock, so `durationMs` is left out: only a
-	 * training times an attempt today, and a made-up number would poison the comparison.
-	 */
-	private buildResult(): PuzzleShareResultRequest | undefined {
-		const closure = this.store.closure();
-
-		if ('open' === closure) {
-			return undefined;
-		}
-
-		return {
-			solved: 'solved' === this.store.result(),
-			closure,
-			hintUsed: this.store.hintUsed(),
-			mistakeCount: this.store.mistakeCount(),
-		};
 	}
 }

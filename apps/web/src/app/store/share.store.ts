@@ -56,6 +56,12 @@ export class ShareStore
 		return grouped;
 	});
 
+	readonly sent = computed(() =>
+		[...this.shareEntities()].sort(
+			(one, other) => other.createdAt.getTime() - one.createdAt.getTime(),
+		),
+	);
+
 	/** What the device held, so a refresh never lands on top of a load that has not arrived. */
 	private readonly loaded: Promise<void> = this.load();
 
@@ -70,6 +76,10 @@ export class ShareStore
 		return [...(this.byPuzzle().get(lichessId) ?? [])].sort(
 			(one, other) => other.createdAt.getTime() - one.createdAt.getTime(),
 		);
+	}
+
+	find(uuid: string): ShareRow | undefined {
+		return this.shareEntityMap()[uuid];
 	}
 
 	hasShared(lichessId: string): boolean {

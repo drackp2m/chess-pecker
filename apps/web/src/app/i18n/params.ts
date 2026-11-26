@@ -73,4 +73,23 @@ export interface CommonI18nParams {
 	'01M11DZXV8SZ13Z3AZ0AQPYG7H': {
 		username: string;
 	};
+	'01M8AM6W2YDVQ5CR9S509NQT2B': {
+		username: string;
+	};
+	'01M8AM6WQ1R31ZTMHYB74AZJTW': {
+		usernames: string;
+	};
+	'01M8AM6XDNFT4Q63392Z24B2JC': {
+		date: string;
+	};
+	'01M8AM6YKNVRBDZMQECMRX8E1H': {
+		answered: string;
+		total: string;
+	};
+	'01M8AM73C8P42Q2S65J29814PE': {
+		username: string;
+	};
+	'01M8AM75XS1CTJNPREVKPVDMC0': {
+		count: number;
+	};
 }

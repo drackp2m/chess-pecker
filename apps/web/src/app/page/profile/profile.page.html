@@ -2,13 +2,33 @@
 	<div class="bookmark-section flex-col gap-2">
 		<h4>{{ I18n.common.BOOKMARK_TITLE | i18n }}</h4>
 
-		<div class="flex-row flex-wrap gap-2">
-			@for (type of bookmarkTypes; track type) {
-				<button appThemed class="bookmark-category" [appRouterLink]="bookmarkLink(type)">
-					{{ bookmarkLabels[type] | i18n }} ({{ bookmarkCount(type) }})
-				</button>
-			}
-		</div>
+		@if (hasNoBookmarks()) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.BOOKMARK_NONE | i18n }}</p>
+		} @else {
+			<div class="flex-row flex-wrap gap-2">
+				@for (type of bookmarkTypes(); track type) {
+					<button appThemed class="bookmark-category" [appRouterLink]="bookmarkLink(type)">
+						{{ bookmarkLabels[type] | i18n }} ({{ bookmarkCount(type) }})
+					</button>
+				}
+			</div>
+		}
+	</div>
+
+	<div class="challenge-section flex-col gap-2">
+		<h4>{{ I18n.common.CHALLENGE_TITLE | i18n }}</h4>
+
+		@if (hasNoChallenges()) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.CHALLENGE_NONE | i18n }}</p>
+		} @else {
+			<div class="flex-row flex-wrap gap-2">
+				@for (direction of challengeDirections(); track direction) {
+					<button appThemed class="bookmark-category" [appRouterLink]="challengeLink(direction)">
+						{{ challengeLabels[direction] | i18n }} ({{ challengeCount(direction) }})
+					</button>
+				}
+			</div>
+		}
 	</div>
 
 	<div class="flex-col gap-2">

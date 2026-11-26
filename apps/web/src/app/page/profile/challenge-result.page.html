@@ -1,0 +1,123 @@
+<section class="flex-col gap-4">
+	@if (isLoading() && undefined === share()) {
+		<p>{{ I18n.common.LOADING | i18n }}</p>
+	} @else if (loadError()) {
+		<p role="alert">{{ I18n.common.CHALLENGE_LOAD_ERROR | i18n }}</p>
+	} @else if (share(); as share) {
+		<header class="flex-col gap-1">
+			<h4 class="title color-contrast-mid">
+				{{ I18n.common.CHALLENGE_TITLE | i18n }} · {{ I18n.common.CHALLENGE_RESULTS | i18n }}
+				<span class="color-contrast">{{ share.lichessId }}</span>
+			</h4>
+
+			<p class="fs-sm color-contrast-mid">
+				@if ('sent' === direction) {
+					{{ I18n.common.CHALLENGE_TO | i18n: { usernames: recipientNames() } }}
+				} @else {
+					{{ I18n.common.CHALLENGE_FROM | i18n: { username: share.sender.user.username } }}
+				}
+				· {{ I18n.common.CHALLENGE_SENT_AT | i18n: { date: formatDate(share.createdAt) } }}
+			</p>
+		</header>
+
+		<div class="overview">
+			<div class="board">
+				@if (puzzle(); as puzzle) {
+					<app-static-chess-board [fen]="puzzle.fen" [firstMove]="puzzle.moves[0]" />
+				} @else {
+					<span class="board-placeholder"></span>
+				}
+			</div>
+
+			<div class="flex-col gap-3">
+				@if (share.message; as message) {
+					<blockquote class="message">
+						<p>{{ message }}</p>
+						<cite class="fs-sm color-contrast-mid">{{ share.sender.user.username }}</cite>
+					</blockquote>
+				}
+
+				<div class="progress flex-col gap-1">
+					<span class="fs-lg fw-lg">
+						{{
+							I18n.common.CHALLENGE_ANSWERS
+								| i18n
+									: {
+											answered: answered().toString(),
+											total: share.recipients.length.toString(),
+									  }
+						}}
+					</span>
+
+					<span class="bar">
+						<span
+							class="fill"
+							[style.width.%]="
+								0 === share.recipients.length ? 0 : (100 * answered()) / share.recipients.length
+							"
+						></span>
+					</span>
+				</div>
+
+				@if (canSolve()) {
+					<button appThemed color="accent" [appRouterLink]="solveLink">
+						{{ I18n.common.CHALLENGE_SOLVE | i18n }}
+					</button>
+				}
+			</div>
+		</div>
+
+		@if (!canSolve()) {
+			@if (0 === answered() && 'sent' === direction) {
+				<p class="empty fs-sm">{{ I18n.common.CHALLENGE_NO_ANSWERS | i18n }}</p>
+			}
+
+			<ol class="standings flex-col gap-2">
+				@for (standing of standings(); track standing.participant.user.uuid) {
+					<li
+						class="standing p-2 br-1"
+						[class.mine]="isMine(standing)"
+						[class.leader]="1 === standing.position"
+						[class.waiting]="null === standing.position"
+					>
+						<span class="position fw-lg">{{ standing.position ?? '·' }}</span>
+
+						<span class="who flex-col">
+							<span class="fw-lg">
+								{{ standing.participant.user.username }}
+								@if (isMine(standing)) {
+									<span class="color-contrast-mid">({{ I18n.common.CHALLENGE_YOU | i18n }})</span>
+								}
+							</span>
+
+							@if (standing.participant.result; as result) {
+								<span class="details fs-sm color-contrast-mid">
+									{{ I18n.common.CHALLENGE_MISTAKES | i18n: { count: result.mistakeCount } }}
+									@if (result.hintUsed) {
+										· {{ I18n.common.CHALLENGE_HINT_USED | i18n }}
+									}
+									@if (undefined !== result.durationMs) {
+										· {{ result.durationMs | duration }}
+									}
+									· {{ formatDate(result.createdAt) }}
+								</span>
+							}
+						</span>
+
+						@if (standing.participant.result; as result) {
+							<span
+								class="verdict fs-sm"
+								[class.solved]="'solved' === verdict(result)"
+								[class.revealed]="'revealed' === verdict(result)"
+							>
+								{{ verdictLabel(result) | i18n }}
+							</span>
+						} @else {
+							<span class="verdict fs-sm pending">{{ I18n.common.CHALLENGE_PENDING | i18n }}</span>
+						}
+					</li>
+				}
+			</ol>
+		}
+	}
+</section>

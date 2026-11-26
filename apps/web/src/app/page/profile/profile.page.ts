@@ -1,7 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { FriendUser, PuzzleBookmarkType } from '@chesspecker/api-definitions';
 
+import {
+	CHALLENGE_DIRECTIONS,
+	CHALLENGE_DIRECTION_LABEL,
+	ChallengeDirection,
+} from '@app/definition/challenge.type';
 import { PUZZLE_BOOKMARK_LABEL, PUZZLE_BOOKMARK_TYPES } from '@app/definition/puzzle-bookmark.type';
 import { ButtonDirective } from '@app/directive/button.directive';
 import { InputDirective } from '@app/directive/input.directive';
@@ -11,7 +16,9 @@ import { I18nPipe } from '@app/pipe/i18n.pipe';
 import { BookmarkStore } from '@app/store/bookmark.store';
 import { PageLoadStore } from '@app/store/page-load.store';
 import { ProfileStore } from '@app/store/profile.store';
+import { ReceivedShareStore } from '@app/store/received-share.store';
 import { SessionStore } from '@app/store/session.store';
+import { ShareStore } from '@app/store/share.store';
 import { LogOutUseCase } from '@app/use-case/log-out.use-case';
 
 @Component({
@@ -26,8 +33,30 @@ export class ProfilePage implements OnInit {
 	readonly store = inject(ProfileStore);
 	readonly session = inject(SessionStore);
 	readonly bookmarks = inject(BookmarkStore);
-	readonly bookmarkTypes = PUZZLE_BOOKMARK_TYPES;
 	readonly bookmarkLabels = PUZZLE_BOOKMARK_LABEL;
+	readonly challengeLabels = CHALLENGE_DIRECTION_LABEL;
+
+	private readonly shares = inject(ShareStore);
+	private readonly receivedShares = inject(ReceivedShareStore);
+
+	readonly bookmarkTypes = computed(() =>
+		PUZZLE_BOOKMARK_TYPES.filter((type) => 0 < this.bookmarkCount(type)),
+	);
+
+	readonly hasNoBookmarks = computed(
+		() => !this.bookmarks.isLoading() && 0 === this.bookmarkTypes().length,
+	);
+
+	readonly challengeDirections = computed(() =>
+		CHALLENGE_DIRECTIONS.filter((direction) => 0 < this.challengeCount(direction)),
+	);
+
+	readonly hasNoChallenges = computed(
+		() =>
+			!this.shares.isLoading() &&
+			this.receivedShares.isLoaded() &&
+			0 === this.challengeDirections().length,
+	);
 
 	private readonly logOutUseCase = inject(LogOutUseCase);
 	private readonly pageLoad = inject(PageLoadStore);
@@ -41,6 +70,8 @@ export class ProfilePage implements OnInit {
 		this.store.clearSearch();
 		void this.pageLoad.track(this.store.load());
 		void this.pageLoad.track(this.bookmarks.ready());
+		void this.pageLoad.track(this.shares.ready());
+		void this.receivedShares.refresh();
 	}
 
 	logOut(): void {
@@ -89,6 +120,14 @@ export class ProfilePage implements OnInit {
 
 	bookmarkLink(type: PuzzleBookmarkType): string {
 		return `/profile/bookmarks/${type}`;
+	}
+
+	challengeCount(direction: ChallengeDirection): number {
+		return 'sent' === direction ? this.shares.sent().length : this.receivedShares.shares().length;
+	}
+
+	challengeLink(direction: ChallengeDirection): string {
+		return `/profile/challenges/${direction}`;
 	}
 
 	private async search(): Promise<void> {

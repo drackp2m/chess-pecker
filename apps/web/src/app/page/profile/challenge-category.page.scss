@@ -1,0 +1,63 @@
+section {
+	width: 100%;
+}
+
+.challenge-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 1rem;
+}
+
+.challenge-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+
+	min-width: 0;
+
+	color: inherit;
+	text-decoration: none;
+
+	&:focus-visible {
+		outline: 2px solid var(--color-contrast);
+		outline-offset: 4px;
+	}
+}
+
+.board-placeholder {
+	aspect-ratio: 1;
+	width: 100%;
+	border: 1px dashed var(--color-contrast-mid);
+}
+
+.exercise-name {
+	font-weight: 600;
+	text-align: center;
+}
+
+.people {
+	overflow: hidden;
+	text-align: center;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.status {
+	align-self: center;
+	padding: 0.1rem 0.6rem;
+	border: 1px solid var(--color-contrast-mid);
+	border-radius: 999px;
+
+	&.complete {
+		border-color: var(--color-accent);
+		color: var(--color-accent);
+	}
+
+	&.pending {
+		border-style: dashed;
+	}
+}
+
+.empty {
+	opacity: 0.7;
+}

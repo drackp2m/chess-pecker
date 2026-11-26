@@ -1,0 +1,36 @@
+section {
+	width: 100%;
+	max-width: 34rem;
+
+	.title {
+		span {
+			text-decoration: underline;
+			text-decoration-thickness: 2px;
+		}
+	}
+}
+
+.headline {
+	&.failed {
+		color: rgb(196 48 38);
+	}
+
+	&.solved {
+		color: var(--color-accent);
+	}
+}
+
+.message {
+	margin: 0;
+	padding-left: 0.75rem;
+	border-left: 3px solid var(--color-accent);
+	font-style: italic;
+}
+
+.error {
+	color: rgb(196 48 38);
+}
+
+.empty {
+	opacity: 0.7;
+}

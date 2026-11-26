@@ -9,6 +9,7 @@ import { FriendshipRepository } from '@app/repository/friendship.repository';
 import { UserRepository } from '@app/repository/user.repository';
 import { NO_SYNC_STATE, withSyncState } from '@app/store/feature/with-sync-state';
 import { FriendStore } from '@app/store/friend.store';
+import { ReceivedShareStore } from '@app/store/received-share.store';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
@@ -43,12 +44,14 @@ export class ProfileStore
 	private readonly friendshipRepository = inject(FriendshipRepository);
 	private readonly userRepository = inject(UserRepository);
 	private readonly friendStore = inject(FriendStore);
+	private readonly receivedShareStore = inject(ReceivedShareStore);
 
 	readonly friends = this.friendStore.friends;
 
 	reset(): void {
 		patchState(this, initialState, NO_SYNC_STATE);
 		this.friendStore.reset();
+		this.receivedShareStore.reset();
 	}
 
 	async load(): Promise<void> {

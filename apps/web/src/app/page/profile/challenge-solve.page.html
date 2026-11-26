@@ -1,0 +1,76 @@
+<section class="flex-col gap-4">
+	@if (isLoading()) {
+		<p>{{ I18n.common.LOADING | i18n }}</p>
+	} @else if (loadError()) {
+		<p role="alert">{{ I18n.common.CHALLENGE_LOAD_ERROR | i18n }}</p>
+	} @else if (0 === store.library.puzzles().length) {
+		<p class="empty">{{ I18n.common.CHALLENGE_NONE_PENDING | i18n }}</p>
+
+		<button appThemed appRouterLink="/profile/challenges/received">
+			{{ I18n.common.CHALLENGE_RECEIVED | i18n }}
+		</button>
+	} @else {
+		@if (store.puzzle(); as puzzle) {
+			<header class="flex-col gap-1">
+				<h4 class="title color-contrast-mid">
+					{{ I18n.common.CHALLENGE_TITLE | i18n }} · {{ I18n.common.SOLVING | i18n }}
+					<span class="color-contrast">{{ puzzle.id }}</span> · {{ counter() }}
+				</h4>
+
+				@if ('' !== senders()) {
+					<p class="fs-sm color-contrast-mid">
+						{{ I18n.common.CHALLENGE_FROM | i18n: { username: senders() } }}
+					</p>
+				}
+
+				@for (share of current(); track share.uuid) {
+					@if (share.message; as message) {
+						<blockquote class="message fs-sm">{{ message }}</blockquote>
+					}
+				}
+
+				<div class="flex-row justify-between align-center gap-2">
+					<p
+						class="headline fs-lg fw-lg"
+						[class.failed]="'failed' === store.outcome()"
+						[class.solved]="'solved' === store.outcome()"
+					>
+						{{ headline() | i18n }}
+					</p>
+					<app-puzzle-difficulty />
+				</div>
+			</header>
+		}
+
+		<app-puzzle-solver
+			[previousLabel]="I18n.puzzle.PREVIOUS_EXERCISE"
+			[nextLabel]="I18n.puzzle.NEXT_EXERCISE"
+			[isPreviousDisabled]="!store.library.hasPrevious()"
+			[isNextDisabled]="!store.library.hasNext()"
+			[allowBookmarkWhileOpen]="true"
+			(previous)="store.previousPuzzle()"
+			(next)="store.nextPuzzle()"
+		/>
+
+		@if (null !== failedLichessId() && failedLichessId() === store.puzzle()?.id) {
+			<div class="flex-row flex-wrap align-center justify-between gap-2">
+				<p class="error fs-sm" role="alert">{{ I18n.common.CHALLENGE_ANSWER_ERROR | i18n }}</p>
+
+				<button appThemed [disabled]="isSubmitting()" (click)="retry()">
+					{{ I18n.common.RETRY | i18n }}
+				</button>
+			</div>
+		} @else if (isAnswered()) {
+			<div class="flex-row flex-wrap gap-2">
+				@for (share of current(); track share.uuid) {
+					<button appThemed color="accent" [appRouterLink]="resultsLink(share)">
+						{{ I18n.common.CHALLENGE_SEE_RESULTS | i18n }}
+						@if (1 < current().length) {
+							· {{ share.sender.user.username }}
+						}
+					</button>
+				}
+			</div>
+		}
+	}
+</section>

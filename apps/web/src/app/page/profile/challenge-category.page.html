@@ -1,0 +1,59 @@
+<section class="flex-col gap-4">
+	<h4 class="color-contrast-mid">
+		{{ I18n.common.CHALLENGE_TITLE | i18n }} ·
+		<span class="color-contrast">{{ directionLabel | i18n }}</span>
+	</h4>
+
+	@if (isLoading() && 0 === shares().length) {
+		<p>{{ I18n.common.LOADING | i18n }}</p>
+	} @else if (loadError()) {
+		<p role="alert">{{ I18n.common.CHALLENGE_LOAD_ERROR | i18n }}</p>
+	} @else if (0 === shares().length) {
+		<p class="empty">
+			@if ('sent' === direction) {
+				{{ I18n.common.CHALLENGE_EMPTY_SENT | i18n }}
+			} @else {
+				{{ I18n.common.CHALLENGE_EMPTY_RECEIVED | i18n }}
+			}
+		</p>
+	} @else {
+		<div class="challenge-grid">
+			@for (share of shares(); track share.uuid) {
+				<a class="challenge-card" [appRouterLink]="link(share)">
+					@if (puzzles().get(share.lichessId); as puzzle) {
+						<app-static-chess-board [fen]="puzzle.fen" [firstMove]="puzzle.moves[0]" />
+					} @else {
+						<span class="board-placeholder"></span>
+					}
+
+					<span class="exercise-name">{{ share.lichessId }}</span>
+
+					<span class="people fs-sm color-contrast-mid">
+						@if ('sent' === direction) {
+							{{ I18n.common.CHALLENGE_TO | i18n: { usernames: recipientNames(share) } }}
+						} @else {
+							{{ I18n.common.CHALLENGE_FROM | i18n: { username: share.sender.user.username } }}
+						}
+					</span>
+
+					@if ('sent' === direction) {
+						<span class="status fs-sm" [class.complete]="isComplete(share)">
+							{{
+								I18n.common.CHALLENGE_ANSWERS
+									| i18n
+										: {
+												answered: answered(share),
+												total: share.recipients.length.toString(),
+										  }
+							}}
+						</span>
+					} @else if (myResult(share); as result) {
+						<span class="status fs-sm complete">{{ verdictLabel(result) | i18n }}</span>
+					} @else {
+						<span class="status fs-sm pending">{{ I18n.common.CHALLENGE_PENDING | i18n }}</span>
+					}
+				</a>
+			}
+		</div>
+	}
+</section>
