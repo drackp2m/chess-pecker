@@ -3,6 +3,7 @@ import type { SetTrainingGoalRequest, TrainingProgress } from '@chesspecker/api-
 
 import { TrainingPolicy } from '@app/definition/training-policy.constant';
 import { TrainingRow } from '@app/repository/definition/training-schema.interface';
+import { CatalogReadinessUseCase } from '@app/use-case/catalog-readiness.use-case';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { LocalProgressUseCase } from '@app/use-case/local-progress.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
@@ -18,6 +19,7 @@ export class TrainingEngineUseCase {
 	private readonly progress = inject(LocalProgressUseCase);
 	private readonly repair = inject(RepairCycleUseCase);
 	private readonly keys = inject(LocalKeyUseCase);
+	private readonly catalog = inject(CatalogReadinessUseCase);
 
 	async list(): Promise<readonly TrainingRow[]> {
 		return this.trainings.list();
@@ -28,10 +30,13 @@ export class TrainingEngineUseCase {
 	}
 
 	async start(): Promise<void> {
+		await this.catalog.assertDownloaded();
 		await this.trainings.start();
 	}
 
 	async selectSet(uuid: string, size: number): Promise<number> {
+		await this.catalog.assertDownloaded();
+
 		return this.cycles.selectSet(await this.training(uuid), size);
 	}
 

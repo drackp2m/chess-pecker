@@ -87,7 +87,7 @@
 	"01KZJ895M5FVDK3GJWD8TYTXHC": "Cierra las demás pestañas de esta aplicación para terminar de actualizar su base de datos local.",
 	"01KZJ895M5G0BQV1TG8JC425X4": "No se llega al servidor. Comprueba que el API está en marcha.",
 	"01KZJ895M5XWG0GF2STZHSBH7X": "{detail}",
-	"01KZJ895M50KK3084TMWF8FPSS": "Este dispositivo no tiene ejercicios en esa banda de nivel. Conéctate para descargar el catálogo, o importa tus propios ejercicios desde un CSV.",
+	"01KZJ895M50KK3084TMWF8FPSS": "Este dispositivo no tiene ejercicios del catálogo en esa banda de nivel. Conéctate para descargarlo.",
 	"01KZJ895M5X6YE44PRDRCCR6QS": "Ya tienes un entrenamiento en curso. La lista se acaba de recargar: sigue con ese o cancélalo antes.",
 	"01KZJ895M5QV11484PMDGBF8CC": "Marca cuántos ejercicios al día quieres hacer antes de abrir el primer ciclo.",
 	"01KZJ895M5R0ST7AFE8M90TDN6": "El usuario o la contraseña no son correctos.",
@@ -153,5 +153,6 @@
 	"01M11DZXV8F2HN6ZK9WRJ9APFR": "No se ha podido mandar el reto",
 	"01M11DZXV8E5R9MYRTM9ADW87F": "No se ha podido cargar tu lista de amigos",
 	"01M11DZXV8PQ7263S0R7G8YTVW": "{username} te ha retado con un ejercicio",
-	"01M11DZXV8SZ13Z3AZ0AQPYG7H": "{username} ha resuelto el reto"
+	"01M11DZXV8SZ13Z3AZ0AQPYG7H": "{username} ha resuelto el reto",
+	"01M8A86P4RV9B75Y2Q8S0NTBTB": "El catálogo de ejercicios todavía se está descargando. Espera a que termine para empezar un entrenamiento."
 }

@@ -12,10 +12,10 @@ import {
 	TrainingRow,
 } from '@app/repository/definition/training-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
+import { CyclePlanUseCase } from '@app/use-case/cycle-plan.use-case';
 import { LocalCalibrationUseCase } from '@app/use-case/local-calibration.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
 import { born, touch } from '@app/use-case/sync/local-record';
-import { buildCycleOrder } from '@app/util/cycle-order';
 import { LocalFailureError } from '@app/util/local-failure-error';
 import { clampRatingBucket, ratingBucketCeiling } from '@app/util/rating-bucket';
 import { expectedCycleItems, isWholeCycle } from '@app/util/whole-cycle';
@@ -38,6 +38,7 @@ export class LocalCycleUseCase {
 	private readonly repository = inject(TrainingLocalRepository);
 	private readonly trainings = inject(LocalTrainingUseCase);
 	private readonly calibration = inject(LocalCalibrationUseCase);
+	private readonly plan = inject(CyclePlanUseCase);
 
 	async listSet(trainingUuid: string): Promise<readonly TrainingPuzzleRow[]> {
 		return this.repository.findAllByIndex('trainingPuzzle', 'trainingUuid', trainingUuid);
@@ -128,7 +129,9 @@ export class LocalCycleUseCase {
 
 		const cycle = this.newCycle(trainingUuid, cycles.length + 1, set.length);
 
-		await this.openCycle(training, cycle, this.toItemRows(cycle, buildCycleOrder(set)));
+		const order = await this.plan.order(set, last);
+
+		await this.openCycle(training, cycle, this.toItemRows(cycle, order));
 
 		return cycle;
 	}
@@ -255,13 +258,9 @@ export class LocalCycleUseCase {
 	}
 
 	private async sampleBand(rating: number, size: number): Promise<readonly PuzzleRow[]> {
-		const spread = TrainingPolicy.setRatingSpread;
+		const bucket = clampRatingBucket(rating);
 
-		return this.repository.sampleByRating(
-			clampRatingBucket(rating - spread),
-			ratingBucketCeiling(clampRatingBucket(rating + spread)),
-			size,
-		);
+		return this.repository.sampleCatalogByRating(bucket, ratingBucketCeiling(bucket), size);
 	}
 
 	private newCycle(trainingUuid: string, index: number, expectedItems: number): TrainingCycleRow {

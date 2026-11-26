@@ -18,7 +18,7 @@ const CATALOG_EMPTY = { key: I18n.common.CATALOG_EMPTY };
 function emptyRepository() {
 	return {
 		findAllByIndex: vi.fn(() => Promise.resolve([])),
-		sampleByRating: vi.fn(() => Promise.resolve([])),
+		sampleCatalogByRating: vi.fn(() => Promise.resolve([])),
 		insert: vi.fn((_store: string, row: unknown) => Promise.resolve(row)),
 		batchInsert: vi.fn(() => Promise.resolve()),
 	};

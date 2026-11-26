@@ -10,7 +10,6 @@ import { TrainingLocalRepository } from '@app/repository/training-local.reposito
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
 import { RepairCycleUseCase } from '@app/use-case/repair-cycle.use-case';
-import { cycleBlock } from '@app/util/cycle-order';
 
 const TRAINING = 'training-1';
 
@@ -209,26 +208,18 @@ describe('RepairCycleUseCase.execute', () => {
 		expect(Math.max(...positions)).toStrictEqual(999);
 	});
 
-	it('places every restored slot inside the rating block that owns its positions', async () => {
+	it('hands the restored positions out from the easiest exercise to the hardest', async () => {
 		const entries = set();
 		const { repair, written } = configure({ set: entries, items: survivors(entries) });
 		const byUuid = new Map(entries.map((entry) => [entry.uuid, entry]));
 
 		await repair.execute(CYCLE);
 
-		const blocks = new Map([
-			[1100, { start: 0, end: 344 }],
-			[1200, { start: 344, end: 674 }],
-			[1300, { start: 674, end: 1000 }],
-		]);
+		const ratings = [...written.cycleItem]
+			.sort((one, other) => one.position - other.position)
+			.map((item) => byUuid.get(item.trainingPuzzleUuid)?.rating ?? 0);
 
-		for (const item of written.cycleItem) {
-			const rating = byUuid.get(item.trainingPuzzleUuid)?.rating ?? 0;
-			const range = blocks.get(cycleBlock(rating));
-
-			expect(item.position).toBeGreaterThanOrEqual(range?.start ?? -1);
-			expect(item.position).toBeLessThan(range?.end ?? -1);
-		}
+		expect(ratings).toEqual([...ratings].sort((one, other) => one - other));
 	});
 
 	it('hands out every exercise the cycle was still missing, and no repeats', async () => {

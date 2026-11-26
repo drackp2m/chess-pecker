@@ -19,12 +19,8 @@ export const TrainingPolicy = {
 	refineUpperAccuracy: 0.9,
 	refineLowerAccuracy: 0.8,
 
-	/** Size of the working set, and the width of the ELO band it is drawn from. */
+	/** Size of the working set, drawn from the calibrated hundred-ELO band alone. */
 	defaultSetSize: 1000,
-	setRatingSpread: 100,
-
-	/** The block shuffled within between cycles, keeping the easy → hard order. */
-	shuffleBlockSize: 100,
 
 	minCycles: 4,
 	maxCycles: 7,

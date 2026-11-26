@@ -9,6 +9,7 @@ import {
 	TrainingPuzzleRow,
 } from '@app/repository/definition/training-schema.interface';
 import { TrainingLocalRepository } from '@app/repository/training-local.repository';
+import { CyclePlanUseCase } from '@app/use-case/cycle-plan.use-case';
 import { LocalCalibrationUseCase } from '@app/use-case/local-calibration.use-case';
 import { LocalCycleUseCase } from '@app/use-case/local-cycle.use-case';
 import { LocalTrainingUseCase } from '@app/use-case/local-training.use-case';
@@ -100,15 +101,20 @@ function configure(
 		updateStatus: vi.fn().mockResolvedValue(undefined),
 	};
 
+	const plan = {
+		order: vi.fn((entries: readonly TrainingPuzzleRow[]) => Promise.resolve([...entries])),
+	};
+
 	TestBed.configureTestingModule({
 		providers: [
 			{ provide: TrainingLocalRepository, useValue: repository },
 			{ provide: LocalTrainingUseCase, useValue: trainings },
 			{ provide: LocalCalibrationUseCase, useValue: {} },
+			{ provide: CyclePlanUseCase, useValue: plan },
 		],
 	});
 
-	return { repository, trainings, written, cycles: TestBed.inject(LocalCycleUseCase) };
+	return { repository, trainings, plan, written, cycles: TestBed.inject(LocalCycleUseCase) };
 }
 
 describe('LocalCycleUseCase.startCycle', () => {
@@ -138,6 +144,24 @@ describe('LocalCycleUseCase.startCycle', () => {
 		);
 		expect(written.cycle).toHaveLength(1);
 		expect(written.training).toMatchObject([{ uuid: TRAINING, status: 'running' }]);
+	});
+
+	it('lays the slots out in the order the plan builds from the pass before', async () => {
+		const previous = cycle(1, { expectedItems: 3 });
+		const { cycles, plan, written } = configure([previous], set(3));
+
+		plan.order.mockImplementation((entries: readonly TrainingPuzzleRow[]) =>
+			Promise.resolve([...entries].reverse()),
+		);
+
+		await cycles.startCycle(TRAINING);
+
+		expect(plan.order).toHaveBeenCalledWith(set(3), previous);
+		expect(written.cycleItem).toMatchObject([
+			{ lichessId: 'L2', position: 0 },
+			{ lichessId: 'L1', position: 1 },
+			{ lichessId: 'L0', position: 2 },
+		]);
 	});
 
 	it('refuses to start while the set is still coming down', async () => {

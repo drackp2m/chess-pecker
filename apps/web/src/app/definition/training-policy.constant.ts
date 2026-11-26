@@ -12,9 +12,6 @@ export const TrainingPolicy = {
 	maxRefineRounds: 6,
 
 	defaultSetSize: 1000,
-	setRatingSpread: 100,
-
-	shuffleBlockSize: 100,
 
 	minCycles: 4,
 	maxCycles: 7,

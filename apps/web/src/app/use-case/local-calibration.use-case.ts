@@ -142,7 +142,11 @@ export class LocalCalibrationUseCase {
 		rating: number,
 	): Promise<readonly PuzzleRow[]> {
 		const size = roundPuzzleCount(kind);
-		const puzzles = await this.repository.sampleByRating(rating, ratingBucketCeiling(rating), size);
+		const puzzles = await this.repository.sampleCatalogByRating(
+			rating,
+			ratingBucketCeiling(rating),
+			size,
+		);
 
 		if (puzzles.length < size) {
 			throw new LocalFailureError(

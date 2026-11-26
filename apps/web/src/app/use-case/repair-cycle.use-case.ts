@@ -101,7 +101,6 @@ export class RepairCycleUseCase {
 		await this.assertNothingElseRunning(cycle);
 
 		const placements = planCycleRepair(
-			set,
 			this.unplaced(set, items),
 			this.freePositions(expectedItems, items),
 		);
