@@ -1,5 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import type { FriendUser, Friendship, UserBlock, UserSummary } from '@chesspecker/api-definitions';
+import type {
+	FriendRequests,
+	FriendUser,
+	Friendship,
+	PublicUser,
+	UserBlock,
+} from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
@@ -10,6 +16,7 @@ import { UserRepository } from '@app/repository/user.repository';
 import { NO_SYNC_STATE, withSyncState } from '@app/store/feature/with-sync-state';
 import { FriendStore } from '@app/store/friend.store';
 import { ReceivedShareStore } from '@app/store/received-share.store';
+import { UserDirectoryStore } from '@app/store/user-directory.store';
 import { ApiCancelledError } from '@app/util/api-cancelled-error';
 import { HttpError } from '@app/util/http-error';
 
@@ -17,7 +24,7 @@ interface ProfileStoreProps {
 	received: readonly Friendship[];
 	sent: readonly Friendship[];
 	blocked: readonly UserBlock[];
-	matches: readonly UserSummary[];
+	matches: readonly PublicUser[];
 	/** The term `matches` answers to, so the list can be labelled and cleared. */
 	searchTerm: string;
 	isSearching: boolean;
@@ -45,6 +52,7 @@ export class ProfileStore
 	private readonly userRepository = inject(UserRepository);
 	private readonly friendStore = inject(FriendStore);
 	private readonly receivedShareStore = inject(ReceivedShareStore);
+	private readonly directory = inject(UserDirectoryStore);
 
 	readonly friends = this.friendStore.friends;
 
@@ -66,6 +74,7 @@ export class ProfileStore
 			]);
 
 			this.friendStore.replace(friends);
+			this.rememberAvatars(friends, requests, blocked);
 			patchState(this, {
 				received: requests.received,
 				sent: requests.sent,
@@ -95,11 +104,10 @@ export class ProfileStore
 		patchState(this, { isSearching: true, error: null, notice: null });
 
 		try {
-			patchState(this, {
-				matches: await this.userRepository.search(username),
-				searchTerm: username,
-				isSearching: false,
-			});
+			const matches = await this.userRepository.search(username);
+
+			this.directory.remember(matches);
+			patchState(this, { matches, searchTerm: username, isSearching: false });
 		} catch (error) {
 			// The term is dropped along with the results: a failed search is not an empty
 			// one, and "nobody is called that" would be the wrong thing to read.
@@ -198,6 +206,19 @@ export class ProfileStore
 
 	clearFeedback(): void {
 		patchState(this, { error: null, notice: null });
+	}
+
+	private rememberAvatars(
+		friends: readonly FriendUser[],
+		requests: FriendRequests,
+		blocked: readonly UserBlock[],
+	): void {
+		this.directory.remember([
+			...friends,
+			...requests.received.map((request) => request.requester),
+			...requests.sent.map((request) => request.addressee),
+			...blocked.map((entry) => entry.blocked),
+		]);
 	}
 
 	/**

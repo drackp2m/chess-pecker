@@ -1,9 +1,9 @@
-import type { SearchUserRequest, UserSummary } from '@chesspecker/api-definitions';
+import type { PublicUser, SearchUserRequest } from '@chesspecker/api-definitions';
 import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../user.entity';
 import { UserRepository } from '../user.repository';
-import { presentUserSummary } from '../util/user-summary.util';
+import { presentPublicUser } from '../util/user-summary.util';
 
 const DEFAULT_LIMIT = 10;
 
@@ -21,10 +21,10 @@ export class SearchUsersUseCase {
 	) {}
 
 	/**
-	 * Prefix search, so someone can be found before being asked. Returns `UserSummary` and
+	 * Prefix search, so someone can be found before being asked. Returns `PublicUser` and
 	 * never the caller themselves, whom the next use case would refuse anyway.
 	 */
-	async execute(currentUser: User, search: SearchUserRequest): Promise<UserSummary[]> {
+	async execute(currentUser: User, search: SearchUserRequest): Promise<PublicUser[]> {
 		const users = await this.userRepository.getMany(
 			{
 				username: { $ilike: `${escapeLikePattern(search.username)}%` },
@@ -33,6 +33,6 @@ export class SearchUsersUseCase {
 			{ orderBy: { username: 'asc' }, limit: search.limit ?? DEFAULT_LIMIT },
 		);
 
-		return users.map(presentUserSummary);
+		return users.map(presentPublicUser);
 	}
 }

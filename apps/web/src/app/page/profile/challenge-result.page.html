@@ -82,10 +82,7 @@
 					>
 						<span class="position fw-lg">{{ standing.position ?? '·' }}</span>
 
-						<app-avatar
-							[uuid]="standing.participant.user.uuid"
-							[avatar]="standing.participant.user.avatar"
-						/>
+						<app-avatar [uuid]="standing.participant.user.uuid" />
 
 						<span class="who flex-col">
 							<span class="fw-lg">

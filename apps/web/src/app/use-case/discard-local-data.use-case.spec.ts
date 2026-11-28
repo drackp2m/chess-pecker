@@ -11,6 +11,7 @@ import {
 	UnsavedCount,
 } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
+import { AvatarStore } from '@app/store/avatar.store';
 import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
 import { NotificationStore } from '@app/store/notification.store';
@@ -18,6 +19,7 @@ import { ProfileStore } from '@app/store/profile.store';
 import { ShareStore } from '@app/store/share.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
+import { UserDirectoryStore } from '@app/store/user-directory.store';
 import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { DiscardContext, DiscardLocalDataUseCase } from '@app/use-case/discard-local-data.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
@@ -101,12 +103,14 @@ function configure(options: Options = {}) {
 	});
 	const stores = {
 		activity: store('activity'),
+		avatar: store('avatar'),
 		bookmark: store('bookmark'),
 		notification: store('notification'),
 		profile: store('profile'),
 		share: store('share'),
 		sync: store('sync'),
 		training: store('training'),
+		directory: store('directory'),
 	};
 
 	TestBed.configureTestingModule({
@@ -116,12 +120,14 @@ function configure(options: Options = {}) {
 			{ provide: BookmarkMirrorUseCase, useValue: bookmarks },
 			{ provide: ModalStore, useValue: modalStore },
 			{ provide: ActivityStore, useValue: stores.activity },
+			{ provide: AvatarStore, useValue: stores.avatar },
 			{ provide: BookmarkStore, useValue: stores.bookmark },
 			{ provide: NotificationStore, useValue: stores.notification },
 			{ provide: ProfileStore, useValue: stores.profile },
 			{ provide: ShareStore, useValue: stores.share },
 			{ provide: SyncStore, useValue: stores.sync },
 			{ provide: TrainingStore, useValue: stores.training },
+			{ provide: UserDirectoryStore, useValue: stores.directory },
 		],
 	});
 
@@ -215,12 +221,14 @@ describe('DiscardLocalDataUseCase.execute', () => {
 			'clear',
 			'release',
 			'activity',
+			'avatar',
 			'bookmark',
 			'notification',
 			'profile',
 			'share',
 			'sync',
 			'training',
+			'directory',
 		]);
 	});
 
@@ -230,12 +238,14 @@ describe('DiscardLocalDataUseCase.execute', () => {
 		await discard.execute();
 
 		expect(stores.activity.reset).toHaveBeenCalledTimes(1);
+		expect(stores.avatar.reset).toHaveBeenCalledTimes(1);
 		expect(stores.bookmark.reset).toHaveBeenCalledTimes(1);
 		expect(stores.notification.reset).toHaveBeenCalledTimes(1);
 		expect(stores.profile.reset).toHaveBeenCalledTimes(1);
 		expect(stores.share.reset).toHaveBeenCalledTimes(1);
 		expect(stores.sync.reset).toHaveBeenCalledTimes(1);
 		expect(stores.training.reset).toHaveBeenCalledTimes(1);
+		expect(stores.directory.reset).toHaveBeenCalledTimes(1);
 	});
 });
 

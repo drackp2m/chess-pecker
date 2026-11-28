@@ -3,6 +3,7 @@ import type { Avatar } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
+import { Resettable } from '@app/definition/resettable.interface';
 import { I18n, i18nRef } from '@app/i18n';
 import { UserRepository } from '@app/repository/user.repository';
 import { SessionStore } from '@app/store/session.store';
@@ -23,7 +24,10 @@ const initialState: AvatarStoreProps = {
 @Injectable({
 	providedIn: 'root',
 })
-export class AvatarStore extends signalStore({ protectedState: false }, withState(initialState)) {
+export class AvatarStore
+	extends signalStore({ protectedState: false }, withState(initialState))
+	implements Resettable
+{
 	private readonly userRepository = inject(UserRepository);
 	private readonly session = inject(SessionStore);
 
@@ -44,6 +48,10 @@ export class AvatarStore extends signalStore({ protectedState: false }, withStat
 		patchState(this, { isSubmitting: false, notice: i18nRef(I18n.profile.AVATAR_SAVED) });
 
 		return true;
+	}
+
+	reset(): void {
+		patchState(this, initialState);
 	}
 
 	clearFeedback(): void {

@@ -11,7 +11,7 @@
 				@for (friend of store.friends(); track friend.uuid) {
 					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
 						<span class="who flex-row gap-2 align-center">
-							<app-avatar [uuid]="friend.uuid" [avatar]="friend.avatar" />
+							<app-avatar [uuid]="friend.uuid" />
 
 							<span class="name fw-lg">{{ friend.username }}</span>
 						</span>
@@ -60,7 +60,7 @@
 					@for (match of store.matches(); track match.uuid) {
 						<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
 							<span class="who flex-row gap-2 align-center">
-								<app-avatar [uuid]="match.uuid" [avatar]="match.avatar" />
+								<app-avatar [uuid]="match.uuid" />
 
 								<span class="name fw-lg">{{ match.username }}</span>
 							</span>
@@ -104,7 +104,7 @@
 				@for (request of store.received(); track request.uuid) {
 					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
 						<span class="who flex-row gap-2 align-center">
-							<app-avatar [uuid]="request.requester.uuid" [avatar]="request.requester.avatar" />
+							<app-avatar [uuid]="request.requester.uuid" />
 
 							<span class="name fw-lg">{{ request.requester.username }}</span>
 						</span>
@@ -138,7 +138,7 @@
 				@for (request of store.sent(); track request.uuid) {
 					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
 						<span class="who flex-row gap-2 align-center">
-							<app-avatar [uuid]="request.addressee.uuid" [avatar]="request.addressee.avatar" />
+							<app-avatar [uuid]="request.addressee.uuid" />
 
 							<span class="name fw-lg">{{ request.addressee.username }}</span>
 						</span>
@@ -162,7 +162,7 @@
 				@for (entry of store.blocked(); track entry.uuid) {
 					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
 						<span class="who flex-row gap-2 align-center">
-							<app-avatar [uuid]="entry.blocked.uuid" [avatar]="entry.blocked.avatar" />
+							<app-avatar [uuid]="entry.blocked.uuid" />
 
 							<span class="name fw-lg">{{ entry.blocked.username }}</span>
 						</span>

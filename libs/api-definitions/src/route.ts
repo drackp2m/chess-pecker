@@ -51,7 +51,7 @@ import type {
 	TrainingCycleItem,
 	TrainingProgress,
 } from './training';
-import type { SearchUserRequest, UserSummary } from './user';
+import type { GetUserAvatarsRequest, PublicUser, SearchUserRequest, UserAvatar } from './user';
 import type { UpsertUserSettingRequest, UserSetting } from './user-setting';
 
 export interface ApiEndpoint {
@@ -218,7 +218,8 @@ export interface TrainingDeleteRoutes {
 }
 
 export interface UserGetRoutes {
-	'': { query: SearchUserRequest; response: readonly UserSummary[] };
+	'': { query: SearchUserRequest; response: readonly PublicUser[] };
+	'/avatar': { query: GetUserAvatarsRequest; response: readonly UserAvatar[] };
 }
 
 export interface UserPatchRoutes {

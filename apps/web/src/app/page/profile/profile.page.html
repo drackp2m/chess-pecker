@@ -2,7 +2,7 @@
 	<div class="flex-col gap-2">
 		@if (session.user(); as user) {
 			<div class="card flex-row gap-3 align-center p-3 br-1">
-				<app-avatar class="card-avatar" [uuid]="user.uuid" [avatar]="user.avatar" />
+				<app-avatar class="card-avatar" [uuid]="user.uuid" />
 
 				<div class="flex-col gap-2 align-start">
 					<span class="username fs-lg fw-lg">{{ user.username }}</span>

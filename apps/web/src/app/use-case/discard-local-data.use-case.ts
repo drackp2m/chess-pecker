@@ -9,6 +9,7 @@ import { LocalOwner } from '@app/definition/model/setting/local-owner.type';
 import { Resettable } from '@app/definition/resettable.interface';
 import { LocalDataRepository } from '@app/repository/local-data.repository';
 import { ActivityStore } from '@app/store/activity.store';
+import { AvatarStore } from '@app/store/avatar.store';
 import { BookmarkStore } from '@app/store/bookmark.store';
 import { ModalStore } from '@app/store/modal.store';
 import { NotificationStore } from '@app/store/notification.store';
@@ -16,6 +17,7 @@ import { ProfileStore } from '@app/store/profile.store';
 import { ShareStore } from '@app/store/share.store';
 import { SyncStore } from '@app/store/sync.store';
 import { TrainingStore } from '@app/store/training.store';
+import { UserDirectoryStore } from '@app/store/user-directory.store';
 import { BookmarkMirrorUseCase } from '@app/use-case/bookmark-mirror.use-case';
 import { LocalOwnerUseCase } from '@app/use-case/local-owner.use-case';
 import { SYNC_LOCK, withExclusiveLock } from '@app/util/exclusive-lock';
@@ -40,12 +42,14 @@ export class DiscardLocalDataUseCase {
 	 */
 	private readonly stores: readonly Resettable[] = [
 		inject(ActivityStore),
+		inject(AvatarStore),
 		inject(BookmarkStore),
 		inject(NotificationStore),
 		inject(ProfileStore),
 		inject(ShareStore),
 		inject(SyncStore),
 		inject(TrainingStore),
+		inject(UserDirectoryStore),
 	];
 
 	async confirm(context: DiscardContext): Promise<boolean> {

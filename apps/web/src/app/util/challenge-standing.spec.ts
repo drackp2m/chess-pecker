@@ -20,7 +20,7 @@ function participant(
 	username: string,
 	answer: PuzzleShareResult | null = null,
 ): PuzzleShareParticipant {
-	return { user: { uuid: `uuid-${username}`, username, avatar: null }, result: answer };
+	return { user: { uuid: `uuid-${username}`, username }, result: answer };
 }
 
 function share(

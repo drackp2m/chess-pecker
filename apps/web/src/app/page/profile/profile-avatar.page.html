@@ -1,6 +1,6 @@
 <section class="flex-col gap-6">
 	<div class="flex-col gap-3 align-center">
-		<app-avatar class="preview" [uuid]="uuid()" [avatar]="draft()" />
+		<app-avatar class="preview" [uuid]="uuid()" [preview]="draft()" />
 
 		<p class="fs-sm color-contrast-mid text-center">{{ I18n.profile.AVATAR_INTRO | i18n }}</p>
 
@@ -22,7 +22,7 @@
 					[attr.aria-label]="pieceLabel[option] | i18n"
 					(click)="pickPiece(option)"
 				>
-					<app-avatar [uuid]="uuid()" [avatar]="pieceOption(option)" />
+					<app-avatar [uuid]="uuid()" [preview]="pieceOption(option)" />
 				</button>
 			}
 		</div>
