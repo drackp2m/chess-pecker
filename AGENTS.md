@@ -44,7 +44,6 @@ Before doing anything else with translations (plurals, selects, gender, using ke
 ## Gotchas
 
 - A `define` inside a configuration of `apps/web/angular.json` replaces the one in `options` — it is not merged — so a new constant must be repeated in `configurations.development` or it is missing under `ng serve` only.
-- `pnpm import:puzzles` defaults to the deployed API (`api.chess.drackp2m.dev`), not localhost.
 
 ## More context
 
