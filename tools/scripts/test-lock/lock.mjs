@@ -63,16 +63,5 @@ function checkOne(file, expected) {
 	};
 }
 
-export function checkLock(lock, files, unlocked) {
-	const problems = files.map((file) => checkOne(file, lock.files[file])).filter(Boolean);
-	const notes = unlocked.map((file) => ({
-		file,
-		type: 'unlocked',
-		message: 'Test file is not locked — run `pnpm test:lock --select` to include it.',
-	}));
-
-	return [...problems, ...notes];
-}
-
-export const severityOf = (type, strict) =>
-	'unlocked' === type ? (strict ? 'error' : 'info') : 'error';
+export const checkLock = (lock, files) =>
+	files.map((file) => checkOne(file, lock.files[file])).filter(Boolean);

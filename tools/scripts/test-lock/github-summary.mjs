@@ -1,9 +1,7 @@
 import { plural } from '../lint/lint-report.mjs';
 import { inStepSummary, writeStepSummary } from '../util/github-summary.mjs';
 
-import { severityOf } from './lock.mjs';
-
-const ICONS = { modified: '❌', deleted: '❌', unlocked: 'ℹ️' };
+const ICONS = { modified: '❌', deleted: '❌' };
 
 const verdictOf = (problems, locked) =>
 	0 === problems.length
@@ -22,17 +20,14 @@ function findingTable(findings) {
 	return ['', '| | file | detail |', '| :---: | :--- | :--- |', ...findingRows(findings)];
 }
 
-export function writeTestLockSummary({ findings, locked, strict, scope }) {
+export function writeTestLockSummary({ findings, locked, scope }) {
 	if (!inStepSummary()) {
 		return;
 	}
 
-	const problems = findings.filter(({ type }) => 'info' !== severityOf(type, strict));
-	const notes = findings.length - problems.length;
 	const title = scope ? `Test Lock — \`${scope}\`` : 'Test Lock';
-	const tail = 0 === notes ? [] : ['', `ℹ️ ${plural(notes, 'test file')} not locked.`];
 
 	writeStepSummary(
-		[`## ${title}`, '', verdictOf(problems, locked), ...findingTable(problems), ...tail].join('\n'),
+		[`## ${title}`, '', verdictOf(findings, locked), ...findingTable(findings)].join('\n'),
 	);
 }

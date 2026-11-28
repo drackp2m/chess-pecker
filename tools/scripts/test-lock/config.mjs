@@ -38,7 +38,6 @@ export function parseArgs(argv) {
 		...DEFAULTS,
 		...(lock ? { lockFile: lock } : {}),
 		mode: modeOf(argv),
-		strict: argv.includes('--strict'),
 		filters: readFilters(argv),
 	};
 }

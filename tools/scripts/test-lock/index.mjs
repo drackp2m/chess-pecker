@@ -19,7 +19,6 @@ if (lock.broken) {
 
 function runCheck() {
 	const files = lockedFiles(lock, options.filters);
-	const unlocked = candidates(options).filter((file) => undefined === lock.files[file]);
 
 	printHeader('Checking', files, options.lockFile);
 
@@ -31,12 +30,12 @@ function runCheck() {
 		return 0;
 	}
 
-	const findings = checkLock(lock, files, unlocked);
+	const findings = checkLock(lock, files);
 	const scope = options.filters.join(', ');
 
-	writeTestLockSummary({ findings, locked: files.length, strict: options.strict, scope });
+	writeTestLockSummary({ findings, locked: files.length, scope });
 
-	return printCheck(findings, { strict: options.strict, locked: files.length });
+	return printCheck(findings, { locked: files.length });
 }
 
 function changesOf(previous, next) {

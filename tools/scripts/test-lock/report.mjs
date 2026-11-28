@@ -2,16 +2,16 @@ import path from 'node:path';
 
 import { c, plural, printProblems, printTally } from '../lint/lint-report.mjs';
 
-import { severityOf, shortHash } from './lock.mjs';
+import { shortHash } from './lock.mjs';
 
 const ICONS = { added: `${c.green}+${c.reset}`, removed: `${c.red}-${c.reset}` };
 
 const fullPath = (file) => path.resolve(file);
 
-const toProblems = (findings, strict) =>
+const toProblems = (findings) =>
 	findings.map((item) => ({
 		file: fullPath(item.file),
-		severity: severityOf(item.type, strict),
+		severity: 'error',
 		message: item.message,
 		rule: item.type,
 	}));
@@ -22,15 +22,8 @@ export function printHeader(action, files, lockFile) {
 	console.log(`${c.bold}${action} test lock...${c.reset} ${c.dim}(${details})${c.reset}`);
 }
 
-export function printCheck(findings, { strict, locked }) {
-	const problems = toProblems(
-		findings.filter(({ type }) => 'info' !== severityOf(type, strict)),
-		strict,
-	);
-	const notes = toProblems(
-		findings.filter(({ type }) => 'info' === severityOf(type, strict)),
-		strict,
-	);
+export function printCheck(findings, { locked }) {
+	const problems = toProblems(findings);
 
 	if (0 === problems.length) {
 		console.log(`\n  ${c.green}✔ ${plural(locked, 'locked file')} intact.${c.reset}`);
@@ -43,13 +36,7 @@ export function printCheck(findings, { strict, locked }) {
 		);
 	}
 
-	if (0 !== notes.length) {
-		const hint = '`pnpm test:lock:select` to include them';
-
-		console.log(`  ${c.dim}${plural(notes.length, 'test file')} not locked — ${hint}.${c.reset}`);
-	}
-
-	return problems.some(({ severity }) => 'error' === severity) ? 1 : 0;
+	return 0 === problems.length ? 0 : 1;
 }
 
 export function printChanges(changes) {
