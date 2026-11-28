@@ -3,7 +3,6 @@
 REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)
 CERT="$REPO_ROOT/.cert/cert.pem"
 KEY="$REPO_ROOT/.cert/key.pem"
-BASE_HREF="/"
 SERVE_DIR="dist/chesspecker/browser"
 APP_PORT=4201
 PROXY_PORT=4200
@@ -21,9 +20,18 @@ if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
   exit 1
 fi
 
-echo "🏗️ Building PWA in watch mode (base-href $BASE_HREF)..."
-ng build chesspecker --configuration preview --watch --base-href "$BASE_HREF" &
+rm -rf "$SERVE_DIR"
+
+echo "🏗️ Building PWA in watch mode..."
+ng build chesspecker --configuration preview --watch &
 BUILD_PID=$!
+
+until [ -f "$SERVE_DIR/index.html" ]; do
+  sleep 1
+done
+
+echo "🧭 Linking 404.html to index.html, as GitHub Pages serves it for every route..."
+ln -sf index.html "$SERVE_DIR/404.html"
 
 echo "📂 Serving $SERVE_DIR over plain HTTP on port $APP_PORT..."
 http-server "$SERVE_DIR" -p "$APP_PORT" -c-1 &

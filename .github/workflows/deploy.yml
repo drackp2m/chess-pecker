@@ -76,7 +76,6 @@ jobs:
       contents: read
     steps:
       - name: Setup Pages
-        id: pages
         uses: actions/configure-pages@v5
 
       - name: Checkout repository
@@ -102,11 +101,14 @@ jobs:
       - name: Build application
         run: |
           set -o pipefail
-          pnpm --filter @chesspecker/web build --base-href ${{ steps.pages.outputs.base_url }}/ 2>&1 | tee /tmp/build.log
+          pnpm --filter @chesspecker/web build 2>&1 | tee /tmp/build.log
 
       - name: Build summary
         if: always()
         run: node tools/scripts/build/summary.mjs /tmp/build.log
+
+      - name: Serve the app for every route
+        run: cp apps/web/dist/chesspecker/browser/index.html apps/web/dist/chesspecker/browser/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
