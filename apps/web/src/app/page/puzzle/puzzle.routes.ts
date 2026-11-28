@@ -7,6 +7,7 @@ export default [
 	{
 		path: '',
 		title: I18n.common.EXERCISES,
+		data: { back: '/' },
 		resolve: { i18n: resolveI18n('puzzle') },
 		loadComponent: () => import('./puzzle.page').then(({ PuzzlePage }) => PuzzlePage),
 	},
@@ -15,7 +16,7 @@ export default [
 		// trainer can be tried without pasting a CSV first.
 		path: 'sample',
 		title: I18n.common.SAMPLE_EXERCISE,
-		data: { sample: true },
+		data: { sample: true, back: '/' },
 		resolve: { i18n: resolveI18n('puzzle') },
 		loadComponent: () => import('./puzzle.page').then(({ PuzzlePage }) => PuzzlePage),
 	},

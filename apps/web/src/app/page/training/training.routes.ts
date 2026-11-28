@@ -34,6 +34,7 @@ export default [
 			{
 				path: 'solve',
 				title: I18n.common.SOLVING,
+				data: { back: '/training' },
 				loadComponent: () =>
 					import('./training-solve.page').then(({ TrainingSolvePage }) => TrainingSolvePage),
 			},

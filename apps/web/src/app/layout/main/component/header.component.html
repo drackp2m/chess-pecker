@@ -1,26 +1,30 @@
-<section
-	class="header force-light pb-2 px-4 surface-contrast color-primary flex-row align-center justify-between"
->
-	<button appRouterLink="/" class="logo flex-row gap-2 align-center color-primary">
-		@if (titleKey(); as key) {
-			<h3>{{ key | i18n }}</h3>
-		} @else {
-			<h3>Chess Pecker</h3>
+<section class="header force-light pb-2 px-4 surface-contrast color-primary">
+	<span class="side start flex-row align-center">
+		@if (backLink(); as link) {
+			<button
+				class="back flex-row align-center color-primary"
+				[attr.aria-label]="I18n.common.BACK | i18n"
+				(click)="goBack(link)"
+			>
+				<app-svg icon="chevron-left" [size]="18" />
+			</button>
 		}
-	</button>
+	</span>
 
-	<span class="session flex-row gap-2 align-center">
+	<h3 class="title">
+		@if (titleKey(); as key) {
+			{{ key | i18n }}
+		} @else {
+			Chess Pecker
+		}
+	</h3>
+
+	<span class="side end flex-row gap-2 align-center">
 		<app-sync-indicator />
 
 		<ng-content>
 			@if (hasNotice()) {
 				<app-connection-indicator />
-			} @else if (session.isAuthenticated()) {
-				<span class="fs-md">{{ session.username() }}</span>
-			} @else if (session.isAnonymous()) {
-				<button appRouterLink="/login" class="log-in fs-md color-primary">
-					{{ I18n.common.LOG_IN | i18n }}
-				</button>
 			}
 		</ng-content>
 	</span>

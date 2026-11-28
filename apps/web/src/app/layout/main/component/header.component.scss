@@ -1,15 +1,31 @@
 .header {
 	position: sticky;
 	top: 0;
+
+	display: grid;
+	grid-template-columns: 1fr minmax(0, auto) 1fr;
+	gap: var(--spacing-2);
+	align-items: center;
+
 	padding-top: var(--safe-padding-top);
 	border-bottom: solid 1.5px var(--color-primary);
 
-	.logo {
+	.side {
+		min-width: 0;
 		height: 24px;
 	}
 
-	.log-in {
-		text-decoration: underline;
-		text-underline-offset: 3px;
+	.end {
+		justify-content: flex-end;
+	}
+
+	.title {
+		overflow: hidden;
+
+		min-width: 0;
+
+		text-align: center;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 }
