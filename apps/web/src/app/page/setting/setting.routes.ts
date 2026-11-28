@@ -5,6 +5,14 @@ import { I18n } from '@app/i18n';
 
 export default [
 	{
+		path: 'board',
+		title: I18n.common.BOARD_TITLE,
+		data: { back: '/settings' },
+		resolve: { i18n: resolveI18n('setting') },
+		loadComponent: () =>
+			import('./setting-board.page').then(({ SettingBoardPage }) => SettingBoardPage),
+	},
+	{
 		path: '',
 		title: I18n.common.SETTINGS,
 		resolve: { i18n: resolveI18n('setting') },

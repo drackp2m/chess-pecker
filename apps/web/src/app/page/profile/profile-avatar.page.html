@@ -1,0 +1,89 @@
+<section class="flex-col gap-6">
+	<div class="flex-col gap-3 align-center">
+		<app-avatar class="preview" [uuid]="uuid()" [avatar]="draft()" />
+
+		<p class="fs-sm color-contrast-mid text-center">{{ I18n.profile.AVATAR_INTRO | i18n }}</p>
+
+		@if (isDerived()) {
+			<p class="fs-sm color-contrast-mid text-center">{{ I18n.profile.AVATAR_DERIVED | i18n }}</p>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4 id="avatar-piece">{{ I18n.profile.AVATAR_PIECE | i18n }}</h4>
+
+		<div class="options flex-row flex-wrap gap-2" role="group" aria-labelledby="avatar-piece">
+			@for (option of pieces; track option) {
+				<button
+					type="button"
+					class="piece-option br-1"
+					[class.selected]="option === piece()"
+					[attr.aria-pressed]="option === piece()"
+					[attr.aria-label]="pieceLabel[option] | i18n"
+					(click)="pickPiece(option)"
+				>
+					<app-avatar [uuid]="uuid()" [avatar]="pieceOption(option)" />
+				</button>
+			}
+		</div>
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4 id="avatar-color">{{ I18n.profile.AVATAR_COLOR | i18n }}</h4>
+
+		<div class="options flex-row flex-wrap gap-2" role="group" aria-labelledby="avatar-color">
+			@for (option of colors; track option) {
+				<button
+					type="button"
+					class="swatch"
+					[class.selected]="option === color()"
+					[style.background-color]="swatch(option)"
+					[disabled]="option === background()"
+					[attr.aria-pressed]="option === color()"
+					[attr.aria-label]="colorLabel[option] | i18n"
+					(click)="pickColor(option)"
+				></button>
+			}
+		</div>
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4 id="avatar-background">{{ I18n.profile.AVATAR_BACKGROUND | i18n }}</h4>
+
+		<div class="options flex-row flex-wrap gap-2" role="group" aria-labelledby="avatar-background">
+			@for (option of colors; track option) {
+				<button
+					type="button"
+					class="swatch"
+					[class.selected]="option === background()"
+					[style.background-color]="swatch(option)"
+					[disabled]="option === color()"
+					[attr.aria-pressed]="option === background()"
+					[attr.aria-label]="colorLabel[option] | i18n"
+					(click)="pickBackground(option)"
+				></button>
+			}
+		</div>
+
+		<p class="fs-sm color-contrast-mid">{{ I18n.profile.AVATAR_SAME_COLOR | i18n }}</p>
+	</div>
+
+	<div class="flex-col gap-2">
+		<button
+			appThemed
+			color="accent"
+			[disabled]="store.isSubmitting() || isUnchanged()"
+			(click)="save()"
+		>
+			{{ (store.isSubmitting() ? I18n.common.SAVING : I18n.profile.AVATAR_SAVE) | i18n }}
+		</button>
+
+		@if (store.error(); as message) {
+			<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
+		}
+
+		@if (store.notice(); as message) {
+			<p class="fs-sm" role="status">{{ message.key | i18n: message.params }}</p>
+		}
+	</div>
+</section>

@@ -1,4 +1,5 @@
 import type { AuthUser, LoginRequest, RegisterRequest } from './auth';
+import type { Avatar, UpdateAvatarRequest } from './avatar';
 import type {
 	BlockUserRequest,
 	FriendRequests,
@@ -218,6 +219,10 @@ export interface TrainingDeleteRoutes {
 
 export interface UserGetRoutes {
 	'': { query: SearchUserRequest; response: readonly UserSummary[] };
+}
+
+export interface UserPatchRoutes {
+	'/avatar': { params: UpdateAvatarRequest; response: Avatar };
 }
 
 export interface UserBlockGetRoutes {

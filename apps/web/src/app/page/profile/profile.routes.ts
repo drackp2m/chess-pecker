@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import type { RouteBack } from '@app/definition/route-back.type';
+import { authenticatedGuard } from '@app/guard/authenticated.guard';
 import { resolveI18n } from '@app/guard/i18n.resolver';
 import { I18n } from '@app/i18n';
 
@@ -31,6 +32,7 @@ export default [
 	},
 	{
 		path: 'challenges/received/solve/:uuid',
+		canActivate: [authenticatedGuard],
 		title: I18n.common.CHALLENGE_TITLE,
 		data: { back: '/profile/challenges/received' },
 		resolve: { i18n: resolveI18n('puzzle') },
@@ -39,6 +41,7 @@ export default [
 	},
 	{
 		path: 'challenges/:direction/:uuid',
+		canActivate: [authenticatedGuard],
 		title: I18n.common.CHALLENGE_RESULTS,
 		data: {
 			back: (({ direction = '' }) => `/profile/challenges/${direction}`) satisfies RouteBack,
@@ -49,6 +52,7 @@ export default [
 	},
 	{
 		path: 'challenges/:direction',
+		canActivate: [authenticatedGuard],
 		title: I18n.common.CHALLENGE_TITLE,
 		data: { back: '/profile' },
 		resolve: { i18n: resolveI18n('puzzle') },
@@ -56,6 +60,33 @@ export default [
 			import('./challenge-category.page').then(
 				({ ChallengeCategoryPage }) => ChallengeCategoryPage,
 			),
+	},
+	{
+		path: 'avatar',
+		title: I18n.common.AVATAR_TITLE,
+		canActivate: [authenticatedGuard],
+		data: { back: '/profile' },
+		resolve: { i18n: resolveI18n('profile') },
+		loadComponent: () =>
+			import('./profile-avatar.page').then(({ ProfileAvatarPage }) => ProfileAvatarPage),
+	},
+	{
+		path: 'account',
+		title: I18n.common.ACCOUNT_TITLE,
+		canActivate: [authenticatedGuard],
+		data: { back: '/profile' },
+		resolve: { i18n: resolveI18n('profile') },
+		loadComponent: () =>
+			import('./profile-account.page').then(({ ProfileAccountPage }) => ProfileAccountPage),
+	},
+	{
+		path: 'friends',
+		title: I18n.common.FRIENDS_TITLE,
+		canActivate: [authenticatedGuard],
+		data: { back: '/profile' },
+		resolve: { i18n: resolveI18n('profile') },
+		loadComponent: () =>
+			import('./profile-friends.page').then(({ ProfileFriendsPage }) => ProfileFriendsPage),
 	},
 	{
 		path: '',

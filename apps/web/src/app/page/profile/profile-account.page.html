@@ -1,0 +1,21 @@
+<section class="flex-col gap-6">
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.profile.YOUR_ACCOUNT | i18n }}</h4>
+
+		<p class="fs-sm color-contrast-mid">
+			@if (session.username(); as username) {
+				{{ I18n.profile.LOGGED_IN_AS | i18n: { username } }}
+			} @else {
+				{{ I18n.profile.SESSION_OPEN | i18n }}
+			}
+		</p>
+
+		<button appThemed [disabled]="session.isSubmitting()" (click)="logOut()">
+			{{ I18n.profile.LOG_OUT | i18n }}
+		</button>
+
+		@if (session.error(); as message) {
+			<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
+		}
+	</div>
+</section>

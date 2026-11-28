@@ -1,56 +1,20 @@
 <section class="flex-col gap-6">
-	<div class="bookmark-section flex-col gap-2">
-		<h4>{{ I18n.common.BOOKMARK_TITLE | i18n }}</h4>
-
-		@if (hasNoBookmarks()) {
-			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.BOOKMARK_NONE | i18n }}</p>
-		} @else {
-			<div class="flex-row flex-wrap gap-2">
-				@for (type of bookmarkTypes(); track type) {
-					<button appThemed class="bookmark-category" [appRouterLink]="bookmarkLink(type)">
-						{{ bookmarkLabels[type] | i18n }} ({{ bookmarkCount(type) }})
-					</button>
-				}
-			</div>
-		}
-	</div>
-
-	<div class="challenge-section flex-col gap-2">
-		<h4>{{ I18n.common.CHALLENGE_TITLE | i18n }}</h4>
-
-		@if (hasNoChallenges()) {
-			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.CHALLENGE_NONE | i18n }}</p>
-		} @else {
-			<div class="flex-row flex-wrap gap-2">
-				@for (direction of challengeDirections(); track direction) {
-					<button appThemed class="bookmark-category" [appRouterLink]="challengeLink(direction)">
-						{{ challengeLabels[direction] | i18n }} ({{ challengeCount(direction) }})
-					</button>
-				}
-			</div>
-		}
-	</div>
-
 	<div class="flex-col gap-2">
-		<h4>{{ I18n.profile.YOUR_ACCOUNT | i18n }}</h4>
+		@if (session.user(); as user) {
+			<div class="card flex-row gap-3 align-center p-3 br-1">
+				<app-avatar class="card-avatar" [uuid]="user.uuid" [avatar]="user.avatar" />
 
-		@if (session.isAuthenticated()) {
-			<p class="fs-sm color-contrast-mid">
-				@if (session.username(); as username) {
-					{{ I18n.profile.LOGGED_IN_AS | i18n: { username } }}
-				} @else {
-					{{ I18n.profile.SESSION_OPEN | i18n }}
-				}
-			</p>
+				<div class="flex-col gap-2 align-start">
+					<span class="username fs-lg fw-lg">{{ user.username }}</span>
 
-			<button appThemed [disabled]="session.isSubmitting()" (click)="logOut()">
-				{{ I18n.profile.LOG_OUT | i18n }}
-			</button>
-
-			@if (session.error(); as message) {
-				<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
-			}
+					<button appThemed appRouterLink="/profile/avatar">
+						{{ I18n.profile.AVATAR_EDIT | i18n }}
+					</button>
+				</div>
+			</div>
 		} @else if (session.isUnreachable()) {
+			<h4>{{ I18n.profile.YOUR_ACCOUNT | i18n }}</h4>
+
 			<p class="fs-sm color-contrast-mid">
 				{{ I18n.profile.UNREACHABLE_EXPLANATION | i18n }}
 			</p>
@@ -59,6 +23,8 @@
 			this whole branch off the screen until the server answers one way or the other. -->
 			<button appThemed (click)="retryConnection()">{{ I18n.profile.TRY_AGAIN | i18n }}</button>
 		} @else if (session.isAnonymous()) {
+			<h4>{{ I18n.profile.YOUR_ACCOUNT | i18n }}</h4>
+
 			<p class="fs-sm color-contrast-mid">
 				{{ I18n.profile.ANONYMOUS_EXPLANATION | i18n }}
 			</p>
@@ -76,159 +42,52 @@
 	</div>
 
 	<div class="flex-col gap-2">
-		<h4>{{ I18n.profile.ADD_FRIEND | i18n }}</h4>
+		<h4>{{ I18n.common.BOOKMARK_TITLE | i18n }}</h4>
 
-		<p class="fs-sm color-contrast-mid">{{ I18n.profile.ADD_FRIEND_INTRO | i18n }}</p>
+		@if (hasNoBookmarks()) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.BOOKMARK_NONE | i18n }}</p>
+		} @else {
+			<div class="flex-row flex-wrap gap-2">
+				@for (type of bookmarkTypes(); track type) {
+					<button appThemed [appRouterLink]="bookmarkLink(type)">
+						{{ bookmarkLabels[type] | i18n }} ({{ bookmarkCount(type) }})
+					</button>
+				}
+			</div>
+		}
+	</div>
 
-		<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
-			<input
-				appThemed
-				type="text"
-				[label]="I18n.profile.USERNAME | i18n"
-				autocomplete="off"
-				formControlName="username"
-			/>
+	@if (session.isAuthenticated()) {
+		<div class="flex-col gap-2">
+			<h4>{{ I18n.common.CHALLENGE_TITLE | i18n }}</h4>
 
-			<button appThemed type="submit" color="accent" [disabled]="store.isSearching()">
-				{{ (store.isSearching() ? I18n.profile.SEARCHING : I18n.profile.SEARCH) | i18n }}
-			</button>
-		</form>
-
-		@if (store.searchTerm(); as term) {
-			@if (0 === store.matches().length) {
-				<p class="empty fs-sm color-contrast-mid">
-					{{ I18n.profile.NO_MATCH_FOR | i18n: { term } }}
-				</p>
+			@if (hasNoChallenges()) {
+				<p class="empty fs-sm color-contrast-mid">{{ I18n.common.CHALLENGE_NONE | i18n }}</p>
 			} @else {
-				<ul class="flex-col gap-2">
-					@for (match of store.matches(); track match.uuid) {
-						<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
-							<span class="fw-lg">{{ match.username }}</span>
-
-							<span class="flex-row gap-2">
-								<button
-									appThemed
-									color="accent"
-									[disabled]="store.isSubmitting()"
-									(click)="sendRequest(match.username)"
-								>
-									{{ I18n.profile.SEND_REQUEST | i18n }}
-								</button>
-
-								<button appThemed (click)="block(match.username)">
-									{{ I18n.profile.BLOCK | i18n }}
-								</button>
-							</span>
-						</li>
+				<div class="flex-row flex-wrap gap-2">
+					@for (direction of challengeDirections(); track direction) {
+						<button appThemed [appRouterLink]="challengeLink(direction)">
+							{{ challengeLabels[direction] | i18n }} ({{ challengeCount(direction) }})
+						</button>
 					}
-				</ul>
+				</div>
 			}
-		}
+		</div>
 
-		@if (store.error(); as message) {
-			<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
-		}
+		<nav class="flex-col gap-2">
+			<h4>{{ I18n.profile.SECTIONS | i18n }}</h4>
 
-		@if (store.notice(); as message) {
-			<p class="fs-sm" role="status">{{ message.key | i18n: message.params }}</p>
-		}
-	</div>
+			<button appThemed appRouterLink="/profile/friends">
+				{{ I18n.common.FRIENDS_TITLE | i18n }}
+			</button>
 
-	<div class="flex-col gap-2">
-		<h4>{{ I18n.profile.REQUESTS_RECEIVED | i18n }}</h4>
+			<button appThemed appRouterLink="/profile/avatar">
+				{{ I18n.common.AVATAR_TITLE | i18n }}
+			</button>
 
-		@if (0 === store.received().length) {
-			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NOTHING_WAITING | i18n }}</p>
-		} @else {
-			<ul class="flex-col gap-2">
-				@for (request of store.received(); track request.uuid) {
-					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
-						<span class="fw-lg">{{ request.requester.username }}</span>
-
-						<span class="flex-row gap-2">
-							<button appThemed color="accent" (click)="accept(request.uuid)">
-								{{ I18n.profile.ACCEPT | i18n }}
-							</button>
-
-							<button appThemed (click)="decline(request.uuid)">
-								{{ I18n.profile.DECLINE | i18n }}
-							</button>
-
-							<button appThemed (click)="block(request.requester.username)">
-								{{ I18n.profile.BLOCK | i18n }}
-							</button>
-						</span>
-					</li>
-				}
-			</ul>
-		}
-	</div>
-
-	<div class="flex-col gap-2">
-		<h4>{{ I18n.profile.REQUESTS_SENT | i18n }}</h4>
-
-		@if (0 === store.sent().length) {
-			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NONE_SENT | i18n }}</p>
-		} @else {
-			<ul class="flex-col gap-2">
-				@for (request of store.sent(); track request.uuid) {
-					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
-						<span class="fw-lg">{{ request.addressee.username }}</span>
-
-						<button appThemed (click)="remove(request.uuid)">
-							{{ I18n.common.CANCEL | i18n }}
-						</button>
-					</li>
-				}
-			</ul>
-		}
-	</div>
-
-	<div class="flex-col gap-2">
-		<h4>{{ I18n.profile.FRIENDS | i18n }}</h4>
-
-		@if (store.isLoading()) {
-			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
-		} @else if (0 === store.friends().length) {
-			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NO_FRIENDS | i18n }}</p>
-		} @else {
-			<ul class="flex-col gap-2">
-				@for (friend of store.friends(); track friend.uuid) {
-					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
-						<span class="fw-lg">{{ friend.username }}</span>
-
-						<span class="flex-row gap-2">
-							<button appThemed [disabled]="store.isSubmitting()" (click)="unfriend(friend)">
-								{{ I18n.profile.UNFRIEND | i18n }}
-							</button>
-
-							<button appThemed (click)="block(friend.username)">
-								{{ I18n.profile.BLOCK | i18n }}
-							</button>
-						</span>
-					</li>
-				}
-			</ul>
-		}
-	</div>
-
-	<div class="flex-col gap-2">
-		<h4>{{ I18n.profile.BLOCKED | i18n }}</h4>
-
-		@if (0 === store.blocked().length) {
-			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NOBODY_BLOCKED | i18n }}</p>
-		} @else {
-			<ul class="flex-col gap-2">
-				@for (entry of store.blocked(); track entry.uuid) {
-					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
-						<span class="fw-lg">{{ entry.blocked.username }}</span>
-
-						<button appThemed (click)="unblock(entry.uuid)">
-							{{ I18n.profile.UNBLOCK | i18n }}
-						</button>
-					</li>
-				}
-			</ul>
-		}
-	</div>
+			<button appThemed appRouterLink="/profile/account">
+				{{ I18n.common.ACCOUNT_TITLE | i18n }}
+			</button>
+		</nav>
+	}
 </section>

@@ -7,8 +7,7 @@ export default [
 	{
 		path: '',
 		title: I18n.common.LOG_IN,
-		// TODO: back to '/profile' once it opens without a session (phase 2).
-		data: { back: '/' },
+		data: { back: '/profile' },
 		resolve: { i18n: resolveI18n('auth') },
 		loadComponent: () => import('./login.page').then(({ LoginPage }) => LoginPage),
 	},

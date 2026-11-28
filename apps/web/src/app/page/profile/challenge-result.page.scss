@@ -68,7 +68,7 @@ section {
 
 .standing {
 	display: grid;
-	grid-template-columns: 2rem 1fr auto;
+	grid-template-columns: 2rem auto 1fr auto;
 	gap: 0.75rem;
 	align-items: center;
 

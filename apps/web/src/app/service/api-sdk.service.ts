@@ -29,6 +29,7 @@ import type {
 	UserBlockGetRoutes,
 	UserBlockPostRoutes,
 	UserGetRoutes,
+	UserPatchRoutes,
 	UserSettingDeleteRoutes,
 	UserSettingGetRoutes,
 	UserSettingPutRoutes,
@@ -122,6 +123,7 @@ export class ApiSdkService {
 
 	readonly PATCH = {
 		friendship: this.caller<FriendshipPatchRoutes>('PATCH', 'friendship'),
+		user: this.caller<UserPatchRoutes>('PATCH', 'user'),
 	};
 
 	readonly DELETE = {

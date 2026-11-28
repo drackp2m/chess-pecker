@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import type { PuzzleShareResult } from '@chesspecker/api-definitions';
 
+import { AvatarComponent } from '@app/component/avatar/avatar.component';
 import { StaticChessBoardComponent } from '@app/component/static-chess-board/static-chess-board.component';
 import {
 	CHALLENGE_VERDICT_LABEL,
@@ -36,6 +37,7 @@ import { PuzzleMapper } from '@app/util/puzzle-mapper';
 	templateUrl: './challenge-result.page.html',
 	styleUrl: './challenge-result.page.scss',
 	imports: [
+		AvatarComponent,
 		StaticChessBoardComponent,
 		ButtonDirective,
 		RouterLinkDirective,

@@ -8,6 +8,7 @@ import type {
 import { toIsoDate } from '../../../shared/util/to-iso-date';
 import { PuzzleAttemptClosure } from '../../training/definition/puzzle-attempt-closure.enum';
 import { User } from '../../user/user.entity';
+import { presentUserSummary } from '../../user/util/user-summary.util';
 import { PuzzleShareAttempt } from '../puzzle-share-attempt.entity';
 import { PuzzleShareRecipient } from '../puzzle-share-recipient.entity';
 import { PuzzleShare } from '../puzzle-share.entity';
@@ -31,7 +32,7 @@ function presentParticipant(
 	const attempt = attempts.get(user.uuid);
 
 	return {
-		user: { uuid: user.uuid, username: user.username },
+		user: presentUserSummary(user),
 		result: undefined === attempt ? null : presentResult(attempt),
 	};
 }

@@ -1,0 +1,69 @@
+@use 'sass:map';
+
+$avatar-palette: (
+	red: (
+		fill: rgb(214 69 65),
+		outline: rgb(92 22 20),
+	),
+	orange: (
+		fill: rgb(236 133 52),
+		outline: rgb(102 48 10),
+	),
+	yellow: (
+		fill: rgb(242 200 75),
+		outline: rgb(105 78 10),
+	),
+	lime: (
+		fill: rgb(166 206 72),
+		outline: rgb(60 82 15),
+	),
+	green: (
+		fill: rgb(64 160 96),
+		outline: rgb(18 66 36),
+	),
+	teal: (
+		fill: rgb(38 166 154),
+		outline: rgb(10 70 64),
+	),
+	sky: (
+		fill: rgb(92 184 230),
+		outline: rgb(20 74 102),
+	),
+	blue: (
+		fill: rgb(58 110 214),
+		outline: rgb(16 36 84),
+	),
+	violet: (
+		fill: rgb(138 92 214),
+		outline: rgb(48 24 92),
+	),
+	pink: (
+		fill: rgb(232 112 170),
+		outline: rgb(102 28 64),
+	),
+	brown: (
+		fill: rgb(142 94 60),
+		outline: rgb(250 240 228),
+	),
+	slate: (
+		fill: rgb(100 116 139),
+		outline: rgb(240 244 248),
+	),
+	ivory: (
+		fill: rgb(244 238 222),
+		outline: rgb(60 52 40),
+	),
+	ink: (
+		fill: rgb(36 34 40),
+		outline: rgb(236 232 224),
+	),
+);
+
+@layer base {
+	:root {
+		@each $name, $tone in $avatar-palette {
+			--avatar-#{$name}: #{map.get($tone, fill)};
+			--avatar-#{$name}-outline: #{map.get($tone, outline)};
+		}
+	}
+}

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import type { Avatar } from './avatar';
 import type { UserRole } from './user';
 
 export const loginRequestSchema = z.object({
@@ -22,4 +23,5 @@ export interface AuthUser {
 	readonly username: string;
 	readonly role: UserRole;
 	readonly email?: string;
+	readonly avatar?: Avatar | null;
 }

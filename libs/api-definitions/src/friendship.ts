@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import type { Avatar } from './avatar';
 import type { UserRole } from './user';
 
 export type FriendshipStatus = 'pending' | 'accepted' | 'declined';
@@ -9,6 +10,7 @@ export interface FriendUser {
 	readonly username: string;
 	readonly role: UserRole;
 	readonly email?: string;
+	readonly avatar?: Avatar | null;
 }
 
 export interface Friendship {

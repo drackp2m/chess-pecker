@@ -1,6 +1,6 @@
 import { HttpStatusCode } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
-import type { AuthUser, LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
+import type { AuthUser, Avatar, LoginRequest, RegisterRequest } from '@chesspecker/api-definitions';
 import { patchState, signalStore, withState } from '@ngrx/signals';
 
 import type { TranslationRef } from '@app/definition/i18n.type';
@@ -39,6 +39,7 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	readonly isAnonymous = computed(() => 'anonymous' === this.status());
 	readonly isUnreachable = computed(() => 'unreachable' === this.status());
 	readonly username = computed(() => this.user()?.username ?? null);
+	readonly avatar = computed(() => this.user()?.avatar ?? null);
 
 	/**
 	 * Two readings of the same probe that must not contradict each other on screen: the
@@ -193,6 +194,14 @@ export class SessionStore extends signalStore({ protectedState: false }, withSta
 	/** The API refused to renew: only the cookies decide, so the store follows them. */
 	expire(): void {
 		patchState(this, { status: 'anonymous', user: null });
+	}
+
+	adoptAvatar(avatar: Avatar): void {
+		const user = this.user();
+
+		if (null !== user) {
+			patchState(this, { user: { ...user, avatar } });
+		}
 	}
 
 	clearError(): void {

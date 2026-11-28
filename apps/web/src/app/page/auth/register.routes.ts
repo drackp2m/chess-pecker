@@ -7,8 +7,7 @@ export default [
 	{
 		path: '',
 		title: I18n.common.CREATE_ACCOUNT,
-		// TODO: back to '/profile' once it opens without a session (phase 2).
-		data: { back: '/' },
+		data: { back: '/profile' },
 		resolve: { i18n: resolveI18n('auth') },
 		loadComponent: () => import('./register.page').then(({ RegisterPage }) => RegisterPage),
 	},

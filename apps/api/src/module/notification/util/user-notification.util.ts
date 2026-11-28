@@ -1,6 +1,7 @@
 import type { UserNotification as UserNotificationResponse } from '@chesspecker/api-definitions';
 
 import { toIsoDate } from '../../../shared/util/to-iso-date';
+import { presentUserSummary } from '../../user/util/user-summary.util';
 import { UserNotification } from '../user-notification.entity';
 
 /**
@@ -13,7 +14,7 @@ export function presentNotification(notification: UserNotification): UserNotific
 	return {
 		uuid: notification.uuid,
 		type: notification.type,
-		actor: undefined === actor ? null : { uuid: actor.uuid, username: actor.username },
+		actor: undefined === actor ? null : presentUserSummary(actor),
 		shareUuid: notification.share?.uuid ?? null,
 		readAt: undefined === notification.readAt ? null : toIsoDate(notification.readAt),
 		createdAt: toIsoDate(notification.createdAt),

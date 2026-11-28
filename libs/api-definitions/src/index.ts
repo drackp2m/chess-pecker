@@ -1,4 +1,5 @@
 export * from './auth';
+export * from './avatar';
 export * from './friendship';
 export * from './notification';
 export * from './puzzle';

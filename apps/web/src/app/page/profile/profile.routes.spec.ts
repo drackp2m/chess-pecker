@@ -36,6 +36,27 @@ describe('PROFILE_ROUTES back links', () => {
 		);
 	});
 
+	it('sends the avatar, the account and the friends back to the profile', () => {
+		expect(backOf('avatar')).toBe('/profile');
+		expect(backOf('account')).toBe('/profile');
+		expect(backOf('friends')).toBe('/profile');
+	});
+
+	it('asks for a session on every page that needs one, and not on the profile or bookmarks', () => {
+		const guarded = PROFILE_ROUTES.filter((route) => undefined !== route.canActivate).map(
+			(route) => route.path,
+		);
+
+		expect(guarded).toStrictEqual([
+			'challenges/received/solve/:uuid',
+			'challenges/:direction/:uuid',
+			'challenges/:direction',
+			'avatar',
+			'account',
+			'friends',
+		]);
+	});
+
 	it('leaves the profile itself, a root of the menu, without a back link', () => {
 		expect(backOf('')).toBeUndefined();
 	});

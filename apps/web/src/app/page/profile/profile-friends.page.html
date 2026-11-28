@@ -1,0 +1,178 @@
+<section class="flex-col gap-6">
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.profile.FRIENDS | i18n }}</h4>
+
+		@if (store.isLoading()) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.common.LOADING | i18n }}</p>
+		} @else if (0 === store.friends().length) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NO_FRIENDS | i18n }}</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (friend of store.friends(); track friend.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="who flex-row gap-2 align-center">
+							<app-avatar [uuid]="friend.uuid" [avatar]="friend.avatar" />
+
+							<span class="name fw-lg">{{ friend.username }}</span>
+						</span>
+
+						<span class="flex-row gap-2">
+							<button appThemed [disabled]="store.isSubmitting()" (click)="unfriend(friend)">
+								{{ I18n.profile.UNFRIEND | i18n }}
+							</button>
+
+							<button appThemed (click)="block(friend.username)">
+								{{ I18n.profile.BLOCK | i18n }}
+							</button>
+						</span>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.profile.ADD_FRIEND | i18n }}</h4>
+
+		<p class="fs-sm color-contrast-mid">{{ I18n.profile.ADD_FRIEND_INTRO | i18n }}</p>
+
+		<form [formGroup]="form" class="flex-col gap-3" (ngSubmit)="submit()">
+			<input
+				appThemed
+				type="text"
+				[label]="I18n.profile.USERNAME | i18n"
+				autocomplete="off"
+				formControlName="username"
+			/>
+
+			<button appThemed type="submit" color="accent" [disabled]="store.isSearching()">
+				{{ (store.isSearching() ? I18n.profile.SEARCHING : I18n.profile.SEARCH) | i18n }}
+			</button>
+		</form>
+
+		@if (store.searchTerm(); as term) {
+			@if (0 === store.matches().length) {
+				<p class="empty fs-sm color-contrast-mid">
+					{{ I18n.profile.NO_MATCH_FOR | i18n: { term } }}
+				</p>
+			} @else {
+				<ul class="flex-col gap-2">
+					@for (match of store.matches(); track match.uuid) {
+						<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+							<span class="who flex-row gap-2 align-center">
+								<app-avatar [uuid]="match.uuid" [avatar]="match.avatar" />
+
+								<span class="name fw-lg">{{ match.username }}</span>
+							</span>
+
+							<span class="flex-row gap-2">
+								<button
+									appThemed
+									color="accent"
+									[disabled]="store.isSubmitting()"
+									(click)="sendRequest(match.username)"
+								>
+									{{ I18n.profile.SEND_REQUEST | i18n }}
+								</button>
+
+								<button appThemed (click)="block(match.username)">
+									{{ I18n.profile.BLOCK | i18n }}
+								</button>
+							</span>
+						</li>
+					}
+				</ul>
+			}
+		}
+
+		@if (store.error(); as message) {
+			<p class="error fs-sm" role="alert">{{ message.key | i18n: message.params }}</p>
+		}
+
+		@if (store.notice(); as message) {
+			<p class="fs-sm" role="status">{{ message.key | i18n: message.params }}</p>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.profile.REQUESTS_RECEIVED | i18n }}</h4>
+
+		@if (0 === store.received().length) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NOTHING_WAITING | i18n }}</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (request of store.received(); track request.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="who flex-row gap-2 align-center">
+							<app-avatar [uuid]="request.requester.uuid" [avatar]="request.requester.avatar" />
+
+							<span class="name fw-lg">{{ request.requester.username }}</span>
+						</span>
+
+						<span class="flex-row gap-2">
+							<button appThemed color="accent" (click)="accept(request.uuid)">
+								{{ I18n.profile.ACCEPT | i18n }}
+							</button>
+
+							<button appThemed (click)="decline(request.uuid)">
+								{{ I18n.profile.DECLINE | i18n }}
+							</button>
+
+							<button appThemed (click)="block(request.requester.username)">
+								{{ I18n.profile.BLOCK | i18n }}
+							</button>
+						</span>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.profile.REQUESTS_SENT | i18n }}</h4>
+
+		@if (0 === store.sent().length) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NONE_SENT | i18n }}</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (request of store.sent(); track request.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="who flex-row gap-2 align-center">
+							<app-avatar [uuid]="request.addressee.uuid" [avatar]="request.addressee.avatar" />
+
+							<span class="name fw-lg">{{ request.addressee.username }}</span>
+						</span>
+
+						<button appThemed (click)="remove(request.uuid)">
+							{{ I18n.common.CANCEL | i18n }}
+						</button>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.profile.BLOCKED | i18n }}</h4>
+
+		@if (0 === store.blocked().length) {
+			<p class="empty fs-sm color-contrast-mid">{{ I18n.profile.NOBODY_BLOCKED | i18n }}</p>
+		} @else {
+			<ul class="flex-col gap-2">
+				@for (entry of store.blocked(); track entry.uuid) {
+					<li class="row flex-row flex-wrap gap-2 align-center justify-between p-2 br-1">
+						<span class="who flex-row gap-2 align-center">
+							<app-avatar [uuid]="entry.blocked.uuid" [avatar]="entry.blocked.avatar" />
+
+							<span class="name fw-lg">{{ entry.blocked.username }}</span>
+						</span>
+
+						<button appThemed (click)="unblock(entry.uuid)">
+							{{ I18n.profile.UNBLOCK | i18n }}
+						</button>
+					</li>
+				}
+			</ul>
+		}
+	</div>
+</section>

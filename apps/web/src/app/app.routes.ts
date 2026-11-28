@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 
 import { anonymousGuard } from '@app/guard/anonymous.guard';
-import { authenticatedGuard } from '@app/guard/authenticated.guard';
 import { introGuard } from '@app/guard/intro.guard';
 import { MainLayout } from '@app/layout/main/main.layout';
 
@@ -39,7 +38,6 @@ export const APP_ROUTES: Routes = [
 			},
 			{
 				path: 'profile',
-				canActivate: [authenticatedGuard],
 				loadChildren: () => import('./page/profile/profile.routes'),
 			},
 			{

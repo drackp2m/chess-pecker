@@ -1,15 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { BoardDemoComponent } from '@app/component/board-demo/board-demo.component';
 import { SyncStatusComponent } from '@app/component/sync-status/sync-status.component';
-import { ANALYSIS_DEPTHS, normalizeAnalysisDepth } from '@app/definition/analysis-preference.type';
-import {
-	MOVE_ANIMATIONS,
-	MOVE_ANIMATION_LABEL,
-	MoveAnimation,
-} from '@app/definition/board-animation.type';
-import { MOVE_INPUT_LABEL, buildMoveInputMethods } from '@app/definition/board-input.type';
 import {
 	LANGUAGE_FLAG,
 	LANGUAGE_NAME,
@@ -17,19 +9,17 @@ import {
 	SELECTABLE_LANGUAGES,
 } from '@app/definition/language.type';
 import { GENDERS, GENDER_LABEL, Gender } from '@app/definition/model/setting/gender.type';
-import { MOVE_SPEEDS, MOVE_SPEED_LABEL, MoveSpeed } from '@app/definition/move-speed.type';
 import { Theme } from '@app/definition/service/theme.type';
+import { ButtonDirective } from '@app/directive/button.directive';
 import { RadioCheckboxDirective } from '@app/directive/radio-checkbox/radio-checkbox.directive';
+import { RouterLinkDirective } from '@app/directive/router-link.directive';
 import { SelectDirective } from '@app/directive/select/select.directive';
 import { I18n, provideI18nScope } from '@app/i18n';
 import { version } from '@app/package';
 import { I18nPipe } from '@app/pipe/i18n.pipe';
-import { AnalysisPreferenceService } from '@app/service/analysis-preference.service';
-import { BoardPreferenceService } from '@app/service/board-preference.service';
 import { BookmarkPreferenceService } from '@app/service/bookmark-preference.service';
 import { GenderService } from '@app/service/gender.service';
 import { LanguageService } from '@app/service/language.service';
-import { SoundService } from '@app/service/sound.service';
 import { ThemeService } from '@app/service/theme.service';
 import { TIMEZONES, TimezoneService } from '@app/service/timezone.service';
 import { bindSetting } from '@app/util/setting-binding';
@@ -41,7 +31,8 @@ import { bindSetting } from '@app/util/setting-binding';
 		ReactiveFormsModule,
 		RadioCheckboxDirective,
 		SelectDirective,
-		BoardDemoComponent,
+		ButtonDirective,
+		RouterLinkDirective,
 		SyncStatusComponent,
 		I18nPipe,
 	],
@@ -52,24 +43,15 @@ export class SettingPage {
 
 	readonly VERSION = version;
 
-	readonly moveSpeeds = MOVE_SPEEDS;
-	readonly speedLabel = MOVE_SPEED_LABEL;
-	readonly moveAnimations = MOVE_ANIMATIONS;
-	readonly animationLabel = MOVE_ANIMATION_LABEL;
-	readonly inputLabel = MOVE_INPUT_LABEL;
 	readonly languages = SELECTABLE_LANGUAGES;
 	readonly timezones = TIMEZONES;
 	readonly languageName = LANGUAGE_NAME;
 	readonly languageFlag = LANGUAGE_FLAG;
 	readonly genders = GENDERS;
 	readonly genderLabel = GENDER_LABEL;
-	readonly analysisDepths = ANALYSIS_DEPTHS;
 
 	private readonly themeService = inject(ThemeService);
-	private readonly boardPreference = inject(BoardPreferenceService);
-	private readonly analysisPreference = inject(AnalysisPreferenceService);
 	private readonly bookmarkPreference = inject(BookmarkPreferenceService);
-	private readonly sound = inject(SoundService);
 	private readonly languageService = inject(LanguageService);
 	private readonly timezoneService = inject(TimezoneService);
 	private readonly genderService = inject(GenderService);
@@ -77,8 +59,6 @@ export class SettingPage {
 	private readonly isBookmarkAlwaysFavorite = computed(
 		() => !this.bookmarkPreference.isPromptEnabled(),
 	);
-
-	private readonly analysisDepth = computed(() => String(this.analysisPreference.depth()));
 
 	readonly form = new FormGroup({
 		language: new FormControl<Language>(this.languageService.selectedLanguage(), {
@@ -97,40 +77,13 @@ export class SettingPage {
 			nonNullable: true,
 			validators: [Validators.required],
 		}),
-		moveSpeed: new FormControl<MoveSpeed>(this.boardPreference.moveSpeed(), {
-			nonNullable: true,
-			validators: [Validators.required],
-		}),
-		moveAnimation: new FormControl<MoveAnimation>(this.boardPreference.moveAnimation(), {
-			nonNullable: true,
-			validators: [Validators.required],
-		}),
-		moveInput: new FormGroup({
-			click: new FormControl<boolean>(this.isMethodEnabled('click'), { nonNullable: true }),
-			drag: new FormControl<boolean>(this.isMethodEnabled('drag'), { nonNullable: true }),
-		}),
-		moveLift: new FormControl<boolean>(this.boardPreference.moveLift(), { nonNullable: true }),
-		sound: new FormControl<boolean>(this.sound.isEnabled(), { nonNullable: true }),
-		analysisBar: new FormControl<boolean>(this.analysisPreference.isBarShown(), {
-			nonNullable: true,
-		}),
-		analysisDepth: new FormControl<string>(this.analysisDepth(), { nonNullable: true }),
 		bookmarkAlwaysFavorite: new FormControl<boolean>(this.isBookmarkAlwaysFavorite(), {
 			nonNullable: true,
 		}),
 	});
 
-	// Mirrors both the stored value and the correction made when a selection would
-	// otherwise leave the board with no way to move a piece.
-	private readonly moveInput = computed(() => ({
-		click: this.isMethodEnabled('click'),
-		drag: this.isMethodEnabled('drag'),
-	}));
-
 	constructor() {
 		this.bindApp();
-		this.bindBoard();
-		this.bindAnalysis();
 	}
 
 	private bindApp(): void {
@@ -150,10 +103,6 @@ export class SettingPage {
 			this.themeService.updateSelectedTheme(theme);
 		});
 
-		bindSetting(this.form.controls.sound, this.sound.isEnabled, (isEnabled) => {
-			this.sound.update(isEnabled);
-		});
-
 		bindSetting(
 			this.form.controls.bookmarkAlwaysFavorite,
 			this.isBookmarkAlwaysFavorite,
@@ -161,41 +110,5 @@ export class SettingPage {
 				this.bookmarkPreference.updatePrompt(!isAlways);
 			},
 		);
-	}
-
-	private bindBoard(): void {
-		bindSetting(this.form.controls.moveSpeed, this.boardPreference.moveSpeed, (speed) => {
-			this.boardPreference.updateMoveSpeed(speed);
-		});
-
-		bindSetting(
-			this.form.controls.moveAnimation,
-			this.boardPreference.moveAnimation,
-			(animation) => {
-				this.boardPreference.updateMoveAnimation(animation);
-			},
-		);
-
-		bindSetting(this.form.controls.moveInput, this.moveInput, ({ click, drag }) => {
-			this.boardPreference.updateMoveInputMethods(buildMoveInputMethods(click, drag));
-		});
-
-		bindSetting(this.form.controls.moveLift, this.boardPreference.moveLift, (isEnabled) => {
-			this.boardPreference.updateMoveLift(isEnabled);
-		});
-	}
-
-	private bindAnalysis(): void {
-		bindSetting(this.form.controls.analysisBar, this.analysisPreference.isBarShown, (isShown) => {
-			this.analysisPreference.updateBar(isShown);
-		});
-
-		bindSetting(this.form.controls.analysisDepth, this.analysisDepth, (depth) => {
-			this.analysisPreference.updateDepth(normalizeAnalysisDepth(Number(depth)));
-		});
-	}
-
-	private isMethodEnabled(method: 'click' | 'drag'): boolean {
-		return this.boardPreference.moveInputMethods().includes(method);
 	}
 }

@@ -71,5 +71,6 @@
 	"01M3MMHFT3BV64RXG2B9E1XJGF": "Es lo que viene marcado al empezar una partida nueva, donde se puede cambiar solo para esa partida.",
 	"01M3MMHFT3P5G6B7A12HYE7P4A": "Mostrar la barra de evaluación",
 	"01M3MMHFT3JPFF197S7S5KXZY7": "Profundidad",
-	"01M3MMHFT3X8BJ45T4D4Z94KKQ": "Hasta dónde calcula el motor antes de dar su evaluación. Cuanto más profundo, más fiable, pero también más lento, y la máquina espera a que termine para mover."
+	"01M3MMHFT3X8BJ45T4D4Z94KKQ": "Hasta dónde calcula el motor antes de dar su evaluación. Cuanto más profundo, más fiable, pero también más lento, y la máquina espera a que termine para mover.",
+	"01M8HD7SGD22Y284KGSCEJWTH6": "Movimiento, sonido y análisis del tablero."
 }

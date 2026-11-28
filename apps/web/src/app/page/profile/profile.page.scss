@@ -3,38 +3,18 @@ section {
 	max-width: 34rem;
 }
 
-.bookmark-section,
-.challenge-section {
-	order: 1;
-}
-
-section > div:nth-child(3) {
-	order: 5;
-}
-
-section > div:nth-child(4) {
-	order: 2;
-}
-
-section > div:nth-child(5),
-section > div:nth-child(6) {
-	order: 3;
-}
-
-section > div:nth-child(7) {
-	order: 1;
-}
-
-section > div:nth-child(8) {
-	order: 4;
-}
-
-.error {
-	color: rgb(196 48 38);
-}
-
-.row {
+.card {
 	border: 1px solid var(--color-contrast-mid);
+}
+
+.card-avatar {
+	--avatar-size: 4rem;
+}
+
+.username {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .empty {

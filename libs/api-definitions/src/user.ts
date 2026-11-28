@@ -1,10 +1,13 @@
 import { z } from 'zod';
 
+import type { Avatar } from './avatar';
+
 export type UserRole = 'admin' | 'registered' | 'guest';
 
 export interface UserSummary {
 	readonly uuid: string;
 	readonly username: string;
+	readonly avatar: Avatar | null;
 }
 
 export interface SearchUserRequest {

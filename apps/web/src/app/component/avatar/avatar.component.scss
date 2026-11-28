@@ -1,0 +1,22 @@
+:host {
+	--board-piece-white: var(--avatar-fill);
+	--board-piece-white-outline: var(--avatar-outline);
+
+	overflow: hidden;
+	display: inline-flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+
+	aspect-ratio: 1;
+	width: var(--avatar-size, 2.5rem);
+	border-radius: 50%;
+
+	background-color: var(--avatar-background);
+	box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-contrast) 15%, transparent);
+
+	app-chess-piece {
+		width: 80%;
+		height: 80%;
+	}
+}

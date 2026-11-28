@@ -3,6 +3,7 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { User } from '../user.entity';
 import { UserRepository } from '../user.repository';
+import { presentUserSummary } from '../util/user-summary.util';
 
 const DEFAULT_LIMIT = 10;
 
@@ -32,6 +33,6 @@ export class SearchUsersUseCase {
 			{ orderBy: { username: 'asc' }, limit: search.limit ?? DEFAULT_LIMIT },
 		);
 
-		return users.map((user) => ({ uuid: user.uuid, username: user.username }));
+		return users.map(presentUserSummary);
 	}
 }

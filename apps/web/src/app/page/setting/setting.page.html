@@ -87,134 +87,14 @@
 		</form>
 	</div>
 
-	<div class="flex-col gap-4">
-		<div class="flex-col gap-2">
-			<h4>{{ I18n.setting.BOARD | i18n }}</h4>
+	<div class="flex-col gap-2">
+		<h4>{{ I18n.setting.BOARD | i18n }}</h4>
 
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.BOARD_INTRO | i18n }}</p>
-		</div>
+		<p class="fs-sm color-contrast-mid">{{ I18n.setting.BOARD_LINK_INTRO | i18n }}</p>
 
-		<app-board-demo />
-
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.setting.MOVE_SPEED | i18n }}</h5>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_SPEED_INTRO | i18n }}</p>
-
-			<form [formGroup]="form" class="flex-col gap-1">
-				@for (speed of moveSpeeds; track speed) {
-					<input
-						appThemed
-						type="radio"
-						[label]="speedLabel[speed] | i18n"
-						[value]="speed"
-						formControlName="moveSpeed"
-					/>
-				}
-			</form>
-		</div>
-
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.setting.MOVE_ANIMATION | i18n }}</h5>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_ANIMATION_INTRO | i18n }}</p>
-
-			<form [formGroup]="form" class="flex-col gap-1">
-				@for (animation of moveAnimations; track animation) {
-					<input
-						appThemed
-						type="radio"
-						[label]="animationLabel[animation] | i18n"
-						[value]="animation"
-						formControlName="moveAnimation"
-					/>
-				}
-			</form>
-		</div>
-
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.setting.MOVE_INPUT | i18n }}</h5>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_INPUT_INTRO | i18n }}</p>
-
-			<form [formGroup]="form.controls.moveInput" class="flex-col gap-1">
-				<input
-					appThemed
-					type="checkbox"
-					[label]="inputLabel.click | i18n"
-					formControlName="click"
-				/>
-
-				<input appThemed type="checkbox" [label]="inputLabel.drag | i18n" formControlName="drag" />
-			</form>
-		</div>
-
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.setting.MOVE_LIFT | i18n }}</h5>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.MOVE_LIFT_INTRO | i18n }}</p>
-
-			<form [formGroup]="form" class="flex-col gap-1">
-				<input
-					appThemed
-					type="checkbox"
-					[label]="I18n.setting.MOVE_LIFT_TOGGLE | i18n"
-					formControlName="moveLift"
-				/>
-			</form>
-		</div>
-
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.setting.SOUND | i18n }}</h5>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.SOUND_INTRO | i18n }}</p>
-
-			<form [formGroup]="form" class="flex-col gap-1">
-				<input
-					appThemed
-					type="checkbox"
-					[label]="I18n.setting.SOUND_TOGGLE | i18n"
-					formControlName="sound"
-				/>
-			</form>
-		</div>
-	</div>
-
-	<div class="flex-col gap-4">
-		<div class="flex-col gap-2">
-			<h4>{{ I18n.setting.ANALYSIS | i18n }}</h4>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.ANALYSIS_INTRO | i18n }}</p>
-		</div>
-
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.setting.ANALYSIS_BAR | i18n }}</h5>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.ANALYSIS_BAR_INTRO | i18n }}</p>
-
-			<form [formGroup]="form" class="flex-col gap-1">
-				<input
-					appThemed
-					type="checkbox"
-					[label]="I18n.setting.ANALYSIS_BAR_TOGGLE | i18n"
-					formControlName="analysisBar"
-				/>
-			</form>
-		</div>
-
-		<div class="flex-col gap-2">
-			<h5>{{ I18n.setting.ANALYSIS_DEPTH | i18n }}</h5>
-
-			<p class="fs-sm color-contrast-mid">{{ I18n.setting.ANALYSIS_DEPTH_INTRO | i18n }}</p>
-
-			<form [formGroup]="form" class="flex-col gap-1">
-				<select appThemed [label]="I18n.setting.ANALYSIS_DEPTH" formControlName="analysisDepth">
-					@for (depth of analysisDepths; track depth) {
-						<option [value]="depth">{{ depth }}</option>
-					}
-				</select>
-			</form>
-		</div>
+		<button appThemed appRouterLink="/settings/board">
+			{{ I18n.common.BOARD_TITLE | i18n }}
+		</button>
 	</div>
 
 	<div class="flex-col gap-2">

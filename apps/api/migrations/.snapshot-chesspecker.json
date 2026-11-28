@@ -3324,6 +3324,94 @@
       "name": "user",
       "schema": "public",
       "columns": {
+        "avatar_background": {
+          "name": "avatar_background",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "red",
+            "orange",
+            "yellow",
+            "lime",
+            "green",
+            "teal",
+            "sky",
+            "blue",
+            "violet",
+            "pink",
+            "brown",
+            "slate",
+            "ivory",
+            "ink"
+          ],
+          "mappedType": "enum"
+        },
+        "avatar_color": {
+          "name": "avatar_color",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "red",
+            "orange",
+            "yellow",
+            "lime",
+            "green",
+            "teal",
+            "sky",
+            "blue",
+            "violet",
+            "pink",
+            "brown",
+            "slate",
+            "ivory",
+            "ink"
+          ],
+          "mappedType": "enum"
+        },
+        "avatar_piece": {
+          "name": "avatar_piece",
+          "type": "text",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [
+            "pawn",
+            "knight",
+            "bishop",
+            "rook",
+            "queen",
+            "king"
+          ],
+          "mappedType": "enum"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamptz(6)",
@@ -3481,6 +3569,24 @@
         }
       ],
       "checks": [
+        {
+          "name": "user_avatar_background_check",
+          "expression": "\"avatar_background\" in ('red', 'orange', 'yellow', 'lime', 'green', 'teal', 'sky', 'blue', 'violet', 'pink', 'brown', 'slate', 'ivory', 'ink')",
+          "definition": "check (\"avatar_background\" in ('red', 'orange', 'yellow', 'lime', 'green', 'teal', 'sky', 'blue', 'violet', 'pink', 'brown', 'slate', 'ivory', 'ink'))",
+          "columnName": "avatar_background"
+        },
+        {
+          "name": "user_avatar_color_check",
+          "expression": "\"avatar_color\" in ('red', 'orange', 'yellow', 'lime', 'green', 'teal', 'sky', 'blue', 'violet', 'pink', 'brown', 'slate', 'ivory', 'ink')",
+          "definition": "check (\"avatar_color\" in ('red', 'orange', 'yellow', 'lime', 'green', 'teal', 'sky', 'blue', 'violet', 'pink', 'brown', 'slate', 'ivory', 'ink'))",
+          "columnName": "avatar_color"
+        },
+        {
+          "name": "user_avatar_piece_check",
+          "expression": "\"avatar_piece\" in ('pawn', 'knight', 'bishop', 'rook', 'queen', 'king')",
+          "definition": "check (\"avatar_piece\" in ('pawn', 'knight', 'bishop', 'rook', 'queen', 'king'))",
+          "columnName": "avatar_piece"
+        },
         {
           "name": "user_role_check",
           "expression": "\"role\" in ('admin', 'registered', 'guest')",
